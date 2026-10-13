@@ -455,7 +455,8 @@ textarea:focus {
   padding-top: 0.9rem;
   margin-top: 0.9rem;
 }
-.question:first-child {
+.question:first-child,
+h2 + .question {
   border-top: none;
   padding-top: 0;
   margin-top: 0;
@@ -625,6 +626,11 @@ table.table {
   }
   .card {
     padding: 0.85rem;
+  }
+  .card.table-wrap {
+    padding: 0;
+    border: none;
+    background: transparent;
   }
   .table-cards thead {
     display: none;
