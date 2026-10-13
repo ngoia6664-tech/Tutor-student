@@ -11,14 +11,10 @@ const StudentHome = lazy(() => import('./pages/student/StudentHome.jsx'))
 const StudentAssignment = lazy(() => import('./pages/student/StudentAssignment.jsx'))
 const StudentResults = lazy(() => import('./pages/student/StudentResults.jsx'))
 
-function Placeholder({ title }) {
-  return (
-    <div className="card">
-      <h2>{title}</h2>
-      <p className="muted">Đang xây dựng.</p>
-    </div>
-  )
-}
+const TutorStudents = lazy(() => import('./pages/tutor/TutorStudents.jsx'))
+const TutorAssignments = lazy(() => import('./pages/tutor/TutorAssignments.jsx'))
+const AssignmentEditor = lazy(() => import('./pages/tutor/AssignmentEditor.jsx'))
+const AssignmentTracking = lazy(() => import('./pages/tutor/AssignmentTracking.jsx'))
 
 export default function App() {
   return (
@@ -34,7 +30,11 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Placeholder title="Trang gia sư" />} />
+        <Route index element={<TutorStudents />} />
+        <Route path="assignments" element={<TutorAssignments />} />
+        <Route path="assignments/new" element={<AssignmentEditor />} />
+        <Route path="assignments/:id" element={<AssignmentTracking />} />
+        <Route path="assignments/:id/edit" element={<AssignmentEditor />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

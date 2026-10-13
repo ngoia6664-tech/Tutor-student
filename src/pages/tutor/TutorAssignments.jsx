@@ -1,0 +1,113 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { supabase, unwrap } from '../../lib/supabase.js'
+import { useAsync } from '../../lib/useAsync.js'
+import { errMsg } from '../../lib/errors.js'
+import { formatDate } from '../../lib/format.js'
+import { deleteAssignment } from '../../lib/assignments.js'
+import Loading from '../../components/Loading.jsx'
+import ErrorBox from '../../components/ErrorBox.jsx'
+import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
+
+export default function TutorAssignments() {
+  const [filter, setFilter] = useState('all')
+  const [actionError, setActionError] = useState(null)
+  const [deleting, setDeleting] = useState(null)
+
+  const { data, loading, error, reload } = useAsync(async () => {
+    const rows = unwrap(
+      await supabase
+        .from('assignments')
+        .select('id, title, type, due_date, created_at, assignment_recipients(status)')
+        .order('created_at', { ascending: false })
+    )
+    return rows.map((a) => {
+      const c = { todo: 0, done: 0, checked: 0 }
+      a.assignment_recipients.forEach((r) => (c[r.status] += 1))
+      return { ...a, counts: c, total: a.assignment_recipients.length }
+    })
+  }, [])
+
+  async function handleDelete(a) {
+    if (!window.confirm(`Xóa bài tập "${a.title}"? Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.`)) return
+    setDeleting(a.id)
+    setActionError(null)
+    try {
+      await deleteAssignment(a.id)
+      reload()
+    } catch (e) {
+      setActionError(errMsg(e))
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  const rows = (data || []).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
+
+  return (
+    <div>
+      <div className="page-head">
+        <h1>Bài tập</h1>
+        <div className="row">
+          <Link className="btn" to="/tutor/import">
+            Dán JSON
+          </Link>
+          <Link className="btn btn-primary" to="/tutor/assignments/new">
+            + Soạn bài tập
+          </Link>
+        </div>
+      </div>
+
+      <div className="chips" style={{ marginBottom: '1rem' }}>
+        <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
+          Tất cả
+        </button>
+        <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
+          Có bài chờ chấm
+        </button>
+      </div>
+
+      <ErrorBox message={actionError} />
+      {loading && <Loading />}
+      <ErrorBox message={error} onRetry={reload} />
+
+      {!loading && !error && rows.length === 0 && (
+        <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : 'Chưa có bài tập nào.'}</div>
+      )}
+
+      {!loading && !error && rows.length > 0 && (
+        <div className="list">
+          {rows.map((a) => (
+            <div key={a.id} className="list-item">
+              <Link to={`/tutor/assignments/${a.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
+                {a.title}
+              </Link>
+              <div className="row" style={{ marginBottom: '0.5rem' }}>
+                <TypeBadge type={a.type} />
+                <DueBadge date={a.due_date} />
+                <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
+              </div>
+              <div className="row small" style={{ marginBottom: '0.5rem' }}>
+                <span>{a.total} học sinh:</span>
+                <span className="badge badge-warn">{a.counts.todo} chưa nộp</span>
+                <span className="badge badge-primary">{a.counts.done} chờ chấm</span>
+                <span className="badge badge-ok">{a.counts.checked} đã chấm</span>
+              </div>
+              <div className="row">
+                <Link className="btn btn-small btn-primary" to={`/tutor/assignments/${a.id}`}>
+                  Theo dõi & chấm
+                </Link>
+                <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
+                  Sửa
+                </Link>
+                <button type="button" className="btn btn-small btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
+                  {deleting === a.id ? 'Đang xóa...' : 'Xóa'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
