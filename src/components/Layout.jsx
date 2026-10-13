@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
+import ThemeToggle from './ThemeToggle.jsx'
 
 const NAV = {
   tutor: [
@@ -26,11 +27,14 @@ export default function Layout() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="brand">⚛ Vật lý{profile.role === 'tutor' ? ' · Gia sư' : ''}</span>
+          <span className="brand">
+            <span className="brand-mark">⚛</span> Vật lý{profile.role === 'tutor' ? ' – Gia sư' : ''}
+          </span>
           <div className="topbar-user">
             <span className="user-name" title={profile.full_name}>
               {profile.full_name || 'Tài khoản'}
             </span>
+            <ThemeToggle />
             <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
               Đăng xuất
             </button>

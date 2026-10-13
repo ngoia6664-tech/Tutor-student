@@ -5,6 +5,7 @@ import { errMsg } from '../lib/errors.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorBox from '../components/ErrorBox.jsx'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 
 export default function Login() {
   const { session, profile, profileError, loading, signOut } = useAuth()
@@ -28,8 +29,11 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
+      <ThemeToggle className="login-theme" />
       <form className="card login-card" onSubmit={handleSubmit}>
-        <h1>⚛ Gia sư Vật lý</h1>
+        <h1>
+          <span className="brand-mark">⚛</span> Gia sư Vật lý
+        </h1>
         <p className="muted">Đăng nhập bằng tài khoản được gia sư cấp.</p>
 
         {session && profileError && (

@@ -185,7 +185,10 @@ function ReviewView({ data }) {
           <span className="auto-score-num">
             {sum.correct}/{sum.autoTotal}
           </span>
-          <span className="muted">câu trắc nghiệm và điền khuyết đúng (máy chấm). Câu điền khuyết viết khác đáp án sẽ được gia sư xem lại.</span>
+          <span>câu đúng, máy chấm phần trắc nghiệm và điền khuyết</span>
+          <span className="muted small" style={{ flexBasis: '100%' }}>
+            Ý điền khuyết viết khác đáp án nhưng vẫn đúng nghĩa sẽ được gia sư xem lại.
+          </span>
         </div>
       )}
 

@@ -47,6 +47,12 @@ function buildLessonMd(lesson) {
 }
 
 // ----- Câu hỏi -----
+// Loại câu đã hiện ở nhãn "Trắc nghiệm / Điền khuyết / Tự luận", nên đề chỉ ghi mức độ
+function levelLine(level) {
+  const l = str(level)
+  return l ? `_Mức độ: ${l}_` : ''
+}
+
 function noteBlock(note, includeNotes) {
   return includeNotes && str(note) ? `**Lưu ý:** ${str(note)}` : ''
 }
@@ -63,7 +69,7 @@ function fromFillBlank(fb, includeNotes) {
     flagged: !!str(fb.note),
     exercise: {
       kind: 'fill_blank',
-      question_md: join([`_Điền khuyết${fb.level ? ' · ' + str(fb.level) : ''}_`, 'Điền vào chỗ trống:']),
+      question_md: join([levelLine(fb.level), 'Điền vào chỗ trống:']),
       options: items.map(({ id, statement }) => ({ id, statement })),
       correct: Object.fromEntries(items.map(({ id, answer }) => [id, answer])),
       answer_md: items.map((it) => `**${it.id})** ${it.answer}`).join('\n\n'),
@@ -80,7 +86,7 @@ function fromMcq(q, includeNotes) {
     reason: str(o.reason),
   }))
   const correct = options.find((o) => o.label === str(q.answer))
-  const head = `_Trắc nghiệm${q.level ? ' · ' + str(q.level) : ''}_`
+  const head = levelLine(q.level)
   const method_md = join([
     q.core ? `**Cốt lõi:** ${str(q.core)}` : '',
     options.some((o) => o.reason) ? `**Phân tích từng phương án:**\n\n${options.map((o) => `- **${o.label}.** ${o.reason}`).join('\n')}` : '',
@@ -122,7 +128,7 @@ function fromProblem(p, typeTitle, includeNotes) {
     flagged: !!str(p.note),
     exercise: {
       kind: 'essay',
-      question_md: join([`_Tự luận${typeTitle ? ' · ' + typeTitle : ''}_`, str(p.statement)]),
+      question_md: join([typeTitle ? `_${typeTitle}_` : '', str(p.statement)]),
       answer_md: str(p.answer),
       method_md: join([
         arr(p.solution).length ? `**Lời giải:**\n\n${numbered(p.solution)}` : '',

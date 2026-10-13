@@ -152,6 +152,7 @@ export default function ImportJson() {
           </button>
         </div>
         <textarea
+          className="code"
           rows={12}
           value={text}
           onChange={(e) => reset(e.target.value)}

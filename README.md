@@ -4,7 +4,8 @@
 Bài giảng và bài tập được giao **theo từng học sinh**. Nhóm chỉ dùng để lọc và chọn nhanh.
 
 - **Gia sư** (`/tutor`): quản lý học sinh, soạn bài giảng (Markdown + công thức, file, video), soạn bài tập (đề, đáp án, phương pháp giải), nhập nhanh bằng JSON, theo dõi bài nộp, xem ảnh, chấm điểm và nhận xét.
-- **Học sinh** (`/student`): xem bài cần làm (hạn gần nhất lên đầu), chụp ảnh bài làm và nộp, xem đáp án **sau khi nộp**, xem điểm và nhận xét, xem bài giảng.
+- **Học sinh** (`/student`): xem bài cần làm (hạn gần nhất lên đầu), làm bài ngay trong app (trắc nghiệm chọn phương án, điền khuyết gõ đáp án, tự luận gõ hoặc chụp ảnh) rồi nộp, xem đáp án và kết quả máy chấm **sau khi nộp**, xem điểm và nhận xét, xem bài giảng.
+- Giao diện tối ("bảng đen") mặc định, có nút ☀/☾ để chuyển sang giao diện sáng ("vở ô ly"); lựa chọn được nhớ trên từng máy.
 
 Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQL, Storage), KaTeX, react-markdown.
 
@@ -54,7 +55,7 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
         ├── student/
         │   ├── StudentHome.jsx        # bài cần làm
         │   ├── StudentAssignment.jsx  # làm bài, nộp, xem đáp án, điểm
-        │   ├── SubmitPanel.jsx        # chụp/chọn ảnh + Nộp bài
+        │   ├── SubmitPanel.jsx        # ảnh (không bắt buộc) + Nộp bài
         │   ├── StudentResults.jsx     # điểm và nhận xét
         │   ├── StudentLessons.jsx     # danh sách bài giảng
         │   └── StudentLesson.jsx      # xem một bài giảng
@@ -62,7 +63,7 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
             ├── TutorStudents.jsx      # danh sách học sinh, lọc nhóm, sửa hồ sơ
             ├── TutorAssignments.jsx   # danh sách bài tập + thống kê
             ├── AssignmentEditor.jsx   # soạn/sửa bài tập
-            ├── AssignmentTracking.jsx # theo dõi, xem ảnh, chấm điểm
+            ├── AssignmentTracking.jsx # theo dõi, xem bài làm + ảnh, điểm máy chấm, chấm điểm
             ├── TutorLessons.jsx       # danh sách bài giảng
             ├── TutorLessonView.jsx    # xem bài giảng + ai đã nhận
             ├── LessonEditor.jsx       # soạn/sửa bài giảng
@@ -103,7 +104,9 @@ Học sinh gõ `/tutor/...` sẽ bị chuyển về `/student`. Gia sư gõ `/st
 2. Mở file `supabase/schema.sql`, copy **toàn bộ** nội dung và dán vào ô soạn.
 3. Bấm **Run**. Kết quả đúng là `Success. No rows returned`.
 
-File này tạo 7 bảng, bật RLS cho tất cả, tạo hàm `is_tutor()`, trigger tự tạo hồ sơ khi có tài khoản mới, trigger chặn học sinh sửa điểm, 2 hàm lưu bài và 2 bucket Storage riêng tư (`lesson-files`, `submissions`).
+File này tạo 8 bảng (thêm `submission_answers` lưu câu trả lời), bật RLS cho tất cả, tạo hàm `is_tutor()`, trigger tự tạo hồ sơ khi có tài khoản mới, trigger chặn cập nhật bài nộp trái phép, các hàm `save_lesson`, `save_assignment`, `submit_assignment` (nộp bài + chấm tự động) và 2 bucket Storage riêng tư (`lesson-files`, `submissions`).
+
+> **Nâng cấp từ bản trước:** nếu bạn đã chạy `schema.sql` cũ, chỉ cần **chạy lại toàn bộ file mới** trong SQL Editor. Dữ liệu cũ được giữ, các câu cũ thành câu "Tự luận". Riêng những bài đã nhập từ file `tutor-lesson/v1` *trước bản cập nhật này*, trắc nghiệm vẫn là văn bản, chưa có nút chọn. Hãy xóa các bài đó và nhập lại file để có câu trắc nghiệm, điền khuyết thật.
 Có thể chạy lại file nhiều lần mà không mất dữ liệu.
 
 ### Bước 3: Tắt tự đăng ký (khuyên dùng) [Dashboard]
@@ -218,6 +221,20 @@ Bài tập:
  "exercises":[{"question_md":"Tính $T$ khi $\\omega = 4\\pi$","method_md":"$T = \\frac{2\\pi}{\\omega}$","answer_md":"$T = 0{,}5$ s"}]}
 ```
 
+Một câu có thể là một trong 3 loại:
+
+```json
+{"question_md":"Tính T...", "answer_md":"...", "method_md":"..."}
+{"question_md":"Chu kì phụ thuộc vào", "options":["biên độ","khối lượng và độ cứng","pha"], "correct":"B", "method_md":"..."}
+{"question_md":"Điền vào chỗ trống:", "blanks":[{"id":"a","statement":"Đơn vị tần số là ......","answer":"Hz"}]}
+```
+
+| Loại | Nhận diện | Học sinh làm | Máy chấm |
+|---|---|---|---|
+| Tự luận | không có `options`, `blanks` | gõ bài làm và/hoặc chụp ảnh (không bắt buộc) | không, gia sư chấm |
+| Trắc nghiệm | có `options` (mảng chữ, hoặc `{"label","text"}`) + `correct` | chọn 1 phương án (nút tròn) | đúng / sai |
+| Điền khuyết | có `blanks` | gõ đáp án vào từng ô | "khớp" khi giống đáp án (không phân biệt hoa thường, khoảng trắng, dấu câu cuối); không khớp thì để gia sư xem |
+
 - `type`: `classwork` (làm trên lớp) hoặc `homework` (về nhà). `due_date`: `YYYY-MM-DD`, có thể bỏ trống.
 - Bài giảng có thể thêm `"video_url": "https://..."`.
 - **Dấu `\` trong JSON phải viết đôi**: `\\frac`, `\\omega`. Nếu bạn quên (viết `\frac`), JSON sẽ hiểu `\f` là ký tự đặc biệt và công thức bị hỏng mà không báo lỗi. App tự nhận ra và sửa các lệnh LaTeX phổ biến, đồng thời hiện cảnh báo "Đã tự sửa N dấu \\". Hãy xem kỹ bản xem trước.
@@ -242,8 +259,8 @@ App chuyển một file như vậy thành:
 | `theory` + `method` của từng `problem_types` | **1 bài giảng** (tiêu đề = `topic`): mỗi mục gồm giải thích, hình dung, ý chính, công thức, lỗi hay gặp; cuối bài có tóm tắt 1 phút và phương pháp giải từng dạng |
 | Câu có `"assignment":"classwork"` | Bài tập **"<topic> – Bài tập trên lớp"** |
 | Câu có `"assignment":"homework"` | Bài tập **"<topic> – Bài tập về nhà"** |
-| `mcq` | Đề + các phương án A/B/C/D; đáp án = phương án đúng; phương pháp giải = `core` + phân tích từng phương án (`reason`) |
-| `fill_blank` | Mỗi nhóm thành 1 câu (a, b, c…); đáp án theo từng ý |
+| `mcq` | Câu **trắc nghiệm** có nút chọn A/B/C/D, máy chấm theo `answer`. Phương pháp giải = `core` + phân tích từng phương án (`reason`); lý do đúng sai **không** gửi cho học sinh trước khi nộp. Nếu `answer` không khớp phương án nào, câu đó thành tự luận và có cảnh báo |
+| `fill_blank` | Mỗi nhóm thành 1 câu **điền khuyết**, mỗi ý (a, b, c…) có một ô gõ đáp án |
 | `problems` | Đề = `statement`; đáp án = `answer`; phương pháp giải = các bước `solution` |
 | `note` của từng câu | Thêm vào lời giải dưới dạng "Lưu ý" (có ô tick để tắt) |
 | `review_flags` | Chỉ hiện cho gia sư ở bước xem trước, **không** lưu và không gửi cho học sinh |
@@ -259,11 +276,13 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 
 - Câu hỏi (`exercises`) và đáp án (`answer_keys`) nằm ở **2 bảng riêng**.
 - RLS của `answer_keys` chỉ cho học sinh đọc khi dòng `assignment_recipients` của chính em đó có `status` là `done` hoặc `checked`. Trước khi nộp, máy chủ trả về **rỗng**, nên đáp án không bao giờ được gửi xuống trình duyệt, kể cả khi học sinh tự gọi API.
-- RLS không chặn được theo cột, nên trigger `guard_assignment_recipient_update` đảm bảo học sinh:
-  - chỉ chuyển được `todo → done` (không tự đặt `checked`, không nộp lại sau khi đã nộp);
-  - không sửa được `score`, `feedback`;
-  - phải có ít nhất 1 ảnh trong Storage thì mới được đánh dấu đã nộp (tránh bấm "nộp" khống để xem đáp án);
-  - `submission_path` và `submitted_at` do máy chủ ghi, không lấy từ trình duyệt.
+- Phương án trắc nghiệm (`exercises.options`) chỉ chứa chữ cái và nội dung. Phương án đúng nằm ở `answer_keys.correct`, nên cũng bị giấu như trên.
+- Học sinh **không có quyền UPDATE** bảng `assignment_recipients` và không có quyền ghi bảng `submission_answers`. Cách duy nhất để nộp là gọi hàm `submit_assignment()` phía máy chủ. Hàm này:
+  - chỉ nhận bài được giao cho chính học sinh đó và đang ở trạng thái `todo` (không nộp lại sau khi đã nộp);
+  - lưu câu trả lời, **chấm trắc nghiệm / điền khuyết ở máy chủ** (trình duyệt không bao giờ cần biết đáp án để chấm);
+  - tự ghi `status = 'done'`, `submitted_at`, `submission_path`; học sinh không chạm được `score`, `feedback`.
+- Trigger `guard_assignment_recipient_update` chặn thêm một lớp: mọi cập nhật không đến từ gia sư hoặc từ `submit_assignment()` đều bị từ chối.
+- Hệ quả của việc nộp không cần ảnh: học sinh có thể bấm nộp với bài trống để xem đáp án. Khi đó bài vẫn hiện "Đã nộp" với các câu "Không trả lời", và gia sư thấy rõ trong trang chấm.
 - Storage: học sinh chỉ tải ảnh vào thư mục `submissions/<id của mình>/<id bài được giao>/` và chỉ khi bài còn `todo`. Học sinh chỉ đọc được ảnh của mình và file của bài giảng được giao cho mình. Cả 2 bucket đều riêng tư, link xem là link tạm có hạn 1 giờ.
 - Học sinh không có quyền sửa `profiles`, nên không tự đổi được `role`.
 
@@ -273,6 +292,12 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 
 | Điểm chưa rõ trong yêu cầu | Cách làm | Lý do |
 |---|---|---|
+| Cách nộp bài | Làm ngay trong app: trắc nghiệm chọn nút tròn, điền khuyết gõ vào ô, tự luận gõ chữ. Ảnh **không bắt buộc** | Nộp nhanh trên điện thoại; trắc nghiệm được chấm ngay |
+| Lưu nháp | Câu trả lời đang làm được lưu trên máy (localStorage), tải lại trang không mất; nộp xong thì xóa | Học sinh hay bị gián đoạn khi làm trên điện thoại |
+| Chấm điền khuyết | Chỉ đánh "khớp" khi giống hệt đáp án (bỏ qua hoa thường, khoảng trắng, dấu câu cuối). Không khớp thì **không** đánh sai mà để "Cần xem" | Cùng một ý có nhiều cách viết, máy không nên phạt oan |
+| Điểm | Gia sư vẫn quyết định điểm cuối. Có nút **Dùng điểm máy chấm** = số câu đúng / số câu máy chấm × 10, làm tròn 0,25 | Bài có cả tự luận thì điểm máy chỉ là gợi ý |
+| Sửa đáp án sau khi đã nộp | Câu được cập nhật tại chỗ (giữ câu trả lời), và bài đã nộp được **chấm lại** theo đáp án mới | File nguồn có vài đáp án đề tô đỏ bị nghi sai (`review_flags`) |
+| Giao diện | Mặc định tối "bảng đen" (nền xanh đá, chữ màu phấn), nút ☀/☾ chuyển sang sáng "vở ô ly"; font Be Vietnam Pro | Theo yêu cầu màu trầm tối; font thiết kế riêng cho dấu tiếng Việt |
 | Nộp 1 hay nhiều ảnh? | Nhiều ảnh (tối đa 15), lưu chung thư mục `<student_id>/<assignment_id>`; `submission_path` là đường dẫn thư mục | Bài làm thường có nhiều trang |
 | Nút chụp ảnh | 2 nút: **Chụp ảnh** (mở thẳng camera sau) và **Chọn từ thư viện** (chọn được nhiều ảnh) | Trên điện thoại, `capture` mở camera nhưng không chọn được ảnh có sẵn |
 | Ảnh điện thoại nặng 3–8MB | Thu nhỏ còn cạnh dài 1800px (JPEG) trước khi tải lên | Nộp nhanh hơn với mạng 4G, tiết kiệm dung lượng Storage miễn phí |
@@ -280,7 +305,7 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 | Gia sư chấm khi học sinh chưa nộp | Cho phép, có hỏi xác nhận | Bài "làm trên lớp" có thể chấm trực tiếp trên giấy |
 | Trạng thái `checked` | Tự đặt khi gia sư bấm **Lưu chấm** | Một thao tác vừa lưu điểm vừa đánh dấu đã chấm |
 | Lưu bài tập (nhiều bảng) | Dùng hàm SQL `save_assignment` / `save_lesson` (một transaction) | Nếu lỗi giữa chừng thì không để lại bài tập thiếu câu hoặc thiếu đáp án |
-| Sửa bài tập đã giao | Thay toàn bộ câu hỏi; bài nộp và điểm giữ nguyên; bỏ chọn học sinh thì xóa dòng nộp của em đó (có cảnh báo) | Đơn giản, dễ hiểu |
+| Sửa bài tập đã giao | Câu còn giữ được cập nhật tại chỗ, câu bị xóa thì mất câu trả lời của câu đó; bỏ chọn học sinh thì xóa bài nộp của em đó (có cảnh báo) | Không mất bài làm của học sinh khi chỉ sửa lỗi chính tả |
 | Hồ sơ học sinh | Trigger tự tạo `profiles` (role `student`) khi tạo tài khoản; gia sư sửa tên/nhóm/lớp/môn ngay trong app | Không phải chạy SQL cho từng em |
 | Bài "đang đến hạn" | Trang chủ hiện **mọi** bài chưa nộp, hạn gần nhất lên đầu, bài quá hạn tô đỏ, bài không có hạn để cuối | Không bỏ sót bài quá hạn |
 | Nhận xét | Văn bản thường (giữ xuống dòng) | Gia sư gõ nhanh trên điện thoại |
@@ -294,8 +319,20 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 ### 6.1. Đã kiểm tra tự động khi phát triển
 
 - `npm run build` thành công.
-- `schema.sql` được chạy 2 lần liên tiếp trên PostgreSQL (PGlite, có giả lập `auth.uid()` và `storage.objects` của Supabase), cùng **33 kiểm tra RLS**, tất cả đều đạt. Các kiểm tra gồm: học sinh không thấy đáp án trước khi nộp và thấy sau khi nộp; không tự cho điểm được; không nộp khi chưa có ảnh; không tải ảnh vào thư mục người khác; không đọc được bài hoặc bài giảng không giao cho mình; không gọi được hàm lưu bài; không đổi được role.
-- Chạy thử giao diện trên Chrome cỡ màn hình điện thoại với API Supabase giả lập: **23 kiểm tra đạt**. Các kiểm tra gồm: chuyển trang theo vai trò, báo lỗi sai mật khẩu, công thức KaTeX hiển thị, trang làm bài **không gửi request `answer_keys`** trước khi nộp, Dán JSON → xem trước → trang soạn.
+- `schema.sql` được chạy 2 lần liên tiếp trên PostgreSQL (PGlite, có giả lập `auth.uid()` và `storage.objects` của Supabase), cùng **42 kiểm tra RLS**, tất cả đều đạt. Các kiểm tra gồm:
+  - học sinh không thấy đáp án (kể cả phương án đúng của trắc nghiệm) trước khi nộp, và thấy sau khi nộp;
+  - học sinh không tự sửa điểm hay trạng thái, không ghi câu trả lời trực tiếp, không nộp bài không được giao, không nộp lại;
+  - nộp được khi không có ảnh;
+  - chấm đúng: trắc nghiệm sai, điền khuyết khớp dù khác hoa thường/khoảng trắng, tự luận để trống điểm máy;
+  - sửa đáp án thì bài đã nộp được chấm lại;
+  - không xem được câu trả lời của bạn khác.
+- Chạy `schema.sql` bản cũ có dữ liệu, rồi chạy bản mới đè lên: dữ liệu được giữ, quyền UPDATE trực tiếp của học sinh bị gỡ.
+- Chạy thử giao diện trên Chrome cỡ màn hình điện thoại với API Supabase giả lập, tất cả đều đạt:
+  - phân quyền và điều hướng;
+  - làm bài trắc nghiệm / điền khuyết, nháp còn sau khi tải lại, nộp không ảnh, xem kết quả máy chấm;
+  - đổi và nhớ giao diện sáng/tối;
+  - trang chấm và trang soạn của gia sư;
+  - nhập file `song-c4-giao-thoa.json`.
 
 Những kiểm tra trên **chưa chạy trên một project Supabase thật**, vì cần key của bạn. Hãy làm các bước ở mục 6.2 sau khi cài đặt xong.
 
@@ -322,18 +359,18 @@ Chuẩn bị: đăng nhập gia sư, tạo 1 bài tập 2 câu (có đáp án) g
    set local role authenticated;
    select * from public.answer_keys;                 -- Chưa nộp: phải ra 0 dòng
    update public.assignment_recipients set score = 10
-     where student_id = '<ID_HOC_SINH_A>';           -- Phải báo lỗi "không được sửa điểm"
+     where student_id = '<ID_HOC_SINH_A>';           -- Phải ra UPDATE 0 (học sinh không có quyền sửa)
    rollback;
    ```
-9. Bấm **Nộp bài** mà chưa chọn ảnh → nút bị mờ, không nộp được.
-10. Trên điện thoại, bấm **Chụp ảnh** → mở camera. Chụp 1–2 ảnh rồi bấm **Nộp bài** → xác nhận → hiện "Đã nộp…", và **đáp án + phương pháp giải** hiện dưới từng câu.
-11. Chạy lại đoạn SQL ở bước 8 → lần này `answer_keys` trả về 2 dòng, còn lệnh sửa điểm vẫn không có tác dụng (`UPDATE 0`, vì bài đã nộp nên học sinh không còn quyền cập nhật dòng đó).
+9. Với bài có câu trắc nghiệm: chọn một phương án → vòng chữ cái được tô. Gõ vào ô điền khuyết, rồi tải lại trang → câu trả lời vẫn còn (nháp).
+10. Bấm **Nộp bài** khi còn câu bỏ trống → app nhắc "Còn N câu chưa trả lời". Bấm đồng ý (không cần ảnh) → hiện "Đã nộp…", điểm máy chấm "x/y", phương án đúng tô xanh, phương án sai tô đỏ, cùng đáp án + phương pháp giải từng câu. Thử thêm trên điện thoại: **Chụp ảnh** mở camera và ảnh nộp kèm hiện ở cuối trang.
+11. Chạy lại đoạn SQL ở bước 8 → lần này `answer_keys` trả về các dòng đáp án, còn lệnh sửa điểm vẫn ra `UPDATE 0`.
 12. Đăng nhập **học sinh B** → không thấy bài tập và bài giảng của A. Gõ thẳng đường dẫn bài của A (`/student/assignments/<id>`) → báo "không được giao cho bạn".
 
 **Chấm điểm**
 
-13. Gia sư vào **Bài tập** → bài vừa giao hiện "1 chờ chấm" → **Theo dõi & chấm** → **Xem ảnh bài nộp** → thấy ảnh.
-14. Nhập điểm 8.5 và nhận xét, bấm **Lưu chấm** → trạng thái thành "Đã chấm".
+13. Gia sư vào **Bài tập** → bài vừa giao hiện "1 chờ chấm" → **Theo dõi & chấm** → thấy "Máy chấm: x/y" → **Xem bài làm** (từng câu có nhãn Đúng / Sai / Cần xem) → **Xem ảnh nộp kèm**.
+14. Bấm **Dùng điểm máy chấm** hoặc tự nhập điểm 8.5, ghi nhận xét, bấm **Lưu chấm** → trạng thái thành "Đã chấm".
 15. Học sinh A vào **Kết quả** → thấy điểm 8.5 và nhận xét.
 16. Gia sư bấm **Cho nộp lại** → bài của A trở về "Chưa nộp" và hiện lại trên trang chủ của A.
 
@@ -344,6 +381,7 @@ Chuẩn bị: đăng nhập gia sư, tạo 1 bài tập 2 câu (có đáp án) g
 19. Dán JSON có lỗi (ví dụ thiếu dấu `}` hoặc `"type":"abc"`) → hiện lỗi rõ ràng bằng tiếng Việt.
 20. Thử trên điện thoại: chữ không bị tràn ngang, các nút đủ lớn để bấm, menu trên cùng cuộn ngang được.
 21. Tắt mạng rồi tải một trang → hiện lỗi "Không kết nối được máy chủ" cùng nút **Thử lại**, không bị trắng trang.
+22. Bấm nút ☀ ở góc trên → chuyển sang giao diện sáng. Tải lại trang → vẫn sáng, không bị nháy màu tối trước. Bấm ☾ để về giao diện tối.
 
 ---
 
