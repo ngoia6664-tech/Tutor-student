@@ -14,7 +14,20 @@ function normalizeType(v) {
 }
 
 // ----- Bài giảng -----
-function buildLessonMd(lesson) {
+const IMG_DATA = /^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,[a-z0-9+/=\s]+$/i
+
+// Hình minh họa → ảnh Markdown có chú thích: ![chú thích](src "chú thích")
+function diagramMd(d, where, warnings) {
+  const src = str(d?.src).replace(/\s+/g, '')
+  if (!IMG_DATA.test(src) && !/^https:\/\//i.test(src)) {
+    warnings.push(`${where}: bỏ qua một hình vì "src" không phải ảnh base64 (png, jpg, gif, webp, svg) hoặc link https.`)
+    return ''
+  }
+  const caption = str(d.caption).replace(/["\n\]]/g, ' ')
+  return caption ? `![${caption}](${src} "${caption}")` : `![](${src})`
+}
+
+function buildLessonMd(lesson, warnings) {
   const theory = lesson.theory || {}
   const meta = [str(lesson.chapter), lesson.grade ? `Lớp ${str(lesson.grade)}` : '', lesson.estimated_minutes ? `Khoảng ${lesson.estimated_minutes} phút` : '']
     .filter(Boolean)
@@ -23,7 +36,9 @@ function buildLessonMd(lesson) {
   const sections = arr(theory.sections).map((s, i) =>
     join([
       `## ${i + 1}. ${str(s.title) || 'Mục ' + (i + 1)}`,
-      str(s.explain),
+      // Có "paragraphs" (bài giảng dài) thì dùng nó; "explain" chỉ là bản tóm tắt nên bỏ để khỏi lặp
+      arr(s.paragraphs).length ? arr(s.paragraphs).map(str).filter(Boolean).join('\n\n') : str(s.explain),
+      ...arr(s.diagrams).map((d) => diagramMd(d, `Mục "${str(s.title)}"`, warnings)),
       s.analogy ? `**Hình dung dễ hiểu:** ${str(s.analogy)}` : '',
       arr(s.key_points).length ? `**Ý chính:**\n\n${bullets(s.key_points)}` : '',
       arr(s.formulas).length ? `**Công thức:**\n\n${bullets(s.formulas)}` : '',
@@ -150,7 +165,7 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const warnings = []
   const drafts = []
 
-  const content_md = buildLessonMd(lesson)
+  const content_md = buildLessonMd(lesson, warnings)
   if (content_md.trim()) drafts.push({ kind: 'lesson', title: topic, content_md, video_url: str(lesson.video_url) })
   else warnings.push('File không có phần lý thuyết ("theory"), nên không tạo bài giảng.')
 

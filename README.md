@@ -256,7 +256,9 @@ App chuyển một file như vậy thành:
 
 | Trong file | Thành |
 |---|---|
-| `theory` + `method` của từng `problem_types` | **1 bài giảng** (tiêu đề = `topic`): mỗi mục gồm giải thích, hình dung, ý chính, công thức, lỗi hay gặp; cuối bài có tóm tắt 1 phút và phương pháp giải từng dạng |
+| `theory` + `method` của từng `problem_types` | **1 bài giảng** (tiêu đề = `topic`): mỗi mục gồm phần giảng, hình minh họa, hình dung, ý chính, công thức, lỗi hay gặp; cuối bài có tóm tắt 1 phút và phương pháp giải từng dạng |
+| `sections[].paragraphs` | Các đoạn giảng dài. Mục nào có `paragraphs` thì dùng chúng và bỏ `explain` (vì `explain` là bản tóm tắt, tránh lặp); mục không có thì dùng `explain` |
+| `sections[].diagrams` (`src`, `caption`) | Hình minh họa có chú thích, đặt sau phần giảng. `src` là ảnh base64 (`data:image/svg+xml;base64,...`, png, jpg, webp, gif) hoặc link `https://`; loại khác bị bỏ qua và có cảnh báo. Hình SVG luôn hiện bằng bộ màu sáng trên khung giấy, để đọc rõ dù máy và app đang ở chế độ tối hay sáng |
 | Câu có `"assignment":"classwork"` | Bài tập **"<topic> – Bài tập trên lớp"** |
 | Câu có `"assignment":"homework"` | Bài tập **"<topic> – Bài tập về nhà"** |
 | `mcq` | Câu **trắc nghiệm** có nút chọn A/B/C/D, máy chấm theo `answer`. Phương pháp giải = `core` + phân tích từng phương án (`reason`); lý do đúng sai **không** gửi cho học sinh trước khi nộp. Nếu `answer` không khớp phương án nào, câu đó thành tự luận và có cảnh báo |

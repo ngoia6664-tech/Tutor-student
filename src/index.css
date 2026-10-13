@@ -541,6 +541,27 @@ input[type='radio'] {
   background: var(--primary-soft);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
+/* Hình minh họa: luôn đặt trên khung "giấy" sáng để hình vẽ nét tối đọc rõ ở cả hai giao diện */
+.md .figure {
+  display: block;
+  margin: 1rem 0;
+  text-align: center;
+}
+.md .figure img {
+  display: block;
+  margin: 0 auto;
+  max-width: min(100%, 420px);
+  background: #fbfcfc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+}
+.md .figcaption {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
 .md table {
   border-collapse: collapse;
   display: block;
