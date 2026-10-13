@@ -223,7 +223,35 @@ Bài tập:
 - **Dấu `\` trong JSON phải viết đôi**: `\\frac`, `\\omega`. Nếu bạn quên (viết `\frac`), JSON sẽ hiểu `\f` là ký tự đặc biệt và công thức bị hỏng mà không báo lỗi. App tự nhận ra và sửa các lệnh LaTeX phổ biến, đồng thời hiện cảnh báo "Đã tự sửa N dấu \\". Hãy xem kỹ bản xem trước.
 - Có thể dán nguyên khối có bọc ` ```json ... ``` `, app tự bỏ phần bọc.
 
-Quy trình: **Dán JSON → Kiểm tra & xem trước → Tiếp tục** → mở trang soạn với nội dung đã điền sẵn → chọn học sinh (và file/video với bài giảng) → **Lưu**.
+### Dạng đầy đủ `tutor-lesson/v1` (một file cho cả chủ đề)
+
+```json
+{"schema":"tutor-lesson/v1","lesson":{"topic":"Chủ đề 4: Giao thoa sóng cơ","chapter":"...","grade":"11",
+ "theory":{"plan":"...","sections":[{"title":"...","explain":"...","analogy":"...","key_points":[],"formulas":[],"common_mistakes":[]}],"summary_1_min":[]},
+ "exercises":{
+   "fill_blank":[{"assignment":"classwork","items":[{"id":"a","statement":"...","answer":"..."}]}],
+   "mcq":[{"assignment":"classwork","level":"nhận biết","stem":"...","options":[{"label":"A","text":"...","reason":"..."}],"answer":"A","core":"...","note":""}],
+   "problem_types":[{"title":"Dạng 1: ...","method":["..."],"problems":[{"assignment":"homework","statement":"...","solution":["..."],"answer":"...","note":""}]}]},
+ "review_flags":["..."]}}
+```
+
+App chuyển một file như vậy thành:
+
+| Trong file | Thành |
+|---|---|
+| `theory` + `method` của từng `problem_types` | **1 bài giảng** (tiêu đề = `topic`): mỗi mục gồm giải thích, hình dung, ý chính, công thức, lỗi hay gặp; cuối bài có tóm tắt 1 phút và phương pháp giải từng dạng |
+| Câu có `"assignment":"classwork"` | Bài tập **"<topic> – Bài tập trên lớp"** |
+| Câu có `"assignment":"homework"` | Bài tập **"<topic> – Bài tập về nhà"** |
+| `mcq` | Đề + các phương án A/B/C/D; đáp án = phương án đúng; phương pháp giải = `core` + phân tích từng phương án (`reason`) |
+| `fill_blank` | Mỗi nhóm thành 1 câu (a, b, c…); đáp án theo từng ý |
+| `problems` | Đề = `statement`; đáp án = `answer`; phương pháp giải = các bước `solution` |
+| `note` của từng câu | Thêm vào lời giải dưới dạng "Lưu ý" (có ô tick để tắt) |
+| `review_flags` | Chỉ hiện cho gia sư ở bước xem trước, **không** lưu và không gửi cho học sinh |
+
+Quy trình: **📂 Chọn file .json** (hoặc dán) → **Kiểm tra & xem trước** → mở từng phần để đọc lại, đặt hạn nộp cho từng bài tập → chọn học sinh → **Lưu N phần đã chọn**. Bài tập được tự liên kết với bài giảng của cùng file.
+Muốn sửa một phần trước khi lưu (hoặc gắn file PDF, video vào bài giảng), bấm **Sửa trong trang soạn** ở phần đó. Nếu lưu bị lỗi giữa chừng, phần đã lưu được đánh dấu ✅, và bấm lưu lại chỉ lưu những phần còn thiếu.
+
+Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọn học sinh → **Lưu**.
 
 ---
 

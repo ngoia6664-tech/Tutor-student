@@ -1,3 +1,5 @@
+import { convertTutorLessonV1 } from './importTutorLesson.js'
+
 // Phân tích JSON bài giảng / bài tập soạn sẵn ở bên ngoài.
 //
 // Vấn đề hay gặp: công thức LaTeX viết "\frac" thay vì "\\frac" trong JSON.
@@ -91,8 +93,9 @@ function validDate(s) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d
 }
 
-// Trả về { draft, warnings } hoặc ném Error với danh sách lỗi dễ hiểu
-export function parseImport(raw) {
+// Trả về { drafts, warnings, flags } hoặc ném Error với danh sách lỗi dễ hiểu.
+// drafts: danh sách bài giảng / bài tập; flags: ghi chú cần gia sư kiểm tra (không gửi học sinh).
+export function parseImport(raw, options = {}) {
   if (!raw || !raw.trim()) throw new Error('Chưa dán nội dung JSON.')
   const { text, fixes } = fixLatexBackslashes(stripFences(raw))
   const warnings = []
@@ -106,6 +109,13 @@ export function parseImport(raw) {
   }
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('JSON phải là một đối tượng { ... }.')
 
+  // Định dạng đầy đủ: lý thuyết + nhiều loại câu hỏi
+  if (obj.schema === 'tutor-lesson/v1') {
+    const r = convertTutorLessonV1(obj, options)
+    return { ...r, warnings: [...warnings, ...r.warnings] }
+  }
+  if (typeof obj.schema === 'string') throw new Error('Chưa hỗ trợ định dạng "' + obj.schema + '". Định dạng hỗ trợ: "tutor-lesson/v1" hoặc dạng có "kind".')
+
   const errors = []
   if (obj.kind !== 'lesson' && obj.kind !== 'assignment') {
     throw new Error('Thiếu hoặc sai "kind". Giá trị hợp lệ: "lesson" (bài giảng) hoặc "assignment" (bài tập).')
@@ -117,7 +127,7 @@ export function parseImport(raw) {
     if (!content_md.trim()) warnings.push('Bài giảng chưa có nội dung "content_md".')
     const video_url = optString(obj.video_url, 'video_url', errors)
     if (errors.length) throw new Error(errors.join('\n'))
-    return { draft: { kind: 'lesson', title: obj.title.trim(), content_md, video_url }, warnings }
+    return { drafts: [{ kind: 'lesson', title: obj.title.trim(), content_md, video_url }], warnings, flags: [] }
   }
 
   // Bài tập
@@ -145,7 +155,7 @@ export function parseImport(raw) {
   })
   if (errors.length) throw new Error(errors.join('\n'))
 
-  return { draft: { kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises }, warnings }
+  return { drafts: [{ kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises }], warnings, flags: [] }
 }
 
 export const SAMPLE_LESSON = JSON.stringify(
