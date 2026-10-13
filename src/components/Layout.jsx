@@ -1,0 +1,56 @@
+import { NavLink, Outlet } from 'react-router-dom'
+import { Suspense } from 'react'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import Loading from './Loading.jsx'
+import ErrorBoundary from './ErrorBoundary.jsx'
+
+const NAV = {
+  tutor: [
+    { to: '/tutor', label: 'Học sinh', end: true },
+    { to: '/tutor/assignments', label: 'Bài tập' },
+    { to: '/tutor/lessons', label: 'Bài giảng' },
+    { to: '/tutor/import', label: 'Dán JSON' },
+  ],
+  student: [
+    { to: '/student', label: 'Bài cần làm', end: true },
+    { to: '/student/results', label: 'Kết quả' },
+    { to: '/student/lessons', label: 'Bài giảng' },
+  ],
+}
+
+export default function Layout() {
+  const { profile, signOut } = useAuth()
+  const items = NAV[profile.role] || []
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <span className="brand">⚛ Vật lý{profile.role === 'tutor' ? ' · Gia sư' : ''}</span>
+          <div className="topbar-user">
+            <span className="user-name" title={profile.full_name}>
+              {profile.full_name || 'Tài khoản'}
+            </span>
+            <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+        <nav className="nav">
+          {items.map((it) => (
+            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              {it.label}
+            </NavLink>
+          ))}
+        </nav>
+      </header>
+      <main className="page">
+        <ErrorBoundary>
+          <Suspense fallback={<Loading />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
+      </main>
+    </div>
+  )
+}
