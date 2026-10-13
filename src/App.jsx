@@ -15,6 +15,7 @@ const TutorStudents = lazy(() => import('./pages/tutor/TutorStudents.jsx'))
 const TutorAssignments = lazy(() => import('./pages/tutor/TutorAssignments.jsx'))
 const AssignmentEditor = lazy(() => import('./pages/tutor/AssignmentEditor.jsx'))
 const AssignmentTracking = lazy(() => import('./pages/tutor/AssignmentTracking.jsx'))
+const ImportJson = lazy(() => import('./pages/tutor/ImportJson.jsx'))
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="assignments/new" element={<AssignmentEditor />} />
         <Route path="assignments/:id" element={<AssignmentTracking />} />
         <Route path="assignments/:id/edit" element={<AssignmentEditor />} />
+        <Route path="import" element={<ImportJson />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 
