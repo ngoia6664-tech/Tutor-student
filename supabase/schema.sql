@@ -1,0 +1,517 @@
+-- =====================================================================
+-- Ứng dụng gia sư Vật lý – Schema + Row Level Security + Storage
+-- Chạy toàn bộ file này trong Supabase Dashboard > SQL Editor.
+-- File chạy lại nhiều lần được (idempotent): không xóa dữ liệu cũ.
+-- =====================================================================
+
+
+-- =====================================================================
+-- 1. BẢNG
+-- =====================================================================
+
+-- Hồ sơ người dùng (1-1 với auth.users)
+create table if not exists public.profiles (
+  id          uuid primary key references auth.users (id) on delete cascade,
+  full_name   text not null default '',
+  role        text not null default 'student' check (role in ('tutor', 'student')),
+  group_name  text check (group_name in ('A', 'B', 'C', 'D', 'E')),
+  grade       int  check (grade in (11, 12)),
+  subjects    text[] not null default '{}',
+  created_at  timestamptz not null default now()
+);
+
+-- Bài giảng
+create table if not exists public.lessons (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  content_md  text not null default '',
+  file_path   text,            -- đường dẫn trong bucket 'lesson-files'
+  video_url   text,
+  created_at  timestamptz not null default now()
+);
+
+-- Bài giảng giao cho từng học sinh
+create table if not exists public.lesson_recipients (
+  lesson_id   uuid not null references public.lessons (id) on delete cascade,
+  student_id  uuid not null references public.profiles (id) on delete cascade,
+  primary key (lesson_id, student_id)
+);
+
+-- Bài tập
+create table if not exists public.assignments (
+  id          uuid primary key default gen_random_uuid(),
+  lesson_id   uuid references public.lessons (id) on delete set null,
+  title       text not null,
+  type        text not null default 'homework' check (type in ('classwork', 'homework')),
+  due_date    date,
+  created_at  timestamptz not null default now()
+);
+
+-- Câu hỏi trong bài tập (KHÔNG chứa đáp án)
+create table if not exists public.exercises (
+  id             uuid primary key default gen_random_uuid(),
+  assignment_id  uuid not null references public.assignments (id) on delete cascade,
+  sort_order     int not null default 0,
+  question_md    text not null
+);
+
+-- Đáp án tách bảng riêng để RLS chặn được trước khi nộp
+create table if not exists public.answer_keys (
+  exercise_id  uuid primary key references public.exercises (id) on delete cascade,
+  answer_md    text not null default '',
+  method_md    text not null default ''
+);
+
+-- Bài tập giao cho từng học sinh + trạng thái nộp / chấm
+create table if not exists public.assignment_recipients (
+  assignment_id    uuid not null references public.assignments (id) on delete cascade,
+  student_id       uuid not null references public.profiles (id) on delete cascade,
+  status           text not null default 'todo' check (status in ('todo', 'done', 'checked')),
+  submission_path  text,          -- thư mục ảnh trong bucket 'submissions': <student_id>/<assignment_id>
+  submitted_at     timestamptz,
+  score            numeric(5, 2),
+  feedback         text,
+  primary key (assignment_id, student_id)
+);
+
+create index if not exists lesson_recipients_student_idx     on public.lesson_recipients (student_id);
+create index if not exists assignment_recipients_student_idx on public.assignment_recipients (student_id);
+create index if not exists exercises_assignment_idx          on public.exercises (assignment_id, sort_order);
+create index if not exists assignments_lesson_idx            on public.assignments (lesson_id);
+
+
+-- =====================================================================
+-- 2. HÀM is_tutor()
+-- security definer: đọc profiles mà không bị RLS của profiles chặn
+-- (tránh đệ quy vô hạn khi policy của profiles gọi lại is_tutor()).
+-- =====================================================================
+create or replace function public.is_tutor()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'tutor'
+  );
+$$;
+
+revoke all on function public.is_tutor() from public;
+grant execute on function public.is_tutor() to authenticated;
+
+
+-- =====================================================================
+-- 3. TỰ TẠO HỒ SƠ KHI CÓ TÀI KHOẢN MỚI
+-- Mặc định role = 'student'. Gia sư tự đổi role của mình bằng SQL (README).
+-- =====================================================================
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (new.id, coalesce(nullif(new.raw_user_meta_data ->> 'full_name', ''), split_part(new.email, '@', 1)))
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Tạo hồ sơ cho các tài khoản đã có trước khi chạy file này
+insert into public.profiles (id, full_name)
+select u.id, coalesce(nullif(u.raw_user_meta_data ->> 'full_name', ''), split_part(u.email, '@', 1))
+from auth.users u
+on conflict (id) do nothing;
+
+
+-- =====================================================================
+-- 4. CHỐT CHẶN KHI HỌC SINH NỘP BÀI
+-- RLS chỉ lọc được DÒNG, không lọc được CỘT. Trigger này đảm bảo
+-- học sinh chỉ đổi được status / submission_path / submitted_at,
+-- không sửa được score / feedback, và chỉ nộp được 1 lần.
+-- security invoker (mặc định): truy vấn storage.objects chạy với quyền
+-- của chính học sinh, nên chỉ thấy ảnh trong thư mục của mình.
+-- =====================================================================
+create or replace function public.guard_assignment_recipient_update()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  -- SQL Editor / service role (không có auth.uid()) và gia sư: cho phép mọi thay đổi
+  if auth.uid() is null or public.is_tutor() then
+    return new;
+  end if;
+
+  if new.assignment_id is distinct from old.assignment_id
+     or new.student_id is distinct from old.student_id then
+    raise exception 'Không được đổi bài tập hoặc học sinh của dòng này';
+  end if;
+
+  if new.score is distinct from old.score
+     or new.feedback is distinct from old.feedback then
+    raise exception 'Học sinh không được sửa điểm hoặc nhận xét';
+  end if;
+
+  if old.status <> 'todo' then
+    raise exception 'Bài này đã nộp, không thể nộp lại. Hãy nhờ gia sư mở lại nếu cần.';
+  end if;
+
+  if new.status <> 'done' then
+    raise exception 'Học sinh chỉ được chuyển trạng thái sang "done" (đã nộp)';
+  end if;
+
+  -- Đường dẫn và thời gian nộp do máy chủ quyết định, không tin dữ liệu từ trình duyệt
+  new.submission_path := old.student_id::text || '/' || old.assignment_id::text;
+  new.submitted_at := now();
+
+  if not exists (
+    select 1 from storage.objects o
+    where o.bucket_id = 'submissions'
+      and o.name like new.submission_path || '/%'
+  ) then
+    raise exception 'Chưa có ảnh bài làm nào được tải lên';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists guard_assignment_recipient_update on public.assignment_recipients;
+create trigger guard_assignment_recipient_update
+  before update on public.assignment_recipients
+  for each row execute function public.guard_assignment_recipient_update();
+
+
+-- =====================================================================
+-- 5. ROW LEVEL SECURITY
+-- =====================================================================
+alter table public.profiles              enable row level security;
+alter table public.lessons               enable row level security;
+alter table public.lesson_recipients     enable row level security;
+alter table public.assignments           enable row level security;
+alter table public.exercises             enable row level security;
+alter table public.answer_keys           enable row level security;
+alter table public.assignment_recipients enable row level security;
+
+-- ---------- profiles ----------
+drop policy if exists profiles_tutor_all   on public.profiles;
+drop policy if exists profiles_self_select on public.profiles;
+
+create policy profiles_tutor_all on public.profiles
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Học sinh chỉ đọc hồ sơ của mình, không sửa được (không đổi được role)
+create policy profiles_self_select on public.profiles
+  for select to authenticated
+  using (id = auth.uid());
+
+-- ---------- lessons ----------
+drop policy if exists lessons_tutor_all      on public.lessons;
+drop policy if exists lessons_student_select on public.lessons;
+
+create policy lessons_tutor_all on public.lessons
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy lessons_student_select on public.lessons
+  for select to authenticated
+  using (exists (
+    select 1 from public.lesson_recipients lr
+    where lr.lesson_id = lessons.id and lr.student_id = auth.uid()
+  ));
+
+-- ---------- lesson_recipients ----------
+drop policy if exists lesson_recipients_tutor_all      on public.lesson_recipients;
+drop policy if exists lesson_recipients_student_select on public.lesson_recipients;
+
+create policy lesson_recipients_tutor_all on public.lesson_recipients
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy lesson_recipients_student_select on public.lesson_recipients
+  for select to authenticated
+  using (student_id = auth.uid());
+
+-- ---------- assignments ----------
+drop policy if exists assignments_tutor_all      on public.assignments;
+drop policy if exists assignments_student_select on public.assignments;
+
+create policy assignments_tutor_all on public.assignments
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy assignments_student_select on public.assignments
+  for select to authenticated
+  using (exists (
+    select 1 from public.assignment_recipients ar
+    where ar.assignment_id = assignments.id and ar.student_id = auth.uid()
+  ));
+
+-- ---------- exercises ----------
+drop policy if exists exercises_tutor_all      on public.exercises;
+drop policy if exists exercises_student_select on public.exercises;
+
+create policy exercises_tutor_all on public.exercises
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy exercises_student_select on public.exercises
+  for select to authenticated
+  using (exists (
+    select 1 from public.assignment_recipients ar
+    where ar.assignment_id = exercises.assignment_id and ar.student_id = auth.uid()
+  ));
+
+-- ---------- answer_keys ----------
+-- Đáp án CHỈ đọc được khi bài của học sinh đã ở trạng thái done/checked.
+-- Trước khi nộp, truy vấn answer_keys trả về rỗng: đáp án không bao giờ
+-- được gửi xuống trình duyệt học sinh.
+drop policy if exists answer_keys_tutor_all      on public.answer_keys;
+drop policy if exists answer_keys_student_select on public.answer_keys;
+
+create policy answer_keys_tutor_all on public.answer_keys
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy answer_keys_student_select on public.answer_keys
+  for select to authenticated
+  using (exists (
+    select 1
+    from public.exercises e
+    join public.assignment_recipients ar on ar.assignment_id = e.assignment_id
+    where e.id = answer_keys.exercise_id
+      and ar.student_id = auth.uid()
+      and ar.status in ('done', 'checked')
+  ));
+
+-- ---------- assignment_recipients ----------
+drop policy if exists assignment_recipients_tutor_all      on public.assignment_recipients;
+drop policy if exists assignment_recipients_student_select on public.assignment_recipients;
+drop policy if exists assignment_recipients_student_update on public.assignment_recipients;
+
+create policy assignment_recipients_tutor_all on public.assignment_recipients
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy assignment_recipients_student_select on public.assignment_recipients
+  for select to authenticated
+  using (student_id = auth.uid());
+
+-- Học sinh chỉ cập nhật dòng của mình (cột nào được sửa: xem trigger ở mục 4)
+create policy assignment_recipients_student_update on public.assignment_recipients
+  for update to authenticated
+  using (student_id = auth.uid() and status = 'todo')
+  with check (student_id = auth.uid());
+
+-- Ghi chú: không dùng GRANT theo cột vì gia sư và học sinh cùng là role
+-- 'authenticated' (gia sư cần sửa score/feedback). Trigger ở mục 4 chặn cột.
+-- Học sinh không có policy INSERT/DELETE → không tự giao/xóa bài được.
+
+
+-- =====================================================================
+-- 6. HÀM LƯU BÀI GIẢNG / BÀI TẬP (gói trong 1 transaction)
+-- Lưu bài tập gồm nhiều bảng (assignments, exercises, answer_keys,
+-- recipients). Dùng hàm để nếu lỗi giữa chừng thì không để lại dữ liệu dở.
+-- =====================================================================
+create or replace function public.save_lesson(p jsonb)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid := nullif(p ->> 'id', '')::uuid;
+  v_students uuid[];
+begin
+  if not public.is_tutor() then
+    raise exception 'Chỉ gia sư mới được lưu bài giảng';
+  end if;
+  if coalesce(trim(p ->> 'title'), '') = '' then
+    raise exception 'Bài giảng cần có tiêu đề';
+  end if;
+
+  if v_id is null then
+    insert into lessons (title, content_md, file_path, video_url)
+    values (trim(p ->> 'title'), coalesce(p ->> 'content_md', ''),
+            nullif(p ->> 'file_path', ''), nullif(trim(p ->> 'video_url'), ''))
+    returning id into v_id;
+  else
+    update lessons
+       set title = trim(p ->> 'title'),
+           content_md = coalesce(p ->> 'content_md', ''),
+           file_path = nullif(p ->> 'file_path', ''),
+           video_url = nullif(trim(p ->> 'video_url'), '')
+     where id = v_id;
+    if not found then
+      raise exception 'Không tìm thấy bài giảng để cập nhật';
+    end if;
+  end if;
+
+  -- Đồng bộ danh sách học sinh nhận
+  select coalesce(array_agg(x::uuid), '{}')
+    into v_students
+    from jsonb_array_elements_text(coalesce(p -> 'student_ids', '[]'::jsonb)) as x;
+
+  delete from lesson_recipients
+   where lesson_id = v_id and student_id <> all (v_students);
+  insert into lesson_recipients (lesson_id, student_id)
+  select v_id, s from unnest(v_students) as s
+  on conflict do nothing;
+
+  return v_id;
+end;
+$$;
+
+create or replace function public.save_assignment(p jsonb)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid := nullif(p ->> 'id', '')::uuid;
+  v_students uuid[];
+  v_ex jsonb;
+  v_ex_id uuid;
+  v_i int := 0;
+begin
+  if not public.is_tutor() then
+    raise exception 'Chỉ gia sư mới được lưu bài tập';
+  end if;
+  if coalesce(trim(p ->> 'title'), '') = '' then
+    raise exception 'Bài tập cần có tiêu đề';
+  end if;
+  if coalesce(p ->> 'type', '') not in ('classwork', 'homework') then
+    raise exception 'Loại bài tập phải là classwork hoặc homework';
+  end if;
+  if jsonb_array_length(coalesce(p -> 'exercises', '[]'::jsonb)) = 0 then
+    raise exception 'Bài tập cần ít nhất 1 câu hỏi';
+  end if;
+
+  if v_id is null then
+    insert into assignments (lesson_id, title, type, due_date)
+    values (nullif(p ->> 'lesson_id', '')::uuid, trim(p ->> 'title'), p ->> 'type',
+            nullif(p ->> 'due_date', '')::date)
+    returning id into v_id;
+  else
+    update assignments
+       set lesson_id = nullif(p ->> 'lesson_id', '')::uuid,
+           title = trim(p ->> 'title'),
+           type = p ->> 'type',
+           due_date = nullif(p ->> 'due_date', '')::date
+     where id = v_id;
+    if not found then
+      raise exception 'Không tìm thấy bài tập để cập nhật';
+    end if;
+    -- Sửa bài: thay toàn bộ câu hỏi (đáp án xóa theo nhờ on delete cascade)
+    delete from exercises where assignment_id = v_id;
+  end if;
+
+  for v_ex in select value from jsonb_array_elements(p -> 'exercises') loop
+    v_i := v_i + 1;
+    if coalesce(trim(v_ex ->> 'question_md'), '') = '' then
+      raise exception 'Câu % chưa có đề bài', v_i;
+    end if;
+    insert into exercises (assignment_id, sort_order, question_md)
+    values (v_id, v_i, v_ex ->> 'question_md')
+    returning id into v_ex_id;
+    insert into answer_keys (exercise_id, answer_md, method_md)
+    values (v_ex_id, coalesce(v_ex ->> 'answer_md', ''), coalesce(v_ex ->> 'method_md', ''));
+  end loop;
+
+  -- Đồng bộ danh sách học sinh nhận (học sinh mới: status 'todo')
+  select coalesce(array_agg(x::uuid), '{}')
+    into v_students
+    from jsonb_array_elements_text(coalesce(p -> 'student_ids', '[]'::jsonb)) as x;
+
+  delete from assignment_recipients
+   where assignment_id = v_id and student_id <> all (v_students);
+  insert into assignment_recipients (assignment_id, student_id)
+  select v_id, s from unnest(v_students) as s
+  on conflict do nothing;
+
+  return v_id;
+end;
+$$;
+
+revoke all on function public.save_lesson(jsonb) from public;
+revoke all on function public.save_assignment(jsonb) from public;
+grant execute on function public.save_lesson(jsonb) to authenticated;
+grant execute on function public.save_assignment(jsonb) to authenticated;
+
+
+-- =====================================================================
+-- 7. STORAGE (bucket riêng tư + policy)
+-- lesson-files: <thư mục ngẫu nhiên>/<tên file>   – gia sư tải lên
+-- submissions : <student_id>/<assignment_id>/<ảnh> – học sinh tải lên
+-- =====================================================================
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('lesson-files', 'lesson-files', false, 52428800, null),          -- tối đa 50MB
+  ('submissions',  'submissions',  false, 15728640,                 -- tối đa 15MB/ảnh
+   array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
+on conflict (id) do nothing;
+
+drop policy if exists lesson_files_tutor_all      on storage.objects;
+drop policy if exists lesson_files_student_read   on storage.objects;
+drop policy if exists submissions_tutor_all       on storage.objects;
+drop policy if exists submissions_student_read    on storage.objects;
+drop policy if exists submissions_student_insert  on storage.objects;
+
+create policy lesson_files_tutor_all on storage.objects
+  for all to authenticated
+  using (bucket_id = 'lesson-files' and public.is_tutor())
+  with check (bucket_id = 'lesson-files' and public.is_tutor());
+
+-- Học sinh chỉ tải được file của bài giảng giao cho mình
+create policy lesson_files_student_read on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'lesson-files'
+    and exists (
+      select 1
+      from public.lessons l
+      join public.lesson_recipients lr on lr.lesson_id = l.id
+      where l.file_path = storage.objects.name
+        and lr.student_id = auth.uid()
+    )
+  );
+
+create policy submissions_tutor_all on storage.objects
+  for all to authenticated
+  using (bucket_id = 'submissions' and public.is_tutor())
+  with check (bucket_id = 'submissions' and public.is_tutor());
+
+-- Học sinh chỉ xem ảnh trong thư mục của chính mình
+create policy submissions_student_read on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'submissions'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Học sinh chỉ tải ảnh lên thư mục của mình, cho bài được giao và CHƯA nộp
+create policy submissions_student_insert on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'submissions'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    and exists (
+      select 1 from public.assignment_recipients ar
+      where ar.student_id = auth.uid()
+        and ar.assignment_id::text = (storage.foldername(name))[2]
+        and ar.status = 'todo'
+    )
+  );
+
+-- Hết. Bước tiếp theo: gán role 'tutor' cho tài khoản của bạn (xem README).
