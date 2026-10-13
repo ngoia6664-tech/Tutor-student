@@ -21,30 +21,68 @@ export async function deleteAssignment(id) {
   unwrap(await supabase.from('assignments').delete().eq('id', id))
 }
 
-// Tải bài tập đầy đủ (kể cả đáp án) cho trang sửa / theo dõi của gia sư
+// Dữ liệu một câu gửi lên hàm save_assignment
+export function toExercisePayload(ex) {
+  const kind = ex.kind || 'essay'
+  return {
+    id: ex.id || null,
+    kind,
+    question_md: ex.question_md,
+    options: kind === 'essay' ? null : ex.options,
+    correct: kind === 'essay' ? null : ex.correct,
+    answer_md: ex.answer_md || '',
+    method_md: ex.method_md || '',
+  }
+}
+
+// answer_keys là quan hệ 1-1 nên PostgREST có thể trả về object hoặc mảng
+function firstKey(k) {
+  return Array.isArray(k) ? k[0] : k
+}
+
+// Tải bài tập đầy đủ (kể cả đáp án và câu trả lời) cho trang sửa / theo dõi của gia sư
 export async function fetchAssignmentFull(id) {
   const assignment = unwrap(await supabase.from('assignments').select('*').eq('id', id).maybeSingle())
   if (!assignment) throw new Error('Không tìm thấy bài tập (có thể đã bị xóa).')
-  const exercises = unwrap(
-    await supabase
+  const [exercises, recipients, answers] = await Promise.all([
+    supabase
       .from('exercises')
-      .select('id, sort_order, question_md, answer_keys(answer_md, method_md)')
+      .select('id, sort_order, kind, question_md, options, answer_keys(answer_md, method_md, correct)')
       .eq('assignment_id', id)
       .order('sort_order')
-  )
-  const recipients = unwrap(
-    await supabase
-      .from('assignment_recipients')
-      .select('*, student:profiles(id, full_name, group_name, grade)')
-      .eq('assignment_id', id)
-  )
+      .then(unwrap),
+    supabase.from('assignment_recipients').select('*, student:profiles(id, full_name, group_name, grade)').eq('assignment_id', id).then(unwrap),
+    supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct').eq('assignment_id', id).then(unwrap),
+  ])
+  // Gom câu trả lời theo học sinh: { student_id: { exercise_id: {answer, is_correct} } }
+  const answersByStudent = {}
+  for (const a of answers) {
+    answersByStudent[a.student_id] ??= {}
+    answersByStudent[a.student_id][a.exercise_id] = a
+  }
   return {
     assignment,
-    // answer_keys là quan hệ 1-1 nên có thể trả về object hoặc mảng tùy phiên bản
     exercises: exercises.map((e) => {
-      const k = Array.isArray(e.answer_keys) ? e.answer_keys[0] : e.answer_keys
-      return { id: e.id, question_md: e.question_md, answer_md: k?.answer_md || '', method_md: k?.method_md || '' }
+      const k = firstKey(e.answer_keys)
+      return {
+        id: e.id,
+        kind: e.kind || 'essay',
+        question_md: e.question_md,
+        options: e.options || null,
+        correct: k?.correct ?? null,
+        answer_md: k?.answer_md || '',
+        method_md: k?.method_md || '',
+      }
     }),
     recipients,
+    answersByStudent,
   }
+}
+
+// Thống kê chấm tự động: số câu máy chấm được và số câu đúng
+export function autoSummary(exercises, answers = {}) {
+  const auto = exercises.filter((e) => e.kind === 'mcq' || e.kind === 'fill_blank')
+  const mcq = exercises.filter((e) => e.kind === 'mcq')
+  const correct = auto.filter((e) => answers[e.id]?.is_correct === true).length
+  return { autoTotal: auto.length, mcqTotal: mcq.length, correct, allAuto: auto.length === exercises.length && exercises.length > 0 }
 }

@@ -5,6 +5,8 @@ import { errMsg } from '../../lib/errors.js'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../../lib/importJson.js'
 import { SAMPLE_TUTOR_LESSON } from '../../lib/importTutorLesson.js'
 import { formatDate, TYPE_LABEL } from '../../lib/format.js'
+import { toExercisePayload } from '../../lib/assignments.js'
+import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import VideoEmbed from '../../components/VideoEmbed.jsx'
@@ -102,7 +104,7 @@ export default function ImportJson() {
               type: d.type,
               due_date: opts[i].due_date || null,
               lesson_id: lessonId,
-              exercises: d.exercises.map(({ question_md, answer_md, method_md }) => ({ question_md, answer_md, method_md })),
+              exercises: d.exercises.map(toExercisePayload),
               student_ids: studentIds,
             },
           })
@@ -285,9 +287,11 @@ function AssignmentPreview({ draft, dueDate }) {
       </p>
       {draft.exercises.map((ex, i) => (
         <div key={i} className="question">
-          <div className="question-label">Câu {i + 1}</div>
-          <Markdown>{ex.question_md}</Markdown>
-          {ex.answer_md && (
+          <div className="question-label">
+            Câu {i + 1} <span className="badge">{KIND_LABEL[ex.kind || 'essay']}</span>
+          </div>
+          <ExerciseBody ex={{ kind: 'essay', ...ex }} mode="preview" correct={ex.correct} name={`p-${i}`} />
+          {ex.answer_md && (ex.kind || 'essay') === 'essay' && (
             <div className="answer-box">
               <div className="box-label">Đáp án</div>
               <Markdown>{ex.answer_md}</Markdown>

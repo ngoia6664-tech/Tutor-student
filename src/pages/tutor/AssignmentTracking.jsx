@@ -4,7 +4,8 @@ import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
 import { formatDate, formatDateTime, formatScore } from '../../lib/format.js'
-import { deleteAssignment, fetchAssignmentFull, removeSubmissionFiles } from '../../lib/assignments.js'
+import { autoSummary, deleteAssignment, fetchAssignmentFull, removeSubmissionFiles } from '../../lib/assignments.js'
+import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import { loadSubmissionImages } from '../../lib/submissions.js'
 import { studentLabel } from '../../lib/students.js'
 import Loading from '../../components/Loading.jsx'
@@ -88,9 +89,11 @@ export default function AssignmentTracking() {
         <div style={{ marginTop: '0.75rem' }}>
           {exercises.map((ex, i) => (
             <div key={ex.id} className="question">
-              <div className="question-label">Câu {i + 1}</div>
-              <Markdown>{ex.question_md}</Markdown>
-              {ex.answer_md && (
+              <div className="question-label">
+                Câu {i + 1} <span className="badge">{KIND_LABEL[ex.kind]}</span>
+              </div>
+              <ExerciseBody ex={ex} mode="preview" name={`k-${ex.id}`} correct={ex.correct} />
+              {ex.kind === 'essay' && ex.answer_md && (
                 <div className="answer-box">
                   <div className="box-label">Đáp án</div>
                   <Markdown>{ex.answer_md}</Markdown>
@@ -114,13 +117,39 @@ export default function AssignmentTracking() {
         </div>
       )}
       {sorted.map((r) => (
-        <GradeCard key={r.student_id} rec={r} onChanged={reload} />
+        <GradeCard key={r.student_id} rec={r} exercises={exercises} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
       ))}
     </div>
   )
 }
 
-function GradeCard({ rec, onChanged }) {
+// Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu
+function AnswerSheet({ exercises, answers, studentId }) {
+  return (
+    <div className="answer-sheet">
+      {exercises.map((ex, i) => {
+        const a = answers[ex.id]
+        return (
+          <div key={ex.id} className="question">
+            <div className="question-label">
+              Câu {i + 1} <span className="badge">{KIND_LABEL[ex.kind]}</span>
+              {a?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
+              {a?.is_correct === false && <span className="badge badge-danger">Sai</span>}
+              {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
+              {!a && <span className="badge badge-muted">Không trả lời</span>}
+            </div>
+            <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={ex.correct} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function GradeCard({ rec, exercises, answers, onChanged }) {
+  const sum = autoSummary(exercises, answers)
+  const answeredCount = Object.keys(answers).length
+  const [showSheet, setShowSheet] = useState(false)
   const [score, setScore] = useState(rec.score ?? '')
   const [feedback, setFeedback] = useState(rec.feedback ?? '')
   const [images, setImages] = useState(null) // null = chưa tải
@@ -169,7 +198,7 @@ function GradeCard({ rec, onChanged }) {
 
   // Cho học sinh nộp lại: xóa ảnh cũ, đưa về trạng thái chưa nộp
   async function reopen() {
-    if (!window.confirm('Mở lại để học sinh nộp lại? Ảnh bài nộp cũ sẽ bị xóa. (Học sinh đã xem đáp án.)')) return
+    if (!window.confirm('Mở lại để học sinh nộp lại? Ảnh nộp kèm sẽ bị xóa; câu trả lời đã gõ/chọn được giữ để học sinh sửa. (Học sinh đã xem đáp án.)')) return
     setBusy(true)
     setError(null)
     try {
@@ -201,24 +230,48 @@ function GradeCard({ rec, onChanged }) {
         </p>
       )}
 
-      {rec.submission_path && (
-        <div style={{ marginBottom: '0.75rem' }}>
-          <button type="button" className="btn btn-small" onClick={toggleImages} disabled={imgLoading}>
-            {imgLoading ? 'Đang tải ảnh...' : images ? 'Ẩn ảnh bài nộp' : '🖼️ Xem ảnh bài nộp'}
+      {rec.status !== 'todo' && sum.autoTotal > 0 && (
+        <p className="small" style={{ margin: '0 0 0.5rem' }}>
+          Máy chấm: <strong>{sum.correct}/{sum.autoTotal}</strong> câu trắc nghiệm / điền khuyết đúng
+        </p>
+      )}
+
+      <div className="row" style={{ marginBottom: '0.75rem' }}>
+        {answeredCount > 0 && (
+          <button type="button" className="btn btn-small" onClick={() => setShowSheet((s) => !s)}>
+            {showSheet ? 'Ẩn bài làm' : `📝 Xem bài làm (${answeredCount}/${exercises.length} câu)`}
           </button>
-          {images && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <ImageGallery images={images} />
-            </div>
-          )}
+        )}
+        {rec.submission_path && (
+          <button type="button" className="btn btn-small" onClick={toggleImages} disabled={imgLoading}>
+            {imgLoading ? 'Đang tải ảnh...' : images ? 'Ẩn ảnh' : '🖼️ Xem ảnh nộp kèm'}
+          </button>
+        )}
+      </div>
+      {showSheet && <AnswerSheet exercises={exercises} answers={answers} studentId={rec.student_id} />}
+      {images && (
+        <div style={{ marginBottom: '0.75rem' }}>
+          <ImageGallery images={images} />
         </div>
       )}
 
       <div className="grid-2">
         <label className="field">
-          <span>Điểm</span>
+          <span>Điểm (thang 10)</span>
           <input type="number" inputMode="decimal" step="0.25" min="0" value={score} onChange={(e) => setScore(e.target.value)} />
         </label>
+        {rec.status !== 'todo' && sum.autoTotal > 0 && (
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="btn btn-small"
+              title="Điểm = số câu đúng / số câu máy chấm × 10, làm tròn 0,25"
+              onClick={() => setScore(String(Math.round((sum.correct / sum.autoTotal) * 40) / 4))}
+            >
+              Dùng điểm máy chấm ({Math.round((sum.correct / sum.autoTotal) * 40) / 4})
+            </button>
+          </div>
+        )}
       </div>
       <label className="field">
         <span>Nhận xét</span>

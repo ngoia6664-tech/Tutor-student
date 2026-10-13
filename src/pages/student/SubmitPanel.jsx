@@ -3,6 +3,7 @@ import { supabase, unwrap, SUBMISSION_BUCKET } from '../../lib/supabase.js'
 import { errMsg } from '../../lib/errors.js'
 import { compressImage } from '../../lib/files.js'
 import ErrorBox from '../../components/ErrorBox.jsx'
+import { isAnswered } from '../../components/ExerciseBody.jsx'
 
 const MAX_IMAGES = 15
 
@@ -13,8 +14,8 @@ function extFor(type) {
   return 'jpg'
 }
 
-// Khu vực chọn ảnh bài làm + nút Nộp bài
-export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
+// Ảnh bài làm (không bắt buộc) + nút Nộp bài
+export default function SubmitPanel({ assignmentId, studentId, exercises, answers, onSubmitted }) {
   const [items, setItems] = useState([]) // [{ file, url }]
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
@@ -26,6 +27,9 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
 
   // Giải phóng bộ nhớ ảnh xem trước khi rời trang
   useEffect(() => () => itemsRef.current.forEach((it) => URL.revokeObjectURL(it.url)), [])
+
+  const unanswered = exercises.filter((ex) => !isAnswered(ex, answers[ex.id]))
+  const hasEssay = exercises.some((ex) => ex.kind === 'essay')
 
   function addFiles(fileList) {
     setError(null)
@@ -43,18 +47,19 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
   }
 
   async function submit() {
-    if (!items.length) {
-      setError('Hãy chụp hoặc chọn ít nhất 1 ảnh bài làm trước khi nộp.')
-      return
-    }
-    if (!window.confirm('Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.')) return
+    // Câu tự luận chưa gõ nhưng có ảnh thì coi như đã làm
+    const missing = unanswered.filter((ex) => !(ex.kind === 'essay' && items.length))
+    const ask = missing.length
+      ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
+      : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
+    if (!window.confirm(ask)) return
 
     setBusy(true)
     setError(null)
     try {
+      // 1) Tải ảnh (nếu có) lên Storage, đã thu nhỏ
       const folder = `${studentId}/${assignmentId}`
       const stamp = Date.now()
-      // 1) Tải từng ảnh lên Storage (đã thu nhỏ)
       for (let i = 0; i < items.length; i++) {
         setProgress(`Đang tải ảnh ${i + 1}/${items.length}...`)
         const file = await compressImage(items[i].file)
@@ -62,18 +67,10 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
         const path = `${folder}/${stamp}-${String(i + 1).padStart(2, '0')}.${extFor(type)}`
         unwrap(await supabase.storage.from(SUBMISSION_BUCKET).upload(path, file, { contentType: type, upsert: false }))
       }
-      // 2) Đánh dấu đã nộp. Máy chủ (trigger) tự ghi đường dẫn và giờ nộp.
-      setProgress('Đang ghi nhận bài nộp...')
-      const row = unwrap(
-        await supabase
-          .from('assignment_recipients')
-          .update({ status: 'done', submission_path: folder, submitted_at: new Date().toISOString() })
-          .eq('assignment_id', assignmentId)
-          .eq('student_id', studentId)
-          .select()
-          .maybeSingle()
-      )
-      if (!row) throw new Error('Không ghi nhận được bài nộp (có thể bài đã được nộp trước đó). Hãy tải lại trang.')
+      // 2) Gửi câu trả lời; máy chủ lưu, chấm trắc nghiệm và đánh dấu đã nộp
+      setProgress('Đang nộp bài...')
+      const payload = Object.fromEntries(exercises.filter((ex) => answers[ex.id]).map((ex) => [ex.id, answers[ex.id]]))
+      unwrap(await supabase.rpc('submit_assignment', { p_assignment_id: assignmentId, p_answers: payload }))
       onSubmitted()
     } catch (e) {
       setError(errMsg(e))
@@ -84,9 +81,14 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
   }
 
   return (
-    <div className="card">
+    <div className="card submit-card">
       <h2>Nộp bài</h2>
-      <p className="muted small">Làm bài ra giấy, chụp ảnh rõ từng trang rồi bấm "Nộp bài". Có thể chọn nhiều ảnh.</p>
+      <p className="muted small" style={{ marginTop: 0 }}>
+        {unanswered.length
+          ? `Đã trả lời ${exercises.length - unanswered.length}/${exercises.length} câu.`
+          : `Đã trả lời đủ ${exercises.length} câu.`}{' '}
+        {hasEssay ? 'Câu tự luận có thể gõ trực tiếp hoặc chụp ảnh bài làm.' : 'Có thể đính kèm ảnh nháp nếu muốn.'}
+      </p>
 
       {/* capture="environment": mở thẳng camera sau trên điện thoại */}
       <input
@@ -113,12 +115,13 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
       />
 
       <div className="row" style={{ marginBottom: '0.75rem' }}>
-        <button type="button" className="btn" disabled={busy} onClick={() => cameraRef.current?.click()}>
+        <button type="button" className="btn btn-small" disabled={busy} onClick={() => cameraRef.current?.click()}>
           📷 Chụp ảnh
         </button>
-        <button type="button" className="btn" disabled={busy} onClick={() => galleryRef.current?.click()}>
-          🖼️ Chọn từ thư viện
+        <button type="button" className="btn btn-small" disabled={busy} onClick={() => galleryRef.current?.click()}>
+          🖼️ Chọn ảnh
         </button>
+        <span className="muted small">Không bắt buộc</span>
       </div>
 
       {items.length > 0 && (
@@ -139,8 +142,8 @@ export default function SubmitPanel({ assignmentId, studentId, onSubmitted }) {
       <ErrorBox message={error} />
       {progress && <div className="alert alert-info">{progress}</div>}
 
-      <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy || !items.length} onClick={submit}>
-        {busy ? 'Đang nộp...' : `Nộp bài${items.length ? ` (${items.length} ảnh)` : ''}`}
+      <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy} onClick={submit}>
+        {busy ? 'Đang nộp...' : 'Nộp bài'}
       </button>
     </div>
   )

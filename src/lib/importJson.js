@@ -150,8 +150,48 @@ export function parseImport(raw, options = {}) {
     if (!isNonEmptyString(ex.question_md)) errors.push(`Câu ${i + 1}: thiếu "question_md" (đề bài).`)
     const answer_md = optString(ex.answer_md, `exercises[${i}].answer_md`, errors)
     const method_md = optString(ex.method_md, `exercises[${i}].method_md`, errors)
+    const question_md = typeof ex.question_md === 'string' ? ex.question_md : ''
+
+    // Trắc nghiệm: "options": ["...", "..."] hoặc [{"label":"A","text":"..."}], "correct": "B"
+    if (Array.isArray(ex.options) && ex.options.length) {
+      const options = ex.options.map((o, j) => ({
+        label: typeof o === 'object' && o ? String(o.label || String.fromCharCode(65 + j)) : String.fromCharCode(65 + j),
+        text: typeof o === 'object' && o ? String(o.text ?? '') : String(o),
+      }))
+      const correct = String(ex.correct ?? '').trim().toUpperCase()
+      if (options.length < 2) errors.push(`Câu ${i + 1}: trắc nghiệm cần ít nhất 2 phương án.`)
+      if (!options.some((o) => o.label === correct)) errors.push(`Câu ${i + 1}: "correct" phải là một trong ${options.map((o) => o.label).join(', ')}.`)
+      const right = options.find((o) => o.label === correct)
+      return {
+        kind: 'mcq',
+        question_md,
+        options,
+        correct,
+        answer_md: answer_md || (right ? `**${right.label}.** ${right.text}` : ''),
+        method_md,
+      }
+    }
+
+    // Điền khuyết: "blanks": [{"id":"a","statement":"...","answer":"..."}]
+    if (Array.isArray(ex.blanks) && ex.blanks.length) {
+      const items = ex.blanks.map((b, j) => ({
+        id: String(b?.id || String.fromCharCode(97 + j)),
+        statement: String(b?.statement ?? ''),
+        answer: String(b?.answer ?? ''),
+      }))
+      if (items.some((b) => !b.answer.trim())) warnings.push(`Câu ${i + 1}: có chỗ trống chưa có "answer".`)
+      return {
+        kind: 'fill_blank',
+        question_md,
+        options: items.map(({ id, statement }) => ({ id, statement })),
+        correct: Object.fromEntries(items.map(({ id, answer }) => [id, answer])),
+        answer_md: answer_md || items.map((b) => `**${b.id})** ${b.answer}`).join('\n\n'),
+        method_md,
+      }
+    }
+
     if (!answer_md.trim() && !method_md.trim()) warnings.push(`Câu ${i + 1}: chưa có đáp án và phương pháp giải.`)
-    return { question_md: typeof ex.question_md === 'string' ? ex.question_md : '', answer_md, method_md }
+    return { kind: 'essay', question_md, answer_md, method_md }
   })
   if (errors.length) throw new Error(errors.join('\n'))
 
@@ -180,6 +220,16 @@ export const SAMPLE_ASSIGNMENT = JSON.stringify(
         question_md: 'Một vật dao động với $\\omega = 4\\pi$ rad/s. Tính chu kì $T$.',
         method_md: 'Dùng công thức $T = \\dfrac{2\\pi}{\\omega}$.',
         answer_md: '$T = 0{,}5$ s',
+      },
+      {
+        question_md: 'Chu kì của con lắc lò xo phụ thuộc vào',
+        options: ['biên độ dao động', 'khối lượng và độ cứng', 'cách kích thích', 'pha ban đầu'],
+        correct: 'B',
+        method_md: '$T = 2\\pi\\sqrt{\\dfrac{m}{k}}$ chỉ phụ thuộc $m$ và $k$.',
+      },
+      {
+        question_md: 'Điền vào chỗ trống:',
+        blanks: [{ id: 'a', statement: 'Đơn vị của tần số là ......', answer: 'Hz' }],
       },
     ],
   },

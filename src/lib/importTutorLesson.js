@@ -51,42 +51,67 @@ function noteBlock(note, includeNotes) {
   return includeNotes && str(note) ? `**Lưu ý:** ${str(note)}` : ''
 }
 
+// Điền khuyết: mỗi ý (a, b, c...) là một ô để học sinh gõ đáp án
 function fromFillBlank(fb, includeNotes) {
-  const items = arr(fb.items)
+  const items = arr(fb.items).map((it, i) => ({
+    id: str(it.id) || String.fromCharCode(97 + i),
+    statement: str(it.statement),
+    answer: str(it.answer),
+  }))
   return {
     type: normalizeType(fb.assignment),
     flagged: !!str(fb.note),
     exercise: {
-      question_md: join([
-        `_Điền khuyết${fb.level ? ' · ' + str(fb.level) : ''}_`,
-        'Điền vào chỗ trống:',
-        ...items.map((it, i) => `**${str(it.id) || String.fromCharCode(97 + i)})** ${str(it.statement)}`),
-      ]),
-      answer_md: items.map((it, i) => `**${str(it.id) || String.fromCharCode(97 + i)})** ${str(it.answer)}`).join('\n\n'),
+      kind: 'fill_blank',
+      question_md: join([`_Điền khuyết${fb.level ? ' · ' + str(fb.level) : ''}_`, 'Điền vào chỗ trống:']),
+      options: items.map(({ id, statement }) => ({ id, statement })),
+      correct: Object.fromEntries(items.map(({ id, answer }) => [id, answer])),
+      answer_md: items.map((it) => `**${it.id})** ${it.answer}`).join('\n\n'),
       method_md: join([noteBlock(fb.note, includeNotes), fb.source ? `_Nguồn: ${str(fb.source)}_` : '']),
     },
   }
 }
 
+// Trắc nghiệm: phương án hiện thành nút chọn; lý do đúng/sai chỉ nằm ở lời giải
 function fromMcq(q, includeNotes) {
-  const options = arr(q.options)
-  const correct = options.find((o) => str(o.label) === str(q.answer))
+  const options = arr(q.options).map((o, i) => ({
+    label: str(o.label) || String.fromCharCode(65 + i),
+    text: str(o.text),
+    reason: str(o.reason),
+  }))
+  const correct = options.find((o) => o.label === str(q.answer))
+  const head = `_Trắc nghiệm${q.level ? ' · ' + str(q.level) : ''}_`
+  const method_md = join([
+    q.core ? `**Cốt lõi:** ${str(q.core)}` : '',
+    options.some((o) => o.reason) ? `**Phân tích từng phương án:**\n\n${options.map((o) => `- **${o.label}.** ${o.reason}`).join('\n')}` : '',
+    noteBlock(q.note, includeNotes),
+    q.source ? `_Nguồn: ${str(q.source)}_` : '',
+  ])
+
+  // Không xác định được phương án đúng → giữ dạng tự luận để gia sư tự chấm
+  if (options.length < 2 || !correct) {
+    return {
+      type: normalizeType(q.assignment),
+      flagged: true,
+      invalid: true,
+      exercise: {
+        kind: 'essay',
+        question_md: join([head, str(q.stem), options.map((o) => `- **${o.label}.** ${o.text}`).join('\n')]),
+        answer_md: str(q.answer),
+        method_md,
+      },
+    }
+  }
   return {
     type: normalizeType(q.assignment),
     flagged: !!str(q.note),
     exercise: {
-      question_md: join([
-        `_Trắc nghiệm${q.level ? ' · ' + str(q.level) : ''}_`,
-        str(q.stem),
-        options.map((o) => `- **${str(o.label)}.** ${str(o.text)}`).join('\n'),
-      ]),
-      answer_md: correct ? `**${str(correct.label)}.** ${str(correct.text)}` : `**${str(q.answer)}**`,
-      method_md: join([
-        q.core ? `**Cốt lõi:** ${str(q.core)}` : '',
-        options.some((o) => str(o.reason)) ? `**Phân tích từng phương án:**\n\n${options.map((o) => `- **${str(o.label)}.** ${str(o.reason)}`).join('\n')}` : '',
-        noteBlock(q.note, includeNotes),
-        q.source ? `_Nguồn: ${str(q.source)}_` : '',
-      ]),
+      kind: 'mcq',
+      question_md: join([head, str(q.stem)]),
+      options: options.map(({ label, text }) => ({ label, text })),
+      correct: correct.label,
+      answer_md: `**${correct.label}.** ${correct.text}`,
+      method_md,
     },
   }
 }
@@ -96,6 +121,7 @@ function fromProblem(p, typeTitle, includeNotes) {
     type: normalizeType(p.assignment),
     flagged: !!str(p.note),
     exercise: {
+      kind: 'essay',
       question_md: join([`_Tự luận${typeTitle ? ' · ' + typeTitle : ''}_`, str(p.statement)]),
       answer_md: str(p.answer),
       method_md: join([
@@ -129,6 +155,8 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
     ...arr(ex.mcq).map((q) => fromMcq(q, includeNotes)),
     ...arr(ex.problem_types).flatMap((pt) => arr(pt.problems).map((p) => fromProblem(p, str(pt.title), includeNotes))),
   ].filter((c) => c.exercise.question_md.trim())
+  const invalid = converted.filter((c) => c.invalid).length
+  if (invalid) warnings.push(`${invalid} câu trắc nghiệm không xác định được phương án đúng, đã chuyển thành câu tự luận.`)
 
   for (const type of ['classwork', 'homework']) {
     const list = converted.filter((c) => c.type === type)
