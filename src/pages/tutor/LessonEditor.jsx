@@ -8,6 +8,8 @@ import { removeLessonFile, uploadLessonFile } from '../../lib/lessons.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import MarkdownField from '../../components/MarkdownField.jsx'
+import { LessonBody } from '../../components/LessonView.jsx'
+import { packImages, unpackImages } from '../../lib/svg.js'
 import StudentPicker from '../../components/StudentPicker.jsx'
 
 const MAX_FILE_MB = 50
@@ -54,7 +56,9 @@ export default function LessonEditor() {
 
 function LessonForm({ initial, fromImport }) {
   const navigate = useNavigate()
-  const [form, setForm] = useState(initial)
+  // Ảnh nhúng (base64 rất dài) được thay bằng mã ngắn (hinh-1)... trong ô soạn; lưu thì đổi lại
+  const [packed] = useState(() => packImages(initial.content_md))
+  const [form, setForm] = useState(() => ({ ...initial, content_md: packed.text }))
   const [newFile, setNewFile] = useState(null)
   const [removeOld, setRemoveOld] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -100,7 +104,7 @@ function LessonForm({ initial, fromImport }) {
           p: {
             id: form.id,
             title: form.title.trim(),
-            content_md: form.content_md,
+            content_md: unpackImages(form.content_md, packed.images),
             video_url: form.video_url.trim() || null,
             file_path: filePath,
             student_ids: form.student_ids,
@@ -147,6 +151,12 @@ function LessonForm({ initial, fromImport }) {
           rows={14}
           value={form.content_md}
           onChange={(v) => set('content_md', v)}
+          renderPreview={(v) => <LessonBody content={unpackImages(v, packed.images)} />}
+          hint={
+            packed.images.length
+              ? `Có ${packed.images.length} hình nhúng, hiển thị gọn là (hinh-1), (hinh-2)... Giữ nguyên các mã này để không mất hình; có thể di chuyển chúng. Mỗi mục "## Tiêu đề" là một thẻ khi học sinh xem.`
+              : 'Mỗi mục bắt đầu bằng "## Tiêu đề" sẽ thành một thẻ riêng khi học sinh xem; "### ..." là tiêu đề nhỏ trong mục.'
+          }
           placeholder={'## Tiêu đề mục\n\nCông thức: $F = ma$\n\n$$T = \\frac{2\\pi}{\\omega}$$'}
         />
 

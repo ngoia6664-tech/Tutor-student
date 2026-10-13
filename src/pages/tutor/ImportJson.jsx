@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
+import { useAsync } from '../../lib/useAsync.js'
+import { LessonBody, LessonHead } from '../../components/LessonView.jsx'
 import { errMsg } from '../../lib/errors.js'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../../lib/importJson.js'
 import { SAMPLE_TUTOR_LESSON } from '../../lib/importTutorLesson.js'
@@ -25,6 +27,8 @@ export default function ImportJson() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [saveError, setSaveError] = useState(null)
+  const [linkLessonId, setLinkLessonId] = useState('') // bài giảng có sẵn để gắn bài tập (khi file không có bài giảng)
+  const lessonsList = useAsync(async () => unwrap(await supabase.from('lessons').select('id, title').order('created_at', { ascending: false })), [])
 
   function reset(newText) {
     setText(newText)
@@ -86,7 +90,7 @@ export default function ImportJson() {
     const done = { ...saved }
     try {
       // Lưu bài giảng trước để bài tập liên kết được với bài giảng
-      let lessonId = Object.entries(done).find(([i]) => result.drafts[i].kind === 'lesson')?.[1] || null
+      let lessonId = Object.entries(done).find(([i]) => result.drafts[i].kind === 'lesson')?.[1] || linkLessonId || null
       for (const { d, i } of chosen.filter((c) => c.d.kind === 'lesson')) {
         lessonId = unwrap(
           await supabase.rpc('save_lesson', {
@@ -120,6 +124,7 @@ export default function ImportJson() {
 
   const drafts = result?.drafts || []
   const allSaved = drafts.length > 0 && drafts.every((_, i) => !opts[i]?.include || saved[i])
+  const fileHasLesson = drafts.some((d) => d.kind === 'lesson')
 
   return (
     <div>
@@ -241,9 +246,24 @@ export default function ImportJson() {
 
           {!allSaved && (
             <div className="card">
+              {!fileHasLesson && (
+                <label className="field">
+                  <span>Liên kết bài tập với bài giảng có sẵn (không bắt buộc)</span>
+                  <select value={linkLessonId} onChange={(e) => setLinkLessonId(e.target.value)} disabled={lessonsList.loading}>
+                    <option value="">— Không liên kết —</option>
+                    {(lessonsList.data || []).map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.title}
+                      </option>
+                    ))}
+                  </select>
+                  {lessonsList.error && <span className="muted small">Không tải được danh sách bài giảng: {lessonsList.error}</span>}
+                </label>
+              )}
               <h2>Học sinh nhận</h2>
               <p className="muted small" style={{ marginTop: 0 }}>
-                Áp dụng cho mọi phần được tick ở trên. Bài tập sẽ được liên kết với bài giảng trong cùng file.
+                Áp dụng cho mọi phần được tick ở trên.
+                {fileHasLesson ? ' Bài tập sẽ được liên kết với bài giảng trong cùng file.' : ''}
               </p>
               <StudentPicker value={studentIds} onChange={setStudentIds} />
             </div>
@@ -267,10 +287,12 @@ export default function ImportJson() {
   )
 }
 
+// Xem trước đúng như học sinh sẽ thấy: dòng thông tin, tiêu đề, mỗi mục một thẻ
 function LessonPreview({ draft }) {
   return (
-    <div>
-      <Markdown>{draft.content_md}</Markdown>
+    <div className="lesson">
+      <LessonHead title={draft.title} content={draft.content_md} />
+      <LessonBody content={draft.content_md} />
       {draft.video_url && (
         <div style={{ marginTop: '1rem' }}>
           <VideoEmbed url={draft.video_url} />

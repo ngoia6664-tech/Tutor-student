@@ -256,9 +256,10 @@ App chuyển một file như vậy thành:
 
 | Trong file | Thành |
 |---|---|
-| `theory` + `method` của từng `problem_types` | **1 bài giảng** (tiêu đề = `topic`): mỗi mục gồm phần giảng, hình minh họa, hình dung, ý chính, công thức, lỗi hay gặp; cuối bài có tóm tắt 1 phút và phương pháp giải từng dạng |
-| `sections[].paragraphs` | Các đoạn giảng dài. Mục nào có `paragraphs` thì dùng chúng và bỏ `explain` (vì `explain` là bản tóm tắt, tránh lặp); mục không có thì dùng `explain` |
-| `sections[].diagrams` (`src`, `caption`) | Hình minh họa có chú thích, đặt sau phần giảng. `src` là ảnh base64 (`data:image/svg+xml;base64,...`, png, jpg, webp, gif) hoặc link `https://`; loại khác bị bỏ qua và có cảnh báo. Hình SVG luôn hiện bằng bộ màu sáng trên khung giấy, để đọc rõ dù máy và app đang ở chế độ tối hay sáng |
+| `theory` + `method` của từng `problem_types` | **1 bài giảng**, tiêu đề = `topic – part` (có `part` thì dễ phân biệt các ngày). Đầu bài: dòng thông tin `subject · Lớp grade · chapter · part` và khung `plan`. **Mỗi mục `sections[]` là một thẻ riêng** gồm: `explain`, `paragraphs`, hình, rồi các tiêu đề nhỏ Hình dung dễ hiểu / Ý chính / Công thức / Ví dụ / Ghi nhớ / Lỗi hay gặp. Cuối bài: thẻ Tóm tắt 1 phút và thẻ Phương pháp giải từng dạng |
+| `sections[].paragraphs` | Các đoạn giảng dài, đặt ngay sau `explain` trong thẻ của mục |
+| `sections[].diagrams` (`src`, `caption`) | Hình minh họa có chú thích, đặt sau phần giảng. `src` là ảnh base64 (`data:image/svg+xml;base64,...`, png, jpg, webp, gif) hoặc link `https://`; loại khác bị bỏ qua và có cảnh báo. Hình SVG **đổi màu theo nút ☀/☾ của app** (không theo cài đặt máy) |
+| `theory.sections` rỗng (file chỉ có bài tập, vd. `type: "bai_tap_tren_lop"`, `"btvn"`) | **Không tạo bài giảng**, chỉ tạo bài tập. Ở bước lưu có ô **Liên kết với bài giảng có sẵn** (vd. gắn "Ngày 1 – Bài tập trên lớp" với "Ngày 1 – Bài giảng") |
 | Câu có `"assignment":"classwork"` | Bài tập **"<topic> – Bài tập trên lớp"** |
 | Câu có `"assignment":"homework"` | Bài tập **"<topic> – Bài tập về nhà"** |
 | `mcq` | Câu **trắc nghiệm** có nút chọn A/B/C/D, máy chấm theo `answer`. Phương pháp giải = `core` + phân tích từng phương án (`reason`); lý do đúng sai **không** gửi cho học sinh trước khi nộp. Nếu `answer` không khớp phương án nào, câu đó thành tự luận và có cảnh báo |
@@ -299,6 +300,7 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 | Chấm điền khuyết | Chỉ đánh "khớp" khi giống hệt đáp án (bỏ qua hoa thường, khoảng trắng, dấu câu cuối). Không khớp thì **không** đánh sai mà để "Cần xem" | Cùng một ý có nhiều cách viết, máy không nên phạt oan |
 | Điểm | Gia sư vẫn quyết định điểm cuối. Có nút **Dùng điểm máy chấm** = số câu đúng / số câu máy chấm × 10, làm tròn 0,25 | Bài có cả tự luận thì điểm máy chỉ là gợi ý |
 | Sửa đáp án sau khi đã nộp | Câu được cập nhật tại chỗ (giữ câu trả lời), và bài đã nộp được **chấm lại** theo đáp án mới | File nguồn có vài đáp án đề tô đỏ bị nghi sai (`review_flags`) |
+| Bài giảng nhiều mục | Mỗi tiêu đề `## ...` trong nội dung là một thẻ riêng khi xem (áp dụng cả cho bài giảng soạn tay). Ảnh nhúng trong ô soạn hiện gọn là `(hinh-1)`, `(hinh-2)`... | Bài dài dễ đọc trên điện thoại; ô soạn không bị mã ảnh dài hàng chục nghìn ký tự che hết nội dung |
 | Giao diện | Mặc định tối "bảng đen" (nền xanh đá, chữ màu phấn), nút ☀/☾ chuyển sang sáng "vở ô ly"; font Be Vietnam Pro | Theo yêu cầu màu trầm tối; font thiết kế riêng cho dấu tiếng Việt |
 | Nộp 1 hay nhiều ảnh? | Nhiều ảnh (tối đa 15), lưu chung thư mục `<student_id>/<assignment_id>`; `submission_path` là đường dẫn thư mục | Bài làm thường có nhiều trang |
 | Nút chụp ảnh | 2 nút: **Chụp ảnh** (mở thẳng camera sau) và **Chọn từ thư viện** (chọn được nhiều ảnh) | Trên điện thoại, `capture` mở camera nhưng không chọn được ảnh có sẵn |

@@ -27,24 +27,35 @@ function diagramMd(d, where, warnings) {
   return caption ? `![${caption}](${src} "${caption}")` : `![](${src})`
 }
 
+// File có phần lý thuyết thật không (file "bài tập trên lớp" thường để sections rỗng)
+function hasTheory(lesson) {
+  const t = lesson.theory || {}
+  return arr(t.sections).length > 0 || arr(t.summary_1_min).length > 0
+}
+
+// Dòng thông tin đầu bài: Vật lý · Lớp 11 · Chuyên đề 2: Sóng · Ngày 1 - Bài giảng Dạng 1
+function metaLine(lesson) {
+  return [str(lesson.subject), lesson.grade ? `Lớp ${str(lesson.grade)}` : '', str(lesson.chapter), str(lesson.part)].filter(Boolean).join(' · ')
+}
+
+// Bài giảng: mỗi mục là một "## tiêu đề" → hiển thị thành một thẻ riêng (xem LessonView)
 function buildLessonMd(lesson, warnings) {
   const theory = lesson.theory || {}
-  const meta = [str(lesson.chapter), lesson.grade ? `Lớp ${str(lesson.grade)}` : '', lesson.estimated_minutes ? `Khoảng ${lesson.estimated_minutes} phút` : '']
-    .filter(Boolean)
-    .join(' · ')
+  const meta = metaLine(lesson)
+  const plan = str(theory.plan) || (lesson.estimated_minutes ? `Thời lượng khoảng ${lesson.estimated_minutes} phút.` : '')
 
   const sections = arr(theory.sections).map((s, i) =>
     join([
-      `## ${i + 1}. ${str(s.title) || 'Mục ' + (i + 1)}`,
-      // Có "paragraphs" (bài giảng dài) thì dùng nó; "explain" chỉ là bản tóm tắt nên bỏ để khỏi lặp
-      arr(s.paragraphs).length ? arr(s.paragraphs).map(str).filter(Boolean).join('\n\n') : str(s.explain),
+      `## ${str(s.title) || 'Mục ' + (i + 1)}`,
+      str(s.explain),
+      ...arr(s.paragraphs).map(str),
       ...arr(s.diagrams).map((d) => diagramMd(d, `Mục "${str(s.title)}"`, warnings)),
-      s.analogy ? `**Hình dung dễ hiểu:** ${str(s.analogy)}` : '',
-      arr(s.key_points).length ? `**Ý chính:**\n\n${bullets(s.key_points)}` : '',
-      arr(s.formulas).length ? `**Công thức:**\n\n${bullets(s.formulas)}` : '',
-      s.example_from_source ? `**Ví dụ:** ${str(s.example_from_source)}` : '',
-      s.comparison ? `**Ghi nhớ:** ${str(s.comparison)}` : '',
-      arr(s.common_mistakes).length ? `**Lỗi hay gặp:**\n\n${bullets(s.common_mistakes)}` : '',
+      s.analogy ? `### Hình dung dễ hiểu\n\n${str(s.analogy)}` : '',
+      arr(s.key_points).length ? `### Ý chính\n\n${bullets(s.key_points)}` : '',
+      arr(s.formulas).length ? `### Công thức\n\n${bullets(s.formulas)}` : '',
+      s.example_from_source ? `### Ví dụ\n\n${str(s.example_from_source)}` : '',
+      s.comparison ? `### Ghi nhớ\n\n${str(s.comparison)}` : '',
+      arr(s.common_mistakes).length ? `### Lỗi hay gặp\n\n${bullets(s.common_mistakes)}` : '',
     ])
   )
 
@@ -54,7 +65,7 @@ function buildLessonMd(lesson, warnings) {
 
   return join([
     meta ? `_${meta}_` : '',
-    theory.plan ? `> **Kế hoạch học:** ${str(theory.plan)}` : '',
+    plan ? `> ${plan}` : '',
     ...sections,
     arr(theory.summary_1_min).length ? `## Tóm tắt 1 phút\n\n${bullets(theory.summary_1_min)}` : '',
     methods.length ? `## Phương pháp giải các dạng bài\n\n${methods.join('\n\n')}` : '',
@@ -165,9 +176,15 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const warnings = []
   const drafts = []
 
-  const content_md = buildLessonMd(lesson, warnings)
-  if (content_md.trim()) drafts.push({ kind: 'lesson', title: topic, content_md, video_url: str(lesson.video_url) })
-  else warnings.push('File không có phần lý thuyết ("theory"), nên không tạo bài giảng.')
+  // "part" (vd. "Ngày 1 - Bài giảng Dạng 1") giúp phân biệt các file cùng chủ đề trong danh sách
+  const part = str(lesson.part)
+  const baseTitle = part ? `${topic} – ${part}` : topic
+
+  if (hasTheory(lesson)) {
+    drafts.push({ kind: 'lesson', title: baseTitle, content_md: buildLessonMd(lesson, warnings), video_url: str(lesson.video_url) })
+  } else {
+    warnings.push('File không có phần lý thuyết ("theory.sections" rỗng) nên chỉ tạo bài tập. Bạn có thể liên kết bài tập với một bài giảng đã có ở bên dưới.')
+  }
 
   // Gom câu hỏi theo loại bài: điền khuyết → trắc nghiệm → tự luận
   const ex = lesson.exercises || {}
@@ -179,19 +196,20 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const invalid = converted.filter((c) => c.invalid).length
   if (invalid) warnings.push(`${invalid} câu trắc nghiệm không xác định được phương án đúng, đã chuyển thành câu tự luận.`)
 
-  for (const type of ['classwork', 'homework']) {
+  const types = ['classwork', 'homework'].filter((type) => converted.some((c) => c.type === type))
+  for (const type of types) {
     const list = converted.filter((c) => c.type === type)
-    if (!list.length) continue
     drafts.push({
       kind: 'assignment',
-      title: `${topic} – ${TYPE_TITLE[type]}`,
+      // Chỉ có một loại bài và "part" đã nói rõ (vd. "Bài tập trên lớp") thì không thêm hậu tố
+      title: types.length === 1 && part ? baseTitle : `${baseTitle} – ${TYPE_TITLE[type]}`,
       type,
       due_date: '',
       exercises: list.map((c) => c.exercise),
       flaggedCount: list.filter((c) => c.flagged).length,
     })
   }
-  if (!converted.length) warnings.push('File không có câu hỏi nào ("exercises"), nên không tạo bài tập.')
+  if (!converted.length && !drafts.length) warnings.push('File không có câu hỏi nào ("exercises"), nên không tạo bài tập.')
   if (!drafts.length) throw new Error('File không có nội dung để nhập.')
 
   return { drafts, warnings, flags: arr(lesson.review_flags).map(str).filter(Boolean) }

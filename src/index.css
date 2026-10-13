@@ -514,6 +514,54 @@ input[type='radio'] {
   max-width: 400px;
 }
 
+/* ===== Bài giảng: dòng thông tin, tiêu đề, khung kế hoạch, mỗi mục một thẻ ===== */
+.lesson-head {
+  margin: 0.25rem 0 1rem;
+}
+.lesson-head h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.35rem;
+}
+.lesson-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.lesson-intro {
+  margin-bottom: 1rem;
+}
+.md.lesson-intro blockquote {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1.1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+}
+.lesson-section {
+  padding: 1.1rem 1.25rem;
+  line-height: 1.75;
+}
+.lesson-section h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+}
+.lesson-section h3 {
+  margin: 1.2rem 0 0.4rem;
+  font-size: 1rem;
+  color: var(--primary);
+}
+.lesson-section p {
+  margin: 0 0 0.85rem;
+}
+.lesson-section ul,
+.lesson-section ol {
+  padding-left: 1.3rem;
+  margin: 0 0 0.85rem;
+}
+.lesson-section li + li {
+  margin-top: 0.3rem;
+}
+
 /* ===== Markdown + công thức ===== */
 .md {
   overflow-wrap: break-word;
@@ -541,20 +589,18 @@ input[type='radio'] {
   background: var(--primary-soft);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
-/* Hình minh họa: luôn đặt trên khung "giấy" sáng để hình vẽ nét tối đọc rõ ở cả hai giao diện */
+/* Hình minh họa: SVG đã được đổi màu theo giao diện (lib/svg.js) nên đặt thẳng trên nền */
 .md .figure {
   display: block;
-  margin: 1rem 0;
+  margin: 1.1rem 0;
   text-align: center;
 }
 .md .figure img {
   display: block;
   margin: 0 auto;
-  max-width: min(100%, 420px);
-  background: #fbfcfc;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  height: auto;
 }
 .md .figcaption {
   display: block;

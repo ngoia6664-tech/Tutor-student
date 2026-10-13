@@ -2,7 +2,8 @@ import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
-import { isSafeImageDataUri, lightOnlySvg } from '../lib/svg.js'
+import { isSafeImageDataUri, themedSvg } from '../lib/svg.js'
+import { useTheme } from '../lib/theme.js'
 
 // Mặc định react-markdown chặn mọi link "data:". Cho phép riêng ẢNH nhúng base64
 // (hình vẽ SVG trong bài giảng); ảnh trong <img> không chạy được script.
@@ -12,11 +13,13 @@ function urlTransform(url, key, node) {
 }
 
 // Ảnh có chú thích: ![mô tả](src "Hình 1. ...") → khung hình + chú thích bên dưới
+// Hình SVG đổi màu theo giao diện sáng/tối của app
 function Figure({ node: _node, src, alt, title }) {
+  const theme = useTheme()
   if (!src) return null
   return (
     <span className="figure">
-      <img src={lightOnlySvg(src)} alt={alt || title || ''} loading="lazy" />
+      <img src={themedSvg(src, theme)} alt={alt || title || ''} loading="lazy" />
       {title && <span className="figcaption">{title}</span>}
     </span>
   )
