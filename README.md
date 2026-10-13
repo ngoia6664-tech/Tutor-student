@@ -340,7 +340,7 @@ Chuẩn bị: đăng nhập gia sư, tạo 1 bài tập 2 câu (có đáp án) g
 **Bài giảng, JSON, giao diện**
 
 17. Học sinh A vào **Bài giảng** → mở bài → công thức hiển thị đúng, bấm file PDF tải được, video YouTube phát được.
-18. Gia sư vào **Dán JSON**, bấm **Mẫu bài tập** → **Kiểm tra & xem trước** → công thức hiển thị → **Tiếp tục** → chọn học sinh → **Lưu**.
+18. Gia sư vào **Dán JSON**, bấm **📂 Chọn file .json** và chọn `song-c4-giao-thoa.json` → **Kiểm tra & xem trước** → thấy 3 phần (bài giảng, 19 câu trên lớp, 37 câu về nhà) và 9 ghi chú cần kiểm tra → đặt hạn nộp, chọn học sinh A → **Lưu 3 phần đã chọn**. Đăng nhập học sinh A: thấy 2 bài tập và 1 bài giảng; trong bài tập có link "Xem bài giảng liên quan".
 19. Dán JSON có lỗi (ví dụ thiếu dấu `}` hoặc `"type":"abc"`) → hiện lỗi rõ ràng bằng tiếng Việt.
 20. Thử trên điện thoại: chữ không bị tràn ngang, các nút đủ lớn để bấm, menu trên cùng cuộn ngang được.
 21. Tắt mạng rồi tải một trang → hiện lỗi "Không kết nối được máy chủ" cùng nút **Thử lại**, không bị trắng trang.
