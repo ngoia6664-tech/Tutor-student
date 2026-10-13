@@ -74,6 +74,31 @@ create table if not exists public.assignment_recipients (
   primary key (assignment_id, student_id)
 );
 
+-- ---- Nâng cấp: câu trắc nghiệm / điền khuyết (an toàn khi chạy lại trên CSDL cũ) ----
+-- kind: 'essay' (tự luận), 'mcq' (trắc nghiệm), 'fill_blank' (điền khuyết)
+-- options: mcq → [{"label":"A","text":"..."}], fill_blank → [{"id":"a","statement":"..."}]
+-- options KHÔNG chứa đáp án; đáp án máy chấm nằm ở answer_keys.correct
+alter table public.exercises add column if not exists kind text not null default 'essay';
+alter table public.exercises add column if not exists options jsonb;
+alter table public.exercises drop constraint if exists exercises_kind_check;
+alter table public.exercises add constraint exercises_kind_check check (kind in ('essay', 'mcq', 'fill_blank'));
+
+-- correct: mcq → "B", fill_blank → {"a":"...","b":"..."}
+alter table public.answer_keys add column if not exists correct jsonb;
+
+-- Câu trả lời học sinh gõ / chọn trực tiếp trong app
+create table if not exists public.submission_answers (
+  assignment_id  uuid not null,
+  student_id     uuid not null,
+  exercise_id    uuid not null references public.exercises (id) on delete cascade,
+  answer         jsonb not null,   -- {"choice":"B"} | {"blanks":{"a":"..."}} | {"text":"..."}
+  is_correct     boolean,          -- true/false: máy chấm; null: gia sư tự xem
+  primary key (exercise_id, student_id),
+  foreign key (assignment_id, student_id)
+    references public.assignment_recipients (assignment_id, student_id) on delete cascade
+);
+
+create index if not exists submission_answers_rec_idx on public.submission_answers (assignment_id, student_id);
 create index if not exists lesson_recipients_student_idx     on public.lesson_recipients (student_id);
 create index if not exists assignment_recipients_student_idx on public.assignment_recipients (student_id);
 create index if not exists exercises_assignment_idx          on public.exercises (assignment_id, sort_order);
@@ -133,12 +158,11 @@ on conflict (id) do nothing;
 
 
 -- =====================================================================
--- 4. CHỐT CHẶN KHI HỌC SINH NỘP BÀI
--- RLS chỉ lọc được DÒNG, không lọc được CỘT. Trigger này đảm bảo
--- học sinh chỉ đổi được status / submission_path / submitted_at,
--- không sửa được score / feedback, và chỉ nộp được 1 lần.
--- security invoker (mặc định): truy vấn storage.objects chạy với quyền
--- của chính học sinh, nên chỉ thấy ảnh trong thư mục của mình.
+-- 4. CHỐT CHẶN CẬP NHẬT BÀI NỘP
+-- Học sinh KHÔNG có quyền UPDATE trực tiếp bảng assignment_recipients.
+-- Muốn nộp bài phải gọi hàm submit_assignment() (mục 6), hàm này bật cờ
+-- 'app.submitting' trong transaction. Trigger chặn mọi cập nhật khác
+-- không phải của gia sư (phòng hờ nếu sau này lỡ thêm policy UPDATE).
 -- =====================================================================
 create or replace function public.guard_assignment_recipient_update()
 returns trigger
@@ -146,42 +170,13 @@ language plpgsql
 set search_path = public
 as $$
 begin
-  -- SQL Editor / service role (không có auth.uid()) và gia sư: cho phép mọi thay đổi
-  if auth.uid() is null or public.is_tutor() then
+  -- SQL Editor / service role (không có auth.uid()), gia sư, hoặc đi qua submit_assignment()
+  if auth.uid() is null
+     or public.is_tutor()
+     or coalesce(current_setting('app.submitting', true), '') = 'on' then
     return new;
   end if;
-
-  if new.assignment_id is distinct from old.assignment_id
-     or new.student_id is distinct from old.student_id then
-    raise exception 'Không được đổi bài tập hoặc học sinh của dòng này';
-  end if;
-
-  if new.score is distinct from old.score
-     or new.feedback is distinct from old.feedback then
-    raise exception 'Học sinh không được sửa điểm hoặc nhận xét';
-  end if;
-
-  if old.status <> 'todo' then
-    raise exception 'Bài này đã nộp, không thể nộp lại. Hãy nhờ gia sư mở lại nếu cần.';
-  end if;
-
-  if new.status <> 'done' then
-    raise exception 'Học sinh chỉ được chuyển trạng thái sang "done" (đã nộp)';
-  end if;
-
-  -- Đường dẫn và thời gian nộp do máy chủ quyết định, không tin dữ liệu từ trình duyệt
-  new.submission_path := old.student_id::text || '/' || old.assignment_id::text;
-  new.submitted_at := now();
-
-  if not exists (
-    select 1 from storage.objects o
-    where o.bucket_id = 'submissions'
-      and o.name like new.submission_path || '/%'
-  ) then
-    raise exception 'Chưa có ảnh bài làm nào được tải lên';
-  end if;
-
-  return new;
+  raise exception 'Hãy nộp bài bằng nút "Nộp bài" trong ứng dụng';
 end;
 $$;
 
@@ -307,15 +302,24 @@ create policy assignment_recipients_student_select on public.assignment_recipien
   for select to authenticated
   using (student_id = auth.uid());
 
--- Học sinh chỉ cập nhật dòng của mình (cột nào được sửa: xem trigger ở mục 4)
-create policy assignment_recipients_student_update on public.assignment_recipients
-  for update to authenticated
-  using (student_id = auth.uid() and status = 'todo')
-  with check (student_id = auth.uid());
+-- Học sinh KHÔNG có policy INSERT/UPDATE/DELETE: không tự giao bài, không sửa
+-- điểm/nhận xét. Việc nộp bài (status, submission_path, submitted_at) chỉ đi
+-- qua hàm submit_assignment() ở mục 6, hàm này tự kiểm tra quyền.
 
--- Ghi chú: không dùng GRANT theo cột vì gia sư và học sinh cùng là role
--- 'authenticated' (gia sư cần sửa score/feedback). Trigger ở mục 4 chặn cột.
--- Học sinh không có policy INSERT/DELETE → không tự giao/xóa bài được.
+-- ---------- submission_answers ----------
+alter table public.submission_answers enable row level security;
+
+drop policy if exists submission_answers_tutor_all      on public.submission_answers;
+drop policy if exists submission_answers_student_select on public.submission_answers;
+
+create policy submission_answers_tutor_all on public.submission_answers
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Học sinh chỉ đọc câu trả lời của chính mình; ghi thì qua submit_assignment()
+create policy submission_answers_student_select on public.submission_answers
+  for select to authenticated
+  using (student_id = auth.uid());
 
 
 -- =====================================================================
@@ -383,6 +387,7 @@ declare
   v_students uuid[];
   v_ex jsonb;
   v_ex_id uuid;
+  v_kind text;
   v_i int := 0;
 begin
   if not public.is_tutor() then
@@ -413,21 +418,67 @@ begin
     if not found then
       raise exception 'Không tìm thấy bài tập để cập nhật';
     end if;
-    -- Sửa bài: thay toàn bộ câu hỏi (đáp án xóa theo nhờ on delete cascade)
-    delete from exercises where assignment_id = v_id;
+    -- Sửa bài: xóa các câu không còn trong danh sách; câu còn giữ được cập nhật
+    -- tại chỗ để KHÔNG mất câu trả lời học sinh đã nộp.
+    delete from exercises e
+     where e.assignment_id = v_id
+       and e.id::text not in (
+         select coalesce(x ->> 'id', '') from jsonb_array_elements(p -> 'exercises') as x
+       );
   end if;
 
   for v_ex in select value from jsonb_array_elements(p -> 'exercises') loop
     v_i := v_i + 1;
+    v_kind := coalesce(nullif(v_ex ->> 'kind', ''), 'essay');
+    if v_kind not in ('essay', 'mcq', 'fill_blank') then
+      raise exception 'Câu %: loại câu không hợp lệ (%)', v_i, v_kind;
+    end if;
     if coalesce(trim(v_ex ->> 'question_md'), '') = '' then
       raise exception 'Câu % chưa có đề bài', v_i;
     end if;
-    insert into exercises (assignment_id, sort_order, question_md)
-    values (v_id, v_i, v_ex ->> 'question_md')
+    if v_kind = 'mcq' then
+      if jsonb_typeof(v_ex -> 'options') <> 'array' or jsonb_array_length(v_ex -> 'options') < 2 then
+        raise exception 'Câu % (trắc nghiệm) cần ít nhất 2 phương án', v_i;
+      end if;
+      if not exists (
+        select 1 from jsonb_array_elements(v_ex -> 'options') o
+        where o ->> 'label' = v_ex ->> 'correct'
+      ) then
+        raise exception 'Câu % (trắc nghiệm) chưa chọn phương án đúng', v_i;
+      end if;
+    elsif v_kind = 'fill_blank' then
+      if jsonb_typeof(v_ex -> 'options') <> 'array' or jsonb_array_length(v_ex -> 'options') < 1 then
+        raise exception 'Câu % (điền khuyết) cần ít nhất 1 chỗ trống', v_i;
+      end if;
+    end if;
+
+    -- Cập nhật câu cũ (nếu id thuộc bài này), không thì thêm câu mới
+    update exercises
+       set sort_order = v_i, kind = v_kind, question_md = v_ex ->> 'question_md',
+           options = case when v_kind = 'essay' then null else v_ex -> 'options' end
+     where id::text = coalesce(v_ex ->> 'id', '') and assignment_id = v_id
     returning id into v_ex_id;
-    insert into answer_keys (exercise_id, answer_md, method_md)
-    values (v_ex_id, coalesce(v_ex ->> 'answer_md', ''), coalesce(v_ex ->> 'method_md', ''));
+    if v_ex_id is null then
+      insert into exercises (assignment_id, sort_order, kind, question_md, options)
+      values (v_id, v_i, v_kind, v_ex ->> 'question_md',
+              case when v_kind = 'essay' then null else v_ex -> 'options' end)
+      returning id into v_ex_id;
+    end if;
+
+    insert into answer_keys (exercise_id, answer_md, method_md, correct)
+    values (v_ex_id, coalesce(v_ex ->> 'answer_md', ''), coalesce(v_ex ->> 'method_md', ''),
+            case when v_kind = 'essay' then null else v_ex -> 'correct' end)
+    on conflict (exercise_id) do update
+      set answer_md = excluded.answer_md, method_md = excluded.method_md, correct = excluded.correct;
+    v_ex_id := null;
   end loop;
+
+  -- Sửa đáp án thì chấm lại bài đã nộp (vd. phát hiện đáp án đề tô đỏ bị sai)
+  update submission_answers sa
+     set is_correct = public.grade_answer(e.kind, k.correct, sa.answer)
+    from exercises e
+    left join answer_keys k on k.exercise_id = e.id
+   where sa.exercise_id = e.id and e.assignment_id = v_id;
 
   -- Đồng bộ danh sách học sinh nhận (học sinh mới: status 'todo')
   select coalesce(array_agg(x::uuid), '{}')
@@ -448,6 +499,101 @@ revoke all on function public.save_lesson(jsonb) from public;
 revoke all on function public.save_assignment(jsonb) from public;
 grant execute on function public.save_lesson(jsonb) to authenticated;
 grant execute on function public.save_assignment(jsonb) to authenticated;
+
+-- ---------- Chấm tự động ----------
+-- Chuẩn hóa câu trả lời điền khuyết: chữ thường, gộp khoảng trắng, bỏ dấu câu cuối.
+-- Giữ nguyên dấu tiếng Việt ("phuong" khác "phương").
+create or replace function public.normalize_answer(t text)
+returns text
+language sql
+immutable
+as $$
+  select regexp_replace(regexp_replace(lower(trim(coalesce(t, ''))), '\s+', ' ', 'g'), '[\s.,;:!]+$', '');
+$$;
+
+-- mcq: đúng/sai. fill_blank: true nếu MỌI chỗ trống khớp, ngược lại null
+-- (để gia sư tự xem, vì cách viết khác vẫn có thể đúng). essay: null.
+create or replace function public.grade_answer(p_kind text, p_correct jsonb, p_answer jsonb)
+returns boolean
+language plpgsql
+immutable
+as $$
+declare
+  k text;
+begin
+  if p_correct is null or p_answer is null then
+    return null;
+  end if;
+  if p_kind = 'mcq' then
+    return upper(coalesce(p_answer ->> 'choice', '')) = upper(coalesce(p_correct #>> '{}', ''));
+  elsif p_kind = 'fill_blank' then
+    if jsonb_typeof(p_correct) <> 'object' then
+      return null;
+    end if;
+    for k in select jsonb_object_keys(p_correct) loop
+      if public.normalize_answer(p_answer -> 'blanks' ->> k) = ''
+         or public.normalize_answer(p_answer -> 'blanks' ->> k) <> public.normalize_answer(p_correct ->> k) then
+        return null;
+      end if;
+    end loop;
+    return true;
+  end if;
+  return null;
+end;
+$$;
+
+-- ---------- Nộp bài ----------
+-- p_answers: {"<exercise_id>": {"choice":"B"} | {"blanks":{"a":"..."}} | {"text":"..."}}
+-- Ảnh bài làm (nếu có) được tải lên Storage TRƯỚC khi gọi hàm này; không bắt buộc.
+-- security definer: hàm tự kiểm tra học sinh có được giao bài và bài còn 'todo'.
+create or replace function public.submit_assignment(p_assignment_id uuid, p_answers jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_status text;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập để nộp bài';
+  end if;
+
+  select status into v_status
+    from assignment_recipients
+   where assignment_id = p_assignment_id and student_id = v_uid
+   for update;
+  if not found then
+    raise exception 'Bài này không được giao cho bạn';
+  end if;
+  if v_status <> 'todo' then
+    raise exception 'Bài này đã nộp, không thể nộp lại. Hãy nhờ gia sư mở lại nếu cần.';
+  end if;
+
+  -- Lưu câu trả lời (chỉ nhận câu thuộc bài này) và chấm luôn
+  delete from submission_answers where assignment_id = p_assignment_id and student_id = v_uid;
+  insert into submission_answers (assignment_id, student_id, exercise_id, answer, is_correct)
+  select p_assignment_id, v_uid, e.id, a.value, public.grade_answer(e.kind, k.correct, a.value)
+    from exercises e
+    join jsonb_each(coalesce(p_answers, '{}'::jsonb)) as a on a.key = e.id::text
+    left join answer_keys k on k.exercise_id = e.id
+   where e.assignment_id = p_assignment_id
+     and jsonb_typeof(a.value) = 'object';
+
+  -- Bật cờ để trigger ở mục 4 cho phép cập nhật này (chỉ trong transaction hiện tại)
+  perform set_config('app.submitting', 'on', true);
+  update assignment_recipients
+     set status = 'done',
+         submitted_at = now(),
+         submission_path = v_uid::text || '/' || p_assignment_id::text
+   where assignment_id = p_assignment_id and student_id = v_uid;
+  perform set_config('app.submitting', 'off', true);
+end;
+$$;
+
+revoke all on function public.submit_assignment(uuid, jsonb) from public;
+grant execute on function public.submit_assignment(uuid, jsonb) to authenticated;
 
 
 -- =====================================================================
