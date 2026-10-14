@@ -412,5 +412,6 @@ Chuẩn bị: đăng nhập gia sư, tạo 1 bài tập 2 câu (có đáp án) g
 | "Tài khoản này chưa có hồ sơ…" | User được tạo trước khi chạy `schema.sql`. Chạy lại `schema.sql`, phần cuối mục 3 sẽ tạo hồ sơ còn thiếu |
 | Đăng nhập gia sư nhưng vào trang học sinh | Chưa chạy SQL ở bước 5, hoặc gõ sai email |
 | "Bạn không có quyền thực hiện thao tác này" | Đang dùng sai tài khoản, hoặc chưa chạy `schema.sql` mới nhất |
+| `column lessons.chapter_id does not exist` (hoặc thiếu cột, bảng, hàm khác) | Supabase còn chạy schema cũ. Mở SQL Editor, tạo **New query**, dán **toàn bộ** `supabase/schema.sql` (Ctrl+A trong file, đừng bôi đen một phần) rồi bấm **Run**. Nếu Supabase hỏi xác nhận thao tác "destructive" (do có `drop policy`, `drop trigger`), chọn chạy tiếp. Phải thấy "Success. No rows returned"; nếu báo lỗi thì cả file không được áp dụng, hãy gửi lại dòng lỗi đó. Xong thì tải lại trang app |
 | Trên Vercel mở link trực tiếp bị 404 | Kiểm tra `vercel.json` đã có trong repo |
 | Công thức hiện chữ đỏ | Lỗi cú pháp LaTeX trong nội dung. Bấm **Xem trước** khi soạn để kiểm tra |

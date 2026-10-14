@@ -10,5 +10,8 @@ export function errMsg(err) {
   if (/row-level security|violates row-level/i.test(raw)) return 'Bạn không có quyền thực hiện thao tác này.'
   if (/Payload too large|exceeded the maximum allowed size/i.test(raw)) return 'File quá lớn.'
   if (/mime type .* is not supported/i.test(raw)) return 'Định dạng file không được hỗ trợ.'
+  // CSDL trên Supabase còn là bản cũ (thiếu cột/bảng/hàm mới của app)
+  if (/column .* does not exist|relation .* does not exist|Could not find the .* in the schema cache|function .* does not exist/i.test(raw))
+    return `Cơ sở dữ liệu chưa được cập nhật theo phiên bản app mới (${raw}). Gia sư hãy mở Supabase > SQL Editor, dán TOÀN BỘ file supabase/schema.sql và bấm Run (chạy lại an toàn, không mất dữ liệu), rồi tải lại trang.`
   return raw
 }

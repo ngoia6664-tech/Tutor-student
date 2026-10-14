@@ -740,4 +740,7 @@ create policy submissions_student_insert on storage.objects
     )
   );
 
+-- Báo API (PostgREST) đọc lại cấu trúc bảng ngay, tránh lỗi "schema cache" sau khi nâng cấp
+notify pgrst, 'reload schema';
+
 -- Hết. Bước tiếp theo: gán role 'tutor' cho tài khoản của bạn (xem README).
