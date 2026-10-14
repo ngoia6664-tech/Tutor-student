@@ -65,6 +65,16 @@ export function buildTree(chapters) {
   return tree
 }
 
+// Link tới một nhóm trong Thư viện: libraryUrl('11', 'Vật lý', 'Chuyên đề 2') → /tutor/library?lop=11&mon=...&cd=...
+// Nhận key (đã qua keyOf); không truyền gì → trang Thư viện
+export function libraryUrl(...keys) {
+  const p = new URLSearchParams()
+  ;['lop', 'mon', 'cd'].forEach((name, i) => keys[i] !== undefined && p.set(name, keys[i]))
+  const q = p.toString()
+  return q ? `/tutor/library?${q}` : '/tutor/library'
+}
+export const chapterUrl = (id) => `/tutor/library/${id}`
+
 // Giá trị thật từ key trên URL ('-' → null)
 export const fromKey = (k) => (k === undefined || k === null || k === '-' ? null : k)
 export const gradeFromKey = (k) => (fromKey(k) === null ? null : Number(k))

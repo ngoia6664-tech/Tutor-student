@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import Login from './pages/Login.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Layout from './components/Layout.jsx'
@@ -13,8 +13,7 @@ const {
   StudentLessons,
   StudentLesson,
   TutorStudents,
-  TutorChapters,
-  ChapterDetail,
+  Library,
   TutorAssignments,
   AssignmentEditor,
   AssignmentTracking,
@@ -23,6 +22,13 @@ const {
   TutorLessonView,
   LessonEditor,
 } = Pages
+
+// /tutor/chapters(/:id) → /tutor/library(/:id), giữ nguyên ?lop=&mon=&cd=
+function OldChaptersRedirect() {
+  const { id } = useParams()
+  const { search } = useLocation()
+  return <Navigate to={(id ? `/tutor/library/${id}` : '/tutor/library') + search} replace />
+}
 
 export default function App() {
   return (
@@ -40,8 +46,10 @@ export default function App() {
         }
       >
         <Route index element={<TutorStudents />} />
-        <Route path="chapters" element={<TutorChapters />} />
-        <Route path="chapters/:id" element={<ChapterDetail />} />
+        <Route path="library/:id?" element={<Library />} />
+        {/* Link cũ của mục Chương */}
+        <Route path="chapters" element={<OldChaptersRedirect />} />
+        <Route path="chapters/:id" element={<OldChaptersRedirect />} />
         <Route path="assignments" element={<TutorAssignments />} />
         <Route path="assignments/new" element={<AssignmentEditor />} />
         <Route path="assignments/:id" element={<AssignmentTracking />} />

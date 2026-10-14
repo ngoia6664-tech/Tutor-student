@@ -8,8 +8,8 @@ export default function ChapterSelect({ chapters, value, onChange, label = 'Chư
     <label className="field">
       <span>
         {label}{' '}
-        <Link to="/tutor/chapters" className="small" style={{ fontWeight: 400 }}>
-          (quản lý chương)
+        <Link to="/tutor/library" className="small" style={{ fontWeight: 400 }}>
+          (mở Thư viện)
         </Link>
       </span>
       <select value={value || ''} onChange={(e) => onChange(e.target.value)}>

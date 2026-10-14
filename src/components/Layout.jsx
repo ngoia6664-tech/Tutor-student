@@ -9,7 +9,7 @@ import ThemeToggle from './ThemeToggle.jsx'
 const NAV = {
   tutor: [
     { to: '/tutor', label: 'Học sinh', end: true },
-    { to: '/tutor/chapters', label: 'Chương' },
+    { to: '/tutor/library', label: 'Thư viện' },
     { to: '/tutor/assignments', label: 'Bài tập' },
     { to: '/tutor/lessons', label: 'Bài giảng' },
     { to: '/tutor/import', label: 'Dán JSON' },
@@ -25,6 +25,8 @@ export default function Layout() {
   const { profile, signOut } = useAuth()
   const items = NAV[profile.role] || []
   const { pathname } = useLocation()
+  // Trong Thư viện, đổi chương chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
+  const pageKey = pathname.startsWith('/tutor/library') ? '/tutor/library' : pathname
 
   useEffect(() => {
     prefetchPages(profile.role)
@@ -61,7 +63,7 @@ export default function Layout() {
       </header>
       <main className="page">
         {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
-        <div key={pathname} className="page-enter">
+        <div key={pageKey} className="page-enter">
           <ErrorBoundary>
             <Suspense fallback={<Loading />}>
               <Outlet />

@@ -33,7 +33,7 @@ export default function ChapterGroups({ items, chapters, renderItem }) {
     <Fragment key={g.chapter?.id || 'none'}>
       <h2 className="section-title">
         {g.chapter ? (
-          <Link to={`/tutor/chapters/${g.chapter.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+          <Link to={`/tutor/library/${g.chapter.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
             {g.chapter.title}
           </Link>
         ) : (

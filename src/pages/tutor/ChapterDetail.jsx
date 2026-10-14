@@ -1,19 +1,14 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { formatDate, formatDateTime } from '../../lib/format.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
-import { gradeLabel, keyOf, sectionLabel, subjectLabel } from '../../lib/chapters.js'
+import { gradeLabel, keyOf, libraryUrl, sectionLabel, subjectLabel } from '../../lib/chapters.js'
 
-// Link về một cấp trong trang Chương (?lop=&mon=&cd=)
-const levelUrl = (...vals) => '/tutor/chapters?' + new URLSearchParams(vals.map((v, i) => [['lop', 'mon', 'cd'][i], keyOf(v)])).toString()
-
-// Một chương: các bài giảng và bài tập bên trong, kèm tình hình nộp bài
-export default function ChapterDetail() {
-  const { id } = useParams()
-
+// Nội dung một chương (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài
+export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
   const { data, loading, error, reload } = useAsync(async () => {
     const chapter = unwrap(await supabase.from('chapters').select('*').eq('id', id).maybeSingle())
     if (!chapter) throw new Error('Không tìm thấy chương (có thể đã bị xóa).')
@@ -27,40 +22,49 @@ export default function ChapterDetail() {
         .then(unwrap),
     ])
     return { chapter, lessons, assignments }
-  }, [id])
+  }, [id, reloadKey])
 
   if (loading) return <Loading />
   if (error)
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/tutor/chapters">← Danh sách chương</Link>
+        <Link to={libraryUrl()}>← Thư viện</Link>
       </div>
     )
 
   const { chapter, lessons, assignments } = data
   const newState = { state: { chapterId: chapter.id } }
+  const [g, s, c] = [keyOf(chapter.grade), keyOf(chapter.subject), keyOf(chapter.section)]
 
   return (
     <div>
-      <nav className="crumbs" aria-label="Vị trí" style={{ marginTop: 0 }}>
-        <Link to="/tutor/chapters">Tất cả lớp</Link>
+      <nav className="crumbs" aria-label="Vị trí">
+        <Link to={libraryUrl(g)}>{gradeLabel(chapter.grade)}</Link>
         <span>›</span>
-        <Link to={levelUrl(chapter.grade)}>{gradeLabel(chapter.grade)}</Link>
+        <Link to={libraryUrl(g, s)}>{subjectLabel(chapter.subject)}</Link>
         <span>›</span>
-        <Link to={levelUrl(chapter.grade, chapter.subject)}>{subjectLabel(chapter.subject)}</Link>
-        <span>›</span>
-        <Link to={levelUrl(chapter.grade, chapter.subject, chapter.section)}>{sectionLabel(chapter.section)}</Link>
+        <Link to={libraryUrl(g, s, c)}>{sectionLabel(chapter.section)}</Link>
       </nav>
-      <header className="lesson-head">
+      <header className="lesson-head" style={{ marginTop: 0 }}>
         <h1>{chapter.title}</h1>
         <div className="row">
           <Link className="btn btn-small btn-primary" to="/tutor/lessons/new" {...newState}>
-            + Bài giảng trong chương
+            + Bài giảng
           </Link>
           <Link className="btn btn-small btn-primary" to="/tutor/assignments/new" {...newState}>
-            + Bài tập trong chương
+            + Bài tập
           </Link>
+          {onEdit && (
+            <button type="button" className="btn btn-small" onClick={() => onEdit(chapter)}>
+              Sửa chương
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" className="btn btn-small btn-danger" onClick={() => onDelete(chapter, lessons.length + assignments.length)}>
+              Xóa
+            </button>
+          )}
         </div>
       </header>
 
@@ -89,8 +93,8 @@ export default function ChapterDetail() {
       ) : (
         <div className="list">
           {assignments.map((a) => {
-            const c = { todo: 0, done: 0, checked: 0 }
-            a.assignment_recipients.forEach((r) => (c[r.status] += 1))
+            const cnt = { todo: 0, done: 0, checked: 0 }
+            a.assignment_recipients.forEach((r) => (cnt[r.status] += 1))
             return (
               <Link key={a.id} to={`/tutor/assignments/${a.id}`} className="list-item">
                 <div className="list-item-title">✏️ {a.title}</div>
@@ -100,9 +104,9 @@ export default function ChapterDetail() {
                   {a.due_date && <span className="muted">Hạn: {formatDate(a.due_date)}</span>}
                 </div>
                 <div className="row small" style={{ marginTop: '0.4rem' }}>
-                  <span className="badge badge-warn">{c.todo} chưa nộp</span>
-                  <span className="badge badge-primary">{c.done} chờ chấm</span>
-                  <span className="badge badge-ok">{c.checked} đã chấm</span>
+                  <span className="badge badge-warn">{cnt.todo} chưa nộp</span>
+                  <span className="badge badge-primary">{cnt.done} chờ chấm</span>
+                  <span className="badge badge-ok">{cnt.checked} đã chấm</span>
                 </div>
               </Link>
             )
