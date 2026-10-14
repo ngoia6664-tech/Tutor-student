@@ -99,6 +99,23 @@ create table if not exists public.submission_answers (
 );
 
 create index if not exists submission_answers_rec_idx on public.submission_answers (assignment_id, student_id);
+
+-- ---- Nâng cấp: chương ----
+-- Chương gom bài giảng + bài tập của cùng một nội dung (vd. "Chủ đề 4: Giao thoa sóng cơ").
+-- section: nhóm lớn hơn để xếp các chương (vd. "Chuyên đề 2: Sóng").
+create table if not exists public.chapters (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  section     text,
+  sort_order  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists chapters_title_key on public.chapters (lower(title));
+
+alter table public.lessons     add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
+alter table public.assignments add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
+create index if not exists lessons_chapter_idx     on public.lessons (chapter_id);
+create index if not exists assignments_chapter_idx on public.assignments (chapter_id);
 create index if not exists lesson_recipients_student_idx     on public.lesson_recipients (student_id);
 create index if not exists assignment_recipients_student_idx on public.assignment_recipients (student_id);
 create index if not exists exercises_assignment_idx          on public.exercises (assignment_id, sort_order);
@@ -321,6 +338,32 @@ create policy submission_answers_student_select on public.submission_answers
   for select to authenticated
   using (student_id = auth.uid());
 
+-- ---------- chapters ----------
+alter table public.chapters enable row level security;
+
+drop policy if exists chapters_tutor_all      on public.chapters;
+drop policy if exists chapters_student_select on public.chapters;
+
+create policy chapters_tutor_all on public.chapters
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Học sinh chỉ thấy tên các chương có bài giảng / bài tập được giao cho mình
+create policy chapters_student_select on public.chapters
+  for select to authenticated
+  using (
+    exists (
+      select 1 from public.lessons l
+      join public.lesson_recipients lr on lr.lesson_id = l.id
+      where l.chapter_id = chapters.id and lr.student_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.assignments a
+      join public.assignment_recipients ar on ar.assignment_id = a.id
+      where a.chapter_id = chapters.id and ar.student_id = auth.uid()
+    )
+  );
+
 
 -- =====================================================================
 -- 6. HÀM LƯU BÀI GIẢNG / BÀI TẬP (gói trong 1 transaction)
@@ -345,16 +388,18 @@ begin
   end if;
 
   if v_id is null then
-    insert into lessons (title, content_md, file_path, video_url)
+    insert into lessons (title, content_md, file_path, video_url, chapter_id)
     values (trim(p ->> 'title'), coalesce(p ->> 'content_md', ''),
-            nullif(p ->> 'file_path', ''), nullif(trim(p ->> 'video_url'), ''))
+            nullif(p ->> 'file_path', ''), nullif(trim(p ->> 'video_url'), ''),
+            nullif(p ->> 'chapter_id', '')::uuid)
     returning id into v_id;
   else
     update lessons
        set title = trim(p ->> 'title'),
            content_md = coalesce(p ->> 'content_md', ''),
            file_path = nullif(p ->> 'file_path', ''),
-           video_url = nullif(trim(p ->> 'video_url'), '')
+           video_url = nullif(trim(p ->> 'video_url'), ''),
+           chapter_id = nullif(p ->> 'chapter_id', '')::uuid
      where id = v_id;
     if not found then
       raise exception 'Không tìm thấy bài giảng để cập nhật';
@@ -404,16 +449,17 @@ begin
   end if;
 
   if v_id is null then
-    insert into assignments (lesson_id, title, type, due_date)
+    insert into assignments (lesson_id, title, type, due_date, chapter_id)
     values (nullif(p ->> 'lesson_id', '')::uuid, trim(p ->> 'title'), p ->> 'type',
-            nullif(p ->> 'due_date', '')::date)
+            nullif(p ->> 'due_date', '')::date, nullif(p ->> 'chapter_id', '')::uuid)
     returning id into v_id;
   else
     update assignments
        set lesson_id = nullif(p ->> 'lesson_id', '')::uuid,
            title = trim(p ->> 'title'),
            type = p ->> 'type',
-           due_date = nullif(p ->> 'due_date', '')::date
+           due_date = nullif(p ->> 'due_date', '')::date,
+           chapter_id = nullif(p ->> 'chapter_id', '')::uuid
      where id = v_id;
     if not found then
       raise exception 'Không tìm thấy bài tập để cập nhật';
@@ -499,6 +545,40 @@ revoke all on function public.save_lesson(jsonb) from public;
 revoke all on function public.save_assignment(jsonb) from public;
 grant execute on function public.save_lesson(jsonb) to authenticated;
 grant execute on function public.save_assignment(jsonb) to authenticated;
+
+-- Tìm chương theo tên (không phân biệt hoa thường), chưa có thì tạo. Dùng khi nhập JSON.
+create or replace function public.ensure_chapter(p_title text, p_section text default null)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if not public.is_tutor() then
+    raise exception 'Chỉ gia sư mới được tạo chương';
+  end if;
+  if coalesce(trim(p_title), '') = '' then
+    raise exception 'Chương cần có tên';
+  end if;
+  select id into v_id from chapters where lower(title) = lower(trim(p_title));
+  if v_id is null then
+    insert into chapters (title, section, sort_order)
+    values (trim(p_title), nullif(trim(p_section), ''),
+            coalesce((select max(sort_order) + 1 from chapters), 0))
+    on conflict ((lower(title))) do nothing
+    returning id into v_id;
+    if v_id is null then
+      select id into v_id from chapters where lower(title) = lower(trim(p_title));
+    end if;
+  end if;
+  return v_id;
+end;
+$$;
+
+revoke all on function public.ensure_chapter(text, text) from public;
+grant execute on function public.ensure_chapter(text, text) to authenticated;
 
 -- ---------- Chấm tự động ----------
 -- Chuẩn hóa câu trả lời điền khuyết: chữ thường, gộp khoảng trắng, bỏ dấu câu cuối.
