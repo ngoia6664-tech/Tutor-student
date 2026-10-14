@@ -39,7 +39,7 @@ export default function Layout() {
       <header className="topbar">
         <div className="topbar-inner">
           <span className="brand">
-            <span className="brand-mark">⚛</span> Vật lý{profile.role === 'tutor' ? ' – Gia sư' : ''}
+            <span className="brand-mark">⚛</span> Study with Duy Anh
           </span>
           <div className="topbar-user">
             <span className="user-name" title={profile.full_name}>

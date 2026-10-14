@@ -32,7 +32,7 @@ export default function Login() {
       <ThemeToggle className="login-theme" />
       <form className="card login-card" onSubmit={handleSubmit}>
         <h1>
-          <span className="brand-mark">⚛</span> Gia sư Vật lý
+          <span className="brand-mark">⚛</span> Study with Duy Anh
         </h1>
         <p className="muted">Đăng nhập bằng tài khoản được gia sư cấp.</p>
 

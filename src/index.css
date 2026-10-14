@@ -1184,3 +1184,9 @@ details > summary {
     font-size: 0.85rem;
   }
 }
+
+/* Tên app dài: thu nhỏ trên điện thoại hẹp để thanh trên cùng không tràn */
+@media (max-width: 420px) {
+  .brand { font-size: 0.92rem; gap: 0.4rem; }
+  .user-name { max-width: 22vw; }
+}
