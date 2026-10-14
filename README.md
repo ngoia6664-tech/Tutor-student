@@ -5,7 +5,7 @@ Bài giảng và bài tập được giao **theo từng học sinh**. Nhóm ch�
 
 - **Gia sư** (`/tutor`): quản lý học sinh, soạn bài giảng (Markdown + công thức, file, video), soạn bài tập (đề, đáp án, phương pháp giải), nhập nhanh bằng JSON, theo dõi bài nộp, xem ảnh, chấm điểm và nhận xét.
 - **Học sinh** (`/student`): xem bài cần làm (hạn gần nhất lên đầu), làm bài ngay trong app (trắc nghiệm chọn phương án, điền khuyết gõ đáp án, tự luận gõ hoặc chụp ảnh) rồi nộp, xem đáp án và kết quả máy chấm **sau khi nộp**, xem điểm và nhận xét, xem bài giảng.
-- Giao diện tối ("bảng đen") mặc định, có nút ☀/☾ để chuyển sang giao diện sáng ("vở ô ly"); lựa chọn được nhớ trên từng máy.
+- Giao diện tông tím – hồng, mặc định tối, có nút ☀/☾ để chuyển sang giao diện sáng; lựa chọn được nhớ trên từng máy.
 
 Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQL, Storage), KaTeX, react-markdown.
 
@@ -301,7 +301,8 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 | Điểm | Gia sư vẫn quyết định điểm cuối. Có nút **Dùng điểm máy chấm** = số câu đúng / số câu máy chấm × 10, làm tròn 0,25 | Bài có cả tự luận thì điểm máy chỉ là gợi ý |
 | Sửa đáp án sau khi đã nộp | Câu được cập nhật tại chỗ (giữ câu trả lời), và bài đã nộp được **chấm lại** theo đáp án mới | File nguồn có vài đáp án đề tô đỏ bị nghi sai (`review_flags`) |
 | Bài giảng nhiều mục | Mỗi tiêu đề `## ...` trong nội dung là một thẻ riêng khi xem (áp dụng cả cho bài giảng soạn tay). Ảnh nhúng trong ô soạn hiện gọn là `(hinh-1)`, `(hinh-2)`... | Bài dài dễ đọc trên điện thoại; ô soạn không bị mã ảnh dài hàng chục nghìn ký tự che hết nội dung |
-| Giao diện | Mặc định tối "bảng đen" (nền xanh đá, chữ màu phấn), nút ☀/☾ chuyển sang sáng "vở ô ly"; font Be Vietnam Pro | Theo yêu cầu màu trầm tối; font thiết kế riêng cho dấu tiếng Việt |
+| Giao diện | Tông tím – hồng: nền xanh tím than có quầng sáng (tối, mặc định) hoặc nền oải hương (sáng), nút và menu dạng viên thuốc, nút chính chuyển màu tím → hồng có quầng sáng; nút ☀/☾ đổi giao diện; font Be Vietnam Pro | Theo mẫu tuhoc.cc bạn gửi; font thiết kế riêng cho dấu tiếng Việt |
+| Độ mượt | Trang mới hiện ra mờ dần; khi tải lại sau lúc lưu thì giữ nội dung cũ trên màn hình (không nháy); lúc chờ tải hiện khung xương thay vòng xoay; sau đăng nhập tự tải sẵn các trang để bấm menu là hiện ngay; nút nhích lên/nhún nhẹ khi bấm. Máy bật "giảm chuyển động" thì tắt hết hiệu ứng | Thao tác trên điện thoại cảm giác nhanh và liền mạch |
 | Nộp 1 hay nhiều ảnh? | Nhiều ảnh (tối đa 15), lưu chung thư mục `<student_id>/<assignment_id>`; `submission_path` là đường dẫn thư mục | Bài làm thường có nhiều trang |
 | Nút chụp ảnh | 2 nút: **Chụp ảnh** (mở thẳng camera sau) và **Chọn từ thư viện** (chọn được nhiều ảnh) | Trên điện thoại, `capture` mở camera nhưng không chọn được ảnh có sẵn |
 | Ảnh điện thoại nặng 3–8MB | Thu nhỏ còn cạnh dài 1800px (JPEG) trước khi tải lên | Nộp nhanh hơn với mạng 4G, tiết kiệm dung lượng Storage miễn phí |

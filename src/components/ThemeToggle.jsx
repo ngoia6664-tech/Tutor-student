@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const THEME_COLOR = { dark: '#151b1a', light: '#eef2f1' }
+const THEME_COLOR = { dark: '#0c0a1d', light: '#f5f3ff' }
 
 function currentTheme() {
   return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'

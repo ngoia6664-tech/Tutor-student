@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Suspense } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Suspense, useEffect } from 'react'
+import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
@@ -22,6 +23,15 @@ const NAV = {
 export default function Layout() {
   const { profile, signOut } = useAuth()
   const items = NAV[profile.role] || []
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    prefetchPages(profile.role)
+  }, [profile.role])
+  // Đổi trang thì về đầu trang
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [pathname])
 
   return (
     <div className="app">
@@ -49,11 +59,14 @@ export default function Layout() {
         </nav>
       </header>
       <main className="page">
-        <ErrorBoundary>
-          <Suspense fallback={<Loading />}>
-            <Outlet />
-          </Suspense>
-        </ErrorBoundary>
+        {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
+        <div key={pathname} className="page-enter">
+          <ErrorBoundary>
+            <Suspense fallback={<Loading />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
       </main>
     </div>
   )
