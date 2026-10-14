@@ -16,7 +16,7 @@ export default function ChapterSelect({ chapters, value, onChange, label = 'Chư
         <option value="">— Chưa xếp chương —</option>
         {extraOptions}
         {groups.map((g) => (
-          <optgroup key={g.section} label={g.section}>
+          <optgroup key={g.key} label={g.label}>
             {g.chapters.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title}

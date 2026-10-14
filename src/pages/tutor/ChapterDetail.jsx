@@ -5,6 +5,10 @@ import { formatDate, formatDateTime } from '../../lib/format.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
+import { gradeLabel, keyOf, sectionLabel, subjectLabel } from '../../lib/chapters.js'
+
+// Link về một cấp trong trang Chương (?lop=&mon=&cd=)
+const levelUrl = (...vals) => '/tutor/chapters?' + new URLSearchParams(vals.map((v, i) => [['lop', 'mon', 'cd'][i], keyOf(v)])).toString()
 
 // Một chương: các bài giảng và bài tập bên trong, kèm tình hình nộp bài
 export default function ChapterDetail() {
@@ -39,11 +43,16 @@ export default function ChapterDetail() {
 
   return (
     <div>
-      <Link to="/tutor/chapters" className="small">
-        ← Danh sách chương
-      </Link>
-      <header className="lesson-head" style={{ marginTop: '0.5rem' }}>
-        {chapter.section && <p className="lesson-eyebrow">{chapter.section}</p>}
+      <nav className="crumbs" aria-label="Vị trí" style={{ marginTop: 0 }}>
+        <Link to="/tutor/chapters">Tất cả lớp</Link>
+        <span>›</span>
+        <Link to={levelUrl(chapter.grade)}>{gradeLabel(chapter.grade)}</Link>
+        <span>›</span>
+        <Link to={levelUrl(chapter.grade, chapter.subject)}>{subjectLabel(chapter.subject)}</Link>
+        <span>›</span>
+        <Link to={levelUrl(chapter.grade, chapter.subject, chapter.section)}>{sectionLabel(chapter.section)}</Link>
+      </nav>
+      <header className="lesson-head">
         <h1>{chapter.title}</h1>
         <div className="row">
           <Link className="btn btn-small btn-primary" to="/tutor/lessons/new" {...newState}>

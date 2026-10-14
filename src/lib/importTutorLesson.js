@@ -9,6 +9,12 @@ const bullets = (list) => arr(list).map(str).filter(Boolean).map((x) => `- ${x}`
 const numbered = (list) => arr(list).map(str).filter(Boolean).map((x, i) => `${i + 1}. ${x}`).join('\n')
 const join = (parts) => parts.filter((p) => p && p.trim()).join('\n\n')
 
+// "11", 11, "Lớp 11" → 11; không rõ → null
+function toGrade(v) {
+  const n = parseInt(String(v ?? '').replace(/[^0-9]/g, ''), 10)
+  return n >= 1 && n <= 12 ? n : null
+}
+
 function normalizeType(v) {
   return v === 'classwork' || v === 'homework' ? v : 'homework'
 }
@@ -217,8 +223,8 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
     drafts,
     warnings,
     flags: arr(lesson.review_flags).map(str).filter(Boolean),
-    // Chương = topic (vd. Chủ đề 4), nhóm lớn = chapter (vd. Chuyên đề 2: Sóng)
-    chapter: { title: topic, section: str(lesson.chapter) },
+    // Chương = topic (vd. Chủ đề 4), chuyên đề = chapter (vd. Chuyên đề 2: Sóng), kèm lớp + môn
+    chapter: { title: topic, section: str(lesson.chapter), grade: toGrade(lesson.grade), subject: str(lesson.subject) },
     dang: lesson.dang ?? null,
   }
 }

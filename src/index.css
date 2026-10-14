@@ -481,6 +481,36 @@ a.list-item:active {
   border-color: transparent;
   box-shadow: var(--glow);
 }
+/* Lối tắt tới cấp con trong thẻ Lớp / Môn / Chuyên đề */
+.list-item .chips {
+  margin-bottom: 0.65rem;
+}
+a.chip {
+  text-decoration: none;
+  font-size: 0.85rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Thanh vị trí: Tất cả lớp › Lớp 11 › Vật lý */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.5rem 0 1rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.crumbs a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.crumbs a:hover {
+  text-decoration: underline;
+}
 
 /* ===== Khung xương khi đang tải (thay vòng xoay) ===== */
 .skeleton {

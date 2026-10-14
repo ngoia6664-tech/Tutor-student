@@ -110,7 +110,24 @@ create table if not exists public.chapters (
   sort_order  int not null default 0,
   created_at  timestamptz not null default now()
 );
-create unique index if not exists chapters_title_key on public.chapters (lower(title));
+
+-- ---- Nâng cấp: Lớp › Môn › Chuyên đề › Chương ----
+-- grade: lớp (1–12), subject: môn (vd. "Vật lý"). Để trống = "Chưa rõ lớp/môn".
+alter table public.chapters add column if not exists grade   int;
+alter table public.chapters add column if not exists subject text;
+alter table public.chapters drop constraint if exists chapters_grade_check;
+alter table public.chapters add constraint chapters_grade_check check (grade between 1 and 12);
+
+-- Tên chương chỉ cần không trùng trong cùng lớp + môn ("Chủ đề 2" lớp 11 khác "Chủ đề 2" lớp 12)
+drop index if exists public.chapters_title_key;
+create unique index if not exists chapters_scope_title_key
+  on public.chapters (coalesce(grade, 0), lower(coalesce(subject, '')), lower(title));
+
+-- Chương cũ chưa có lớp: đoán từ tên chuyên đề, vd. "L11_Chuyên đề 1" hay "Lớp 12 - ..."
+update public.chapters
+   set grade = (regexp_match(section, '(^|[^[:alpha:]])l(ớp)?[ _.:-]*(1[0-2]|[1-9])([^0-9]|$)', 'i'))[3]::int
+ where grade is null
+   and section ~* '(^|[^[:alpha:]])l(ớp)?[ _.:-]*(1[0-2]|[1-9])([^0-9]|$)';
 
 alter table public.lessons     add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
 alter table public.assignments add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
@@ -546,8 +563,11 @@ revoke all on function public.save_assignment(jsonb) from public;
 grant execute on function public.save_lesson(jsonb) to authenticated;
 grant execute on function public.save_assignment(jsonb) to authenticated;
 
--- Tìm chương theo tên (không phân biệt hoa thường), chưa có thì tạo. Dùng khi nhập JSON.
-create or replace function public.ensure_chapter(p_title text, p_section text default null)
+-- Tìm chương theo tên trong cùng lớp + môn (không phân biệt hoa thường), chưa có thì tạo.
+-- Chương cũ cùng tên nhưng chưa ghi lớp/môn thì dùng lại và điền lớp/môn vào. Dùng khi nhập JSON.
+drop function if exists public.ensure_chapter(text, text);
+create or replace function public.ensure_chapter(p_title text, p_section text default null,
+                                                 p_grade int default null, p_subject text default null)
 returns uuid
 language plpgsql
 security definer
@@ -555,30 +575,50 @@ set search_path = public
 as $$
 declare
   v_id uuid;
+  v_title text := trim(p_title);
+  v_subject text := nullif(trim(p_subject), '');
 begin
   if not public.is_tutor() then
     raise exception 'Chỉ gia sư mới được tạo chương';
   end if;
-  if coalesce(trim(p_title), '') = '' then
+  if coalesce(v_title, '') = '' then
     raise exception 'Chương cần có tên';
   end if;
-  select id into v_id from chapters where lower(title) = lower(trim(p_title));
-  if v_id is null then
-    insert into chapters (title, section, sort_order)
-    values (trim(p_title), nullif(trim(p_section), ''),
-            coalesce((select max(sort_order) + 1 from chapters), 0))
-    on conflict ((lower(title))) do nothing
-    returning id into v_id;
-    if v_id is null then
-      select id into v_id from chapters where lower(title) = lower(trim(p_title));
-    end if;
+
+  select id into v_id from chapters
+   where lower(title) = lower(v_title)
+     and coalesce(grade, 0) = coalesce(p_grade, 0)
+     and lower(coalesce(subject, '')) = lower(coalesce(v_subject, ''));
+  if v_id is not null then
+    return v_id;
   end if;
+
+  -- Chương cũ (trước khi có lớp/môn): bổ sung lớp/môn thay vì tạo trùng
+  select id into v_id from chapters
+   where lower(title) = lower(v_title)
+     and (grade is null or grade = p_grade or p_grade is null)
+     and (subject is null or lower(subject) = lower(v_subject) or v_subject is null)
+   order by created_at
+   limit 1;
+  if v_id is not null then
+    update chapters
+       set grade = coalesce(grade, p_grade),
+           subject = coalesce(subject, v_subject),
+           section = coalesce(section, nullif(trim(p_section), ''))
+     where id = v_id;
+    return v_id;
+  end if;
+
+  insert into chapters (title, section, grade, subject, sort_order)
+  values (v_title, nullif(trim(p_section), ''), p_grade, v_subject,
+          coalesce((select max(sort_order) + 1 from chapters), 0))
+  returning id into v_id;
   return v_id;
 end;
 $$;
 
-revoke all on function public.ensure_chapter(text, text) from public;
-grant execute on function public.ensure_chapter(text, text) to authenticated;
+revoke all on function public.ensure_chapter(text, text, int, text) from public;
+grant execute on function public.ensure_chapter(text, text, int, text) to authenticated;
 
 -- ---------- Chấm tự động ----------
 -- Chuẩn hóa câu trả lời điền khuyết: chữ thường, gộp khoảng trắng, bỏ dấu câu cuối.

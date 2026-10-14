@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
-import { fetchChapters, findChapterByTitle } from '../../lib/chapters.js'
+import { chapterGroupLabel, fetchChapters, findChapter } from '../../lib/chapters.js'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { LessonBody, LessonHead } from '../../components/LessonView.jsx'
 import { errMsg } from '../../lib/errors.js'
@@ -61,7 +61,7 @@ export default function ImportJson() {
       setResult(r)
       setOpts(r.drafts.map((d) => ({ include: true, due_date: d.due_date || '' })))
       // Chọn sẵn chương: có chương trùng tên thì dùng, chưa có thì đề xuất tạo mới
-      const match = r.chapter ? findChapterByTitle(chapters, r.chapter.title) : null
+      const match = r.chapter ? findChapter(chapters, r.chapter) : null
       const choice = match ? match.id : r.chapter?.title ? 'new' : ''
       setChapterChoice(choice)
       // File chỉ có bài tập: gợi ý bài giảng cùng chương (ưu tiên cùng "Dạng")
@@ -114,8 +114,13 @@ export default function ImportJson() {
     try {
       // Chương: tạo mới (nếu chọn) rồi dùng chung cho mọi phần của file
       let chapterId = chapterChoice && chapterChoice !== 'new' ? chapterChoice : null
-      if (chapterChoice === 'new' && result.chapter?.title) {
-        chapterId = unwrap(await supabase.rpc('ensure_chapter', { p_title: result.chapter.title, p_section: result.chapter.section || null }))
+      // Tạo chương mới, hoặc chương tự khớp theo file (để bổ sung lớp/môn nếu chương cũ còn thiếu)
+      const autoMatch = result.chapter ? findChapter(chapters, result.chapter) : null
+      if (result.chapter?.title && (chapterChoice === 'new' || (autoMatch && chapterChoice === autoMatch.id))) {
+        const c = result.chapter
+        chapterId = unwrap(
+          await supabase.rpc('ensure_chapter', { p_title: c.title, p_section: c.section || null, p_grade: c.grade ?? null, p_subject: c.subject || null })
+        )
         setChapterChoice(chapterId)
       }
       // Lưu bài giảng trước để bài tập liên kết được với bài giảng
@@ -283,8 +288,11 @@ export default function ImportJson() {
                 onChange={setChapterChoice}
                 label="Xếp vào chương"
                 extraOptions={
-                  result.chapter?.title && !findChapterByTitle(chapters, result.chapter.title) ? (
-                    <option value="new">+ Tạo chương mới: {result.chapter.title}</option>
+                  result.chapter?.title && !findChapter(chapters, result.chapter) ? (
+                    <option value="new">
+                      + Tạo chương mới: {result.chapter.title}
+                      {chapterGroupLabel(result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(result.chapter)})` : ''}
+                    </option>
                   ) : null
                 }
               />

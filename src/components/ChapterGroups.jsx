@@ -8,7 +8,7 @@ export function ChapterFilter({ chapters, value, onChange }) {
     <select className="chapter-filter" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Lọc theo chương">
       <option value="all">Tất cả chương</option>
       {groupBySection(chapters).map((g) => (
-        <optgroup key={g.section} label={g.section}>
+        <optgroup key={g.key} label={g.label}>
           {g.chapters.map((c) => (
             <option key={c.id} value={c.id}>
               {c.title}
