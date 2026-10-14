@@ -279,8 +279,12 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 
 ## 3b. Chương
 
-- Mỗi **chương** gom bài giảng và bài tập của cùng một nội dung. Các chương được xếp theo **chuyên đề** rồi theo **thứ tự** (sửa ở trang Chương).
-- Gia sư: menu **Chương** → xem số bài giảng / bài tập từng chương, tạo / sửa / xóa chương, mở một chương để xem các bài bên trong và tình hình nộp bài. Trong chương có nút **+ Bài giảng trong chương** / **+ Bài tập trong chương** (tự điền sẵn chương).
+- Mỗi **chương** gom bài giảng và bài tập của cùng một nội dung. Chương được xếp theo cây **Lớp › Môn › Chuyên đề › Chương**, trong chuyên đề thì theo **thứ tự**.
+- Gia sư: menu **Chương** mở ở cấp Lớp. Mỗi thẻ có nút **Mở lớp / Mở môn / Mở chuyên đề / Mở chương**, số đếm và lối tắt tới cấp con. Thanh vị trí phía trên (Tất cả lớp › Lớp 11 › Vật lý) để quay lại.
+- Nút **Sửa** trên thẻ lớp / môn / chuyên đề sửa **cả nhóm**: đổi lớp, tên môn, tên chuyên đề cho mọi chương bên trong (bài giữ nguyên). **+ Thêm chương** điền sẵn lớp, môn, chuyên đề đang xem.
+- Khi nhập file `tutor-lesson/v1`: lớp = `grade`, môn = `subject`, chuyên đề = `chapter`, chương = `topic`. Chương cùng tên trong cùng lớp + môn được dùng lại; chương cũ cùng tên chưa ghi lớp/môn thì được bổ sung lớp/môn. Tên chương chỉ cần không trùng trong cùng lớp + môn.
+- Chương tạo trước khi có cấp Lớp/Môn: lớp được đoán từ tên chuyên đề (vd. `L11_...`, `Lớp 12 ...`), môn để "Chưa rõ môn". Mở lớp đó, bấm **Sửa** trên thẻ "Chưa rõ môn" để điền môn cho cả lớp một lần.
+- Mở một chương để xem các bài bên trong và tình hình nộp bài. Trong chương có nút **+ Bài giảng trong chương** / **+ Bài tập trong chương** (tự điền sẵn chương).
 - Trang **Bài tập** và **Bài giảng** gom theo chương, có ô lọc theo chương; bài chưa xếp chương nằm ở nhóm cuối. Trang soạn có ô **Chương**.
 - Xóa một chương **không xóa bài**; các bài chỉ chuyển sang "Chưa xếp chương".
 - Học sinh: trang Bài giảng gom theo chương; bài tập có nhãn tên chương. Học sinh chỉ thấy tên các chương có bài được giao cho mình.

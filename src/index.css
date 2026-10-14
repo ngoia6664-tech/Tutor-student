@@ -1219,4 +1219,5 @@ details > summary {
 @media (max-width: 420px) {
   .brand { font-size: 0.92rem; gap: 0.4rem; }
   .user-name { max-width: 22vw; }
+  .topbar .btn { white-space: nowrap; }
 }
