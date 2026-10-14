@@ -8,24 +8,30 @@ import { deleteAssignment } from '../../lib/assignments.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
+import ChapterGroups, { ChapterFilter, filterByChapter } from '../../components/ChapterGroups.jsx'
+import { fetchChapters } from '../../lib/chapters.js'
 
 export default function TutorAssignments() {
   const [filter, setFilter] = useState('all')
+  const [chapterFilter, setChapterFilter] = useState('all')
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const rows = unwrap(
-      await supabase
+    const [rows, chapters] = await Promise.all([
+      supabase
         .from('assignments')
-        .select('id, title, type, due_date, created_at, assignment_recipients(status)')
+        .select('id, title, type, due_date, created_at, chapter_id, assignment_recipients(status)')
         .order('created_at', { ascending: false })
-    )
-    return rows.map((a) => {
+        .then(unwrap),
+      fetchChapters(),
+    ])
+    const list = rows.map((a) => {
       const c = { todo: 0, done: 0, checked: 0 }
       a.assignment_recipients.forEach((r) => (c[r.status] += 1))
       return { ...a, counts: c, total: a.assignment_recipients.length }
     })
+    return { list, chapters }
   }, [])
 
   async function handleDelete(a) {
@@ -42,7 +48,8 @@ export default function TutorAssignments() {
     }
   }
 
-  const rows = (data || []).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
+  const chapters = data?.chapters || []
+  const rows = filterByChapter(data?.list || [], chapterFilter).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
 
   return (
     <div>
@@ -65,6 +72,7 @@ export default function TutorAssignments() {
         <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
           Có bài chờ chấm
         </button>
+        <ChapterFilter chapters={chapters} value={chapterFilter} onChange={setChapterFilter} />
       </div>
 
       <ErrorBox message={actionError} />
@@ -72,12 +80,14 @@ export default function TutorAssignments() {
       <ErrorBox message={error} onRetry={reload} />
 
       {!loading && !error && rows.length === 0 && (
-        <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : 'Chưa có bài tập nào.'}</div>
+        <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : chapterFilter !== 'all' ? 'Chương này chưa có bài tập.' : 'Chưa có bài tập nào.'}</div>
       )}
 
       {!loading && !error && rows.length > 0 && (
-        <div className="list">
-          {rows.map((a) => (
+        <ChapterGroups
+          items={rows}
+          chapters={chapters}
+          renderItem={(a) => (
             <div key={a.id} className="list-item">
               <Link to={`/tutor/assignments/${a.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
                 {a.title}
@@ -105,8 +115,8 @@ export default function TutorAssignments() {
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        />
       )}
     </div>
   )

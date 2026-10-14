@@ -9,6 +9,8 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import MarkdownField from '../../components/MarkdownField.jsx'
 import { LessonBody } from '../../components/LessonView.jsx'
+import ChapterSelect from '../../components/ChapterSelect.jsx'
+import { fetchChapters } from '../../lib/chapters.js'
 import { packImages, unpackImages } from '../../lib/svg.js'
 import StudentPicker from '../../components/StudentPicker.jsx'
 
@@ -19,11 +21,15 @@ export default function LessonEditor() {
   const { id } = useParams()
   const location = useLocation()
   const draft = location.state?.draft
+  const presetChapter = location.state?.chapterId || draft?.chapter_id || ''
 
   const { data, loading, error, reload } = useAsync(async () => {
+    const chapters = await fetchChapters()
     if (!id) {
       return {
+        chapters,
         id: null,
+        chapter_id: presetChapter,
         title: draft?.title || '',
         content_md: draft?.content_md || '',
         video_url: draft?.video_url || '',
@@ -34,7 +40,9 @@ export default function LessonEditor() {
     const lesson = unwrap(await supabase.from('lessons').select('*, lesson_recipients(student_id)').eq('id', id).maybeSingle())
     if (!lesson) throw new Error('Không tìm thấy bài giảng (có thể đã bị xóa).')
     return {
+      chapters,
       id: lesson.id,
+      chapter_id: lesson.chapter_id || '',
       title: lesson.title,
       content_md: lesson.content_md || '',
       video_url: lesson.video_url || '',
@@ -104,6 +112,7 @@ function LessonForm({ initial, fromImport }) {
           p: {
             id: form.id,
             title: form.title.trim(),
+            chapter_id: form.chapter_id || null,
             content_md: unpackImages(form.content_md, packed.images),
             video_url: form.video_url.trim() || null,
             file_path: filePath,
@@ -146,6 +155,7 @@ function LessonForm({ initial, fromImport }) {
           <span>Tiêu đề *</span>
           <input type="text" value={form.title} onChange={(e) => set('title', e.target.value)} required />
         </label>
+        <ChapterSelect chapters={initial.chapters} value={form.chapter_id} onChange={(v) => set('chapter_id', v)} />
         <MarkdownField
           label="Nội dung (Markdown + công thức $...$, $$...$$)"
           rows={14}

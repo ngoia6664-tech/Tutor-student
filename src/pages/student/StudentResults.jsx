@@ -15,7 +15,7 @@ export default function StudentResults() {
     const rows = unwrap(
       await supabase
         .from('assignment_recipients')
-        .select('status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date)')
+        .select('status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, chapter:chapters(title))')
         .eq('student_id', profile.id)
         .in('status', ['done', 'checked'])
         .order('submitted_at', { ascending: false })
@@ -43,6 +43,7 @@ export default function StudentResults() {
                 {r.status === 'checked' && <span className="score">{formatScore(r.score)}</span>}
               </div>
               <div className="row">
+                {r.assignment.chapter && <span className="badge badge-primary">{r.assignment.chapter.title}</span>}
                 <TypeBadge type={r.assignment.type} />
                 <StatusBadge status={r.status} />
                 <span className="muted small">Nộp: {formatDateTime(r.submitted_at)}</span>

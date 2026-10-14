@@ -10,6 +10,8 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import MarkdownField from '../../components/MarkdownField.jsx'
 import StudentPicker from '../../components/StudentPicker.jsx'
 import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
+import ChapterSelect from '../../components/ChapterSelect.jsx'
+import { fetchChapters } from '../../lib/chapters.js'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
 const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
@@ -86,15 +88,21 @@ export default function AssignmentEditor() {
   const { id } = useParams()
   const location = useLocation()
   const draft = location.state?.draft
+  const presetChapter = location.state?.chapterId || ''
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const lessons = unwrap(await supabase.from('lessons').select('id, title').order('created_at', { ascending: false }))
+    const [lessons, chapters] = await Promise.all([
+      supabase.from('lessons').select('id, title').order('created_at', { ascending: false }).then(unwrap),
+      fetchChapters(),
+    ])
     if (id) {
       const full = await fetchAssignmentFull(id)
       return {
         lessons,
+        chapters,
         initial: {
           id,
+          chapter_id: full.assignment.chapter_id || '',
           title: full.assignment.title,
           type: full.assignment.type,
           due_date: full.assignment.due_date || '',
@@ -108,8 +116,10 @@ export default function AssignmentEditor() {
     }
     return {
       lessons,
+      chapters,
       initial: {
         id: null,
+        chapter_id: presetChapter,
         title: draft?.title || '',
         type: draft?.type || 'homework',
         due_date: draft?.due_date || '',
@@ -133,7 +143,7 @@ export default function AssignmentEditor() {
   return <AssignmentForm key={id || 'new'} {...data} fromImport={!!draft && !id} />
 }
 
-function AssignmentForm({ initial, lessons, submittedIds, fromImport }) {
+function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }) {
   const navigate = useNavigate()
   const [form, setForm] = useState(initial)
   const [saving, setSaving] = useState(false)
@@ -180,6 +190,7 @@ function AssignmentForm({ initial, lessons, submittedIds, fromImport }) {
         type: form.type,
         due_date: form.due_date || null,
         lesson_id: form.lesson_id || null,
+        chapter_id: form.chapter_id || null,
         exercises: form.exercises.map(fromFormExercise),
         student_ids: form.student_ids,
       }
@@ -211,6 +222,7 @@ function AssignmentForm({ initial, lessons, submittedIds, fromImport }) {
           <span>Tiêu đề *</span>
           <input type="text" value={form.title} onChange={(e) => set('title', e.target.value)} required />
         </label>
+        <ChapterSelect chapters={chapters} value={form.chapter_id} onChange={(v) => set('chapter_id', v)} />
         <div className="grid-2">
           <label className="field">
             <span>Loại</span>

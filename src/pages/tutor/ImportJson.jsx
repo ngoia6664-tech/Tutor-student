@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
+import { fetchChapters, findChapterByTitle } from '../../lib/chapters.js'
+import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { LessonBody, LessonHead } from '../../components/LessonView.jsx'
 import { errMsg } from '../../lib/errors.js'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../../lib/importJson.js'
@@ -28,7 +30,18 @@ export default function ImportJson() {
   const [error, setError] = useState(null)
   const [saveError, setSaveError] = useState(null)
   const [linkLessonId, setLinkLessonId] = useState('') // bài giảng có sẵn để gắn bài tập (khi file không có bài giảng)
-  const lessonsList = useAsync(async () => unwrap(await supabase.from('lessons').select('id, title').order('created_at', { ascending: false })), [])
+  const [chapterChoice, setChapterChoice] = useState('') // '' = không xếp chương | 'new' = tạo theo file | chapter_id
+  const [reloadKey, setReloadKey] = useState(0)
+  // Danh sách bài giảng + chương có sẵn (tải lại sau mỗi lần lưu để chương mới xuất hiện)
+  const lists = useAsync(async () => {
+    const [lessons, chapters] = await Promise.all([
+      supabase.from('lessons').select('id, title, chapter_id').order('created_at', { ascending: false }).then(unwrap),
+      fetchChapters(),
+    ])
+    return { lessons, chapters }
+  }, [reloadKey])
+  const lessonsList = { ...lists, data: lists.data?.lessons }
+  const chapters = lists.data?.chapters || []
 
   function reset(newText) {
     setText(newText)
@@ -47,6 +60,16 @@ export default function ImportJson() {
       const r = parseImport(text, { includeNotes: withNotes })
       setResult(r)
       setOpts(r.drafts.map((d) => ({ include: true, due_date: d.due_date || '' })))
+      // Chọn sẵn chương: có chương trùng tên thì dùng, chưa có thì đề xuất tạo mới
+      const match = r.chapter ? findChapterByTitle(chapters, r.chapter.title) : null
+      const choice = match ? match.id : r.chapter?.title ? 'new' : ''
+      setChapterChoice(choice)
+      // File chỉ có bài tập: gợi ý bài giảng cùng chương (ưu tiên cùng "Dạng")
+      if (match && !r.drafts.some((d) => d.kind === 'lesson')) {
+        const inChapter = (lists.data?.lessons || []).filter((l) => l.chapter_id === match.id)
+        const sameDang = r.dang != null ? inChapter.find((l) => new RegExp(`Dạng\\s*${r.dang}(?!\\d)`, 'i').test(l.title)) : null
+        setLinkLessonId((sameDang || inChapter[0])?.id || '')
+      } else setLinkLessonId('')
     } catch (e) {
       setError(e.message)
     }
@@ -89,12 +112,18 @@ export default function ImportJson() {
     setSaveError(null)
     const done = { ...saved }
     try {
+      // Chương: tạo mới (nếu chọn) rồi dùng chung cho mọi phần của file
+      let chapterId = chapterChoice && chapterChoice !== 'new' ? chapterChoice : null
+      if (chapterChoice === 'new' && result.chapter?.title) {
+        chapterId = unwrap(await supabase.rpc('ensure_chapter', { p_title: result.chapter.title, p_section: result.chapter.section || null }))
+        setChapterChoice(chapterId)
+      }
       // Lưu bài giảng trước để bài tập liên kết được với bài giảng
       let lessonId = Object.entries(done).find(([i]) => result.drafts[i].kind === 'lesson')?.[1] || linkLessonId || null
       for (const { d, i } of chosen.filter((c) => c.d.kind === 'lesson')) {
         lessonId = unwrap(
           await supabase.rpc('save_lesson', {
-            p: { title: d.title, content_md: d.content_md, video_url: d.video_url || null, file_path: null, student_ids: studentIds },
+            p: { title: d.title, content_md: d.content_md, video_url: d.video_url || null, file_path: null, chapter_id: chapterId, student_ids: studentIds },
           })
         )
         done[i] = lessonId
@@ -108,6 +137,7 @@ export default function ImportJson() {
               type: d.type,
               due_date: opts[i].due_date || null,
               lesson_id: lessonId,
+              chapter_id: chapterId,
               exercises: d.exercises.map(toExercisePayload),
               student_ids: studentIds,
             },
@@ -119,6 +149,7 @@ export default function ImportJson() {
       setSaveError(`${errMsg(e)}. Những phần đã lưu được đánh dấu ✅; bấm lưu lại sẽ chỉ lưu phần còn thiếu.`)
     } finally {
       setSaving(false)
+      setReloadKey((k) => k + 1)
     }
   }
 
@@ -246,6 +277,17 @@ export default function ImportJson() {
 
           {!allSaved && (
             <div className="card">
+              <ChapterSelect
+                chapters={chapters}
+                value={chapterChoice}
+                onChange={setChapterChoice}
+                label="Xếp vào chương"
+                extraOptions={
+                  result.chapter?.title && !findChapterByTitle(chapters, result.chapter.title) ? (
+                    <option value="new">+ Tạo chương mới: {result.chapter.title}</option>
+                  ) : null
+                }
+              />
               {!fileHasLesson && (
                 <label className="field">
                   <span>Liên kết bài tập với bài giảng có sẵn (không bắt buộc)</span>

@@ -176,9 +176,10 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const warnings = []
   const drafts = []
 
-  // "part" (vd. "Ngày 1 - Bài giảng Dạng 1") giúp phân biệt các file cùng chủ đề trong danh sách
+  // Tên chương (topic) đã hiện ở nhóm/nhãn chương, nên tên bài chỉ cần "part"
+  // (vd. "Ngày 1 - Bài giảng Dạng 1"); không có part thì dùng topic
   const part = str(lesson.part)
-  const baseTitle = part ? `${topic} – ${part}` : topic
+  const baseTitle = part || topic
 
   if (hasTheory(lesson)) {
     drafts.push({ kind: 'lesson', title: baseTitle, content_md: buildLessonMd(lesson, warnings), video_url: str(lesson.video_url) })
@@ -212,7 +213,14 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   if (!converted.length && !drafts.length) warnings.push('File không có câu hỏi nào ("exercises"), nên không tạo bài tập.')
   if (!drafts.length) throw new Error('File không có nội dung để nhập.')
 
-  return { drafts, warnings, flags: arr(lesson.review_flags).map(str).filter(Boolean) }
+  return {
+    drafts,
+    warnings,
+    flags: arr(lesson.review_flags).map(str).filter(Boolean),
+    // Chương = topic (vd. Chủ đề 4), nhóm lớn = chapter (vd. Chuyên đề 2: Sóng)
+    chapter: { title: topic, section: str(lesson.chapter) },
+    dang: lesson.dang ?? null,
+  }
 }
 
 export const SAMPLE_TUTOR_LESSON = JSON.stringify(

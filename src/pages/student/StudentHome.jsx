@@ -15,7 +15,7 @@ export default function StudentHome() {
     const rows = unwrap(
       await supabase
         .from('assignment_recipients')
-        .select('status, assignment:assignments(id, title, type, due_date)')
+        .select('status, assignment:assignments(id, title, type, due_date, chapter:chapters(title))')
         .eq('student_id', profile.id)
         .eq('status', 'todo')
     )
@@ -40,6 +40,7 @@ export default function StudentHome() {
             <Link key={a.id} to={`/student/assignments/${a.id}`} className="list-item">
               <div className="list-item-title">{a.title}</div>
               <div className="row">
+                {a.chapter && <span className="badge badge-primary">{a.chapter.title}</span>}
                 <TypeBadge type={a.type} />
                 <DueBadge date={a.due_date} />
                 {a.due_date && <span className="muted small">Hạn: {formatDate(a.due_date)}</span>}

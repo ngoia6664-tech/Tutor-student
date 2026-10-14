@@ -78,6 +78,7 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
 | `/tutor` | gia sư | Danh sách học sinh |
 | `/tutor/assignments`, `/new`, `/:id`, `/:id/edit` | gia sư | Bài tập: danh sách, soạn, theo dõi/chấm, sửa |
 | `/tutor/lessons`, `/new`, `/:id`, `/:id/edit` | gia sư | Bài giảng |
+| `/tutor/chapters`, `/:id` | gia sư | Chương: danh sách theo chuyên đề, tạo/sửa/xóa, xem bài trong chương |
 | `/tutor/import` | gia sư | Dán JSON |
 | `/student` | học sinh | Bài cần làm |
 | `/student/assignments/:id` | học sinh | Làm và nộp bài |
@@ -256,7 +257,8 @@ App chuyển một file như vậy thành:
 
 | Trong file | Thành |
 |---|---|
-| `theory` + `method` của từng `problem_types` | **1 bài giảng**, tiêu đề = `topic – part` (có `part` thì dễ phân biệt các ngày). Đầu bài: dòng thông tin `subject · Lớp grade · chapter · part` và khung `plan`. **Mỗi mục `sections[]` là một thẻ riêng** gồm: `explain`, `paragraphs`, hình, rồi các tiêu đề nhỏ Hình dung dễ hiểu / Ý chính / Công thức / Ví dụ / Ghi nhớ / Lỗi hay gặp. Cuối bài: thẻ Tóm tắt 1 phút và thẻ Phương pháp giải từng dạng |
+| `theory` + `method` của từng `problem_types` | **1 bài giảng**, tiêu đề = `part` (không có `part` thì dùng `topic`). Đầu bài: dòng thông tin `subject · Lớp grade · chapter · part` và khung `plan`. **Mỗi mục `sections[]` là một thẻ riêng** gồm: `explain`, `paragraphs`, hình, rồi các tiêu đề nhỏ Hình dung dễ hiểu / Ý chính / Công thức / Ví dụ / Ghi nhớ / Lỗi hay gặp. Cuối bài: thẻ Tóm tắt 1 phút và thẻ Phương pháp giải từng dạng |
+| `topic` + `chapter` | **Chương** = `topic` (vd. "Chủ đề 4: Giao thoa sóng cơ"), nhóm lớn = `chapter` (vd. "Chuyên đề 2: Sóng"). Có chương trùng tên (không phân biệt hoa thường) thì dùng lại, chưa có thì đề xuất tạo mới; đổi được ở ô **Xếp vào chương**. File chỉ có bài tập thì app tự gợi ý liên kết với bài giảng cùng chương, ưu tiên cùng `dang` |
 | `sections[].paragraphs` | Các đoạn giảng dài, đặt ngay sau `explain` trong thẻ của mục |
 | `sections[].diagrams` (`src`, `caption`) | Hình minh họa có chú thích, đặt sau phần giảng. `src` là ảnh base64 (`data:image/svg+xml;base64,...`, png, jpg, webp, gif) hoặc link `https://`; loại khác bị bỏ qua và có cảnh báo. Hình SVG **đổi màu theo nút ☀/☾ của app** (không theo cài đặt máy) |
 | `theory.sections` rỗng (file chỉ có bài tập, vd. `type: "bai_tap_tren_lop"`, `"btvn"`) | **Không tạo bài giảng**, chỉ tạo bài tập. Ở bước lưu có ô **Liên kết với bài giảng có sẵn** (vd. gắn "Ngày 1 – Bài tập trên lớp" với "Ngày 1 – Bài giảng") |
@@ -272,6 +274,17 @@ Quy trình: **📂 Chọn file .json** (hoặc dán) → **Kiểm tra & xem trư
 Muốn sửa một phần trước khi lưu (hoặc gắn file PDF, video vào bài giảng), bấm **Sửa trong trang soạn** ở phần đó. Nếu lưu bị lỗi giữa chừng, phần đã lưu được đánh dấu ✅, và bấm lưu lại chỉ lưu những phần còn thiếu.
 
 Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọn học sinh → **Lưu**.
+
+---
+
+## 3b. Chương
+
+- Mỗi **chương** gom bài giảng và bài tập của cùng một nội dung. Các chương được xếp theo **chuyên đề** rồi theo **thứ tự** (sửa ở trang Chương).
+- Gia sư: menu **Chương** → xem số bài giảng / bài tập từng chương, tạo / sửa / xóa chương, mở một chương để xem các bài bên trong và tình hình nộp bài. Trong chương có nút **+ Bài giảng trong chương** / **+ Bài tập trong chương** (tự điền sẵn chương).
+- Trang **Bài tập** và **Bài giảng** gom theo chương, có ô lọc theo chương; bài chưa xếp chương nằm ở nhóm cuối. Trang soạn có ô **Chương**.
+- Xóa một chương **không xóa bài**; các bài chỉ chuyển sang "Chưa xếp chương".
+- Học sinh: trang Bài giảng gom theo chương; bài tập có nhãn tên chương. Học sinh chỉ thấy tên các chương có bài được giao cho mình.
+- Bài đã tạo trước khi có tính năng này nằm ở "Chưa xếp chương"; mở **Sửa** và chọn chương để xếp vào.
 
 ---
 

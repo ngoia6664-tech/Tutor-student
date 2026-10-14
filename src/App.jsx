@@ -13,6 +13,8 @@ const {
   StudentLessons,
   StudentLesson,
   TutorStudents,
+  TutorChapters,
+  ChapterDetail,
   TutorAssignments,
   AssignmentEditor,
   AssignmentTracking,
@@ -38,6 +40,8 @@ export default function App() {
         }
       >
         <Route index element={<TutorStudents />} />
+        <Route path="chapters" element={<TutorChapters />} />
+        <Route path="chapters/:id" element={<ChapterDetail />} />
         <Route path="assignments" element={<TutorAssignments />} />
         <Route path="assignments/new" element={<AssignmentEditor />} />
         <Route path="assignments/:id" element={<AssignmentTracking />} />

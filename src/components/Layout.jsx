@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle.jsx'
 const NAV = {
   tutor: [
     { to: '/tutor', label: 'Học sinh', end: true },
+    { to: '/tutor/chapters', label: 'Chương' },
     { to: '/tutor/assignments', label: 'Bài tập' },
     { to: '/tutor/lessons', label: 'Bài giảng' },
     { to: '/tutor/import', label: 'Dán JSON' },

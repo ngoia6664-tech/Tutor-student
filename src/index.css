@@ -510,6 +510,33 @@ a.list-item:active {
   }
 }
 
+/* Ô lọc theo chương (cạnh các nút lọc dạng viên thuốc) */
+select.chapter-filter {
+  width: auto;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 0.3rem 2rem 0.3rem 0.9rem;
+  font-size: 0.9rem;
+  border-color: var(--border-strong);
+}
+
+/* Tiêu đề nhóm (chuyên đề / chương) trong danh sách */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0.25rem 0 0.65rem;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-strong), transparent);
+}
+
 /* ===== Form ===== */
 .field {
   display: flex;
