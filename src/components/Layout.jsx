@@ -17,7 +17,7 @@ const NAV = {
   student: [
     { to: '/student', label: 'Bài cần làm', end: true },
     { to: '/student/results', label: 'Kết quả' },
-    { to: '/student/lessons', label: 'Bài giảng' },
+    { to: '/student/library', label: 'Thư viện' },
   ],
 }
 
@@ -26,7 +26,7 @@ export default function Layout() {
   const items = NAV[profile.role] || []
   const { pathname } = useLocation()
   // Trong Thư viện, đổi chương chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
-  const pageKey = pathname.startsWith('/tutor/library') ? '/tutor/library' : pathname
+  const pageKey = pathname.match(/^\/(tutor|student)\/library/)?.[0] ?? pathname
 
   useEffect(() => {
     prefetchPages(profile.role)

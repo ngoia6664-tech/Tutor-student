@@ -10,7 +10,7 @@ const {
   StudentHome,
   StudentAssignment,
   StudentResults,
-  StudentLessons,
+  StudentLibrary,
   StudentLesson,
   TutorStudents,
   Library,
@@ -74,7 +74,9 @@ export default function App() {
         <Route index element={<StudentHome />} />
         <Route path="assignments/:id" element={<StudentAssignment />} />
         <Route path="results" element={<StudentResults />} />
-        <Route path="lessons" element={<StudentLessons />} />
+        <Route path="library/:id?" element={<StudentLibrary />} />
+        {/* Trang "Bài giảng" cũ nay nằm trong Thư viện */}
+        <Route path="lessons" element={<Navigate to="/student/library" replace />} />
         <Route path="lessons/:id" element={<StudentLesson />} />
         <Route path="*" element={<NotFound />} />
       </Route>

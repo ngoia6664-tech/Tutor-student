@@ -83,7 +83,8 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
 | `/student` | học sinh | Bài cần làm |
 | `/student/assignments/:id` | học sinh | Làm và nộp bài |
 | `/student/results` | học sinh | Điểm và nhận xét |
-| `/student/lessons`, `/:id` | học sinh | Bài giảng |
+| `/student/library`, `/:id` | học sinh | Thư viện: cây Môn › Chuyên đề › Chương của lớp mình, bài giảng + bài tập từng chương |
+| `/student/lessons/:id` | học sinh | Xem một bài giảng (`/student/lessons` cũ tự chuyển sang Thư viện) |
 
 Học sinh gõ `/tutor/...` sẽ bị chuyển về `/student`. Gia sư gõ `/student/...` sẽ bị chuyển về `/tutor`.
 
@@ -280,14 +281,15 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 ## 3b. Chương
 
 - Mỗi **chương** gom bài giảng và bài tập của cùng một nội dung. Chương được xếp theo cây **Lớp › Môn › Chuyên đề › Chương**, trong chuyên đề thì theo **thứ tự**.
-- Gia sư: menu **Thư viện**. Bên trái là mục lục dạng cây: bấm mũi tên để mở/thu, bấm tên lớp / môn / chuyên đề để xem các chương bên trong, bấm tên chương để xem bài giảng, bài tập của chương ở bên phải. Cây nhớ nhánh nào đang mở, có ô **Tìm chương**. Trên điện thoại, mục lục gập thành nút **☰ Mục lục** ở đầu trang.
+- Gia sư: menu **Thư viện**. Đầu mục lục là **tab lớp** (Lớp 10, Lớp 11, Lớp 12…): mỗi lớp một cây riêng. Ô **+ Lớp** mở cây cho lớp mới chưa có chương (vd. Lớp 10), rồi bấm **+ Thêm chương** để tạo chương đầu tiên. Bên dưới là cây: bấm mũi tên để mở/thu, bấm tên môn / chuyên đề để xem các chương bên trong, bấm tên chương để xem bài giảng, bài tập của chương ở bên phải. Cây nhớ nhánh nào đang mở, có ô **Tìm chương**. Trên điện thoại, mục lục gập thành nút **☰ Mục lục** ở đầu trang.
 - Nút **Sửa lớp / Sửa môn / Sửa chuyên đề** (khi đang xem một nhóm) sửa **cả nhóm**: đổi lớp, tên môn, tên chuyên đề cho mọi chương bên trong (bài giữ nguyên). **+ Thêm chương** điền sẵn lớp, môn, chuyên đề đang xem.
 - Khi nhập file `tutor-lesson/v1`: lớp = `grade`, môn = `subject`, chuyên đề = `chapter`, chương = `topic`. Chương cùng tên trong cùng lớp + môn được dùng lại; chương cũ cùng tên chưa ghi lớp/môn thì được bổ sung lớp/môn. Tên chương chỉ cần không trùng trong cùng lớp + môn.
 - Chương tạo trước khi có cấp Lớp/Môn: lớp được đoán từ tên chuyên đề (vd. `L11_...`, `Lớp 12 ...`), môn để "Chưa rõ môn". Trong Thư viện, bấm "Chưa rõ môn" dưới lớp đó rồi bấm **Sửa môn** để điền môn cho cả nhóm một lần.
 - Mở một chương để xem các bài bên trong và tình hình nộp bài. Trong chương có nút **+ Bài giảng trong chương** / **+ Bài tập trong chương** (tự điền sẵn chương).
 - Trang **Bài tập** và **Bài giảng** gom theo chương, có ô lọc theo chương; bài chưa xếp chương nằm ở nhóm cuối. Trang soạn có ô **Chương**.
 - Xóa một chương **không xóa bài**; các bài chỉ chuyển sang "Chưa xếp chương".
-- Học sinh: trang Bài giảng gom theo chương; bài tập có nhãn tên chương. Học sinh chỉ thấy tên các chương có bài được giao cho mình.
+- Học sinh: menu **Thư viện** có cây giống gia sư nhưng **chỉ của lớp mình** (theo ô "Lớp" trong hồ sơ học sinh ở trang Học sinh) và chỉ gồm bài được giao. Bấm chương để xem bài giảng, bài tập (bài chưa làm lên trước, thanh tiến độ đã nộp). Số nhỏ cạnh tên chương là số bài chưa làm. Bài chưa xếp chương hoặc thuộc chương của lớp khác nằm ở mục **Bài khác**, để không bị sót. Học sinh chưa được ghi lớp thì thấy tất cả. Bài tập ở trang chủ vẫn có nhãn tên chương.
+- Ô "Lớp" của học sinh nay chọn được Lớp 6–12 (trước chỉ 11, 12); cần chạy lại `schema.sql` để cơ sở dữ liệu nhận lớp mới.
 - Bài đã tạo trước khi có tính năng này nằm ở "Chưa xếp chương"; mở **Sửa** và chọn chương để xếp vào.
 
 ---

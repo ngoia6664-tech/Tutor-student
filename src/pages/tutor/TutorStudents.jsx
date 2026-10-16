@@ -171,8 +171,11 @@ function EditStudent({ student, onCancel, onSaved }) {
           <span>Lớp</span>
           <select value={form.grade} onChange={set('grade')}>
             <option value="">— chưa có —</option>
-            <option value="11">Lớp 11</option>
-            <option value="12">Lớp 12</option>
+            {[6, 7, 8, 9, 10, 11, 12].map((g) => (
+              <option key={g} value={g}>
+                Lớp {g}
+              </option>
+            ))}
           </select>
         </label>
       </div>

@@ -21,14 +21,14 @@ export default function StudentLesson() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/student/lessons">← Danh sách bài giảng</Link>
+        <Link to="/student/library">← Thư viện</Link>
       </div>
     )
 
   return (
     <div>
-      <Link to="/student/lessons" className="small">
-        ← Danh sách bài giảng
+      <Link to={data.lesson.chapter_id ? `/student/library/${data.lesson.chapter_id}` : '/student/library'} className="small">
+        ← Thư viện
       </Link>
       <div style={{ marginTop: '0.5rem' }}>
         <LessonView lesson={data.lesson} />

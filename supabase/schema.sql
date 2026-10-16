@@ -111,6 +111,10 @@ create table if not exists public.chapters (
   created_at  timestamptz not null default now()
 );
 
+-- ---- Nâng cấp: học sinh lớp bất kỳ (trước chỉ 11, 12), để mở thêm lớp 10... ----
+alter table public.profiles drop constraint if exists profiles_grade_check;
+alter table public.profiles add constraint profiles_grade_check check (grade between 1 and 12);
+
 -- ---- Nâng cấp: Lớp › Môn › Chuyên đề › Chương ----
 -- grade: lớp (1–12), subject: môn (vd. "Vật lý"). Để trống = "Chưa rõ lớp/môn".
 alter table public.chapters add column if not exists grade   int;
