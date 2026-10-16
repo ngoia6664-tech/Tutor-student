@@ -20,6 +20,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { ChapterForm, GroupForm } from '../../components/ChapterForms.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
 import ChapterDetail from './ChapterDetail.jsx'
+import Icon from '../../components/Icon.jsx'
 
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
 const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
@@ -397,7 +398,9 @@ function Overview({ tree }) {
   return (
     <div>
       <div className="page-head">
-        <h1>Thư viện</h1>
+        <h1>
+          <span className="title-icon"><Icon name="library" /></span>Thư viện
+        </h1>
       </div>
       <p className="muted">
         Mỗi lớp có một cây <b>Môn › Chuyên đề › Chương</b> riêng, chọn lớp bằng tab ở đầu mục lục. Học sinh chỉ thấy cây của lớp mình (theo "Lớp" trong hồ sơ

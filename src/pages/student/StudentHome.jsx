@@ -42,6 +42,7 @@ export default function StudentHome() {
     <div className="library">
       <FilterTree
         title="Bài cần làm"
+        icon="todo"
         chapters={chapters}
         items={data?.list || []}
         badgeIf={() => true}
@@ -62,7 +63,7 @@ export default function StudentHome() {
         <ErrorBox message={error} onRetry={reload} />
 
         {!loading && !error && rows.length === 0 && (
-          <div className="empty">{where ? 'Mục này không còn bài cần làm.' : '🎉 Bạn đã làm hết bài được giao.'}</div>
+          <div className={where ? 'empty' : 'empty empty-done'}>{where ? 'Mục này không còn bài cần làm.' : 'Bạn đã làm hết bài được giao.'}</div>
         )}
 
         {!loading && !error && rows.length > 0 && (

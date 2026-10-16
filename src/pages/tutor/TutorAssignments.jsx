@@ -11,6 +11,7 @@ import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
+import Icon from '../../components/Icon.jsx'
 
 export default function TutorAssignments() {
   const [filter, setFilter] = useState('all')
@@ -58,6 +59,7 @@ export default function TutorAssignments() {
     <div className="library">
       <FilterTree
         title="Bài tập"
+        icon="assignment"
         chapters={chapters}
         items={data?.list || []}
         badgeIf={(a) => a.counts.done > 0}
@@ -67,7 +69,9 @@ export default function TutorAssignments() {
       <section className="library-main">
         <div className="page-head">
           <div>
-            <h1>Bài tập</h1>
+            <h1>
+              <span className="title-icon"><Icon name="assignment" /></span>Bài tập
+            </h1>
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">

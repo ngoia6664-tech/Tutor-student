@@ -5,21 +5,22 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
+import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 
 const NAV = {
   tutor: [
-    { to: '/tutor', label: 'Học sinh', end: true },
-    { to: '/tutor/library', label: 'Thư viện' },
-    { to: '/tutor/assignments', label: 'Bài tập' },
-    { to: '/tutor/lessons', label: 'Bài giảng' },
-    { to: '/tutor/import', label: 'Dán JSON' },
+    { to: '/tutor', label: 'Học sinh', icon: 'users', end: true },
+    { to: '/tutor/library', label: 'Thư viện', icon: 'library' },
+    { to: '/tutor/assignments', label: 'Bài tập', icon: 'assignment' },
+    { to: '/tutor/lessons', label: 'Bài giảng', icon: 'lesson' },
+    { to: '/tutor/import', label: 'Dán JSON', icon: 'import' },
   ],
   student: [
-    { to: '/student', label: 'Bài cần làm', end: true },
-    { to: '/student/results', label: 'Kết quả' },
-    { to: '/student/library', label: 'Thư viện' },
+    { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
+    { to: '/student/results', label: 'Kết quả', icon: 'results' },
+    { to: '/student/library', label: 'Thư viện', icon: 'library' },
   ],
 }
 
@@ -59,7 +60,8 @@ export default function Layout() {
         <nav className="nav">
           {items.map((it) => (
             <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              {it.label}
+              <Icon name={it.icon} size={17} />
+              <span>{it.label}</span>
             </NavLink>
           ))}
         </nav>

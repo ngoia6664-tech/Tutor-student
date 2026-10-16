@@ -10,6 +10,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
+import Icon from '../../components/Icon.jsx'
 
 // Bài giảng (gia sư): cây Lớp › Môn › Chuyên đề › Chương bên trái để lọc, danh sách bên phải
 export default function TutorLessons() {
@@ -76,11 +77,13 @@ export default function TutorLessons() {
 
   return (
     <div className="library">
-      <FilterTree title="Bài giảng" chapters={chapters} items={data?.list || []} gradeTabs storageKey="lessons-tree-open" />
+      <FilterTree title="Bài giảng" icon="lesson" chapters={chapters} items={data?.list || []} gradeTabs storageKey="lessons-tree-open" />
       <section className="library-main">
         <div className="page-head">
           <div>
-            <h1>Bài giảng</h1>
+            <h1>
+              <span className="title-icon"><Icon name="lesson" /></span>Bài giảng
+            </h1>
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">

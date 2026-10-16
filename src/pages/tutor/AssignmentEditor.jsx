@@ -12,6 +12,7 @@ import StudentPicker from '../../components/StudentPicker.jsx'
 import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
+import Icon from '../../components/Icon.jsx'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
 const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
@@ -205,7 +206,9 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
   return (
     <form onSubmit={save}>
       <div className="page-head">
-        <h1>{isEdit ? 'Sửa bài tập' : 'Soạn bài tập'}</h1>
+        <h1>
+          <span className="title-icon"><Icon name="assignment" /></span>{isEdit ? 'Sửa bài tập' : 'Soạn bài tập'}
+        </h1>
         <Link to="/tutor/assignments">← Danh sách</Link>
       </div>
 

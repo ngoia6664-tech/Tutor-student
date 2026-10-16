@@ -5,6 +5,7 @@ import { errMsg } from '../../lib/errors.js'
 import { fetchStudents, GROUPS } from '../../lib/students.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
+import Icon from '../../components/Icon.jsx'
 
 export default function TutorStudents() {
   const [group, setGroup] = useState('all')
@@ -30,7 +31,8 @@ export default function TutorStudents() {
   return (
     <div>
       <div className="page-head">
-        <h1>Học sinh {data && <span className="muted small">({students.length})</span>}</h1>
+        <h1>
+          <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}</h1>
       </div>
 
       <div className="chips" style={{ marginBottom: '1rem' }}>

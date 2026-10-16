@@ -10,6 +10,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
+import Icon from '../../components/Icon.jsx'
 
 const OTHER = 'khac' // mục "Bài khác": bài chưa xếp chương hoặc thuộc lớp khác
 const url = (id) => (id ? `/student/library/${id}` : '/student/library')
@@ -226,7 +227,8 @@ function Overview({ chapters, itemsOf, myGrade, hasOther }) {
   return (
     <div>
       <div className="page-head">
-        <h1>Thư viện {myGrade ? gradeLabel(myGrade) : ''}</h1>
+        <h1>
+          <span className="title-icon"><Icon name="library" /></span>Thư viện {myGrade ? gradeLabel(myGrade) : ''}</h1>
       </div>
       <p className="muted">
         {total > 0 ? (

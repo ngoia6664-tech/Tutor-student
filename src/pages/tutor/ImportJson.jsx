@@ -15,6 +15,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import VideoEmbed from '../../components/VideoEmbed.jsx'
 import StudentPicker from '../../components/StudentPicker.jsx'
+import Icon from '../../components/Icon.jsx'
 
 // Dán JSON hoặc chọn file .json → kiểm tra → xem trước → chọn học sinh → lưu
 export default function ImportJson() {
@@ -165,7 +166,9 @@ export default function ImportJson() {
   return (
     <div>
       <div className="page-head">
-        <h1>Dán JSON</h1>
+        <h1>
+          <span className="title-icon"><Icon name="import" /></span>Dán JSON
+        </h1>
       </div>
 
       <div className="card">

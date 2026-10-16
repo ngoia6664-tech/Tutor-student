@@ -8,6 +8,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
+import Icon from '../../components/Icon.jsx'
 
 // Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chương
 export default function StudentResults() {
@@ -38,11 +39,13 @@ export default function StudentResults() {
 
   return (
     <div className="library">
-      <FilterTree title="Kết quả" chapters={chapters} items={data?.list || []} hideEmpty noneLabel="Bài khác" storageKey="results-tree-open" />
+      <FilterTree title="Kết quả" icon="results" chapters={chapters} items={data?.list || []} hideEmpty noneLabel="Bài khác" storageKey="results-tree-open" />
       <section className="library-main">
         <div className="page-head">
           <div>
-            <h1>Kết quả</h1>
+            <h1>
+              <span className="title-icon"><Icon name="results" /></span>Kết quả
+            </h1>
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           {avg !== null && (

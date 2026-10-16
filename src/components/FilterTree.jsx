@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { buildTree, gradeFromKey, gradeLabel, keyOf, sectionLabel, subjectLabel } from '../lib/chapters.js'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from './TreeNav.jsx'
+import Icon from './Icon.jsx'
 
 // ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › Chuyên đề › Chương -----
 // Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&cd=Chuyên đề 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
@@ -65,7 +66,7 @@ function makeUrl(pathname, { lop, mon, cd, ch }) {
  * - badgeIf: bài nào hiện thành số vàng cạnh chương (vd. bài chưa làm, bài chờ chấm)
  * - showCount: hiện số bài (xám) cạnh mỗi chương
  */
-export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chương', storageKey }) {
+export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chương', storageKey }) {
   const { pathname } = useLocation()
   const sel = useTreeSelection()
   const { open, toggle, ensure } = useOpenNodes(storageKey)
@@ -149,7 +150,14 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
   return (
     <TreeSide shown={shown} onToggleShown={() => setShown((v) => !v)} where={where}>
       <div className="tree-head">
-        <span className="tree-title">{title}</span>
+        <span className="tree-title">
+          {icon && (
+            <span className="title-icon">
+              <Icon name={icon} size={16} />
+            </span>
+          )}
+          {title}
+        </span>
       </div>
       {gradeTabs && tabs.length > 0 && (
         <div className="grade-tabs" role="tablist" aria-label="Chọn lớp">

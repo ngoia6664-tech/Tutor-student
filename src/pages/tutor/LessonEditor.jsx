@@ -13,6 +13,7 @@ import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import { packImages, unpackImages } from '../../lib/svg.js'
 import StudentPicker from '../../components/StudentPicker.jsx'
+import Icon from '../../components/Icon.jsx'
 
 const MAX_FILE_MB = 50
 
@@ -144,7 +145,9 @@ function LessonForm({ initial, fromImport }) {
   return (
     <form onSubmit={save}>
       <div className="page-head">
-        <h1>{isEdit ? 'Sửa bài giảng' : 'Soạn bài giảng'}</h1>
+        <h1>
+          <span className="title-icon"><Icon name="lesson" /></span>{isEdit ? 'Sửa bài giảng' : 'Soạn bài giảng'}
+        </h1>
         <Link to="/tutor/lessons">← Danh sách</Link>
       </div>
 
