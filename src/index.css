@@ -31,6 +31,8 @@
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
   --focus: rgba(192, 132, 252, 0.6);
   --skeleton: rgba(255, 255, 255, 0.06);
+  --topbar-bg: rgba(12, 10, 29, 0.96); /* trình duyệt không làm mờ nền được: gần như đặc */
+  --topbar-glass: rgba(12, 10, 29, 0.72);
 }
 
 :root[data-theme='light'] {
@@ -61,6 +63,8 @@
   --shadow: 0 10px 30px -14px rgba(60, 30, 120, 0.25);
   --focus: rgba(124, 58, 237, 0.45);
   --skeleton: rgba(60, 30, 120, 0.07);
+  --topbar-bg: rgba(245, 243, 255, 0.97);
+  --topbar-glass: rgba(245, 243, 255, 0.72);
 }
 
 :root {
@@ -152,13 +156,19 @@ code {
 
 /* ===== Khung trang ===== */
 .topbar {
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
+  background: var(--topbar-bg);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
+}
+/* Chỉ làm nền trong mờ khi trình duyệt hỗ trợ làm mờ phía sau */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar {
+    background: var(--topbar-glass);
+  }
 }
 .topbar-inner {
   max-width: 980px;
@@ -296,8 +306,8 @@ code {
   padding: 1.05rem 1.2rem;
   margin-bottom: 1rem;
   box-shadow: var(--shadow);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 .list {
   display: flex;
@@ -643,14 +653,17 @@ input[type='radio'] {
 }
 .alert-error {
   background: var(--danger-soft);
+  border-color: var(--danger-soft);
   border-color: color-mix(in srgb, var(--danger) 35%, transparent);
 }
 .alert-ok {
   background: var(--ok-soft);
+  border-color: var(--ok-soft);
   border-color: color-mix(in srgb, var(--ok) 35%, transparent);
 }
 .alert-info {
   background: var(--primary-soft);
+  border-color: var(--primary-soft);
   border-color: color-mix(in srgb, var(--primary) 30%, transparent);
 }
 .alert-actions {
@@ -842,6 +855,7 @@ h2 + .question {
 }
 .answer-box {
   background: var(--ok-soft);
+  border: 1px solid var(--ok-soft);
   border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
 }
 .method-box,
