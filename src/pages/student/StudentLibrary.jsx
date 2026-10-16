@@ -5,6 +5,7 @@ import { useAsync } from '../../lib/useAsync.js'
 import { compareDue, formatDate } from '../../lib/format.js'
 import { buildTree, gradeLabel, keyOf, sectionLabel, sortChapters, subjectLabel } from '../../lib/chapters.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
+import { useNotifications } from '../../contexts/NotificationsContext.jsx'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
@@ -30,18 +31,18 @@ export default function StudentLibrary() {
     const [lessonRows, assignmentRows, chapters] = await Promise.all([
       supabase
         .from('lesson_recipients')
-        .select('lesson:lessons(id, title, created_at, chapter_id, file_path, video_url)')
+        .select('assigned_at, lesson:lessons(id, title, created_at, chapter_id, file_path, video_url)')
         .eq('student_id', profile.id)
         .then(unwrap),
       supabase
         .from('assignment_recipients')
-        .select('status, score, submitted_at, assignment:assignments(id, title, type, due_date, chapter_id)')
+        .select('status, score, submitted_at, assigned_at, assignment:assignments(id, title, type, due_date, chapter_id)')
         .eq('student_id', profile.id)
         .then(unwrap),
       // RLS: học sinh chỉ đọc được các chương có bài được giao cho mình
       supabase.from('chapters').select('id, title, section, grade, subject, sort_order').then(unwrap),
     ])
-    const lessons = lessonRows.map((r) => r.lesson).filter(Boolean).sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
+    const lessons = lessonRows.filter((r) => r.lesson).map((r) => ({ ...r.lesson, assigned_at: r.assigned_at })).sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
     const assignments = assignmentRows.filter((r) => r.assignment)
     // Cây chỉ gồm chương của lớp mình (chương chưa ghi lớp cũng hiện). Chưa ghi lớp cho học sinh → hiện hết.
     const mine = sortChapters(chapters.filter((c) => myGrade === null || c.grade === null || c.grade === myGrade))
@@ -138,6 +139,7 @@ function Progress({ done, total }) {
 
 // Một chương: bài giảng + bài tập (bài chưa làm lên trước)
 function ChapterView({ chapter, items }) {
+  const { isNew } = useNotifications()
   const { lessons, assignments } = items
   const done = assignments.filter((r) => r.status !== 'todo').length
   return (
@@ -170,7 +172,9 @@ function ChapterView({ chapter, items }) {
         <div className="list" style={{ marginBottom: '1.25rem' }}>
           {lessons.map((l) => (
             <Link key={l.id} to={`/student/lessons/${l.id}`} className="list-item">
-              <div className="list-item-title">📘 {l.title}</div>
+              <div className="list-item-title">
+                📘 {l.title} {isNew(l.assigned_at) && <span className="badge badge-new">Mới</span>}
+              </div>
               <div className="row small">
                 {l.file_path && <span className="badge">📎 File</span>}
                 {l.video_url && <span className="badge">▶️ Video</span>}
@@ -190,7 +194,9 @@ function ChapterView({ chapter, items }) {
             const a = r.assignment
             return (
               <Link key={a.id} to={`/student/assignments/${a.id}`} className="list-item">
-                <div className="list-item-title">✏️ {a.title}</div>
+                <div className="list-item-title">
+                  ✏️ {a.title} {isNew(r.assigned_at) && <span className="badge badge-new">Mới</span>}
+                </div>
                 <div className="row small">
                   <StatusBadge status={r.status} />
                   <TypeBadge type={a.type} />

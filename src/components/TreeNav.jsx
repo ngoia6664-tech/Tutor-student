@@ -95,14 +95,28 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, chi
   )
 }
 
-// Lá của cây: một chương (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm)
-export function TreeLeaf({ to, label, badge }) {
+// Lá của cây: một chương (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
+// active: truyền vào khi lá phân biệt bằng ?tham số (NavLink chỉ so đường dẫn)
+export function TreeLeaf({ to, label, badge, count, active, dim }) {
+  const body = (
+    <>
+      <span className="tree-leaf-text">{label}</span>
+      {badge ? <span className="tree-leaf-badge">{badge}</span> : null}
+      {count !== undefined && <span className="tree-count">{count}</span>}
+    </>
+  )
+  const cls = (on) => ['tree-leaf', on && 'active', dim && 'dim'].filter(Boolean).join(' ')
   return (
     <li role="treeitem">
-      <NavLink to={to} end className={({ isActive }) => (isActive ? 'tree-leaf active' : 'tree-leaf')} title={label}>
-        <span className="tree-leaf-text">{label}</span>
-        {badge ? <span className="tree-leaf-badge">{badge}</span> : null}
-      </NavLink>
+      {active === undefined ? (
+        <NavLink to={to} end className={({ isActive }) => cls(isActive)} title={label}>
+          {body}
+        </NavLink>
+      ) : (
+        <Link to={to} className={cls(active)} title={label} aria-current={active ? 'page' : undefined}>
+          {body}
+        </Link>
+      )}
     </li>
   )
 }

@@ -24,6 +24,15 @@ export function sortChapters(list) {
   )
 }
 
+// Học sinh: các chương thuộc lớp của mình (RLS chỉ trả chương có bài được giao).
+// Chương chưa ghi lớp cũng tính; học sinh chưa ghi lớp thì lấy hết.
+// Đặt grade = lớp của học sinh để cây gom về một lớp, bắt đầu từ Môn.
+export async function fetchStudentChapters(myGrade) {
+  const rows = unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order'))
+  const mine = rows.filter((c) => myGrade == null || c.grade == null || c.grade === myGrade)
+  return sortChapters(myGrade == null ? mine : mine.map((c) => ({ ...c, grade: myGrade })))
+}
+
 export async function fetchChapters() {
   return sortChapters(unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, created_at')))
 }

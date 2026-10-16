@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
+import NotificationBell from './NotificationBell.jsx'
+import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 
 const NAV = {
   tutor: [
@@ -36,7 +38,7 @@ export default function Layout() {
     window.scrollTo({ top: 0 })
   }, [pathname])
 
-  return (
+  const content = (
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
@@ -47,6 +49,7 @@ export default function Layout() {
             <span className="user-name" title={profile.full_name}>
               {profile.full_name || 'Tài khoản'}
             </span>
+            <NotificationBell />
             <ThemeToggle />
             <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
               Đăng xuất
@@ -73,4 +76,6 @@ export default function Layout() {
       </main>
     </div>
   )
+  // Học sinh: thông báo bài mới (chuông + thông báo nổi)
+  return profile.role === 'student' ? <NotificationsProvider>{content}</NotificationsProvider> : content
 }

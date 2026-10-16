@@ -8,12 +8,13 @@ import { deleteAssignment } from '../../lib/assignments.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
-import ChapterGroups, { ChapterFilter, filterByChapter } from '../../components/ChapterGroups.jsx'
+import ChapterGroups from '../../components/ChapterGroups.jsx'
+import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 
 export default function TutorAssignments() {
   const [filter, setFilter] = useState('all')
-  const [chapterFilter, setChapterFilter] = useState('all')
+  const sel = useTreeSelection()
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
@@ -49,75 +50,88 @@ export default function TutorAssignments() {
   }
 
   const chapters = data?.chapters || []
-  const rows = filterByChapter(data?.list || [], chapterFilter).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
+  const chapterById = new Map(chapters.map((c) => [c.id, c]))
+  const rows = (data?.list || []).filter((a) => matchItem(a, chapterById, sel)).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
+  const where = selectionLabel(sel, chapterById, 'Chưa xếp chương')
 
   return (
-    <div>
-      <div className="page-head">
-        <h1>Bài tập</h1>
-        <div className="row">
-          <Link className="btn" to="/tutor/import">
-            Dán JSON
-          </Link>
-          <Link className="btn btn-primary" to="/tutor/assignments/new">
-            + Soạn bài tập
-          </Link>
+    <div className="library">
+      <FilterTree
+        title="Bài tập"
+        chapters={chapters}
+        items={data?.list || []}
+        badgeIf={(a) => a.counts.done > 0}
+        gradeTabs
+        storageKey="assignments-tree-open"
+      />
+      <section className="library-main">
+        <div className="page-head">
+          <div>
+            <h1>Bài tập</h1>
+            {where && <p className="muted small page-sub">{where}</p>}
+          </div>
+          <div className="row">
+            <Link className="btn" to="/tutor/import">
+              Dán JSON
+            </Link>
+            <Link className="btn btn-primary" to="/tutor/assignments/new" state={sel.ch && sel.ch !== 'none' ? { chapterId: sel.ch } : undefined}>
+              + Soạn bài tập
+            </Link>
+          </div>
         </div>
-      </div>
 
-      <div className="chips" style={{ marginBottom: '1rem' }}>
-        <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
-          Tất cả
-        </button>
-        <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
-          Có bài chờ chấm
-        </button>
-        <ChapterFilter chapters={chapters} value={chapterFilter} onChange={setChapterFilter} />
-      </div>
+        <div className="chips" style={{ marginBottom: '1rem' }}>
+          <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
+            Tất cả
+          </button>
+          <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
+            Có bài chờ chấm
+          </button>
+        </div>
 
-      <ErrorBox message={actionError} />
-      {loading && <Loading />}
-      <ErrorBox message={error} onRetry={reload} />
+        <ErrorBox message={actionError} />
+        {loading && <Loading />}
+        <ErrorBox message={error} onRetry={reload} />
 
-      {!loading && !error && rows.length === 0 && (
-        <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : chapterFilter !== 'all' ? 'Chương này chưa có bài tập.' : 'Chưa có bài tập nào.'}</div>
-      )}
+        {!loading && !error && rows.length === 0 && (
+          <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : where ? 'Mục này chưa có bài tập.' : 'Chưa có bài tập nào.'}</div>
+        )}
 
-      {!loading && !error && rows.length > 0 && (
-        <ChapterGroups
-          items={rows}
-          chapters={chapters}
-          renderItem={(a) => (
-            <div key={a.id} className="list-item">
-              <Link to={`/tutor/assignments/${a.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
-                {a.title}
-              </Link>
-              <div className="row" style={{ marginBottom: '0.5rem' }}>
-                <TypeBadge type={a.type} />
-                <DueBadge date={a.due_date} />
-                <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
-              </div>
-              <div className="row small" style={{ marginBottom: '0.5rem' }}>
-                <span>{a.total} học sinh:</span>
-                <span className="badge badge-warn">{a.counts.todo} chưa nộp</span>
-                <span className="badge badge-primary">{a.counts.done} chờ chấm</span>
-                <span className="badge badge-ok">{a.counts.checked} đã chấm</span>
-              </div>
-              <div className="row">
-                <Link className="btn btn-small btn-primary" to={`/tutor/assignments/${a.id}`}>
-                  Theo dõi & chấm
-                </Link>
-                <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
-                  Sửa
-                </Link>
-                <button type="button" className="btn btn-small btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
-                  {deleting === a.id ? 'Đang xóa...' : 'Xóa'}
-                </button>
-              </div>
-            </div>
-          )}
-        />
-      )}
+        {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderAssignment)}</div>}
+        {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderAssignment} />}
+      </section>
     </div>
   )
+
+  function renderAssignment(a) {
+    return (
+      <div key={a.id} className="list-item">
+        <Link to={`/tutor/assignments/${a.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
+          {a.title}
+        </Link>
+        <div className="row" style={{ marginBottom: '0.5rem' }}>
+          <TypeBadge type={a.type} />
+          <DueBadge date={a.due_date} />
+          <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
+        </div>
+        <div className="row small" style={{ marginBottom: '0.5rem' }}>
+          <span>{a.total} học sinh:</span>
+          <span className="badge badge-warn">{a.counts.todo} chưa nộp</span>
+          <span className="badge badge-primary">{a.counts.done} chờ chấm</span>
+          <span className="badge badge-ok">{a.counts.checked} đã chấm</span>
+        </div>
+        <div className="row">
+          <Link className="btn btn-small btn-primary" to={`/tutor/assignments/${a.id}`}>
+            Theo dõi & chấm
+          </Link>
+          <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
+            Sửa
+          </Link>
+          <button type="button" className="btn btn-small btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
+            {deleting === a.id ? 'Đang xóa...' : 'Xóa'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 }

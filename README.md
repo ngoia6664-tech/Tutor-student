@@ -292,6 +292,17 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 - Ô "Lớp" của học sinh nay chọn được Lớp 6–12 (trước chỉ 11, 12); cần chạy lại `schema.sql` để cơ sở dữ liệu nhận lớp mới.
 - Bài đã tạo trước khi có tính năng này nằm ở "Chưa xếp chương"; mở **Sửa** và chọn chương để xếp vào.
 
+- Trang **Bài tập** và **Bài giảng** (gia sư) cũng có cây bên trái: tab **Tất cả / Lớp 11 / Lớp 12…**, bấm môn / chuyên đề / chương để lọc danh sách. Số xám = số bài, số vàng (Bài tập) = số bài đang có bài nộp chờ chấm. Đang chọn một chương thì **+ Soạn bài tập / + Soạn bài giảng** điền sẵn chương đó.
+- Trang **Bài cần làm** và **Kết quả** (học sinh) có cây của lớp mình để lọc; số vàng = số bài chưa làm. Trang Kết quả hiện **điểm trung bình** các bài đã chấm trong mục đang xem.
+
+## 3c. Thông báo bài mới (học sinh)
+
+- Thanh trên cùng có **chuông**: số trên chuông = số bài giảng / bài tập được giao sau lần cuối học sinh mở chuông. Bấm chuông để xem danh sách bài giao trong 14 ngày gần đây (bài mới được tô), bấm một bài để mở. Mở chuông là tính "đã xem".
+- Mở app khi còn bài mới → hiện thông báo nổi "Bạn có N bài mới được giao". Đang mở app mà gia sư giao thêm bài → sau tối đa 1 phút (hoặc ngay khi quay lại tab) hiện thông báo nổi tên bài, có nút **Xem**.
+- Bài mới có nhãn **Mới** trong Bài cần làm và Thư viện.
+- Trong bảng thông báo có nút **Báo cả khi đang mở tab khác**: cho phép trình duyệt hiện thông báo hệ thống khi tab app đang mở nhưng ở nền. Thông báo khi đã **đóng hẳn** app (push) cần thêm máy chủ gửi push và service worker, chưa làm.
+- "Đã xem" lưu trên máy chủ (`profiles.notif_seen_at`, đổi qua hàm `mark_notifications_seen()`), nên điện thoại và máy tính dùng chung. Thời điểm giao bài lưu ở cột `assigned_at` của `lesson_recipients` / `assignment_recipients`; bài giao trước bản cập nhật lấy theo ngày tạo bài. Cần chạy lại `schema.sql`.
+
 ---
 
 ## 4. Bảo mật: đáp án được giấu thế nào

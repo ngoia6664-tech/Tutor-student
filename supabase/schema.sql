@@ -135,6 +135,21 @@ update public.chapters
 
 alter table public.lessons     add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
 alter table public.assignments add column if not exists chapter_id uuid references public.chapters (id) on delete set null;
+-- ---- Nâng cấp: thông báo bài mới cho học sinh ----
+-- assigned_at: lúc bài được giao cho học sinh đó (bài giao trước đây lấy theo ngày tạo bài)
+alter table public.lesson_recipients     add column if not exists assigned_at timestamptz;
+alter table public.assignment_recipients add column if not exists assigned_at timestamptz;
+update public.lesson_recipients lr set assigned_at = l.created_at
+  from public.lessons l where l.id = lr.lesson_id and lr.assigned_at is null;
+update public.assignment_recipients ar set assigned_at = a.created_at
+  from public.assignments a where a.id = ar.assignment_id and ar.assigned_at is null;
+alter table public.lesson_recipients     alter column assigned_at set default now();
+alter table public.assignment_recipients alter column assigned_at set default now();
+alter table public.lesson_recipients     alter column assigned_at set not null;
+alter table public.assignment_recipients alter column assigned_at set not null;
+-- notif_seen_at: lần cuối học sinh mở chuông thông báo (đổi qua hàm mark_notifications_seen)
+alter table public.profiles add column if not exists notif_seen_at timestamptz;
+
 create index if not exists lessons_chapter_idx     on public.lessons (chapter_id);
 create index if not exists assignments_chapter_idx on public.assignments (chapter_id);
 create index if not exists lesson_recipients_student_idx     on public.lesson_recipients (student_id);
@@ -718,6 +733,21 @@ $$;
 
 revoke all on function public.submit_assignment(uuid, jsonb) from public;
 grant execute on function public.submit_assignment(uuid, jsonb) to authenticated;
+
+-- ---------- Thông báo ----------
+-- Học sinh không có quyền sửa bảng profiles, nên đánh dấu "đã xem thông báo" đi qua hàm này
+-- (chỉ đổi notif_seen_at của chính mình).
+create or replace function public.mark_notifications_seen()
+returns timestamptz
+language sql
+security definer
+set search_path = public
+as $$
+  update profiles set notif_seen_at = now() where id = auth.uid() returning notif_seen_at;
+$$;
+
+revoke all on function public.mark_notifications_seen() from public;
+grant execute on function public.mark_notifications_seen() to authenticated;
 
 
 -- =====================================================================
