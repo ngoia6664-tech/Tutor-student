@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { useNotifications } from '../contexts/NotificationsContext.jsx'
 import { formatDate } from '../lib/format.js'
+import Icon from './Icon.jsx'
 
 // "5 phút trước", "3 giờ trước", "Hôm qua", hoặc ngày
 function timeAgo(at) {
@@ -128,7 +129,8 @@ export default function NotificationBell() {
           )}
           {perm === 'default' && (
             <button type="button" className="btn btn-small btn-ghost bell-perm" onClick={askPermission}>
-              🔔 Báo cả khi đang mở tab khác
+              <Icon name="bell" />
+              Báo cả khi đang mở tab khác
             </button>
           )}
         </div>,

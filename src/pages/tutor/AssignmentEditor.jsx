@@ -277,7 +277,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
             </div>
             <div className="row">
               <button type="button" className="btn btn-small" onClick={() => moveEx(i, -1)} disabled={i === 0} aria-label="Lên">
-                ↑
+                <Icon name="up" />
               </button>
               <button
                 type="button"
@@ -286,9 +286,10 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
                 disabled={i === form.exercises.length - 1}
                 aria-label="Xuống"
               >
-                ↓
+                <Icon name="down" />
               </button>
               <button type="button" className="btn btn-small btn-danger" onClick={() => removeEx(i)} disabled={form.exercises.length === 1}>
+                <Icon name="trash" />
                 Xóa câu
               </button>
             </div>
@@ -305,7 +306,8 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         </div>
       ))}
       <button type="button" className="btn" onClick={() => set('exercises', [...form.exercises, toFormExercise({})])}>
-        + Thêm câu hỏi
+        <Icon name="plus" />
+        Thêm câu hỏi
       </button>
 
       <div className="card" style={{ marginTop: '1rem' }}>
@@ -316,6 +318,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
       <div className="sticky-actions">
         <ErrorBox message={error} />
         <button type="submit" className="btn btn-primary btn-big" disabled={saving}>
+          <Icon name="save" />
           {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Lưu và giao bài'}
         </button>
       </div>
@@ -346,13 +349,14 @@ function McqEditor({ ex, index, onChange }) {
           <span className="choice-label">{letter(j)}</span>
           <input type="text" value={o.text} onChange={(e) => setText(j, e.target.value)} placeholder={`Nội dung phương án ${letter(j)}`} />
           <button type="button" className="btn btn-small btn-ghost" onClick={() => remove(j)} disabled={ex.mcq.length <= 2} aria-label="Xóa phương án">
-            ×
+            <Icon name="trash" />
           </button>
         </div>
       ))}
       {ex.mcq.length < 8 && (
         <button type="button" className="btn btn-small" style={{ alignSelf: 'flex-start' }} onClick={() => onChange({ mcq: [...ex.mcq, { text: '' }] })}>
-          + Thêm phương án
+          <Icon name="plus" />
+          Thêm phương án
         </button>
       )}
     </div>
@@ -377,7 +381,7 @@ function BlankEditor({ ex, onChange }) {
             disabled={ex.blanks.length <= 1}
             aria-label="Xóa ý"
           >
-            ×
+            <Icon name="trash" />
           </button>
         </div>
       ))}
@@ -387,7 +391,8 @@ function BlankEditor({ ex, onChange }) {
         style={{ alignSelf: 'flex-start' }}
         onClick={() => onChange({ blanks: [...ex.blanks, { statement: '', answer: '' }] })}
       >
-        + Thêm ý
+        <Icon name="plus" />
+        Thêm ý
       </button>
       <span className="muted small">Máy chấm "khớp" khi học sinh gõ giống đáp án (không phân biệt hoa thường, khoảng trắng). Không khớp thì bạn tự xem.</span>
     </div>

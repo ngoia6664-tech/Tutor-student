@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../lib/supabase.js'
 import { useAuth } from './AuthContext.jsx'
+import Icon from '../components/Icon.jsx'
 
 // Thông báo bài giảng / bài tập mới cho học sinh.
 // - "Mới" = được giao sau lần cuối học sinh mở chuông (profiles.notif_seen_at, lưu trên máy chủ
@@ -179,6 +180,7 @@ function Toast({ toast, onClose }) {
       <span className="toast-text">{toast.text}</span>
       {toast.to && (
         <Link className="btn btn-small btn-primary" to={toast.to} onClick={onClose}>
+          <Icon name="eye" />
           Xem
         </Link>
       )}

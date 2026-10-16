@@ -52,8 +52,9 @@ export default function Layout() {
             </span>
             <NotificationBell />
             <ThemeToggle />
-            <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
-              Đăng xuất
+            <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất">
+              <Icon name="logout" />
+              <span className="btn-text">Đăng xuất</span>
             </button>
           </div>
         </div>

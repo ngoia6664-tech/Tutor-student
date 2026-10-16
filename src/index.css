@@ -1863,3 +1863,34 @@ select.grade-add {
     padding: 0.38rem 0.75rem;
   }
 }
+
+/* Icon trong nút: theo cỡ chữ của nút */
+.btn .icon {
+  width: 1.1em;
+  height: 1.1em;
+  transition: transform 0.18s var(--ease);
+}
+.btn:hover:not(:disabled) .icon {
+  transform: scale(1.12);
+}
+.btn-danger:hover:not(:disabled) .icon {
+  transform: rotate(-8deg) scale(1.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn .icon,
+  .btn:hover .icon {
+    transition: none;
+    transform: none;
+  }
+}
+/* Điện thoại: nút Đăng xuất chỉ còn icon để thanh trên cùng không tràn */
+@media (max-width: 520px) {
+  .btn-logout .btn-text {
+    display: none;
+  }
+  .btn-logout {
+    width: 2.2rem;
+    min-height: 2.2rem;
+    padding: 0;
+  }
+}

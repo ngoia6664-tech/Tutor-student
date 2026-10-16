@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import Icon from './Icon.jsx'
 
 // Bắt lỗi khi render để không bao giờ hiện trang trắng
 export default class ErrorBoundary extends Component {
@@ -23,9 +24,11 @@ export default class ErrorBoundary extends Component {
             <strong>Trang gặp lỗi:</strong> {String(this.state.error.message || this.state.error)}
             <div className="alert-actions">
               <button type="button" className="btn btn-small" onClick={() => window.location.reload()}>
+                <Icon name="refresh" />
                 Tải lại trang
               </button>
               <a className="btn btn-small btn-ghost" href="/">
+                <Icon name="home" />
                 Về trang chủ
               </a>
             </div>

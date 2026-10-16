@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
 import ErrorBox from './ErrorBox.jsx'
+import Icon from './Icon.jsx'
 
 // Chặn trang theo vai trò: sai vai trò thì chuyển về trang của mình
 export default function ProtectedRoute({ role, children }) {
@@ -15,6 +16,7 @@ export default function ProtectedRoute({ role, children }) {
       <div className="page narrow">
         <ErrorBox message={profileError || 'Không đọc được hồ sơ tài khoản.'} onRetry={reloadProfile}>
           <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
+            <Icon name="logout" />
             Đăng xuất
           </button>
         </ErrorBox>

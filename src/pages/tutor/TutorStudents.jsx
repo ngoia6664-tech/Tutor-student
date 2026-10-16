@@ -96,6 +96,7 @@ export default function TutorStudents() {
                     <td data-label="Chờ chấm">{st.done ? <span className="badge badge-primary">{st.done}</span> : 0}</td>
                     <td>
                       <button type="button" className="btn btn-small" onClick={() => setEditing(s)}>
+                        <Icon name="edit" />
                         Sửa
                       </button>
                     </td>
@@ -187,9 +188,11 @@ function EditStudent({ student, onCancel, onSaved }) {
       </label>
       <div className="row">
         <button type="submit" className="btn btn-primary" disabled={saving}>
+          <Icon name="save" />
           {saving ? 'Đang lưu...' : 'Lưu'}
         </button>
         <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={saving}>
+          <Icon name="close" />
           Hủy
         </button>
       </div>

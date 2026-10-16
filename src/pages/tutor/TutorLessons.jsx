@@ -62,12 +62,15 @@ export default function TutorLessons() {
         </div>
         <div className="row">
           <Link className="btn btn-small" to={`/tutor/lessons/${l.id}`}>
+            <Icon name="eye" />
             Xem
           </Link>
           <Link className="btn btn-small" to={`/tutor/lessons/${l.id}/edit`}>
+            <Icon name="edit" />
             Sửa
           </Link>
           <button type="button" className="btn btn-small btn-danger" disabled={deleting === l.id} onClick={() => handleDelete(l)}>
+            <Icon name="trash" />
             {deleting === l.id ? 'Đang xóa...' : 'Xóa'}
           </button>
         </div>
@@ -88,10 +91,12 @@ export default function TutorLessons() {
           </div>
           <div className="row">
             <Link className="btn" to="/tutor/import">
+              <Icon name="import" />
               Dán JSON
             </Link>
             <Link className="btn btn-primary" to="/tutor/lessons/new" state={sel.ch && sel.ch !== 'none' ? { chapterId: sel.ch } : undefined}>
-              + Soạn bài giảng
+              <Icon name="plus" />
+              Soạn bài giảng
             </Link>
           </div>
         </div>

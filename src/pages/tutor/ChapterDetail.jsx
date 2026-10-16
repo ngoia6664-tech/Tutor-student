@@ -6,6 +6,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import { gradeLabel, keyOf, libraryUrl, sectionLabel, subjectLabel } from '../../lib/chapters.js'
+import Icon from '../../components/Icon.jsx'
 
 // Nội dung một chương (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài
 export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
@@ -50,18 +51,22 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
         <h1>{chapter.title}</h1>
         <div className="row">
           <Link className="btn btn-small btn-primary" to="/tutor/lessons/new" {...newState}>
-            + Bài giảng
+            <Icon name="plus" />
+            Bài giảng
           </Link>
           <Link className="btn btn-small btn-primary" to="/tutor/assignments/new" {...newState}>
-            + Bài tập
+            <Icon name="plus" />
+            Bài tập
           </Link>
           {onEdit && (
             <button type="button" className="btn btn-small" onClick={() => onEdit(chapter)}>
+              <Icon name="edit" />
               Sửa chương
             </button>
           )}
           {onDelete && (
             <button type="button" className="btn btn-small btn-danger" onClick={() => onDelete(chapter, lessons.length + assignments.length)}>
+              <Icon name="trash" />
               Xóa
             </button>
           )}

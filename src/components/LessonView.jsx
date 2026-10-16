@@ -5,6 +5,7 @@ import { formatDateTime } from '../lib/format.js'
 import Markdown from './Markdown.jsx'
 import VideoEmbed from './VideoEmbed.jsx'
 import ErrorBox from './ErrorBox.jsx'
+import Icon from './Icon.jsx'
 
 // Tách nội dung Markdown thành: dòng thông tin (dòng đầu dạng _..._), phần mở đầu,
 // và các mục theo tiêu đề "## ". Mỗi mục được hiển thị trong một thẻ riêng.
@@ -64,7 +65,8 @@ function LessonFile({ path }) {
   if (error) return <ErrorBox message={`Không mở được file: ${error}`} onRetry={reload} />
   return (
     <a className="btn" href={url} target="_blank" rel="noopener noreferrer">
-      📎 {displayFileName(path)}
+      <Icon name="file" />
+      {displayFileName(path)}
     </a>
   )
 }

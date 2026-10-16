@@ -76,10 +76,12 @@ export default function TutorAssignments() {
           </div>
           <div className="row">
             <Link className="btn" to="/tutor/import">
+              <Icon name="import" />
               Dán JSON
             </Link>
             <Link className="btn btn-primary" to="/tutor/assignments/new" state={sel.ch && sel.ch !== 'none' ? { chapterId: sel.ch } : undefined}>
-              + Soạn bài tập
+              <Icon name="plus" />
+              Soạn bài tập
             </Link>
           </div>
         </div>
@@ -126,12 +128,15 @@ export default function TutorAssignments() {
         </div>
         <div className="row">
           <Link className="btn btn-small btn-primary" to={`/tutor/assignments/${a.id}`}>
+            <Icon name="grade" />
             Theo dõi & chấm
           </Link>
           <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
+            <Icon name="edit" />
             Sửa
           </Link>
           <button type="button" className="btn btn-small btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
+            <Icon name="trash" />
             {deleting === a.id ? 'Đang xóa...' : 'Xóa'}
           </button>
         </div>

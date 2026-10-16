@@ -183,6 +183,7 @@ function LessonForm({ initial, fromImport }) {
                 className="btn btn-small btn-ghost"
                 onClick={() => (newFile ? setNewFile(null) : setRemoveOld(true))}
               >
+                <Icon name="trash" />
                 Gỡ file
               </button>
             </div>
@@ -192,6 +193,7 @@ function LessonForm({ initial, fromImport }) {
             <span className="muted small">
               File cũ sẽ bị xóa khi lưu.{' '}
               <button type="button" className="btn btn-small btn-ghost" onClick={() => setRemoveOld(false)}>
+                <Icon name="undo" />
                 Hoàn tác
               </button>
             </span>
@@ -218,6 +220,7 @@ function LessonForm({ initial, fromImport }) {
         <ErrorBox message={error} />
         {progress && <div className="alert alert-info">{progress}</div>}
         <button type="submit" className="btn btn-primary btn-big" disabled={saving}>
+          <Icon name="save" />
           {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Lưu và giao bài giảng'}
         </button>
       </div>

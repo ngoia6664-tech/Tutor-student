@@ -1,3 +1,4 @@
+import Icon from './Icon.jsx'
 // Lấy mã video YouTube từ các dạng link phổ biến
 function youtubeId(url) {
   try {
@@ -34,7 +35,8 @@ export default function VideoEmbed({ url }) {
   const safe = /^https?:\/\//i.test(url)
   return safe ? (
     <a className="btn" href={url} target="_blank" rel="noopener noreferrer">
-      ▶️ Mở video
+      <Icon name="play" />
+      Mở video
     </a>
   ) : (
     <p className="muted small">Link video không hợp lệ: {url}</p>

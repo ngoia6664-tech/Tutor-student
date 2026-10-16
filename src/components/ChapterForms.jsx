@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase, unwrap } from '../lib/supabase.js'
 import { errMsg } from '../lib/errors.js'
 import ErrorBox from './ErrorBox.jsx'
+import Icon from './Icon.jsx'
 
 const GRADES = [6, 7, 8, 9, 10, 11, 12]
 
@@ -41,9 +42,11 @@ function FormButtons({ saving, onCancel }) {
   return (
     <div className="row">
       <button type="submit" className="btn btn-primary" disabled={saving}>
+        <Icon name="save" />
         {saving ? 'Đang lưu...' : 'Lưu'}
       </button>
       <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={saving}>
+        <Icon name="close" />
         Hủy
       </button>
     </div>

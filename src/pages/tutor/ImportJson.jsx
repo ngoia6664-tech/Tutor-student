@@ -180,18 +180,23 @@ export default function ImportJson() {
         <input ref={fileRef} type="file" accept=".json,application/json,text/plain" className="hidden-input" onChange={pickFile} />
         <div className="row" style={{ marginBottom: '0.5rem' }}>
           <button type="button" className="btn btn-small" onClick={() => fileRef.current?.click()}>
-            📂 Chọn file .json
+            <Icon name="folder" />
+            Chọn file .json
           </button>
           <button type="button" className="btn btn-small" onClick={pasteFromClipboard}>
-            📋 Dán từ clipboard
+            <Icon name="clipboard" />
+            Dán từ clipboard
           </button>
           <button type="button" className="btn btn-small btn-ghost" onClick={() => reset(SAMPLE_TUTOR_LESSON)}>
+            <Icon name="file" />
             Mẫu đầy đủ
           </button>
           <button type="button" className="btn btn-small btn-ghost" onClick={() => reset(SAMPLE_LESSON)}>
+            <Icon name="file" />
             Mẫu bài giảng
           </button>
           <button type="button" className="btn btn-small btn-ghost" onClick={() => reset(SAMPLE_ASSIGNMENT)}>
+            <Icon name="file" />
             Mẫu bài tập
           </button>
         </div>
@@ -217,6 +222,7 @@ export default function ImportJson() {
         <div style={{ marginTop: '0.5rem' }}>
           <ErrorBox message={error} />
           <button type="button" className="btn btn-primary" onClick={() => check()} disabled={!text.trim()}>
+            <Icon name="search" />
             Kiểm tra & xem trước
           </button>
         </div>
@@ -254,6 +260,7 @@ export default function ImportJson() {
                   </Link>
                 ) : (
                   <button type="button" className="btn btn-small btn-ghost" onClick={() => openEditor(d, i)}>
+                    <Icon name="edit" />
                     Sửa trong trang soạn
                   </button>
                 )}
@@ -330,6 +337,7 @@ export default function ImportJson() {
               </div>
             ) : (
               <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving}>
+                <Icon name="save" />
                 {saving ? 'Đang lưu...' : `Lưu ${drafts.filter((_, i) => opts[i]?.include && !saved[i]).length} phần đã chọn`}
               </button>
             )}

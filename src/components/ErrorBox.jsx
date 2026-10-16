@@ -1,3 +1,4 @@
+import Icon from './Icon.jsx'
 export default function ErrorBox({ message, onRetry, children }) {
   if (!message) return null
   return (
@@ -7,6 +8,7 @@ export default function ErrorBox({ message, onRetry, children }) {
         <div className="alert-actions">
           {onRetry && (
             <button type="button" className="btn btn-small" onClick={onRetry}>
+              <Icon name="refresh" />
               Thử lại
             </button>
           )}

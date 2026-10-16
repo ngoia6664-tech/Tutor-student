@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorBox from '../components/ErrorBox.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
+import Icon from '../components/Icon.jsx'
 
 export default function Login() {
   const { session, profile, profileError, loading, signOut } = useAuth()
@@ -39,6 +40,7 @@ export default function Login() {
         {session && profileError && (
           <ErrorBox message={profileError}>
             <button type="button" className="btn btn-small btn-ghost" onClick={signOut}>
+              <Icon name="logout" />
               Đăng xuất
             </button>
           </ErrorBox>
@@ -60,6 +62,7 @@ export default function Login() {
           />
         </label>
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+          <Icon name="login" />
           {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>

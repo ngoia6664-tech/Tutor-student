@@ -4,6 +4,7 @@ import { errMsg } from '../../lib/errors.js'
 import { compressImage } from '../../lib/files.js'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { isAnswered } from '../../components/ExerciseBody.jsx'
+import Icon from '../../components/Icon.jsx'
 
 const MAX_IMAGES = 15
 
@@ -116,10 +117,12 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
 
       <div className="row" style={{ marginBottom: '0.75rem' }}>
         <button type="button" className="btn btn-small" disabled={busy} onClick={() => cameraRef.current?.click()}>
-          📷 Chụp ảnh
+          <Icon name="camera" />
+          Chụp ảnh
         </button>
         <button type="button" className="btn btn-small" disabled={busy} onClick={() => galleryRef.current?.click()}>
-          🖼️ Chọn ảnh
+          <Icon name="image" />
+          Chọn ảnh
         </button>
         <span className="muted small">Không bắt buộc</span>
       </div>
@@ -143,6 +146,7 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       {progress && <div className="alert alert-info">{progress}</div>}
 
       <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy} onClick={submit}>
+        <Icon name="send" />
         {busy ? 'Đang nộp...' : 'Nộp bài'}
       </button>
     </div>

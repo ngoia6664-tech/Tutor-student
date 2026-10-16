@@ -13,6 +13,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
+import Icon from '../../components/Icon.jsx'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
 
@@ -75,9 +76,11 @@ export default function AssignmentTracking() {
         </div>
         <div className="row">
           <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
+            <Icon name="edit" />
             Sửa bài
           </Link>
           <button type="button" className="btn btn-small btn-danger" onClick={handleDelete} disabled={deleting}>
+            <Icon name="trash" />
             {deleting ? 'Đang xóa...' : 'Xóa bài'}
           </button>
         </div>
@@ -239,12 +242,14 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
       <div className="row" style={{ marginBottom: '0.75rem' }}>
         {answeredCount > 0 && (
           <button type="button" className="btn btn-small" onClick={() => setShowSheet((s) => !s)}>
-            {showSheet ? 'Ẩn bài làm' : `📝 Xem bài làm (${answeredCount}/${exercises.length} câu)`}
+            <Icon name="eye" />
+            {showSheet ? 'Ẩn bài làm' : `Xem bài làm (${answeredCount}/${exercises.length} câu)`}
           </button>
         )}
         {rec.submission_path && (
           <button type="button" className="btn btn-small" onClick={toggleImages} disabled={imgLoading}>
-            {imgLoading ? 'Đang tải ảnh...' : images ? 'Ẩn ảnh' : '🖼️ Xem ảnh nộp kèm'}
+            <Icon name="image" />
+            {imgLoading ? 'Đang tải ảnh...' : images ? 'Ẩn ảnh' : 'Xem ảnh nộp kèm'}
           </button>
         )}
       </div>
@@ -268,6 +273,7 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
               title="Điểm = số câu đúng / số câu máy chấm × 10, làm tròn 0,25"
               onClick={() => setScore(String(Math.round((sum.correct / sum.autoTotal) * 40) / 4))}
             >
+              <Icon name="zap" />
               Dùng điểm máy chấm ({Math.round((sum.correct / sum.autoTotal) * 40) / 4})
             </button>
           </div>
@@ -283,10 +289,12 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
 
       <div className="row">
         <button type="submit" className="btn btn-primary" disabled={busy}>
+          <Icon name="save" />
           {busy ? 'Đang lưu...' : rec.status === 'checked' ? 'Cập nhật chấm' : 'Lưu chấm'}
         </button>
         {rec.status !== 'todo' && (
           <button type="button" className="btn btn-ghost" onClick={reopen} disabled={busy}>
+            <Icon name="refresh" />
             Cho nộp lại
           </button>
         )}

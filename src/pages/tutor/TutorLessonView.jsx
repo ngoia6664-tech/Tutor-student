@@ -5,6 +5,7 @@ import { studentLabel } from '../../lib/students.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import LessonView from '../../components/LessonView.jsx'
+import Icon from '../../components/Icon.jsx'
 
 export default function TutorLessonView() {
   const { id } = useParams()
@@ -39,6 +40,7 @@ export default function TutorLessonView() {
           ← Danh sách bài giảng
         </Link>
         <Link className="btn btn-small" to={`/tutor/lessons/${id}/edit`}>
+          <Icon name="edit" />
           Sửa
         </Link>
       </div>

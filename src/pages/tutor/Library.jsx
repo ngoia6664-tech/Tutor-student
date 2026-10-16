@@ -177,7 +177,8 @@ export default function Library() {
             Thư viện
           </Link>
           <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
-            + Chương
+            <Icon name="plus" />
+            Chương
           </button>
         </div>
 
@@ -308,11 +309,13 @@ export default function Library() {
               <div className="row">
                 {inGroup.length > 0 && (
                   <button type="button" className="btn btn-small" onClick={openGroupForm}>
+                    <Icon name="edit" />
                     Sửa {level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}
                   </button>
                 )}
                 <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
-                  + Thêm chương
+                  <Icon name="plus" />
+                  Thêm chương
                 </button>
               </div>
             </div>
@@ -376,12 +379,15 @@ function GroupChapters({ chapters, showSection, onEdit, onDelete }) {
             </div>
             <div className="row">
               <Link className="btn btn-small btn-primary" to={chapterUrl(c.id)}>
+                <Icon name="open" />
                 Mở
               </Link>
               <button type="button" className="btn btn-small" onClick={() => onEdit(c)}>
+                <Icon name="edit" />
                 Sửa
               </button>
               <button type="button" className="btn btn-small btn-danger" onClick={() => onDelete(c)}>
+                <Icon name="trash" />
                 Xóa
               </button>
             </div>
