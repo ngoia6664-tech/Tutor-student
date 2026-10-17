@@ -13,12 +13,14 @@ import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
 const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
 
 // Dạng dữ liệu trong form (dễ sửa hơn dạng lưu trong CSDL):
-// mcq: [{ text }] + mcqCorrect (vị trí), blanks: [{ statement, answer }]
+// mcq: [{ text }] + mcqCorrect (vị trí), blanks: [{ statement, answer }],
+// tf: [{ statement, answer: true | false | null }] (4 ý a–d), shortAnswer: "1,89"
 function toFormExercise(e) {
   const kind = e.kind || 'essay'
   const base = {
@@ -31,15 +33,25 @@ function toFormExercise(e) {
     mcq: [{ text: '' }, { text: '' }, { text: '' }, { text: '' }],
     mcqCorrect: -1,
     blanks: [{ statement: '', answer: '' }],
+    tf: ['a', 'b', 'c', 'd'].map(() => ({ statement: '', answer: null })),
+    shortAnswer: '',
   }
-  if (kind === 'mcq') {
-    const opts = e.options || []
+  // Câu mới (chưa có options) giữ khung trống mặc định: 4 phương án / 4 ý
+  if (kind === 'mcq' && e.options?.length) {
+    const opts = e.options
     base.mcq = opts.map((o) => ({ text: o.text || '' }))
     base.mcqCorrect = opts.findIndex((o) => o.label === e.correct)
   }
-  if (kind === 'fill_blank') {
+  if (kind === 'fill_blank' && e.options?.length) {
     base.blanks = (e.options || []).map((b) => ({ statement: b.statement || '', answer: e.correct?.[b.id] ?? '' }))
   }
+  if (kind === 'true_false' && e.options?.length) {
+    base.tf = (e.options || []).map((o) => ({
+      statement: o.statement || '',
+      answer: typeof e.correct?.[o.id] === 'boolean' ? e.correct[o.id] : null,
+    }))
+  }
+  if (kind === 'short') base.shortAnswer = typeof e.correct === 'string' ? e.correct : ''
   return base
 }
 
@@ -65,6 +77,20 @@ function fromFormExercise(ex) {
       answer_md: ex.blanks.map((b, i) => `**${blankId(i)})** ${b.answer.trim()}`).join('\n\n'),
     })
   }
+  if (ex.kind === 'true_false') {
+    const options = ex.tf.map((r, i) => ({ id: blankId(i), statement: r.statement.trim() }))
+    const correct = Object.fromEntries(ex.tf.map((r, i) => [blankId(i), r.answer]))
+    return toExercisePayload({
+      ...ex,
+      options,
+      correct,
+      answer_md: ex.tf.map((r, i) => `**${blankId(i)})** ${r.answer ? 'Đúng' : 'Sai'}`).join(' · '),
+    })
+  }
+  if (ex.kind === 'short') {
+    const correct = ex.shortAnswer.trim()
+    return toExercisePayload({ ...ex, options: null, correct, answer_md: correct.split(/\s*;\s*/).join(' hoặc ') })
+  }
   return toExercisePayload(ex)
 }
 
@@ -80,6 +106,12 @@ function checkExercise(ex, n) {
     if (!ex.blanks.length) return `Câu ${n}: cần ít nhất 1 chỗ trống.`
     if (ex.blanks.some((b) => !b.statement.trim() || !b.answer.trim())) return `Câu ${n}: mỗi ý cần có nội dung và đáp án.`
   }
+  if (ex.kind === 'true_false') {
+    if (!ex.tf.length) return `Câu ${n}: cần ít nhất 1 ý.`
+    if (ex.tf.some((r) => !r.statement.trim())) return `Câu ${n}: điền nội dung cho đủ các ý a, b, c, d.`
+    if (ex.tf.some((r) => r.answer === null)) return `Câu ${n}: chọn Đúng hoặc Sai cho từng ý.`
+  }
+  if (ex.kind === 'short' && !ex.shortAnswer.trim()) return `Câu ${n}: nhập đáp án trả lời ngắn.`
   return null
 }
 
@@ -106,6 +138,7 @@ export default function AssignmentEditor() {
           chapter_id: full.assignment.chapter_id || '',
           title: full.assignment.title,
           type: full.assignment.type,
+          is_exam: !!full.assignment.is_exam,
           due_date: full.assignment.due_date || '',
           lesson_id: full.assignment.lesson_id || '',
           exercises: full.exercises.map(toFormExercise),
@@ -123,6 +156,7 @@ export default function AssignmentEditor() {
         chapter_id: presetChapter,
         title: draft?.title || '',
         type: draft?.type || 'homework',
+        is_exam: !!draft?.is_exam,
         due_date: draft?.due_date || '',
         lesson_id: '',
         exercises: draft?.exercises?.length ? draft.exercises.map((e) => toFormExercise({ ...e, id: null })) : [toFormExercise({})],
@@ -163,6 +197,10 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
       return { ...f, exercises: list }
     })
   const removeEx = (index) => setForm((f) => ({ ...f, exercises: f.exercises.filter((_, i) => i !== index) }))
+  const labels = questionLabels(
+    form.exercises.map((e) => ({ ...e, id: e.key })),
+    form.is_exam
+  )
 
   async function save(e) {
     e.preventDefault()
@@ -189,6 +227,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         id: form.id,
         title: form.title.trim(),
         type: form.type,
+        is_exam: form.is_exam,
         due_date: form.due_date || null,
         lesson_id: form.lesson_id || null,
         chapter_id: form.chapter_id || null,
@@ -252,6 +291,8 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         </label>
       </div>
 
+      <ExamToggle form={form} onChange={(v) => set('is_exam', v)} />
+
       <h2>Câu hỏi ({form.exercises.length})</h2>
       <p className="muted small">
         Viết Markdown, công thức đặt trong <code>$...$</code> hoặc <code>$$...$$</code>. Trắc nghiệm và điền khuyết được chấm tự động khi học sinh nộp.
@@ -262,6 +303,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
           <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
             <div className="row">
               <strong>Câu {i + 1}</strong>
+              {form.is_exam && labels[ex.key]?.includes('.') && <span className="badge badge-primary">Phần {labels[ex.key]}</span>}
               <select
                 aria-label={`Loại câu ${i + 1}`}
                 value={ex.kind}
@@ -299,16 +341,37 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
 
           {ex.kind === 'mcq' && <McqEditor ex={ex} index={i} onChange={(patch) => updateEx(i, patch)} />}
           {ex.kind === 'fill_blank' && <BlankEditor ex={ex} onChange={(patch) => updateEx(i, patch)} />}
+          {ex.kind === 'true_false' && <TrueFalseEditor ex={ex} onChange={(patch) => updateEx(i, patch)} />}
+          {ex.kind === 'short' && (
+            <label className="field">
+              <span>Đáp án *</span>
+              <input type="text" value={ex.shortAnswer} onChange={(e) => updateEx(i, { shortAnswer: e.target.value })} placeholder="vd. 1,89" />
+              <span className="muted small">
+                Máy chấm coi "1,89" và "1.89" là một. Nhiều cách viết đều đúng thì ngăn bằng dấu chấm phẩy, vd. <code>0,5; 1/2</code>.
+              </span>
+            </label>
+          )}
           {ex.kind === 'essay' && (
             <MarkdownField label="Đáp án" rows={2} value={ex.answer_md} onChange={(v) => updateEx(i, { answer_md: v })} />
           )}
           <MarkdownField label="Phương pháp giải" rows={3} value={ex.method_md} onChange={(v) => updateEx(i, { method_md: v })} />
         </div>
       ))}
-      <button type="button" className="btn" onClick={() => set('exercises', [...form.exercises, toFormExercise({})])}>
-        <Icon name="plus" />
-        Thêm câu hỏi
-      </button>
+      {form.is_exam ? (
+        <div className="row">
+          {[...EXAM_PARTS.map((p) => [p.kind, `Phần ${p.roman}: ${KIND_LABEL[p.kind]}`]), ['essay', 'Tự luận']].map(([kind, label]) => (
+            <button key={kind} type="button" className="btn" onClick={() => set('exercises', [...form.exercises, toFormExercise({ kind })])}>
+              <Icon name="plus" />
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button type="button" className="btn" onClick={() => set('exercises', [...form.exercises, toFormExercise({})])}>
+          <Icon name="plus" />
+          Thêm câu hỏi
+        </button>
+      )}
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <h2>Học sinh nhận bài</h2>
@@ -395,6 +458,86 @@ function BlankEditor({ ex, onChange }) {
         Thêm ý
       </button>
       <span className="muted small">Máy chấm "khớp" khi học sinh gõ giống đáp án (không phân biệt hoa thường, khoảng trắng). Không khớp thì bạn tự xem.</span>
+    </div>
+  )
+}
+
+// Bật / tắt chế độ đề thi + cấu trúc đề so với chuẩn THPT 18 – 4 – 6
+function ExamToggle({ form, onChange }) {
+  const st = examStructure(form.exercises)
+  return (
+    <div className={form.is_exam ? 'card exam-toggle on' : 'card exam-toggle'}>
+      <label className="exam-switch">
+        <input type="checkbox" checked={form.is_exam} onChange={(e) => onChange(e.target.checked)} />
+        <span>
+          <strong>Đây là đề thi</strong> – chấm theo thang điểm THPT
+        </span>
+      </label>
+      <p className="muted small" style={{ margin: '0.35rem 0 0' }}>
+        Trắc nghiệm 0,25 đ/câu · Đúng/sai: đúng 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1 đ · Trả lời ngắn 0,25 đ/câu. Bài thường thì để trống ô này.
+      </p>
+      {form.is_exam && (
+        <div className="exam-structure">
+          {EXAM_PARTS.map((p) => (
+            <span key={p.kind} className={st.counts[p.kind] === p.standard ? 'badge badge-ok' : 'badge badge-warn'}>
+              Phần {p.roman} · {KIND_LABEL[p.kind]}: {st.counts[p.kind]}/{p.standard} câu
+            </span>
+          ))}
+          {st.other > 0 && <span className="badge">+ {st.other} câu tự chấm</span>}
+          <span className={st.standard ? 'badge badge-ok' : 'badge badge-warn'}>Tối đa {viNum(st.max)} điểm máy chấm</span>
+          {!st.standard && (
+            <span className="muted small" style={{ flexBasis: '100%' }}>
+              Đề chưa đúng cấu trúc chuẩn 18 – 4 – 6. Vẫn lưu được; điểm máy chấm sẽ được quy về thang 10.
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Soạn câu đúng/sai: 4 ý a–d, mỗi ý chọn đáp án Đúng hoặc Sai
+function TrueFalseEditor({ ex, onChange }) {
+  const setRow = (j, patch) => onChange({ tf: ex.tf.map((r, k) => (k === j ? { ...r, ...patch } : r)) })
+  return (
+    <div className="field">
+      <span>Các ý (chọn đáp án Đúng / Sai cho từng ý)</span>
+      <div className="tf-edit">
+        {ex.tf.map((r, j) => (
+          <div key={j} className="tf-edit-row">
+            <span className="blank-id">{blankId(j)})</span>
+            <input type="text" value={r.statement} onChange={(e) => setRow(j, { statement: e.target.value })} placeholder={`Nội dung ý ${blankId(j)}`} />
+            <div className="tf-edit-pick" role="radiogroup" aria-label={`Đáp án ý ${blankId(j)}`}>
+              {[true, false].map((v) => (
+                <button
+                  key={String(v)}
+                  type="button"
+                  className={r.answer === v ? (v ? 'chip active tf-true' : 'chip active tf-false') : 'chip'}
+                  aria-pressed={r.answer === v}
+                  onClick={() => setRow(j, { answer: v })}
+                >
+                  {v ? 'Đúng' : 'Sai'}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="btn btn-small btn-ghost"
+              onClick={() => onChange({ tf: ex.tf.filter((_, k) => k !== j) })}
+              disabled={ex.tf.length <= 1}
+              aria-label={`Xóa ý ${blankId(j)}`}
+            >
+              <Icon name="trash" />
+            </button>
+          </div>
+        ))}
+      </div>
+      {ex.tf.length < 4 && (
+        <button type="button" className="btn btn-small" style={{ alignSelf: 'flex-start' }} onClick={() => onChange({ tf: [...ex.tf, { statement: '', answer: null }] })}>
+          <Icon name="plus" />
+          Thêm ý
+        </button>
+      )}
     </div>
   )
 }

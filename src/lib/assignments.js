@@ -28,7 +28,7 @@ export function toExercisePayload(ex) {
     id: ex.id || null,
     kind,
     question_md: ex.question_md,
-    options: kind === 'essay' ? null : ex.options,
+    options: kind === 'essay' || kind === 'short' ? null : ex.options,
     correct: kind === 'essay' ? null : ex.correct,
     answer_md: ex.answer_md || '',
     method_md: ex.method_md || '',
@@ -52,7 +52,7 @@ export async function fetchAssignmentFull(id) {
       .order('sort_order')
       .then(unwrap),
     supabase.from('assignment_recipients').select('*, student:profiles(id, full_name, group_name, grade)').eq('assignment_id', id).then(unwrap),
-    supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct').eq('assignment_id', id).then(unwrap),
+    supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct, points').eq('assignment_id', id).then(unwrap),
   ])
   // Gom câu trả lời theo học sinh: { student_id: { exercise_id: {answer, is_correct} } }
   const answersByStudent = {}
@@ -79,9 +79,12 @@ export async function fetchAssignmentFull(id) {
   }
 }
 
-// Thống kê chấm tự động: số câu máy chấm được và số câu đúng
+// Loại câu máy chấm được
+export const AUTO_KINDS = ['mcq', 'fill_blank', 'true_false', 'short']
+
+// Thống kê chấm tự động (bài thường): số câu máy chấm được và số câu đúng hoàn toàn
 export function autoSummary(exercises, answers = {}) {
-  const auto = exercises.filter((e) => e.kind === 'mcq' || e.kind === 'fill_blank')
+  const auto = exercises.filter((e) => AUTO_KINDS.includes(e.kind))
   const mcq = exercises.filter((e) => e.kind === 'mcq')
   const correct = auto.filter((e) => answers[e.id]?.is_correct === true).length
   return { autoTotal: auto.length, mcqTotal: mcq.length, correct, allAuto: auto.length === exercises.length && exercises.length > 0 }

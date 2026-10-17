@@ -154,7 +154,100 @@ function fromMcq(q, includeNotes) {
   }
 }
 
+// ----- Đúng / sai (kiểu THPT) -----
+// File gốc ghi mỗi ý thành một câu "trắc nghiệm" 2 phương án Đúng / Sai, id kết thúc bằng a–d
+// (vd. "dd-d1lt-1a"), nguồn ghi "Đúng/Sai câu 1", đề ghi "...\n\nCâu 1a. <nội dung ý>".
+const lc = (v) => str(v).toLowerCase()
+function isTfItem(q) {
+  const texts = arr(q.options).map((o) => lc(o.text))
+  return texts.length === 2 && texts.includes('đúng') && texts.includes('sai')
+}
+const TF_LEAD = /(^|\n)\s*Câu\s*\d+\s*([a-d])\s*[.):]\s*/i
+function tfLetter(q) {
+  return (str(q.id).match(/\d([a-d])$/i) || str(q.stem).match(TF_LEAD)?.slice(1) || [])[1]?.toLowerCase() || null
+}
+function tfGroupKey(q) {
+  const m = str(q.source).match(/Đúng\s*\/\s*Sai\s*câu\s*(\d+)/i)
+  return m ? `${str(q.source).slice(0, m.index)}#${m[1]}` : str(q.id).replace(/[a-d]$/i, '')
+}
+// Đề của một ý: phần chung (dẫn) + nội dung ý
+function splitTfStem(stem) {
+  const t = str(stem)
+  const m = t.match(TF_LEAD)
+  if (!m) return { lead: '', statement: t }
+  return { lead: t.slice(0, m.index).trim(), statement: t.slice(m.index + m[0].length).trim() }
+}
+
+function fromTfGroup(items, includeNotes) {
+  const rows = items.map((q, i) => {
+    const pick = arr(q.options).find((o) => str(o.label) === str(q.answer))
+    const { lead, statement } = splitTfStem(q.stem)
+    return { q, id: tfLetter(q) || String.fromCharCode(97 + i), lead, statement, value: pick ? lc(pick.text) === 'đúng' : null }
+  })
+  const lead = rows.find((r) => r.lead)?.lead || ''
+  const first = items[0]
+  return {
+    type: normalizeType(first.assignment),
+    flagged: items.some((q) => str(q.note)),
+    exercise: {
+      kind: 'true_false',
+      question_md: join([levelLine(first.level), lead || 'Chọn Đúng hoặc Sai cho mỗi ý sau:']),
+      options: rows.map((r) => ({ id: r.id, statement: r.statement })),
+      correct: Object.fromEntries(rows.map((r) => [r.id, r.value])),
+      answer_md: rows.map((r) => `**${r.id})** ${r.value ? 'Đúng' : 'Sai'}`).join(' · '),
+      method_md: join([
+        rows.some((r) => str(r.q.core)) ? rows.map((r) => `- **${r.id})** ${r.value ? 'Đúng' : 'Sai'}: ${str(r.q.core)}`).join('\n') : '',
+        includeNotes ? rows.filter((r) => str(r.q.note)).map((r) => `**Lưu ý ${r.id}):** ${str(r.q.note)}`).join('\n\n') : '',
+        first.source ? `_Nguồn: ${str(first.source).replace(/\s*câu\s*\d+\s*$/i, '')}_` : '',
+      ]),
+    },
+  }
+}
+
+// Trắc nghiệm: gom các ý Đúng/Sai liên tiếp cùng câu (tối đa 4 ý) thành 1 câu đúng/sai, còn lại giữ trắc nghiệm
+function convertMcqList(list, includeNotes) {
+  const out = []
+  for (let i = 0; i < list.length; ) {
+    const q = list[i]
+    if (!isTfItem(q)) {
+      out.push(fromMcq(q, includeNotes))
+      i++
+      continue
+    }
+    const key = tfGroupKey(q)
+    const group = [q]
+    while (i + group.length < list.length && group.length < 4 && isTfItem(list[i + group.length]) && tfGroupKey(list[i + group.length]) === key) {
+      group.push(list[i + group.length])
+    }
+    const ok = group.every((g) => arr(g.options).some((o) => str(o.label) === str(g.answer)))
+    if (ok) out.push(fromTfGroup(group, includeNotes))
+    else group.forEach((g) => out.push(fromMcq(g, includeNotes)))
+    i += group.length
+  }
+  return out
+}
+
+// "Trắc nghiệm trả lời ngắn": đáp án là một số / cụm ngắn → máy chấm được
+const isShortProblem = (p, typeTitle) => /trả\s*lời\s*ngắn/i.test(`${typeTitle} ${str(p.source)}`) && /^[^\n]{1,40}$/.test(str(p.answer))
+
 function fromProblem(p, typeTitle, includeNotes) {
+  if (isShortProblem(p, typeTitle)) {
+    return {
+      type: normalizeType(p.assignment),
+      flagged: !!str(p.note),
+      exercise: {
+        kind: 'short',
+        question_md: str(p.statement),
+        correct: str(p.answer),
+        answer_md: str(p.answer),
+        method_md: join([
+          arr(p.solution).length ? `**Lời giải:**\n\n${numbered(p.solution)}` : '',
+          noteBlock(p.note, includeNotes),
+          p.source ? `_Nguồn: ${str(p.source)}_` : '',
+        ]),
+      },
+    }
+  }
   return {
     type: normalizeType(p.assignment),
     flagged: !!str(p.note),
@@ -197,7 +290,7 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const ex = lesson.exercises || {}
   const converted = [
     ...arr(ex.fill_blank).map((fb) => fromFillBlank(fb, includeNotes)),
-    ...arr(ex.mcq).map((q) => fromMcq(q, includeNotes)),
+    ...convertMcqList(arr(ex.mcq), includeNotes),
     ...arr(ex.problem_types).flatMap((pt) => arr(pt.problems).map((p) => fromProblem(p, str(pt.title), includeNotes))),
   ].filter((c) => c.exercise.question_md.trim())
   const invalid = converted.filter((c) => c.invalid).length
@@ -206,8 +299,10 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const types = ['classwork', 'homework'].filter((type) => converted.some((c) => c.type === type))
   for (const type of types) {
     const list = converted.filter((c) => c.type === type)
+    const exs = list.map((c) => c.exercise)
     drafts.push({
       kind: 'assignment',
+      looksLikeExam: exs.some((e) => e.kind === 'true_false') && exs.some((e) => e.kind === 'short'),
       // Chỉ có một loại bài và "part" đã nói rõ (vd. "Bài tập trên lớp") thì không thêm hậu tố
       title: types.length === 1 && part ? baseTitle : `${baseTitle} – ${TYPE_TITLE[type]}`,
       type,

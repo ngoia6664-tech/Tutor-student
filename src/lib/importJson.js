@@ -152,6 +152,33 @@ export function parseImport(raw, options = {}) {
     const method_md = optString(ex.method_md, `exercises[${i}].method_md`, errors)
     const question_md = typeof ex.question_md === 'string' ? ex.question_md : ''
 
+    // Đúng/sai: "statements": [{"text":"...","answer":true}, ...] (tối đa 4 ý a–d)
+    if (Array.isArray(ex.statements) && ex.statements.length) {
+      const items = ex.statements.slice(0, 4).map((st, j) => ({
+        id: String.fromCharCode(97 + j),
+        statement: String(st?.text ?? st?.statement ?? ''),
+        answer: st?.answer === true || /^(true|đúng|đ)$/i.test(String(st?.answer ?? '')),
+        known: typeof st?.answer === 'boolean' || /^(true|false|đúng|sai|đ|s)$/i.test(String(st?.answer ?? '')),
+      }))
+      if (ex.statements.length > 4) warnings.push(`Câu ${i + 1}: câu đúng/sai chỉ lấy 4 ý đầu.`)
+      if (items.some((it) => !it.known)) errors.push(`Câu ${i + 1}: mỗi ý đúng/sai cần "answer": true hoặc false.`)
+      return {
+        kind: 'true_false',
+        question_md,
+        options: items.map(({ id, statement }) => ({ id, statement })),
+        correct: Object.fromEntries(items.map(({ id, answer }) => [id, answer])),
+        answer_md: answer_md || items.map((it) => `**${it.id})** ${it.answer ? 'Đúng' : 'Sai'}`).join(' · '),
+        method_md,
+      }
+    }
+
+    // Trả lời ngắn: "short_answer": "1,89" (nhiều cách viết: "0,5; 1/2")
+    if (ex.short_answer !== undefined && ex.short_answer !== null) {
+      const correct = String(ex.short_answer).trim()
+      if (!correct) errors.push(`Câu ${i + 1}: "short_answer" đang trống.`)
+      return { kind: 'short', question_md, correct, answer_md: answer_md || correct, method_md }
+    }
+
     // Trắc nghiệm: "options": ["...", "..."] hoặc [{"label":"A","text":"..."}], "correct": "B"
     if (Array.isArray(ex.options) && ex.options.length) {
       const options = ex.options.map((o, j) => ({
@@ -195,7 +222,7 @@ export function parseImport(raw, options = {}) {
   })
   if (errors.length) throw new Error(errors.join('\n'))
 
-  return { drafts: [{ kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises }], warnings, flags: [] }
+  return { drafts: [{ kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises, is_exam: obj.is_exam === true }], warnings, flags: [] }
 }
 
 export const SAMPLE_LESSON = JSON.stringify(

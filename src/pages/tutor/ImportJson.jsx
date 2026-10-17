@@ -60,7 +60,7 @@ export default function ImportJson() {
     try {
       const r = parseImport(text, { includeNotes: withNotes })
       setResult(r)
-      setOpts(r.drafts.map((d) => ({ include: true, due_date: d.due_date || '' })))
+      setOpts(r.drafts.map((d) => ({ include: true, due_date: d.due_date || '', is_exam: !!d.is_exam })))
       // Chọn sẵn chương: có chương trùng tên thì dùng, chưa có thì đề xuất tạo mới
       const match = r.chapter ? findChapter(chapters, r.chapter) : null
       const choice = match ? match.id : r.chapter?.title ? 'new' : ''
@@ -101,7 +101,7 @@ export default function ImportJson() {
   // Mở trang soạn cho một phần (để sửa, gắn file, video...)
   function openEditor(draft, i) {
     const target = draft.kind === 'lesson' ? '/tutor/lessons/new' : '/tutor/assignments/new'
-    navigate(target, { state: { draft: { ...draft, due_date: opts[i]?.due_date || '' } } })
+    navigate(target, { state: { draft: { ...draft, due_date: opts[i]?.due_date || '', is_exam: !!opts[i]?.is_exam } } })
   }
 
   async function saveAll() {
@@ -141,6 +141,7 @@ export default function ImportJson() {
             p: {
               title: d.title,
               type: d.type,
+              is_exam: !!opts[i].is_exam,
               due_date: opts[i].due_date || null,
               lesson_id: lessonId,
               chapter_id: chapterId,
@@ -276,10 +277,23 @@ export default function ImportJson() {
                 )}
               </div>
               {d.kind === 'assignment' && !saved[i] && (
-                <label className="field" style={{ maxWidth: 260 }}>
-                  <span>Hạn nộp</span>
-                  <input type="date" value={opts[i]?.due_date || ''} onChange={(e) => setOpt(i, 'due_date', e.target.value)} />
-                </label>
+                <div className="row" style={{ alignItems: 'flex-end' }}>
+                  <label className="field" style={{ maxWidth: 260 }}>
+                    <span>Hạn nộp</span>
+                    <input type="date" value={opts[i]?.due_date || ''} onChange={(e) => setOpt(i, 'due_date', e.target.value)} />
+                  </label>
+                  <label className="exam-switch" style={{ marginBottom: '0.9rem' }}>
+                    <input type="checkbox" checked={!!opts[i]?.is_exam} onChange={(e) => setOpt(i, 'is_exam', e.target.checked)} />
+                    <span>
+                      <strong>Đề thi</strong> (chấm theo thang THPT)
+                    </span>
+                  </label>
+                  {d.looksLikeExam && !opts[i]?.is_exam && (
+                    <span className="muted small" style={{ flexBasis: '100%', marginTop: '-0.5rem' }}>
+                      Bài có cả câu đúng/sai và trả lời ngắn, giống cấu trúc đề thi THPT. Tích ô Đề thi nếu muốn chấm theo thang THPT.
+                    </span>
+                  )}
+                </div>
               )}
               <details open={drafts.length === 1}>
                 <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Xem nội dung</summary>

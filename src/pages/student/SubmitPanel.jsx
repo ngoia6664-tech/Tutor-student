@@ -16,7 +16,8 @@ function extFor(type) {
 }
 
 // Ảnh bài làm (không bắt buộc) + nút Nộp bài
-export default function SubmitPanel({ assignmentId, studentId, exercises, answers, onSubmitted }) {
+// labels: nhãn câu để nhắc câu chưa làm (đề thi: "I.3", "II.1"...)
+export default function SubmitPanel({ assignmentId, studentId, exercises, answers, labels, onSubmitted }) {
   const [items, setItems] = useState([]) // [{ file, url }]
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
@@ -51,7 +52,7 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
     // Câu tự luận chưa gõ nhưng có ảnh thì coi như đã làm
     const missing = unanswered.filter((ex) => !(ex.kind === 'essay' && items.length))
     const ask = missing.length
-      ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
+      ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => labels?.[ex.id] || exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
       : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
     if (!window.confirm(ask)) return
 

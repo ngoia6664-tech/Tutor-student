@@ -303,6 +303,27 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 - Trong bảng thông báo có nút **Báo cả khi đang mở tab khác**: cho phép trình duyệt hiện thông báo hệ thống khi tab app đang mở nhưng ở nền. Thông báo khi đã **đóng hẳn** app (push) cần thêm máy chủ gửi push và service worker, chưa làm.
 - "Đã xem" lưu trên máy chủ (`profiles.notif_seen_at`, đổi qua hàm `mark_notifications_seen()`), nên điện thoại và máy tính dùng chung. Thời điểm giao bài lưu ở cột `assigned_at` của `lesson_recipients` / `assignment_recipients`; bài giao trước bản cập nhật lấy theo ngày tạo bài. Cần chạy lại `schema.sql`.
 
+## 3d. Đề thi chấm theo thang điểm THPT
+
+Bài tập có ô **"Đây là đề thi"** (trang soạn bài tập, và ở từng bài khi Dán JSON). Gia sư tự quyết bài nào là đề thi; bài thường giữ cách chấm và giao diện cũ.
+
+| Phần | Loại câu | Chuẩn | Điểm |
+|---|---|---|---|
+| I | Trắc nghiệm nhiều phương án | 18 câu | 0,25 / câu |
+| II | Đúng / Sai (mỗi câu 4 ý a–d) | 4 câu | đúng 1 ý 0,1 · 2 ý 0,25 · 3 ý 0,5 · 4 ý 1 |
+| III | Trả lời ngắn | 6 câu | 0,25 / câu |
+
+- Đề chuẩn 18 – 4 – 6 = 10 điểm. Đề không đúng chuẩn vẫn lưu được; điểm máy chấm quy về thang 10 (trang soạn hiện cấu trúc đề và điểm tối đa). Câu tự luận / điền khuyết trong đề thi không tính vào điểm máy, gia sư tự cộng.
+- Máy chủ tính điểm từng câu khi học sinh nộp (`submission_answers.points`, hàm `answer_points()`); sửa đáp án thì bài đã nộp được chấm lại. Gia sư bấm **Dùng điểm máy chấm** để điền điểm, có thể sửa trước khi lưu.
+- **Trả lời ngắn**: "1,89" và "1.89" là một; nhiều cách viết đều đúng thì ngăn bằng `;` (vd. `0,5; 1/2`).
+- Học sinh làm đề: câu chia **Phần I / II / III**, đánh số lại từng phần, có **phiếu trả lời** (lưới số câu, câu đã làm được tô, bấm để nhảy tới). Câu đúng/sai là **bảng 4 ý**, mỗi ý chọn Đ hoặc S. Nộp xong thấy điểm máy chấm theo từng phần và điểm từng câu.
+- Gia sư mở một bài tập: khối **Đáp án** có 2 cách xem: **Bảng đáp án** (lưới đáp án trắc nghiệm, bảng Đ/S, đáp số trả lời ngắn, đáp án + lời giải tự luận) và **Chi tiết từng câu** (đề + đáp án + lời giải, nút mở/thu hết lời giải). Khi xem bài làm của học sinh, câu tự luận có sẵn "Đáp án để so" ngay dưới.
+- Câu đúng/sai và trả lời ngắn dùng được cả trong bài thường (máy chấm tính đúng/sai cả câu như trắc nghiệm).
+
+**Dán JSON:**
+- File `tutor-lesson/v1`: các ý "Đúng/Sai câu N" (đang ghi thành từng câu trắc nghiệm 2 phương án Đúng/Sai, id kết thúc a–d) được **gom lại thành 1 câu đúng/sai 4 ý**; phần dẫn chung lên đầu, lời giải từng ý giữ nguyên. Bài trong `problem_types` có tiêu đề / nguồn chứa "trả lời ngắn" và đáp án ngắn thành câu **Trả lời ngắn**. File có cả đúng/sai và trả lời ngắn được gợi ý là đề thi (ô vẫn để trống cho gia sư quyết).
+- Dạng rút gọn: thêm `"is_exam": true` cho bài; câu đúng/sai `"statements": [{"text": "...", "answer": true}, ...]`; câu trả lời ngắn `"short_answer": "1,89"`.
+
 ---
 
 ## 4. Bảo mật: đáp án được giấu thế nào

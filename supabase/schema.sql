@@ -80,11 +80,18 @@ create table if not exists public.assignment_recipients (
 -- options KHÔNG chứa đáp án; đáp án máy chấm nằm ở answer_keys.correct
 alter table public.exercises add column if not exists kind text not null default 'essay';
 alter table public.exercises add column if not exists options jsonb;
+-- true_false (đúng/sai, kiểu THPT): options → [{"id":"a","statement":"..."}, ... 4 ý], correct → {"a":true,"b":false,...}
+-- short (trả lời ngắn): options null, correct → "1,89" (nhiều cách viết chấp nhận: "1,89; 1,9")
 alter table public.exercises drop constraint if exists exercises_kind_check;
-alter table public.exercises add constraint exercises_kind_check check (kind in ('essay', 'mcq', 'fill_blank'));
+alter table public.exercises add constraint exercises_kind_check check (kind in ('essay', 'mcq', 'fill_blank', 'true_false', 'short'));
 
 -- correct: mcq → "B", fill_blank → {"a":"...","b":"..."}
 alter table public.answer_keys add column if not exists correct jsonb;
+
+-- ---- Nâng cấp: đề thi chấm theo thang điểm THPT ----
+-- is_exam: gia sư đánh dấu bài là đề thi. Khi đó điểm máy chấm tính theo thang THPT:
+--   trắc nghiệm 0,25/câu; đúng-sai: đúng 1/2/3/4 ý được 0,1/0,25/0,5/1; trả lời ngắn 0,25/câu.
+alter table public.assignments add column if not exists is_exam boolean not null default false;
 
 -- Câu trả lời học sinh gõ / chọn trực tiếp trong app
 create table if not exists public.submission_answers (
@@ -99,6 +106,8 @@ create table if not exists public.submission_answers (
 );
 
 create index if not exists submission_answers_rec_idx on public.submission_answers (assignment_id, student_id);
+-- points: điểm câu này theo thang THPT (chỉ tính cho trắc nghiệm, đúng-sai, trả lời ngắn)
+alter table public.submission_answers add column if not exists points numeric(5, 2);
 
 -- ---- Nâng cấp: chương ----
 -- Chương gom bài giảng + bài tập của cùng một nội dung (vd. "Chủ đề 4: Giao thoa sóng cơ").
@@ -485,9 +494,10 @@ begin
   end if;
 
   if v_id is null then
-    insert into assignments (lesson_id, title, type, due_date, chapter_id)
+    insert into assignments (lesson_id, title, type, due_date, chapter_id, is_exam)
     values (nullif(p ->> 'lesson_id', '')::uuid, trim(p ->> 'title'), p ->> 'type',
-            nullif(p ->> 'due_date', '')::date, nullif(p ->> 'chapter_id', '')::uuid)
+            nullif(p ->> 'due_date', '')::date, nullif(p ->> 'chapter_id', '')::uuid,
+            coalesce((p ->> 'is_exam')::boolean, false))
     returning id into v_id;
   else
     update assignments
@@ -495,7 +505,8 @@ begin
            title = trim(p ->> 'title'),
            type = p ->> 'type',
            due_date = nullif(p ->> 'due_date', '')::date,
-           chapter_id = nullif(p ->> 'chapter_id', '')::uuid
+           chapter_id = nullif(p ->> 'chapter_id', '')::uuid,
+           is_exam = coalesce((p ->> 'is_exam')::boolean, false)
      where id = v_id;
     if not found then
       raise exception 'Không tìm thấy bài tập để cập nhật';
@@ -512,7 +523,7 @@ begin
   for v_ex in select value from jsonb_array_elements(p -> 'exercises') loop
     v_i := v_i + 1;
     v_kind := coalesce(nullif(v_ex ->> 'kind', ''), 'essay');
-    if v_kind not in ('essay', 'mcq', 'fill_blank') then
+    if v_kind not in ('essay', 'mcq', 'fill_blank', 'true_false', 'short') then
       raise exception 'Câu %: loại câu không hợp lệ (%)', v_i, v_kind;
     end if;
     if coalesce(trim(v_ex ->> 'question_md'), '') = '' then
@@ -532,18 +543,32 @@ begin
       if jsonb_typeof(v_ex -> 'options') <> 'array' or jsonb_array_length(v_ex -> 'options') < 1 then
         raise exception 'Câu % (điền khuyết) cần ít nhất 1 chỗ trống', v_i;
       end if;
+    elsif v_kind = 'true_false' then
+      if jsonb_typeof(v_ex -> 'options') <> 'array' or jsonb_array_length(v_ex -> 'options') not between 1 and 4 then
+        raise exception 'Câu % (đúng/sai) cần từ 1 đến 4 ý', v_i;
+      end if;
+      if jsonb_typeof(v_ex -> 'correct') <> 'object' or exists (
+        select 1 from jsonb_array_elements(v_ex -> 'options') o
+        where jsonb_typeof(v_ex -> 'correct' -> (o ->> 'id')) is distinct from 'boolean'
+      ) then
+        raise exception 'Câu % (đúng/sai): mỗi ý cần chọn Đúng hoặc Sai', v_i;
+      end if;
+    elsif v_kind = 'short' then
+      if coalesce(trim(v_ex ->> 'correct'), '') = '' then
+        raise exception 'Câu % (trả lời ngắn) chưa có đáp án', v_i;
+      end if;
     end if;
 
     -- Cập nhật câu cũ (nếu id thuộc bài này), không thì thêm câu mới
     update exercises
        set sort_order = v_i, kind = v_kind, question_md = v_ex ->> 'question_md',
-           options = case when v_kind = 'essay' then null else v_ex -> 'options' end
+           options = case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end
      where id::text = coalesce(v_ex ->> 'id', '') and assignment_id = v_id
     returning id into v_ex_id;
     if v_ex_id is null then
       insert into exercises (assignment_id, sort_order, kind, question_md, options)
       values (v_id, v_i, v_kind, v_ex ->> 'question_md',
-              case when v_kind = 'essay' then null else v_ex -> 'options' end)
+              case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end)
       returning id into v_ex_id;
     end if;
 
@@ -557,7 +582,8 @@ begin
 
   -- Sửa đáp án thì chấm lại bài đã nộp (vd. phát hiện đáp án đề tô đỏ bị sai)
   update submission_answers sa
-     set is_correct = public.grade_answer(e.kind, k.correct, sa.answer)
+     set is_correct = public.grade_answer(e.kind, k.correct, sa.answer),
+         points = public.answer_points(e.kind, k.correct, sa.answer)
     from exercises e
     left join answer_keys k on k.exercise_id = e.id
    where sa.exercise_id = e.id and e.assignment_id = v_id;
@@ -650,7 +676,52 @@ as $$
   select regexp_replace(regexp_replace(lower(trim(coalesce(t, ''))), '\s+', ' ', 'g'), '[\s.,;:!]+$', '');
 $$;
 
--- mcq: đúng/sai. fill_blank: true nếu MỌI chỗ trống khớp, ngược lại null
+-- Trả lời ngắn: so từng cách viết được chấp nhận (ngăn bằng ";").
+-- Số thì so theo giá trị: "1,89" = "1.89" = "1,890"; "−" (dấu trừ Unicode) = "-".
+create or replace function public.short_match(p_correct text, p_given text)
+returns boolean
+language plpgsql
+immutable
+as $$
+declare
+  alt text;
+  g text := replace(replace(lower(regexp_replace(coalesce(p_given, ''), '\s+', '', 'g')), ',', '.'), '−', '-');
+  c text;
+begin
+  if g = '' or p_correct is null then
+    return false;
+  end if;
+  for alt in select regexp_split_to_table(p_correct, '\s*;\s*') loop
+    c := replace(replace(lower(regexp_replace(alt, '\s+', '', 'g')), ',', '.'), '−', '-');
+    if c = '' then
+      continue;
+    end if;
+    if g ~ '^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)$' and c ~ '^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)$' then
+      if g::numeric = c::numeric then
+        return true;
+      end if;
+    elsif public.normalize_answer(g) = public.normalize_answer(c) then
+      return true;
+    end if;
+  end loop;
+  return false;
+end;
+$$;
+
+-- Đúng/sai: số ý học sinh chọn đúng
+create or replace function public.tf_count(p_correct jsonb, p_answer jsonb)
+returns int
+language sql
+immutable
+as $$
+  select count(*)::int
+    from jsonb_each(coalesce(p_correct, '{}'::jsonb)) as c
+   where (p_answer -> 'tf' -> c.key) is not null
+     and (p_answer -> 'tf' ->> c.key) = (c.value #>> '{}');
+$$;
+
+-- mcq / short: đúng/sai. true_false: true khi đúng cả 4 ý, sai một ý là false.
+-- fill_blank: true nếu MỌI chỗ trống khớp, ngược lại null
 -- (để gia sư tự xem, vì cách viết khác vẫn có thể đúng). essay: null.
 create or replace function public.grade_answer(p_kind text, p_correct jsonb, p_answer jsonb)
 returns boolean
@@ -665,6 +736,13 @@ begin
   end if;
   if p_kind = 'mcq' then
     return upper(coalesce(p_answer ->> 'choice', '')) = upper(coalesce(p_correct #>> '{}', ''));
+  elsif p_kind = 'short' then
+    return public.short_match(p_correct #>> '{}', p_answer ->> 'text');
+  elsif p_kind = 'true_false' then
+    if jsonb_typeof(p_correct) <> 'object' then
+      return null;
+    end if;
+    return public.tf_count(p_correct, p_answer) = (select count(*) from jsonb_object_keys(p_correct));
   elsif p_kind = 'fill_blank' then
     if jsonb_typeof(p_correct) <> 'object' then
       return null;
@@ -680,6 +758,34 @@ begin
   return null;
 end;
 $$;
+
+-- Điểm một câu theo thang THPT (dùng khi bài là đề thi; lưu cho mọi bài để gia sư bật/tắt sau vẫn đúng):
+--   trắc nghiệm 0,25; trả lời ngắn 0,25; đúng/sai theo số ý đúng: 1 → 0,1; 2 → 0,25; 3 → 0,5; 4 → 1.
+--   Tự luận, điền khuyết: null (gia sư tự chấm).
+create or replace function public.answer_points(p_kind text, p_correct jsonb, p_answer jsonb)
+returns numeric
+language plpgsql
+immutable
+as $$
+begin
+  if p_correct is null then
+    return null;
+  end if;
+  if p_kind in ('mcq', 'short') then
+    return case when coalesce(public.grade_answer(p_kind, p_correct, p_answer), false) then 0.25 else 0 end;
+  elsif p_kind = 'true_false' then
+    return (array[0, 0.1, 0.25, 0.5, 1])[least(public.tf_count(p_correct, p_answer), 4) + 1];
+  end if;
+  return null;
+end;
+$$;
+
+-- Bài đã nộp trước bản cập nhật này: tính điểm từng câu theo thang THPT
+update public.submission_answers sa
+   set points = public.answer_points(e.kind, k.correct, sa.answer)
+  from public.exercises e
+  left join public.answer_keys k on k.exercise_id = e.id
+ where sa.exercise_id = e.id and sa.points is null and e.kind in ('mcq', 'short', 'true_false');
 
 -- ---------- Nộp bài ----------
 -- p_answers: {"<exercise_id>": {"choice":"B"} | {"blanks":{"a":"..."}} | {"text":"..."}}
@@ -712,8 +818,9 @@ begin
 
   -- Lưu câu trả lời (chỉ nhận câu thuộc bài này) và chấm luôn
   delete from submission_answers where assignment_id = p_assignment_id and student_id = v_uid;
-  insert into submission_answers (assignment_id, student_id, exercise_id, answer, is_correct)
-  select p_assignment_id, v_uid, e.id, a.value, public.grade_answer(e.kind, k.correct, a.value)
+  insert into submission_answers (assignment_id, student_id, exercise_id, answer, is_correct, points)
+  select p_assignment_id, v_uid, e.id, a.value, public.grade_answer(e.kind, k.correct, a.value),
+         public.answer_points(e.kind, k.correct, a.value)
     from exercises e
     join jsonb_each(coalesce(p_answers, '{}'::jsonb)) as a on a.key = e.id::text
     left join answer_keys k on k.exercise_id = e.id

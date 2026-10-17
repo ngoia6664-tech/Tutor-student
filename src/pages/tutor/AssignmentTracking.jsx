@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -14,6 +14,9 @@ import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import Icon from '../../components/Icon.jsx'
+import AnswerKey from '../../components/AnswerKey.jsx'
+import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
+import { examStructure, examSummary, groupExercises, viNum } from '../../lib/exam.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
 
@@ -65,6 +68,7 @@ export default function AssignmentTracking() {
       <div className="card" style={{ marginTop: '0.5rem' }}>
         <h1>{a.title}</h1>
         <div className="row" style={{ marginBottom: '0.5rem' }}>
+          {a.is_exam && <span className="badge badge-new">Đề thi · thang THPT</span>}
           <TypeBadge type={a.type} />
           <DueBadge date={a.due_date} />
           <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
@@ -87,31 +91,8 @@ export default function AssignmentTracking() {
         <ErrorBox message={actionError} />
       </div>
 
-      <details className="card">
-        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Đề bài và đáp án ({exercises.length} câu)</summary>
-        <div style={{ marginTop: '0.75rem' }}>
-          {exercises.map((ex, i) => (
-            <div key={ex.id} className="question">
-              <div className="question-label">
-                Câu {i + 1} <span className="badge">{KIND_LABEL[ex.kind]}</span>
-              </div>
-              <ExerciseBody ex={ex} mode="preview" name={`k-${ex.id}`} correct={ex.correct} />
-              {ex.kind === 'essay' && ex.answer_md && (
-                <div className="answer-box">
-                  <div className="box-label">Đáp án</div>
-                  <Markdown>{ex.answer_md}</Markdown>
-                </div>
-              )}
-              {ex.method_md && (
-                <div className="method-box">
-                  <div className="box-label">Phương pháp giải</div>
-                  <Markdown>{ex.method_md}</Markdown>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </details>
+      {a.is_exam && <ExamStructureNote exercises={exercises} />}
+      <AnswerKey exercises={exercises} isExam={!!a.is_exam} />
 
       <h2>Học sinh ({recipients.length})</h2>
       {recipients.length === 0 && (
@@ -120,37 +101,66 @@ export default function AssignmentTracking() {
         </div>
       )}
       {sorted.map((r) => (
-        <GradeCard key={r.student_id} rec={r} exercises={exercises} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
+        <GradeCard key={r.student_id} rec={r} exercises={exercises} isExam={!!a.is_exam} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
       ))}
     </div>
   )
 }
 
-// Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu
-function AnswerSheet({ exercises, answers, studentId }) {
+// Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu.
+// Đề thi: chia phần, hiện điểm từng câu. Câu tự luận: đặt đáp án ngay dưới bài làm để so.
+function AnswerSheet({ exercises, answers, studentId, isExam }) {
   return (
     <div className="answer-sheet">
-      {exercises.map((ex, i) => {
-        const a = answers[ex.id]
-        return (
-          <div key={ex.id} className="question">
-            <div className="question-label">
-              Câu {i + 1} <span className="badge">{KIND_LABEL[ex.kind]}</span>
-              {a?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
-              {a?.is_correct === false && <span className="badge badge-danger">Sai</span>}
-              {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
-              {!a && <span className="badge badge-muted">Không trả lời</span>}
-            </div>
-            <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={ex.correct} />
-          </div>
-        )
-      })}
+      {groupExercises(exercises, isExam).map((g) => (
+        <Fragment key={g.part?.kind || 'all'}>
+          {isExam && <PartHeading part={g.part} count={g.items.length} />}
+          {g.items.map(({ ex, no }) => {
+            const a = answers[ex.id]
+            return (
+              <div key={ex.id} className="question">
+                <div className="question-label">
+                  Câu {no} <span className="badge">{KIND_LABEL[ex.kind]}</span>
+                  {isExam && a && <PointsBadge ex={ex} answer={a} />}
+                  {!isExam && a?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
+                  {!isExam && a?.is_correct === false && <span className="badge badge-danger">Sai</span>}
+                  {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
+                  {!a && <span className="badge badge-muted">Không trả lời</span>}
+                </div>
+                <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={ex.correct} />
+                {ex.kind === 'essay' && (ex.answer_md || ex.method_md) && (
+                  <details className="method-box">
+                    <summary className="box-label">Đáp án để so</summary>
+                    {ex.answer_md && <Markdown>{ex.answer_md}</Markdown>}
+                    {ex.method_md && <Markdown>{ex.method_md}</Markdown>}
+                  </details>
+                )}
+              </div>
+            )
+          })}
+        </Fragment>
+      ))}
     </div>
   )
 }
 
-function GradeCard({ rec, exercises, answers, onChanged }) {
+// Cấu trúc đề thi so với chuẩn 18 – 4 – 6
+function ExamStructureNote({ exercises }) {
+  const st = examStructure(exercises)
+  return (
+    <div className={st.standard ? 'alert alert-ok' : 'alert alert-info'}>
+      Đề thi: {st.counts.mcq} câu trắc nghiệm · {st.counts.true_false} câu đúng/sai · {st.counts.short} câu trả lời ngắn
+      {st.other ? ` · ${st.other} câu tự chấm` : ''} – tối đa {viNum(st.max)} điểm máy chấm.
+      {!st.standard && ' Đề không đúng chuẩn 18 – 4 – 6 nên điểm máy chấm được quy về thang 10.'}
+    </div>
+  )
+}
+
+function GradeCard({ rec, exercises, isExam, answers, onChanged }) {
   const sum = autoSummary(exercises, answers)
+  const exam = isExam ? examSummary(exercises, answers) : null
+  // Điểm gợi ý: đề thi = tổng điểm THPT (quy về thang 10 nếu đề không chuẩn); bài thường = tỉ lệ câu đúng × 10, làm tròn 0,25
+  const suggested = exam ? (exam.max === 10 ? exam.got : exam.score10) : sum.autoTotal ? Math.round((sum.correct / sum.autoTotal) * 40) / 4 : null
   const answeredCount = Object.keys(answers).length
   const [showSheet, setShowSheet] = useState(false)
   const [score, setScore] = useState(rec.score ?? '')
@@ -233,7 +243,19 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
         </p>
       )}
 
-      {rec.status !== 'todo' && sum.autoTotal > 0 && (
+      {rec.status !== 'todo' && exam && exam.parts.length > 0 && (
+        <div className="exam-mini">
+          <span>
+            Máy chấm (THPT): <strong>{viNum(suggested)}</strong>/10
+          </span>
+          {exam.parts.map((p) => (
+            <span key={p.part.kind} className="badge">
+              Phần {p.part.roman}: {viNum(p.got)}/{viNum(p.max)}
+            </span>
+          ))}
+        </div>
+      )}
+      {rec.status !== 'todo' && !exam && sum.autoTotal > 0 && (
         <p className="small" style={{ margin: '0 0 0.5rem' }}>
           Máy chấm: <strong>{sum.correct}/{sum.autoTotal}</strong> câu trắc nghiệm / điền khuyết đúng
         </p>
@@ -253,7 +275,7 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
           </button>
         )}
       </div>
-      {showSheet && <AnswerSheet exercises={exercises} answers={answers} studentId={rec.student_id} />}
+      {showSheet && <AnswerSheet exercises={exercises} answers={answers} studentId={rec.student_id} isExam={isExam} />}
       {images && (
         <div style={{ marginBottom: '0.75rem' }}>
           <ImageGallery images={images} />
@@ -263,18 +285,18 @@ function GradeCard({ rec, exercises, answers, onChanged }) {
       <div className="grid-2">
         <label className="field">
           <span>Điểm (thang 10)</span>
-          <input type="number" inputMode="decimal" step="0.25" min="0" value={score} onChange={(e) => setScore(e.target.value)} />
+          <input type="number" inputMode="decimal" step={isExam ? '0.05' : '0.25'} min="0" max="10" value={score} onChange={(e) => setScore(e.target.value)} />
         </label>
-        {rec.status !== 'todo' && sum.autoTotal > 0 && (
+        {rec.status !== 'todo' && suggested !== null && (exam ? exam.parts.length > 0 : sum.autoTotal > 0) && (
           <div className="field" style={{ justifyContent: 'flex-end' }}>
             <button
               type="button"
               className="btn btn-small"
-              title="Điểm = số câu đúng / số câu máy chấm × 10, làm tròn 0,25"
-              onClick={() => setScore(String(Math.round((sum.correct / sum.autoTotal) * 40) / 4))}
+              title={exam ? 'Tổng điểm theo thang THPT của phần trắc nghiệm, đúng/sai, trả lời ngắn' : 'Điểm = số câu đúng / số câu máy chấm × 10, làm tròn 0,25'}
+              onClick={() => setScore(String(suggested))}
             >
               <Icon name="zap" />
-              Dùng điểm máy chấm ({Math.round((sum.correct / sum.autoTotal) * 40) / 4})
+              Dùng điểm máy chấm ({viNum(suggested)})
             </button>
           </div>
         )}
