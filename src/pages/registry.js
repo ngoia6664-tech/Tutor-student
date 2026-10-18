@@ -11,6 +11,7 @@ const loaders = {
   },
   tutor: {
     TutorStudents: () => import('./tutor/TutorStudents.jsx'),
+    StudentDetail: () => import('./tutor/StudentDetail.jsx'),
     Library: () => import('./tutor/Library.jsx'),
     TutorAssignments: () => import('./tutor/TutorAssignments.jsx'),
     AssignmentEditor: () => import('./tutor/AssignmentEditor.jsx'),

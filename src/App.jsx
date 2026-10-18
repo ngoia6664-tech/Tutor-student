@@ -13,6 +13,7 @@ const {
   StudentLibrary,
   StudentLesson,
   TutorStudents,
+  StudentDetail,
   Library,
   TutorAssignments,
   AssignmentEditor,
@@ -46,6 +47,7 @@ export default function App() {
         }
       >
         <Route index element={<TutorStudents />} />
+        <Route path="students/:id" element={<StudentDetail />} />
         <Route path="library/:id?" element={<Library />} />
         {/* Link cũ của mục Chương */}
         <Route path="chapters" element={<OldChaptersRedirect />} />

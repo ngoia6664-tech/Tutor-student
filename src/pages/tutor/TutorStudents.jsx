@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
+import { fetchStudentStats } from '../../lib/studentReport.js'
+import { viNum } from '../../lib/exam.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
 import { fetchStudents, GROUPS } from '../../lib/students.js'
@@ -12,16 +15,7 @@ export default function TutorStudents() {
   const [editing, setEditing] = useState(null) // học sinh đang sửa
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [students, recs] = await Promise.all([
-      fetchStudents(),
-      supabase.from('assignment_recipients').select('student_id, status').in('status', ['todo', 'done']).then(unwrap),
-    ])
-    // Đếm số bài chưa nộp / chờ chấm của từng học sinh
-    const stats = {}
-    for (const r of recs) {
-      stats[r.student_id] ??= { todo: 0, done: 0 }
-      stats[r.student_id][r.status] += 1
-    }
+    const [students, stats] = await Promise.all([fetchStudents(), fetchStudentStats()])
     return { students, stats }
   }, [])
 
@@ -76,29 +70,48 @@ export default function TutorStudents() {
                 <th>Nhóm</th>
                 <th>Lớp</th>
                 <th>Môn</th>
+                <th>Bài giảng</th>
+                <th>Bài tập đã nộp</th>
                 <th>Chưa nộp</th>
                 <th>Chờ chấm</th>
+                <th>Điểm TB</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {shown.map((s) => {
-                const st = data.stats[s.id] || { todo: 0, done: 0 }
+                const st = data.stats[s.id] || { lessons: 0, total: 0, todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
                 return (
                   <tr key={s.id}>
                     <td>
-                      <strong>{s.full_name || '(chưa đặt tên)'}</strong>
+                      <Link to={`/tutor/students/${s.id}`} className="student-link">
+                        <strong>{s.full_name || '(chưa đặt tên)'}</strong>
+                      </Link>
                     </td>
                     <td data-label="Nhóm">{s.group_name || '—'}</td>
                     <td data-label="Lớp">{s.grade || '—'}</td>
                     <td data-label="Môn">{s.subjects?.length ? s.subjects.join(', ') : '—'}</td>
-                    <td data-label="Chưa nộp">{st.todo}</td>
+                    <td data-label="Bài giảng">{st.lessons}</td>
+                    <td data-label="Bài tập đã nộp">
+                      {st.done + st.checked}/{st.total}
+                    </td>
+                    <td data-label="Chưa nộp">
+                      {st.todo + st.overdue}
+                      {st.overdue > 0 && <span className="badge badge-danger" style={{ marginLeft: '0.35rem' }}>{st.overdue} quá hạn</span>}
+                    </td>
                     <td data-label="Chờ chấm">{st.done ? <span className="badge badge-primary">{st.done}</span> : 0}</td>
+                    <td data-label="Điểm TB">{st.avg === null ? '—' : <strong>{viNum(st.avg)}</strong>}</td>
                     <td>
-                      <button type="button" className="btn btn-small" onClick={() => setEditing(s)}>
-                        <Icon name="edit" />
-                        Sửa
-                      </button>
+                      <div className="row" style={{ flexWrap: 'nowrap', gap: '0.4rem' }}>
+                        <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
+                          <Icon name="open" />
+                          Xem
+                        </Link>
+                        <button type="button" className="btn btn-small" onClick={() => setEditing(s)}>
+                          <Icon name="edit" />
+                          Sửa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -112,7 +125,7 @@ export default function TutorStudents() {
 }
 
 // Sửa tên, nhóm, lớp, môn của học sinh
-function EditStudent({ student, onCancel, onSaved }) {
+export function EditStudent({ student, onCancel, onSaved }) {
   const [form, setForm] = useState({
     full_name: student.full_name || '',
     group_name: student.group_name || '',

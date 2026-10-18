@@ -239,7 +239,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, onChanged }) {
   return (
     <form className="card" onSubmit={saveGrade}>
       <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
-        <strong>{studentLabel(rec.student)}</strong>
+        <strong>{rec.student ? <Link to={`/tutor/students/${rec.student_id}`} className="student-link">{studentLabel(rec.student)}</Link> : studentLabel(rec.student)}</strong>
         <StatusBadge status={rec.status} />
       </div>
       {rec.submitted_at && (

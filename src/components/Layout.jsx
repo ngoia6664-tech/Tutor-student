@@ -11,7 +11,7 @@ import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 
 const NAV = {
   tutor: [
-    { to: '/tutor', label: 'Học sinh', icon: 'users', end: true },
+    { to: '/tutor', label: 'Học sinh', icon: 'users', end: true, also: /^\/tutor\/students\// },
     { to: '/tutor/library', label: 'Thư viện', icon: 'library' },
     { to: '/tutor/assignments', label: 'Bài tập', icon: 'assignment' },
     { to: '/tutor/lessons', label: 'Bài giảng', icon: 'lesson' },
@@ -60,7 +60,7 @@ export default function Layout() {
         </div>
         <nav className="nav">
           {items.map((it) => (
-            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
               <Icon name={it.icon} size={17} />
               <span>{it.label}</span>
             </NavLink>
