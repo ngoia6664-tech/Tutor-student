@@ -325,6 +325,14 @@ Bài tập có ô **"Đây là đề thi"** (trang soạn bài tập, và ở t�
 - Dạng rút gọn: thêm `"is_exam": true` cho bài; câu đúng/sai `"statements": [{"text": "...", "answer": true}, ...]`; câu trả lời ngắn `"short_answer": "1,89"`; `"time_limit_minutes": 45` (bỏ trống = 50 phút, `null` = không tính giờ).
 - Hình của từng câu (`"images": [{"src": "data:image/png;base64,...", "caption": "..."}]`) được gắn vào đề câu đó. Câu đúng/sai lặp cùng một hình ở 4 ý thì chỉ hiện 1 lần.
 
+**Nhập mục lục (Thư viện → "Nhập mục lục"):** dán mục lục giáo trình để tạo nhiều chương một lần, mỗi dòng một mục:
+```
+Lớp 12 · Vật lý                      ← lớp + môn
+Chương 2: Khí lí tưởng               ← chuyên đề (dòng bắt đầu "Chương", "Chuyên đề", "Phần" hoặc "##")
+- Chủ đề 3: Định luật Charles        ← chương (gạch đầu dòng, thụt vào, hoặc bắt đầu "Chủ đề", "Bài")
+```
+Có xem trước; chương đã có (cùng tên, lớp, môn) được giữ nguyên, không tạo trùng. Cách xếp giống file JSON: "Chương" của giáo trình là chuyên đề, "Chủ đề" là chương.
+
 **Tính giờ làm đề:**
 - Bật "Đây là đề thi" thì có thêm ô **Tính giờ làm bài**, mặc định 50 phút; sửa số phút (1–600) hoặc bỏ tích để không tính giờ. Có ở trang soạn và ở từng bài khi Dán JSON. Bài thường không có tính giờ.
 - Học sinh mở đề có tính giờ: chưa thấy đề, bấm **Bắt đầu làm bài** thì đề hiện và đồng hồ đếm ngược (thẻ đầu trang + ô nổi góc dưới; dưới 5 phút chuyển vàng, dưới 1 phút đỏ).

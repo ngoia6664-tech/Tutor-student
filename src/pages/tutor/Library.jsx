@@ -21,6 +21,7 @@ import { ChapterForm, GroupForm } from '../../components/ChapterForms.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
 import ChapterDetail from './ChapterDetail.jsx'
 import Icon from '../../components/Icon.jsx'
+import OutlineImport from '../../components/OutlineImport.jsx'
 
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
 const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
@@ -56,6 +57,13 @@ export default function Library() {
   const [editingGroup, setEditingGroup] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [detailKey, setDetailKey] = useState(0)
+  const [importing, setImporting] = useState(false) // khung "Nhập mục lục"
+  const [notice, setNotice] = useState(null)
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 6000)
+    return () => clearTimeout(t)
+  }, [notice])
 
   const { data, loading, error, reload } = useAsync(
     async () =>
@@ -124,9 +132,18 @@ export default function Library() {
 
   function openChapterForm(c) {
     setEditingGroup(null)
+    setImporting(false)
     setEditing(c)
   }
+  function openImport() {
+    setEditing(null)
+    setEditingGroup(null)
+    setNotice(null)
+    setImporting(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   function openGroupForm() {
+    setImporting(false)
     setEditing(null)
     setEditingGroup({
       level,
@@ -176,10 +193,16 @@ export default function Library() {
           <Link to={libraryUrl()} className="tree-title">
             Thư viện
           </Link>
-          <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
-            <Icon name="plus" />
-            Chương
-          </button>
+          <div className="row" style={{ gap: '0.35rem', flexWrap: 'nowrap' }}>
+            <button type="button" className="btn btn-small" onClick={openImport} title="Dán mục lục để tạo nhiều chương một lần">
+              <Icon name="import" />
+              Nhập
+            </button>
+            <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
+              <Icon name="plus" />
+              Chương
+            </button>
+          </div>
         </div>
 
         {/* Mỗi lớp một cây: chọn lớp bằng tab, "+ Lớp" để mở cây cho lớp mới */}
@@ -248,6 +271,22 @@ export default function Library() {
       <section className="library-main">
         <ErrorBox message={error} onRetry={reload} />
         <ErrorBox message={actionError} />
+        {notice && <div className="alert alert-ok">{notice}</div>}
+
+        {importing && (
+          <OutlineImport
+            chapters={chapters}
+            defaults={{ grade: preset.grade, subject: preset.subject || 'Vật lý' }}
+            onCancel={() => setImporting(false)}
+            onDone={(n, first, partial) => {
+              reload()
+              if (partial) return
+              setImporting(false)
+              setNotice(`Đã tạo ${n} chương.`)
+              if (first) navigate(libraryUrl(keyOf(first.grade), keyOf(first.subject)))
+            }}
+          />
+        )}
 
         {editing && (
           <ChapterForm
@@ -285,7 +324,7 @@ export default function Library() {
 
         {id && <ChapterDetail id={id} reloadKey={detailKey} onEdit={openChapterForm} onDelete={handleDelete} />}
 
-        {!id && level === 0 && !loading && <Overview tree={fullTree} />}
+        {!id && level === 0 && !loading && <Overview tree={fullTree} onImport={openImport} />}
 
         {!id && level > 0 && !loading && (
           <div>
@@ -313,6 +352,10 @@ export default function Library() {
                     Sửa {level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}
                   </button>
                 )}
+                <button type="button" className="btn btn-small" onClick={openImport}>
+                  <Icon name="import" />
+                  Nhập mục lục
+                </button>
                 <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
                   <Icon name="plus" />
                   Thêm chương
@@ -399,7 +442,7 @@ function GroupChapters({ chapters, showSection, onEdit, onDelete }) {
 }
 
 // Chưa chọn gì: tổng quan từng lớp
-function Overview({ tree }) {
+function Overview({ tree, onImport }) {
   const all = tree.flatMap((g) => g.subjects.flatMap((s) => s.sections.flatMap((x) => x.chapters)))
   return (
     <div>
@@ -407,13 +450,17 @@ function Overview({ tree }) {
         <h1>
           <span className="title-icon"><Icon name="library" /></span>Thư viện
         </h1>
+        <button type="button" className="btn btn-small" onClick={onImport}>
+          <Icon name="import" />
+          Nhập mục lục
+        </button>
       </div>
       <p className="muted">
         Mỗi lớp có một cây <b>Môn › Chuyên đề › Chương</b> riêng, chọn lớp bằng tab ở đầu mục lục. Học sinh chỉ thấy cây của lớp mình (theo "Lớp" trong hồ sơ
         học sinh). Khi nhập file JSON, chương được tự xếp theo lớp, môn, chuyên đề ghi trong file.
       </p>
       {all.length === 0 ? (
-        <div className="empty">Chưa có chương nào. Bấm "+ Chương" hoặc nhập một file JSON để tự tạo.</div>
+        <div className="empty">Chưa có chương nào. Bấm "Nhập mục lục" để dán cả mục lục giáo trình, "+ Chương" để tạo từng chương, hoặc nhập một file JSON.</div>
       ) : (
         <div className="overview-grid">
           {tree.map((g) => {
