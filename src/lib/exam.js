@@ -13,6 +13,24 @@ const OTHER_PART = { kind: 'other', roman: '', title: 'Câu khác (gia sư tự 
 
 export const TF_POINTS = [0, 0.1, 0.25, 0.5, 1]
 
+// Thời gian làm đề THPT môn Vật lý (phút), gia sư đổi được cho từng đề
+export const EXAM_MINUTES = 50
+
+// 125 giây → "02:05"; 3725 → "1:02:05"
+export function clockText(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds))
+  const h = Math.floor(s / 3600)
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+  const ss = String(s % 60).padStart(2, '0')
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
+}
+
+// Thời gian làm bài thực tế (phút, làm tròn lên) từ lúc bắt đầu đến lúc nộp
+export function minutesUsed(startedAt, submittedAt) {
+  if (!startedAt || !submittedAt) return null
+  return Math.max(0, Math.ceil((new Date(submittedAt) - new Date(startedAt)) / 60000))
+}
+
 // Điểm tối đa của một câu trong đề thi
 export function maxPoints(ex) {
   if (ex.kind === 'mcq' || ex.kind === 'short') return 0.25

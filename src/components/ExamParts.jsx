@@ -1,4 +1,5 @@
-import { examSummary, maxPoints, viNum } from '../lib/exam.js'
+import Icon from './Icon.jsx'
+import { EXAM_MINUTES, examSummary, maxPoints, viNum } from '../lib/exam.js'
 import { isAnswered } from './ExerciseBody.jsx'
 
 // Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm nhiều phương án lựa chọn" + cách tính điểm
@@ -102,3 +103,41 @@ export function PointsBadge({ ex, answer }) {
     </span>
   )
 }
+
+// Tính giờ làm đề: bật/tắt + số phút (chuẩn THPT 50 phút)
+export function ExamTimer({ timed, minutes, onSet }) {
+  return (
+    <div className="exam-timer-set">
+      <label className="exam-switch">
+        <input type="checkbox" checked={timed} onChange={(e) => onSet('timed', e.target.checked)} />
+        <Icon name="clock" />
+        <span>Tính giờ làm bài</span>
+      </label>
+      {timed && (
+        <label className="exam-minutes">
+          <input
+            type="number"
+            min="1"
+            max="600"
+            inputMode="numeric"
+            value={minutes}
+            onChange={(e) => onSet('time_limit', e.target.value)}
+            aria-label="Số phút làm bài"
+          />
+          <span>phút</span>
+          {String(minutes) !== String(EXAM_MINUTES) && (
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => onSet('time_limit', String(EXAM_MINUTES))}>
+              Về {EXAM_MINUTES} phút
+            </button>
+          )}
+        </label>
+      )}
+      <span className="muted small" style={{ flexBasis: '100%' }}>
+        {timed
+          ? 'Học sinh bấm "Bắt đầu làm bài" thì đồng hồ chạy; hết giờ bài tự nộp.'
+          : 'Không tính giờ: học sinh làm thoải mái đến hạn nộp.'}
+      </span>
+    </div>
+  )
+}
+

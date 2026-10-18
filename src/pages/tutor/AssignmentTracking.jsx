@@ -16,7 +16,7 @@ import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import Icon from '../../components/Icon.jsx'
 import AnswerKey from '../../components/AnswerKey.jsx'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
-import { examStructure, examSummary, groupExercises, viNum } from '../../lib/exam.js'
+import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
 
@@ -69,6 +69,11 @@ export default function AssignmentTracking() {
         <h1>{a.title}</h1>
         <div className="row" style={{ marginBottom: '0.5rem' }}>
           {a.is_exam && <span className="badge badge-new">Đề thi · thang THPT</span>}
+          {a.is_exam && (
+            <span className="badge">
+              <Icon name="clock" /> {a.time_limit_minutes ? `${a.time_limit_minutes} phút` : 'Không tính giờ'}
+            </span>
+          )}
           <TypeBadge type={a.type} />
           <DueBadge date={a.due_date} />
           <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
@@ -101,7 +106,7 @@ export default function AssignmentTracking() {
         </div>
       )}
       {sorted.map((r) => (
-        <GradeCard key={r.student_id} rec={r} exercises={exercises} isExam={!!a.is_exam} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
+        <GradeCard key={r.student_id} rec={r} exercises={exercises} isExam={!!a.is_exam} limit={a.is_exam ? a.time_limit_minutes : null} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
       ))}
     </div>
   )
@@ -156,7 +161,8 @@ function ExamStructureNote({ exercises }) {
   )
 }
 
-function GradeCard({ rec, exercises, isExam, answers, onChanged }) {
+function GradeCard({ rec, exercises, isExam, limit, answers, onChanged }) {
+  const used = minutesUsed(rec.started_at, rec.submitted_at)
   const sum = autoSummary(exercises, answers)
   const exam = isExam ? examSummary(exercises, answers) : null
   // Điểm gợi ý: đề thi = tổng điểm THPT (quy về thang 10 nếu đề không chuẩn); bài thường = tỉ lệ câu đúng × 10, làm tròn 0,25
@@ -219,7 +225,7 @@ function GradeCard({ rec, exercises, isExam, answers, onChanged }) {
       unwrap(
         await supabase
           .from('assignment_recipients')
-          .update({ status: 'todo', submission_path: null, submitted_at: null })
+          .update({ status: 'todo', submission_path: null, submitted_at: null, started_at: null })
           .eq('assignment_id', rec.assignment_id)
           .eq('student_id', rec.student_id)
       )
@@ -236,7 +242,18 @@ function GradeCard({ rec, exercises, isExam, answers, onChanged }) {
         <strong>{studentLabel(rec.student)}</strong>
         <StatusBadge status={rec.status} />
       </div>
-      {rec.submitted_at && <p className="muted small" style={{ margin: '0 0 0.5rem' }}>Nộp lúc {formatDateTime(rec.submitted_at)}</p>}
+      {rec.submitted_at && (
+        <p className="muted small" style={{ margin: '0 0 0.5rem' }}>
+          Nộp lúc {formatDateTime(rec.submitted_at)}
+          {limit && used !== null && (
+            <>
+              {' · '}
+              <Icon name="clock" /> Làm trong {used}/{limit} phút
+              {used > limit + 1 && <span className="badge badge-warn" style={{ marginLeft: '0.4rem' }}>Quá giờ {used - limit} phút</span>}
+            </>
+          )}
+        </p>
+      )}
       {rec.status === 'checked' && (
         <p className="small" style={{ margin: '0 0 0.5rem' }}>
           Điểm hiện tại: <strong>{formatScore(rec.score)}</strong>

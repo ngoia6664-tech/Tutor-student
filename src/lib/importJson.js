@@ -222,7 +222,13 @@ export function parseImport(raw, options = {}) {
   })
   if (errors.length) throw new Error(errors.join('\n'))
 
-  return { drafts: [{ kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises, is_exam: obj.is_exam === true }], warnings, flags: [] }
+  // "time_limit_minutes": số phút làm đề (bỏ trống = 50 phút), null = không tính giờ
+  const limit = obj.time_limit_minutes === null ? null : Number.isInteger(obj.time_limit_minutes) ? obj.time_limit_minutes : undefined
+  return {
+    drafts: [{ kind: 'assignment', title: obj.title.trim(), type: obj.type, due_date, exercises, is_exam: obj.is_exam === true, time_limit_minutes: limit }],
+    warnings,
+    flags: [],
+  }
 }
 
 export const SAMPLE_LESSON = JSON.stringify(

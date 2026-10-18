@@ -16,6 +16,15 @@ import Markdown from '../../components/Markdown.jsx'
 import VideoEmbed from '../../components/VideoEmbed.jsx'
 import StudentPicker from '../../components/StudentPicker.jsx'
 import Icon from '../../components/Icon.jsx'
+import { ExamTimer } from '../../components/ExamParts.jsx'
+import { EXAM_MINUTES } from '../../lib/exam.js'
+
+// Số phút làm bài gửi lên máy chủ: chỉ đề thi có bật tính giờ (số phút sai thì dùng 50)
+function timeLimitOf(o) {
+  if (!o?.is_exam || !o.timed) return null
+  const n = parseInt(o.time_limit, 10)
+  return n >= 1 && n <= 600 ? n : EXAM_MINUTES
+}
 
 // Dán JSON hoặc chọn file .json → kiểm tra → xem trước → chọn học sinh → lưu
 export default function ImportJson() {
@@ -60,7 +69,15 @@ export default function ImportJson() {
     try {
       const r = parseImport(text, { includeNotes: withNotes })
       setResult(r)
-      setOpts(r.drafts.map((d) => ({ include: true, due_date: d.due_date || '', is_exam: !!d.is_exam })))
+      setOpts(
+        r.drafts.map((d) => ({
+          include: true,
+          due_date: d.due_date || '',
+          is_exam: !!d.is_exam,
+          timed: d.time_limit_minutes !== null,
+          time_limit: String(d.time_limit_minutes || EXAM_MINUTES),
+        }))
+      )
       // Chọn sẵn chương: có chương trùng tên thì dùng, chưa có thì đề xuất tạo mới
       const match = r.chapter ? findChapter(chapters, r.chapter) : null
       const choice = match ? match.id : r.chapter?.title ? 'new' : ''
@@ -101,7 +118,7 @@ export default function ImportJson() {
   // Mở trang soạn cho một phần (để sửa, gắn file, video...)
   function openEditor(draft, i) {
     const target = draft.kind === 'lesson' ? '/tutor/lessons/new' : '/tutor/assignments/new'
-    navigate(target, { state: { draft: { ...draft, due_date: opts[i]?.due_date || '', is_exam: !!opts[i]?.is_exam } } })
+    navigate(target, { state: { draft: { ...draft, due_date: opts[i]?.due_date || '', is_exam: !!opts[i]?.is_exam, time_limit_minutes: timeLimitOf(opts[i]) } } })
   }
 
   async function saveAll() {
@@ -142,6 +159,7 @@ export default function ImportJson() {
               title: d.title,
               type: d.type,
               is_exam: !!opts[i].is_exam,
+              time_limit_minutes: timeLimitOf(opts[i]),
               due_date: opts[i].due_date || null,
               lesson_id: lessonId,
               chapter_id: chapterId,
@@ -288,6 +306,9 @@ export default function ImportJson() {
                       <strong>Đề thi</strong> (chấm theo thang THPT)
                     </span>
                   </label>
+                  {opts[i]?.is_exam && (
+                    <ExamTimer timed={!!opts[i].timed} minutes={opts[i].time_limit} onSet={(k, v) => setOpt(i, k, v)} />
+                  )}
                   {d.looksLikeExam && !opts[i]?.is_exam && (
                     <span className="muted small" style={{ flexBasis: '100%', marginTop: '-0.5rem' }}>
                       Bài có cả câu đúng/sai và trả lời ngắn, giống cấu trúc đề thi THPT. Tích ô Đề thi nếu muốn chấm theo thang THPT.

@@ -15,7 +15,8 @@ import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import { packImages, unpackImages } from '../../lib/svg.js'
-import { EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
+import { EXAM_MINUTES, EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
+import { ExamTimer } from '../../components/ExamParts.jsx'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
 const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
@@ -145,6 +146,8 @@ export default function AssignmentEditor() {
           title: full.assignment.title,
           type: full.assignment.type,
           is_exam: !!full.assignment.is_exam,
+          timed: full.assignment.time_limit_minutes != null,
+          time_limit: String(full.assignment.time_limit_minutes || EXAM_MINUTES),
           due_date: full.assignment.due_date || '',
           lesson_id: full.assignment.lesson_id || '',
           exercises: full.exercises.map(toFormExercise),
@@ -163,6 +166,9 @@ export default function AssignmentEditor() {
         title: draft?.title || '',
         type: draft?.type || 'homework',
         is_exam: !!draft?.is_exam,
+        // Đề thi mới mặc định tính giờ 50 phút; gia sư tắt hoặc đổi số phút được
+        timed: draft?.time_limit_minutes !== null,
+        time_limit: String(draft?.time_limit_minutes || EXAM_MINUTES),
         due_date: draft?.due_date || '',
         lesson_id: '',
         exercises: draft?.exercises?.length ? draft.exercises.map((e) => toFormExercise({ ...e, id: null })) : [toFormExercise({})],
@@ -218,6 +224,8 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
       const msg = checkExercise(form.exercises[i], i + 1)
       if (msg) return setError(msg)
     }
+    const minutes = parseInt(form.time_limit, 10)
+    if (form.is_exam && form.timed && !(minutes >= 1 && minutes <= 600)) return setError('Thời gian làm bài phải từ 1 đến 600 phút.')
     if (!form.student_ids.length && !window.confirm('Chưa chọn học sinh nào. Vẫn lưu?')) return
 
     const removedSubmitted = submittedIds.filter((sid) => !form.student_ids.includes(sid))
@@ -234,6 +242,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         title: form.title.trim(),
         type: form.type,
         is_exam: form.is_exam,
+        time_limit_minutes: form.is_exam && form.timed ? minutes : null,
         due_date: form.due_date || null,
         lesson_id: form.lesson_id || null,
         chapter_id: form.chapter_id || null,
@@ -297,7 +306,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         </label>
       </div>
 
-      <ExamToggle form={form} onChange={(v) => set('is_exam', v)} />
+      <ExamToggle form={form} onChange={(v) => set('is_exam', v)} onSet={set} />
 
       <h2>Câu hỏi ({form.exercises.length})</h2>
       <p className="muted small">
@@ -476,7 +485,7 @@ function BlankEditor({ ex, onChange }) {
 }
 
 // Bật / tắt chế độ đề thi + cấu trúc đề so với chuẩn THPT 18 – 4 – 6
-function ExamToggle({ form, onChange }) {
+function ExamToggle({ form, onChange, onSet }) {
   const st = examStructure(form.exercises)
   return (
     <div className={form.is_exam ? 'card exam-toggle on' : 'card exam-toggle'}>
@@ -489,6 +498,7 @@ function ExamToggle({ form, onChange }) {
       <p className="muted small" style={{ margin: '0.35rem 0 0' }}>
         Trắc nghiệm 0,25 đ/câu · Đúng/sai: đúng 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1 đ · Trả lời ngắn 0,25 đ/câu. Bài thường thì để trống ô này.
       </p>
+      {form.is_exam && <ExamTimer timed={form.timed} minutes={form.time_limit} onSet={onSet} />}
       {form.is_exam && (
         <div className="exam-structure">
           {EXAM_PARTS.map((p) => (

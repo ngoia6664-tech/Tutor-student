@@ -322,7 +322,15 @@ Bài tập có ô **"Đây là đề thi"** (trang soạn bài tập, và ở t�
 
 **Dán JSON:**
 - File `tutor-lesson/v1`: các ý "Đúng/Sai câu N" (đang ghi thành từng câu trắc nghiệm 2 phương án Đúng/Sai, id kết thúc a–d) được **gom lại thành 1 câu đúng/sai 4 ý**; phần dẫn chung lên đầu, lời giải từng ý giữ nguyên. Bài trong `problem_types` có tiêu đề / nguồn chứa "trả lời ngắn" và đáp án ngắn thành câu **Trả lời ngắn**. File có cả đúng/sai và trả lời ngắn được gợi ý là đề thi (ô vẫn để trống cho gia sư quyết).
-- Dạng rút gọn: thêm `"is_exam": true` cho bài; câu đúng/sai `"statements": [{"text": "...", "answer": true}, ...]`; câu trả lời ngắn `"short_answer": "1,89"`.
+- Dạng rút gọn: thêm `"is_exam": true` cho bài; câu đúng/sai `"statements": [{"text": "...", "answer": true}, ...]`; câu trả lời ngắn `"short_answer": "1,89"`; `"time_limit_minutes": 45` (bỏ trống = 50 phút, `null` = không tính giờ).
+- Hình của từng câu (`"images": [{"src": "data:image/png;base64,...", "caption": "..."}]`) được gắn vào đề câu đó. Câu đúng/sai lặp cùng một hình ở 4 ý thì chỉ hiện 1 lần.
+
+**Tính giờ làm đề:**
+- Bật "Đây là đề thi" thì có thêm ô **Tính giờ làm bài**, mặc định 50 phút; sửa số phút (1–600) hoặc bỏ tích để không tính giờ. Có ở trang soạn và ở từng bài khi Dán JSON. Bài thường không có tính giờ.
+- Học sinh mở đề có tính giờ: chưa thấy đề, bấm **Bắt đầu làm bài** thì đề hiện và đồng hồ đếm ngược (thẻ đầu trang + ô nổi góc dưới; dưới 5 phút chuyển vàng, dưới 1 phút đỏ).
+- Giờ bắt đầu do máy chủ ghi (`assignment_recipients.started_at`, hàm `start_assignment`), học sinh không sửa được; tải lại trang, đổi máy hay để sai giờ trên máy đều không được thêm giờ.
+- Hết giờ: đề bị khóa và bài **tự nộp** với các câu đã làm, không hỏi lại. Mạng lỗi thì học sinh bấm "Nộp bài" lại (máy chủ vẫn nhận).
+- Gia sư thấy "Làm trong x/50 phút" ở từng bài nộp, nộp muộn hơn giới hạn thì có nhãn "Quá giờ". "Mở lại" bài cho học sinh thì đồng hồ được làm mới.
 
 ---
 

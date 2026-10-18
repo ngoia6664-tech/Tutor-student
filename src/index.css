@@ -2308,3 +2308,132 @@ details.method-box:not([open]) > summary {
     gap: 0.25rem;
   }
 }
+
+/* ===================== Tính giờ làm đề ===================== */
+.exam-timer-set {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  flex-basis: 100%;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+.exam-minutes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.exam-minutes input {
+  width: 5.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+.exam-fieldset {
+  min-width: 0;
+  margin-inline: 0;
+}
+.exam-fieldset:disabled {
+  opacity: 0.75;
+}
+.exam-start {
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+.exam-start-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  background: var(--grad);
+  color: var(--on-primary);
+  font-size: 1.6rem;
+  box-shadow: var(--glow);
+  margin-bottom: 0.6rem;
+}
+.exam-start-rules {
+  text-align: left;
+  max-width: 34rem;
+  margin: 0.8rem auto 1.2rem;
+  padding-left: 1.2rem;
+  line-height: 1.6;
+}
+.exam-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.exam-timer-num {
+  margin-left: auto;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.exam-timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  margin-top: 0.55rem;
+  overflow: hidden;
+}
+.exam-timer-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad);
+  transition: width 1s linear;
+}
+.exam-timer-warn .exam-timer-fill {
+  background: var(--warn);
+}
+.exam-timer-danger .exam-timer-fill {
+  background: var(--danger);
+}
+.exam-timer-warn .exam-timer-num {
+  color: var(--warn);
+}
+.exam-timer-danger .exam-timer-num {
+  color: var(--danger);
+}
+/* Ô đồng hồ nổi góc dưới, luôn thấy khi cuộn đề */
+.exam-timer-float {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow, 0 6px 20px rgba(0, 0, 0, 0.18));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.exam-timer-float.exam-timer-warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.exam-timer-float.exam-timer-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: exam-pulse 1s ease-in-out infinite;
+}
+@keyframes exam-pulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exam-timer-float.exam-timer-danger {
+    animation: none;
+  }
+  .exam-timer-fill {
+    transition: none;
+  }
+}

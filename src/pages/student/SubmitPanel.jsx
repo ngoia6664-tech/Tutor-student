@@ -17,7 +17,8 @@ function extFor(type) {
 
 // Ảnh bài làm (không bắt buộc) + nút Nộp bài
 // labels: nhãn câu để nhắc câu chưa làm (đề thi: "I.3", "II.1"...)
-export default function SubmitPanel({ assignmentId, studentId, exercises, answers, labels, onSubmitted }) {
+// autoSubmit: đề tính giờ đã hết giờ → nộp ngay, không hỏi lại (lỗi mạng thì vẫn bấm nộp lại được)
+export default function SubmitPanel({ assignmentId, studentId, exercises, answers, labels, onSubmitted, autoSubmit = false }) {
   const [items, setItems] = useState([]) // [{ file, url }]
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
@@ -29,6 +30,16 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
 
   // Giải phóng bộ nhớ ảnh xem trước khi rời trang
   useEffect(() => () => itemsRef.current.forEach((it) => URL.revokeObjectURL(it.url)), [])
+
+  // Hết giờ: tự nộp đúng một lần (giữ hàm submit mới nhất để gửi câu trả lời mới nhất)
+  const submitRef = useRef(null)
+  const autoDone = useRef(false)
+  useEffect(() => {
+    if (autoSubmit && !autoDone.current) {
+      autoDone.current = true
+      submitRef.current?.(true)
+    }
+  }, [autoSubmit])
 
   const unanswered = exercises.filter((ex) => !isAnswered(ex, answers[ex.id]))
   const hasEssay = exercises.some((ex) => ex.kind === 'essay')
@@ -48,13 +59,13 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
     setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  async function submit() {
+  async function submit(force = false) {
     // Câu tự luận chưa gõ nhưng có ảnh thì coi như đã làm
     const missing = unanswered.filter((ex) => !(ex.kind === 'essay' && items.length))
     const ask = missing.length
       ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => labels?.[ex.id] || exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
       : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
-    if (!window.confirm(ask)) return
+    if (!force && !window.confirm(ask)) return
 
     setBusy(true)
     setError(null)
@@ -81,6 +92,8 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       setProgress('')
     }
   }
+
+  submitRef.current = submit
 
   return (
     <div className="card submit-card">
@@ -146,7 +159,7 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       <ErrorBox message={error} />
       {progress && <div className="alert alert-info">{progress}</div>}
 
-      <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy} onClick={submit}>
+      <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy} onClick={() => submit()}>
         <Icon name="send" />
         {busy ? 'Đang nộp...' : 'Nộp bài'}
       </button>

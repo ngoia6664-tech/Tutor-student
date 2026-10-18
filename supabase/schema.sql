@@ -93,6 +93,15 @@ alter table public.answer_keys add column if not exists correct jsonb;
 --   trắc nghiệm 0,25/câu; đúng-sai: đúng 1/2/3/4 ý được 0,1/0,25/0,5/1; trả lời ngắn 0,25/câu.
 alter table public.assignments add column if not exists is_exam boolean not null default false;
 
+-- ---- Nâng cấp: tính giờ làm đề thi ----
+-- time_limit_minutes: số phút làm bài (đề THPT chuẩn 50). null = không tính giờ. Chỉ dùng khi is_exam.
+-- started_at: lúc học sinh bấm "Bắt đầu làm bài" (máy chủ ghi, học sinh không tự sửa được)
+alter table public.assignments add column if not exists time_limit_minutes int;
+alter table public.assignments drop constraint if exists assignments_time_limit_check;
+alter table public.assignments add constraint assignments_time_limit_check
+  check (time_limit_minutes is null or time_limit_minutes between 1 and 600);
+alter table public.assignment_recipients add column if not exists started_at timestamptz;
+
 -- Câu trả lời học sinh gõ / chọn trực tiếp trong app
 create table if not exists public.submission_answers (
   assignment_id  uuid not null,
@@ -494,10 +503,11 @@ begin
   end if;
 
   if v_id is null then
-    insert into assignments (lesson_id, title, type, due_date, chapter_id, is_exam)
+    insert into assignments (lesson_id, title, type, due_date, chapter_id, is_exam, time_limit_minutes)
     values (nullif(p ->> 'lesson_id', '')::uuid, trim(p ->> 'title'), p ->> 'type',
             nullif(p ->> 'due_date', '')::date, nullif(p ->> 'chapter_id', '')::uuid,
-            coalesce((p ->> 'is_exam')::boolean, false))
+            coalesce((p ->> 'is_exam')::boolean, false),
+            case when coalesce((p ->> 'is_exam')::boolean, false) then nullif(p ->> 'time_limit_minutes', '')::int end)
     returning id into v_id;
   else
     update assignments
@@ -506,7 +516,9 @@ begin
            type = p ->> 'type',
            due_date = nullif(p ->> 'due_date', '')::date,
            chapter_id = nullif(p ->> 'chapter_id', '')::uuid,
-           is_exam = coalesce((p ->> 'is_exam')::boolean, false)
+           is_exam = coalesce((p ->> 'is_exam')::boolean, false),
+           time_limit_minutes = case when coalesce((p ->> 'is_exam')::boolean, false)
+                                     then nullif(p ->> 'time_limit_minutes', '')::int end
      where id = v_id;
     if not found then
       raise exception 'Không tìm thấy bài tập để cập nhật';
@@ -840,6 +852,45 @@ $$;
 
 revoke all on function public.submit_assignment(uuid, jsonb) from public;
 grant execute on function public.submit_assignment(uuid, jsonb) to authenticated;
+
+-- ---------- Bắt đầu làm đề có tính giờ ----------
+-- Ghi lúc bắt đầu một lần duy nhất (tải lại trang không được tính lại giờ).
+-- Trả về {"started_at": ..., "now": ...}: kèm giờ máy chủ để app bù lệch đồng hồ của máy học sinh.
+drop function if exists public.start_assignment(uuid);
+create or replace function public.start_assignment(p_assignment_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_started timestamptz;
+  v_status text;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập để làm bài';
+  end if;
+  select status, started_at into v_status, v_started
+    from assignment_recipients
+   where assignment_id = p_assignment_id and student_id = v_uid
+   for update;
+  if not found then
+    raise exception 'Bài này không được giao cho bạn';
+  end if;
+  if v_started is null and v_status = 'todo' then
+    perform set_config('app.submitting', 'on', true);
+    update assignment_recipients set started_at = now()
+     where assignment_id = p_assignment_id and student_id = v_uid
+    returning started_at into v_started;
+    perform set_config('app.submitting', 'off', true);
+  end if;
+  return jsonb_build_object('started_at', v_started, 'now', now());
+end;
+$$;
+
+revoke all on function public.start_assignment(uuid) from public;
+grant execute on function public.start_assignment(uuid) to authenticated;
 
 -- ---------- Thông báo ----------
 -- Học sinh không có quyền sửa bảng profiles, nên đánh dấu "đã xem thông báo" đi qua hàm này
