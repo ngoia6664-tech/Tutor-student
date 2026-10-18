@@ -13,6 +13,8 @@ import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import Markdown from '../../components/Markdown.jsx'
+import { packImages, unpackImages } from '../../lib/svg.js'
 import { EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
@@ -23,11 +25,14 @@ const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
 // tf: [{ statement, answer: true | false | null }] (4 ý a–d), shortAnswer: "1,89"
 function toFormExercise(e) {
   const kind = e.kind || 'essay'
+  // Hình nhúng base64 hiện gọn là (hinh-1), (hinh-2)... trong ô soạn
+  const packed = packImages(e.question_md || '')
   const base = {
     key: tempKey(),
     id: e.id || null,
     kind,
-    question_md: e.question_md || '',
+    question_md: packed.text,
+    qImages: packed.images,
     answer_md: e.answer_md || '',
     method_md: e.method_md || '',
     mcq: [{ text: '' }, { text: '' }, { text: '' }, { text: '' }],
@@ -55,7 +60,8 @@ function toFormExercise(e) {
   return base
 }
 
-function fromFormExercise(ex) {
+function fromFormExercise(form) {
+  const ex = { ...form, question_md: unpackImages(form.question_md, form.qImages || []) }
   if (ex.kind === 'mcq') {
     const options = ex.mcq.map((o, i) => ({ label: letter(i), text: o.text.trim() }))
     const correct = ex.mcqCorrect >= 0 ? letter(ex.mcqCorrect) : null
@@ -337,7 +343,14 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
             </div>
           </div>
 
-          <MarkdownField label="Đề bài" required value={ex.question_md} onChange={(v) => updateEx(i, { question_md: v })} />
+          <MarkdownField
+            label="Đề bài"
+            required
+            value={ex.question_md}
+            onChange={(v) => updateEx(i, { question_md: v })}
+            renderPreview={(v) => <Markdown>{unpackImages(v, ex.qImages || [])}</Markdown>}
+            hint={ex.qImages?.length ? `Có ${ex.qImages.length} hình, hiện gọn là (hinh-1), (hinh-2)... Giữ nguyên các mã này để không mất hình.` : undefined}
+          />
 
           {ex.kind === 'mcq' && <McqEditor ex={ex} index={i} onChange={(patch) => updateEx(i, patch)} />}
           {ex.kind === 'fill_blank' && <BlankEditor ex={ex} onChange={(patch) => updateEx(i, patch)} />}

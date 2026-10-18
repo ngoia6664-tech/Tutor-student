@@ -78,6 +78,20 @@ function buildLessonMd(lesson, warnings) {
   ])
 }
 
+// Hình của câu hỏi ("images": [{ src, caption }]) → ảnh Markdown, bỏ hình trùng src
+function imagesMd(list, where, warnings, seen = new Set()) {
+  return arr(list)
+    .filter((d) => {
+      const key = str(d?.src).replace(/\s+/g, '')
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .map((d) => diagramMd(d, where, warnings))
+    .filter(Boolean)
+    .join('\n\n')
+}
+
 // ----- Câu hỏi -----
 // Loại câu đã hiện ở nhãn "Trắc nghiệm / Điền khuyết / Tự luận", nên đề chỉ ghi mức độ
 function levelLine(level) {
@@ -90,7 +104,7 @@ function noteBlock(note, includeNotes) {
 }
 
 // Điền khuyết: mỗi ý (a, b, c...) là một ô để học sinh gõ đáp án
-function fromFillBlank(fb, includeNotes) {
+function fromFillBlank(fb, includeNotes, warnings = []) {
   const items = arr(fb.items).map((it, i) => ({
     id: str(it.id) || String.fromCharCode(97 + i),
     statement: str(it.statement),
@@ -101,7 +115,7 @@ function fromFillBlank(fb, includeNotes) {
     flagged: !!str(fb.note),
     exercise: {
       kind: 'fill_blank',
-      question_md: join([levelLine(fb.level), 'Điền vào chỗ trống:']),
+      question_md: join([levelLine(fb.level), 'Điền vào chỗ trống:', imagesMd(fb.images, `Câu ${str(fb.id)}`, warnings)]),
       options: items.map(({ id, statement }) => ({ id, statement })),
       correct: Object.fromEntries(items.map(({ id, answer }) => [id, answer])),
       answer_md: items.map((it) => `**${it.id})** ${it.answer}`).join('\n\n'),
@@ -111,7 +125,7 @@ function fromFillBlank(fb, includeNotes) {
 }
 
 // Trắc nghiệm: phương án hiện thành nút chọn; lý do đúng/sai chỉ nằm ở lời giải
-function fromMcq(q, includeNotes) {
+function fromMcq(q, includeNotes, warnings = []) {
   const options = arr(q.options).map((o, i) => ({
     label: str(o.label) || String.fromCharCode(65 + i),
     text: str(o.text),
@@ -119,6 +133,7 @@ function fromMcq(q, includeNotes) {
   }))
   const correct = options.find((o) => o.label === str(q.answer))
   const head = levelLine(q.level)
+  const pics = imagesMd(q.images, `Câu ${str(q.id)}`, warnings)
   const method_md = join([
     q.core ? `**Cốt lõi:** ${str(q.core)}` : '',
     options.some((o) => o.reason) ? `**Phân tích từng phương án:**\n\n${options.map((o) => `- **${o.label}.** ${o.reason}`).join('\n')}` : '',
@@ -134,7 +149,7 @@ function fromMcq(q, includeNotes) {
       invalid: true,
       exercise: {
         kind: 'essay',
-        question_md: join([head, str(q.stem), options.map((o) => `- **${o.label}.** ${o.text}`).join('\n')]),
+        question_md: join([head, str(q.stem), pics, options.map((o) => `- **${o.label}.** ${o.text}`).join('\n')]),
         answer_md: str(q.answer),
         method_md,
       },
@@ -145,7 +160,7 @@ function fromMcq(q, includeNotes) {
     flagged: !!str(q.note),
     exercise: {
       kind: 'mcq',
-      question_md: join([head, str(q.stem)]),
+      question_md: join([head, str(q.stem), pics]),
       options: options.map(({ label, text }) => ({ label, text })),
       correct: correct.label,
       answer_md: `**${correct.label}.** ${correct.text}`,
@@ -178,7 +193,7 @@ function splitTfStem(stem) {
   return { lead: t.slice(0, m.index).trim(), statement: t.slice(m.index + m[0].length).trim() }
 }
 
-function fromTfGroup(items, includeNotes) {
+function fromTfGroup(items, includeNotes, warnings = []) {
   const rows = items.map((q, i) => {
     const pick = arr(q.options).find((o) => str(o.label) === str(q.answer))
     const { lead, statement } = splitTfStem(q.stem)
@@ -191,7 +206,7 @@ function fromTfGroup(items, includeNotes) {
     flagged: items.some((q) => str(q.note)),
     exercise: {
       kind: 'true_false',
-      question_md: join([levelLine(first.level), lead || 'Chọn Đúng hoặc Sai cho mỗi ý sau:']),
+      question_md: join([levelLine(first.level), lead || 'Chọn Đúng hoặc Sai cho mỗi ý sau:', imagesMd(items.flatMap((q) => arr(q.images)), `Câu ${str(first.id)}`, warnings)]),
       options: rows.map((r) => ({ id: r.id, statement: r.statement })),
       correct: Object.fromEntries(rows.map((r) => [r.id, r.value])),
       answer_md: rows.map((r) => `**${r.id})** ${r.value ? 'Đúng' : 'Sai'}`).join(' · '),
@@ -205,12 +220,12 @@ function fromTfGroup(items, includeNotes) {
 }
 
 // Trắc nghiệm: gom các ý Đúng/Sai liên tiếp cùng câu (tối đa 4 ý) thành 1 câu đúng/sai, còn lại giữ trắc nghiệm
-function convertMcqList(list, includeNotes) {
+function convertMcqList(list, includeNotes, warnings = []) {
   const out = []
   for (let i = 0; i < list.length; ) {
     const q = list[i]
     if (!isTfItem(q)) {
-      out.push(fromMcq(q, includeNotes))
+      out.push(fromMcq(q, includeNotes, warnings))
       i++
       continue
     }
@@ -220,8 +235,8 @@ function convertMcqList(list, includeNotes) {
       group.push(list[i + group.length])
     }
     const ok = group.every((g) => arr(g.options).some((o) => str(o.label) === str(g.answer)))
-    if (ok) out.push(fromTfGroup(group, includeNotes))
-    else group.forEach((g) => out.push(fromMcq(g, includeNotes)))
+    if (ok) out.push(fromTfGroup(group, includeNotes, warnings))
+    else group.forEach((g) => out.push(fromMcq(g, includeNotes, warnings)))
     i += group.length
   }
   return out
@@ -230,14 +245,15 @@ function convertMcqList(list, includeNotes) {
 // "Trắc nghiệm trả lời ngắn": đáp án là một số / cụm ngắn → máy chấm được
 const isShortProblem = (p, typeTitle) => /trả\s*lời\s*ngắn/i.test(`${typeTitle} ${str(p.source)}`) && /^[^\n]{1,40}$/.test(str(p.answer))
 
-function fromProblem(p, typeTitle, includeNotes) {
+function fromProblem(p, typeTitle, includeNotes, warnings = []) {
+  const pics = imagesMd(p.images, `Bài ${str(p.id)}`, warnings)
   if (isShortProblem(p, typeTitle)) {
     return {
       type: normalizeType(p.assignment),
       flagged: !!str(p.note),
       exercise: {
         kind: 'short',
-        question_md: str(p.statement),
+        question_md: join([str(p.statement), pics]),
         correct: str(p.answer),
         answer_md: str(p.answer),
         method_md: join([
@@ -253,7 +269,7 @@ function fromProblem(p, typeTitle, includeNotes) {
     flagged: !!str(p.note),
     exercise: {
       kind: 'essay',
-      question_md: join([typeTitle ? `_${typeTitle}_` : '', str(p.statement)]),
+      question_md: join([typeTitle ? `_${typeTitle}_` : '', str(p.statement), pics]),
       answer_md: str(p.answer),
       method_md: join([
         arr(p.solution).length ? `**Lời giải:**\n\n${numbered(p.solution)}` : '',
@@ -289,9 +305,9 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   // Gom câu hỏi theo loại bài: điền khuyết → trắc nghiệm → tự luận
   const ex = lesson.exercises || {}
   const converted = [
-    ...arr(ex.fill_blank).map((fb) => fromFillBlank(fb, includeNotes)),
-    ...convertMcqList(arr(ex.mcq), includeNotes),
-    ...arr(ex.problem_types).flatMap((pt) => arr(pt.problems).map((p) => fromProblem(p, str(pt.title), includeNotes))),
+    ...arr(ex.fill_blank).map((fb) => fromFillBlank(fb, includeNotes, warnings)),
+    ...convertMcqList(arr(ex.mcq), includeNotes, warnings),
+    ...arr(ex.problem_types).flatMap((pt) => arr(pt.problems).map((p) => fromProblem(p, str(pt.title), includeNotes, warnings))),
   ].filter((c) => c.exercise.question_md.trim())
   const invalid = converted.filter((c) => c.invalid).length
   if (invalid) warnings.push(`${invalid} câu trắc nghiệm không xác định được phương án đúng, đã chuyển thành câu tự luận.`)
