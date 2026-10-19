@@ -325,12 +325,6 @@ Bài tập có ô **"Đây là đề thi"** (trang soạn bài tập, và ở t�
 - Dạng rút gọn: thêm `"is_exam": true` cho bài; câu đúng/sai `"statements": [{"text": "...", "answer": true}, ...]`; câu trả lời ngắn `"short_answer": "1,89"`; `"time_limit_minutes": 45` (bỏ trống = 50 phút, `null` = không tính giờ).
 - Hình của từng câu (`"images": [{"src": "data:image/png;base64,...", "caption": "..."}]`) được gắn vào đề câu đó. Câu đúng/sai lặp cùng một hình ở 4 ý thì chỉ hiện 1 lần.
 
-**Vẽ hình (menu "Vẽ hình", gia sư và học sinh):** bảng vẽ GeoGebra nhúng qua Apps API (tải từ geogebra.org khi mở trang, cần mạng).
-- 3 kiểu: **Hình phẳng**, **Hình không gian** (lớp 11: ẩn trục và nền xOy), **Hệ trục Oxyz** (lớp 12). Kéo thả điểm thì hình đổi theo; xoay hình 3D bằng chuột phải / hai ngón tay.
-- "Dựng nhanh": tam giác + trọng tâm, đường cao; chóp S.ABCD; chóp đều; tứ diện; lăng trụ; hình hộp; mặt phẳng, vectơ, mặt cầu trong Oxyz.
-- Lưu hình vào "Hình của tôi" (lưu trên trình duyệt của máy đó), mở lại sửa tiếp, tải ảnh PNG, toàn màn hình.
-- Bản quyền: GeoGebra miễn phí cho dùng phi thương mại; dùng cho dạy học có thu phí có thể cần giấy phép (xem geogebra.org/license).
-
 **Nhập mục lục (Thư viện → "Nhập mục lục"):** dán mục lục giáo trình để tạo nhiều chương một lần, mỗi dòng một mục:
 ```
 Lớp 12 · Vật lý                      ← lớp + môn

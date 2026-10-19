@@ -12,7 +12,6 @@ const {
   StudentResults,
   StudentLibrary,
   StudentLesson,
-  StudentDraw,
   TutorStudents,
   StudentDetail,
   Library,
@@ -23,7 +22,6 @@ const {
   TutorLessons,
   TutorLessonView,
   LessonEditor,
-  TutorDraw,
 } = Pages
 
 // /tutor/chapters(/:id) → /tutor/library(/:id), giữ nguyên ?lop=&mon=&cd=
@@ -63,7 +61,6 @@ export default function App() {
         <Route path="lessons/:id" element={<TutorLessonView />} />
         <Route path="lessons/:id/edit" element={<LessonEditor />} />
         <Route path="import" element={<ImportJson />} />
-        <Route path="draw" element={<TutorDraw />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 
@@ -79,7 +76,6 @@ export default function App() {
         <Route index element={<StudentHome />} />
         <Route path="assignments/:id" element={<StudentAssignment />} />
         <Route path="results" element={<StudentResults />} />
-        <Route path="draw" element={<StudentDraw />} />
         <Route path="library/:id?" element={<StudentLibrary />} />
         {/* Trang "Bài giảng" cũ nay nằm trong Thư viện */}
         <Route path="lessons" element={<Navigate to="/student/library" replace />} />
