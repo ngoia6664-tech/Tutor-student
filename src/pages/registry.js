@@ -8,6 +8,7 @@ const loaders = {
     StudentResults: () => import('./student/StudentResults.jsx'),
     StudentLibrary: () => import('./student/StudentLibrary.jsx'),
     StudentLesson: () => import('./student/StudentLesson.jsx'),
+    StudentDraw: () => import('./DrawPage.jsx'),
   },
   tutor: {
     TutorStudents: () => import('./tutor/TutorStudents.jsx'),
@@ -20,6 +21,7 @@ const loaders = {
     TutorLessons: () => import('./tutor/TutorLessons.jsx'),
     TutorLessonView: () => import('./tutor/TutorLessonView.jsx'),
     LessonEditor: () => import('./tutor/LessonEditor.jsx'),
+    TutorDraw: () => import('./DrawPage.jsx'),
   },
 }
 

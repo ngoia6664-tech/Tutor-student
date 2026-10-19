@@ -16,11 +16,13 @@ const NAV = {
     { to: '/tutor/assignments', label: 'Bài tập', icon: 'assignment' },
     { to: '/tutor/lessons', label: 'Bài giảng', icon: 'lesson' },
     { to: '/tutor/import', label: 'Dán JSON', icon: 'import' },
+    { to: '/tutor/draw', label: 'Vẽ hình', icon: 'shapes' },
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
     { to: '/student/results', label: 'Kết quả', icon: 'results' },
     { to: '/student/library', label: 'Thư viện', icon: 'library' },
+    { to: '/student/draw', label: 'Vẽ hình', icon: 'shapes' },
   ],
 }
 
