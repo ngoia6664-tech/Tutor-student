@@ -6,7 +6,7 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #0c0a1d;
-  --surface: rgba(24, 20, 50, 0.78);
+  --surface: rgba(24, 20, 50, 0.9); /* gần đặc: không dùng backdrop-filter vì nền vũ trụ chuyển động */
   --surface-solid: #16132e;
   --surface-2: #1e1a3d;
   --border: #2a2550;
@@ -31,14 +31,14 @@
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
   --focus: rgba(192, 132, 252, 0.6);
   --skeleton: rgba(255, 255, 255, 0.06);
-  --topbar-bg: rgba(12, 10, 29, 0.96); /* trình duyệt không làm mờ nền được: gần như đặc */
+  --topbar-bg: rgba(12, 10, 29, 0.96); /* gần như đặc; không làm mờ phía sau để nhẹ máy */
   --topbar-glass: rgba(12, 10, 29, 0.72);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
   --bg: #f5f3ff;
-  --surface: rgba(255, 255, 255, 0.88);
+  --surface: rgba(255, 255, 255, 0.94);
   --surface-solid: #ffffff;
   --surface-2: #f1edfd;
   --border: #e2dcf5;

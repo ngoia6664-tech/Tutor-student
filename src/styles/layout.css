@@ -1,18 +1,10 @@
 /* ===== Khung trang ===== */
 .topbar {
   background: var(--topbar-bg);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
-}
-/* Chỉ làm nền trong mờ khi trình duyệt hỗ trợ làm mờ phía sau */
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .topbar {
-    background: var(--topbar-glass);
-  }
 }
 .topbar-inner {
   max-width: 980px;

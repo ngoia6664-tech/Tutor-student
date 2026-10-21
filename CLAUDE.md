@@ -44,7 +44,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 `src/index.css` chỉ `@import` các file trong `src/styles/` (thứ tự = thứ tự cascade). Màu dùng biến trong `base.css`;
 theme qua `<html data-theme="dark|light">`. Nền trang (màu, quầng sáng, 3 lớp sao, hệ Mặt Trời 3D, sao băng) KHÔNG ở body
 mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space.css`; body trong suốt. Góc nhìn hệ Mặt Trời
-= biến `--tilt`/`--turn` trên `.space`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
+= biến `--tilt`/`--turn` trên `.solar`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
+Hiệu năng: KHÔNG dùng `backdrop-filter` (nền chuyển động → làm nhòe lại mỗi khung hình); tránh filter nặng / animation liên tục bên trong SVG gấu.
 - `base` biến màu, nền, chữ · `layout` khung trang, thanh trên, menu · `components` khối, nhãn, nút, skeleton, form,
   thông báo, loading, đăng nhập · `content` bài giảng, markdown, câu hỏi/đáp án, ảnh nộp, bảng, soạn thảo, video, điểm
 - `mobile` media query điện thoại chung · `library` thư viện dạng cây · `notifications` chuông + toast · `icons`

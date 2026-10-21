@@ -6,8 +6,6 @@
   padding: 1.05rem 1.2rem;
   margin-bottom: 1rem;
   box-shadow: var(--shadow);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 .list {
   display: flex;

@@ -2,7 +2,6 @@
 .mascot {
   /* Màu viền sáng / quầng sáng của gấu (giao diện tối) */
   --pd-rim: rgba(255, 255, 255, 0.9);
-  --pd-glow: rgba(168, 85, 247, 0.6);
   --pd-aura: rgba(168, 85, 247, 0.28);
   --pd-spark: #fde68a;
   --size: 104px;
@@ -23,7 +22,6 @@
 /* Giao diện sáng: viền trắng không thấy trên nền sáng → viền và quầng tím */
 :root[data-theme='light'] .mascot {
   --pd-rim: rgba(124, 58, 237, 0.55);
-  --pd-glow: rgba(124, 58, 237, 0.35);
   --pd-aura: rgba(167, 139, 250, 0.3);
   --pd-spark: #a855f7;
 }
@@ -87,8 +85,8 @@ body:has(.exam-timer-float) .mascot-restore {
   width: 100%;
   height: 100%;
   overflow: visible;
-  /* Viền sáng ôm sát thân + quầng sáng lan nhẹ: gấu nổi lên khỏi nền vũ trụ */
-  filter: drop-shadow(0 0 1.2px var(--pd-rim)) drop-shadow(0 0 1.2px var(--pd-rim)) drop-shadow(0 0 10px var(--pd-glow));
+  /* Viền sáng ôm sát thân (1 lớp cho nhẹ; quầng sáng do ::before lo) */
+  filter: drop-shadow(0 0 1.5px var(--pd-rim));
 }
 /* Quầng sáng tròn phía sau gấu, phập phồng chậm */
 .mascot-body::before {
@@ -129,14 +127,22 @@ body:has(.exam-timer-float) .mascot-restore {
   transform-origin: 60px 53px;
   animation: pd-blink 5s infinite;
 }
+/* Ngôi sao lấp lánh, tua mũ đung đưa: chỉ khi giảng / ăn mừng (chuyển động bên trong SVG làm vẽ lại cả hình) */
 .pd-star {
   transform-box: fill-box;
   transform-origin: center;
-  animation: pd-twinkle 2.4s ease-in-out infinite;
 }
 .pd-tassel {
   transform-origin: 60px 24px;
-  animation: pd-swing 3s ease-in-out infinite;
+}
+.is-teach .pd-star,
+.is-cheer .pd-star {
+  animation: pd-twinkle 1.2s ease-in-out infinite;
+}
+.is-teach .pd-tassel,
+.is-cheer .pd-tassel,
+.is-walk .pd-tassel {
+  animation: pd-swing 1.2s ease-in-out infinite;
 }
 .pd-mouth-open {
   opacity: 0;

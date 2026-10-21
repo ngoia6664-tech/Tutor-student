@@ -38,7 +38,8 @@
   inset: 0;
 }
 
-/* Một lớp sao: ô SVG lặp lại làm mask, màu = --star. Rộng hơn màn hình đúng 1 ô để trôi vòng lặp liền mạch */
+/* Một lớp sao: ô SVG lặp lại làm mask, màu = --star. Rộng hơn màn hình đúng 1 ô để trôi vòng lặp liền mạch.
+   Để nhẹ máy: lớp xa và giữa đứng yên (chỉ dịch theo cuộn trang), chỉ lớp gần trôi và một lớp lấp lánh. */
 .space-stars {
   position: absolute;
   top: 0;
@@ -50,40 +51,27 @@
   mask-image: var(--stars);
   -webkit-mask-size: var(--tile) var(--tile);
   mask-size: var(--tile) var(--tile);
-  animation: space-drift linear infinite;
-  will-change: transform;
 }
 .space-far {
   opacity: var(--star-far);
-  animation-duration: 320s;
 }
 .space-mid {
   opacity: var(--star-mid);
-  animation-duration: 210s;
 }
 .space-near {
   opacity: var(--star-near);
-  animation-duration: 140s;
+  animation: space-drift 160s linear infinite;
 }
-.space-twinkle-a,
-.space-twinkle-b {
+.space-twinkle {
   opacity: 0;
-  animation:
-    space-drift 140s linear infinite,
-    space-twinkle 5.5s ease-in-out infinite;
-}
-.space-twinkle-b {
-  animation-delay: 0s, -2.7s;
-  animation-duration: 180s, 7s;
+  animation: space-twinkle 6s ease-in-out infinite;
 }
 
 /* Hệ Mặt Trời mờ ở giữa. Mặt phẳng quỹ đạo nghiêng theo --tilt / --turn (SpaceBackdrop cập nhật khi cuộn).
    Mỗi hành tinh: quỹ đạo quay, "carrier" quay ngược + "face" nghiêng ngược để hành tinh luôn tròn, nhìn thẳng. */
-.space {
+.solar {
   --tilt: 72deg;
   --turn: -14deg;
-}
-.solar {
   position: absolute;
   left: 50%;
   top: 56%;
@@ -221,8 +209,7 @@
 @supports (animation-timeline: scroll()) {
   .space-depth-mid,
   .space-depth-near,
-  .space-depth-twinkle-a,
-  .space-depth-twinkle-b {
+  .space-depth-twinkle {
     animation: space-parallax linear both;
     animation-timeline: scroll(root);
   }
@@ -230,8 +217,7 @@
     --depth: -50px;
   }
   .space-depth-near,
-  .space-depth-twinkle-a,
-  .space-depth-twinkle-b {
+  .space-depth-twinkle {
     --depth: -140px;
   }
 }
@@ -239,9 +225,16 @@
   to { transform: translateY(var(--depth)); }
 }
 
+/* Điện thoại: hệ Mặt Trời nhỏ lại; tắt sao trôi và lấp lánh cho nhẹ máy */
 @media (max-width: 640px) {
   .solar {
     scale: 0.55;
+  }
+  .space-near {
+    animation: none;
+  }
+  .space-depth-twinkle {
+    display: none;
   }
 }
 
@@ -254,8 +247,7 @@
   .solar-moon {
     animation: none !important;
   }
-  .space-twinkle-a,
-  .space-twinkle-b,
+  .space-twinkle,
   .space-shooting {
     display: none;
   }

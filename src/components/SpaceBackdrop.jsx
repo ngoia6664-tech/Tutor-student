@@ -31,8 +31,7 @@ const LAYERS = [
   ['far', 260, 70, 0.5, 0.9],
   ['mid', 420, 38, 0.8, 1.3],
   ['near', 640, 16, 1.2, 1.8],
-  ['twinkle-a', 520, 7, 1.4, 2],
-  ['twinkle-b', 700, 6, 1.4, 2.1],
+  ['twinkle', 520, 9, 1.4, 2],
 ]
 
 const TILES = LAYERS.map(([name, size, count, rMin, rMax], i) => ({
@@ -60,7 +59,7 @@ export default function SpaceBackdrop() {
   const ref = useRef(null)
 
   useEffect(() => {
-    const el = ref.current
+    const el = ref.current.querySelector('.solar') // chỉ hệ Mặt Trời dùng góc nhìn: đổi biến ở đây để không tính lại các lớp sao
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
     let frame = 0
     const update = () => {

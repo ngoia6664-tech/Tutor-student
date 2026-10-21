@@ -152,7 +152,7 @@
     padding-left: 0.4rem;
   }
 }
-/* Thẻ đang mở ô chọn cây nổi lên trên các thẻ phía sau (thẻ có backdrop-filter tạo lớp xếp chồng riêng) */
+/* Thẻ đang mở ô chọn cây nổi lên trên các thẻ phía sau */
 .card:has(.tp-panel) {
   position: relative;
   z-index: 9; /* dưới thanh menu (10) */
