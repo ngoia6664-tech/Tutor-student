@@ -23,6 +23,11 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `StudentLibrary`, `StudentLesson`.
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
+- Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout),
+  hình vẽ `components/PandaArt.jsx` (FrontPanda pose sit/teach/cheer, BackPanda leo, BallPanda lăn, SleepingPanda, Bamboo),
+  CSS `styles/mascot.css` (bảng đen font Patrick Hand). mood: idle / climb / walk / roll → dizzy / teach / talk / cheer / sleep;
+  mỗi ~10s chọn trò theo `ACTIVITIES` (leo 50%, đi 30%, lăn 20%), ngủ sau 30s; tự ẩn khi có `.exam-timer-float`.
+  Trang khác gọi `celebrate(text)` / `mascotSay(text)` từ `lib/celebrate.js` (pháo giấy + bé nói).
 - `src/lib/` — `supabase` client · `useAsync` hook tải dữ liệu · `errors` lỗi→tiếng Việt · `format` ngày/nhãn ·
   `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
   `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập ·
@@ -37,7 +42,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 
 ## CSS
 `src/index.css` chỉ `@import` các file trong `src/styles/` (thứ tự = thứ tự cascade). Màu dùng biến trong `base.css`;
-theme qua `<html data-theme="dark|light">`.
+theme qua `<html data-theme="dark|light">`. Nền trang (màu, quầng sáng, 3 lớp sao, hệ Mặt Trời 3D, sao băng) KHÔNG ở body
+mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space.css`; body trong suốt. Góc nhìn hệ Mặt Trời
+= biến `--tilt`/`--turn` trên `.space`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
 - `base` biến màu, nền, chữ · `layout` khung trang, thanh trên, menu · `components` khối, nhãn, nút, skeleton, form,
   thông báo, loading, đăng nhập · `content` bài giảng, markdown, câu hỏi/đáp án, ảnh nộp, bảng, soạn thảo, video, điểm
 - `mobile` media query điện thoại chung · `library` thư viện dạng cây · `notifications` chuông + toast · `icons`

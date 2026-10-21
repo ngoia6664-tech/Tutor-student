@@ -4,6 +4,7 @@ import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { fetchStudentChapters } from '../../lib/chapters.js'
 import { gradeLocal, readMastered, writeMastered } from '../../lib/practice.js'
+import { celebrate, mascotSay } from '../../lib/celebrate.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
@@ -135,6 +136,9 @@ export default function StudentMistakes() {
   )
 }
 
+const PRAISE = ['Chính xác! Lần này bạn làm đúng rồi 🎉', 'Tuyệt vời, sửa sai thành công!', 'Đúng rồi! Tiến bộ thấy rõ luôn 🚀']
+const pick = (list) => list[Math.floor(Math.random() * list.length)]
+
 function PracticeQuestion({ item, mastered, onCorrect }) {
   const { ex, key: k } = item
   const [value, setValue] = useState(null)
@@ -144,7 +148,12 @@ function PracticeQuestion({ item, mastered, onCorrect }) {
   function check() {
     const r = gradeLocal(ex.kind, k?.correct ?? null, value)
     setResult(r)
-    if (r === true) onCorrect()
+    if (r === true) {
+      onCorrect()
+      celebrate(pick(PRAISE))
+    } else if (r === false) {
+      mascotSay('Chưa đúng rồi, xem phương pháp giải rồi làm lại nhé 💪')
+    }
   }
 
   function retry() {

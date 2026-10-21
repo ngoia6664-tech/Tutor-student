@@ -84,16 +84,11 @@
   box-sizing: border-box;
 }
 
-/* Hai quầng sáng tím – hồng cố định sau nền: chi tiết nhận diện của giao diện */
+/* Nền (màu, hai quầng sáng tím – hồng, sao, hệ Mặt Trời) vẽ ở lớp .space trong space.css; body để trong suốt để lớp đó hiện ra */
 body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  background-color: var(--bg);
-  background-image: radial-gradient(60vw 50vh at 0% 0%, var(--aura-1), transparent 70%),
-    radial-gradient(50vw 45vh at 0% 100%, var(--aura-2), transparent 70%),
-    radial-gradient(40vw 40vh at 100% 30%, var(--aura-1), transparent 70%);
-  background-attachment: fixed;
 }
 
 a {

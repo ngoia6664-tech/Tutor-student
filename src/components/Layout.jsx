@@ -8,6 +8,7 @@ import ThemeToggle from './ThemeToggle.jsx'
 import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
+import Mascot from './Mascot.jsx'
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 
@@ -89,6 +90,7 @@ export default function Layout() {
           </ErrorBoundary>
         </div>
       </main>
+      <Mascot />
     </div>
   )
   // Học sinh: thông báo bài mới (chuông + thông báo nổi)

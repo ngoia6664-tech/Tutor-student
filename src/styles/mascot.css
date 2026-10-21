@@ -1,0 +1,565 @@
+/* ===== Giáo sư Gấu Trúc (components/Mascot.jsx, hình vẽ ở PandaArt.jsx) ===== */
+.mascot {
+  /* Màu viền sáng / quầng sáng của gấu (giao diện tối) */
+  --pd-rim: rgba(255, 255, 255, 0.9);
+  --pd-glow: rgba(168, 85, 247, 0.6);
+  --pd-aura: rgba(168, 85, 247, 0.28);
+  --pd-spark: #fde68a;
+  --size: 104px;
+  --walk: -130px; /* quãng đi bộ / lăn sang trái */
+  position: fixed;
+  right: 1rem;
+  bottom: 0.6rem;
+  z-index: 8; /* dưới đồng hồ làm đề (9), thanh menu (10), thông báo nổi (60) */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+.mascot > * {
+  pointer-events: auto;
+}
+/* Giao diện sáng: viền trắng không thấy trên nền sáng → viền và quầng tím */
+:root[data-theme='light'] .mascot {
+  --pd-rim: rgba(124, 58, 237, 0.55);
+  --pd-glow: rgba(124, 58, 237, 0.35);
+  --pd-aura: rgba(167, 139, 250, 0.3);
+  --pd-spark: #a855f7;
+}
+/* Ngủ thì quầng sáng dịu đi */
+.is-sleep .mascot-body::before {
+  opacity: 0.45;
+  animation: none;
+}
+.is-sleep .mascot-body::after {
+  display: none;
+}
+/* Chừa chỗ cuối trang để gấu không che nút cuối cùng (vd. Nộp bài) */
+body:has(.mascot) .page {
+  padding-bottom: 7.5rem;
+}
+/* Đang làm đề có tính giờ: nhường góc cho đồng hồ, không làm phân tâm */
+body:has(.exam-timer-float) .mascot,
+body:has(.exam-timer-float) .mascot-restore {
+  display: none;
+}
+.mascot .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Gấu --- */
+.mascot-stage {
+  position: relative;
+}
+/* Bóng mềm dưới chân */
+.mascot-stage::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -4px;
+  height: 10px;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.3), transparent);
+}
+.mascot-body {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform-origin: 50% 95%;
+  animation: pd-breathe-idle 3.6s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+}
+.mascot-body svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* Viền sáng ôm sát thân + quầng sáng lan nhẹ: gấu nổi lên khỏi nền vũ trụ */
+  filter: drop-shadow(0 0 1.2px var(--pd-rim)) drop-shadow(0 0 1.2px var(--pd-rim)) drop-shadow(0 0 10px var(--pd-glow));
+}
+/* Quầng sáng tròn phía sau gấu, phập phồng chậm */
+.mascot-body::before {
+  content: '';
+  position: absolute;
+  inset: 4% 8% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--pd-aura), transparent);
+  animation: pd-aura 3.6s ease-in-out infinite;
+}
+/* Vài đốm lấp lánh quanh gấu */
+.mascot-body::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  top: 22%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--pd-spark);
+  box-shadow:
+    calc(var(--size) * 0.7) calc(var(--size) * -0.1) 0 -0.5px var(--pd-spark),
+    calc(var(--size) * 0.78) calc(var(--size) * 0.42) 0 0 var(--pd-spark),
+    calc(var(--size) * -0.06) calc(var(--size) * 0.5) 0 -1px var(--pd-spark);
+  animation: pd-sparkle 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+/* Không vẽ khung quanh gấu khi bấm; dùng phím Tab thì gấu sáng nhẹ để biết đang chọn */
+.mascot-body:focus {
+  outline: none;
+}
+.mascot-body:focus-visible svg {
+  filter: drop-shadow(0 0 1.5px var(--pd-rim)) drop-shadow(0 0 14px var(--primary));
+}
+
+/* Bộ phận chung */
+.pd-eyes {
+  transform-origin: 60px 53px;
+  animation: pd-blink 5s infinite;
+}
+.pd-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pd-twinkle 2.4s ease-in-out infinite;
+}
+.pd-tassel {
+  transform-origin: 60px 24px;
+  animation: pd-swing 3s ease-in-out infinite;
+}
+.pd-mouth-open {
+  opacity: 0;
+}
+
+/* Nói / giảng: miệng mấp máy vài nhịp */
+.is-teach .pd-mouth-open,
+.is-talk .pd-mouth-open {
+  animation: pd-talk 0.34s steps(1) 8;
+}
+/* Giảng: đũa gõ nhẹ về phía bảng */
+.pd-wand-up {
+  transform-origin: 40px 80px;
+}
+.is-teach .pd-wand-up {
+  animation: pd-point 0.8s ease-in-out infinite alternate;
+}
+
+/* Ăn mừng: miệng cười to, nhảy */
+.is-cheer .pd-mouth-open {
+  opacity: 1;
+}
+.is-cheer .mascot-body {
+  animation: pd-jump 0.6s cubic-bezier(0.3, 0, 0.4, 1) 4;
+}
+
+/* Đi bộ: chậm chạp, lắc lư, lún xuống mỗi bước */
+.is-walk .mascot-stage {
+  animation: mascot-walk 10s ease-in-out forwards;
+}
+.is-walk .mascot-body {
+  animation: pd-waddle 1.2s ease-in-out infinite;
+}
+.is-walk .pd-leg {
+  animation: pd-step 1.2s ease-in-out infinite;
+}
+.is-walk .pd-leg-r {
+  animation-delay: -0.6s;
+}
+
+/* Leo tre: tre mọc lên, gấu quay lưng ôm cây, thay tay kéo người lên rồi tụt xuống */
+.mascot-bamboo {
+  position: absolute;
+  z-index: 0;
+  bottom: 0;
+  left: 50%;
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 2);
+  transform: translateX(-50%);
+  animation: bamboo-grow 9s ease-in-out forwards;
+}
+.pd-bamboo-top {
+  transform-origin: 30px 200px;
+  animation: bamboo-sway 3.2s ease-in-out infinite;
+}
+.is-climb .mascot-body {
+  animation: mascot-climb 9s ease-in-out forwards;
+}
+.is-climb .pd-arm,
+.is-climb .pd-leg {
+  animation: pd-reach 0.9s ease-in-out infinite alternate;
+}
+.is-climb .pd-arm-r,
+.is-climb .pd-leg-l {
+  animation-direction: alternate-reverse;
+}
+.is-climb .mascot-stage::after {
+  left: 30%;
+  right: 30%;
+}
+
+/* Lăn tròn: ôm gối cuộn người, lăn nảy tưng tưng sang trái rồi lăn về, bụi bay phía sau.
+   Góc quay khớp quãng đường để không bị trượt */
+.is-roll .mascot-stage {
+  animation: mascot-roll-move 6.5s ease-in-out forwards;
+}
+.is-roll .mascot-body {
+  animation: pd-bounce 0.36s ease-in-out infinite alternate;
+}
+.pd-ball {
+  transform-origin: 60px 84px;
+}
+.is-roll .pd-ball {
+  animation: pd-roll 6.5s ease-in-out forwards;
+}
+.is-roll .mascot-stage::before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 46%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(196, 181, 253, 0.55);
+  box-shadow:
+    12px -5px 0 -1px rgba(196, 181, 253, 0.45),
+    -10px -3px 0 -2px rgba(196, 181, 253, 0.4);
+  animation: pd-dust 0.5s ease-out infinite;
+}
+
+/* Chóng mặt sau khi lăn: mắt xoáy, sao bay quanh đầu, lảo đảo */
+.is-dizzy .mascot-body {
+  animation: pd-wobble 0.45s ease-in-out infinite alternate;
+}
+.pd-swirl {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.pd-swirl path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pd-spin 0.8s linear infinite;
+}
+.pd-dizzy-stars {
+  transform-origin: 60px 14px;
+  animation: pd-spin 1.1s linear infinite;
+}
+
+/* Ngủ */
+.is-sleep .mascot-body {
+  animation: none;
+}
+.pd-breathe {
+  transform-origin: 68px 112px;
+  animation: pd-breathe 3.4s ease-in-out infinite;
+}
+.mascot-z {
+  position: absolute;
+  top: 18%;
+  left: 6%;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--muted);
+  animation: pd-z 2.6s ease-out infinite;
+}
+.mascot-z span {
+  font-size: 0.95rem;
+  margin-left: 2px;
+}
+
+/* --- Bảng đen mini (giảng bài) --- */
+.mascot-board {
+  position: relative;
+  width: min(290px, calc(100vw - 2.5rem));
+  padding: 10px 30px 22px 16px;
+  border: 6px solid #6d28d9;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.06), transparent 42%),
+    radial-gradient(circle at 82% 75%, rgba(255, 255, 255, 0.05), transparent 38%),
+    #24352f;
+  color: #f1f7f2;
+  font-family: 'Patrick Hand', cursive;
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.25),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+  transform-origin: 85% 100%;
+  animation: board-open 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+.mascot-board-title {
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+  border-bottom: 2px dashed rgba(241, 247, 242, 0.3);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  color: #fde68a;
+}
+.mascot-board-text {
+  margin: 0;
+  min-height: 2.5em;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.4);
+}
+/* Khay phấn + 2 viên phấn */
+.mascot-board::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 5px;
+  border-radius: 3px;
+  background: #5b21b6;
+}
+.mascot-board::before {
+  content: '';
+  position: absolute;
+  right: 22px;
+  bottom: 9px;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: -34px 0 0 #fde68a;
+}
+
+/* --- Bong bóng thoại (nhắc bài, ăn mừng) --- */
+.mascot-speech {
+  position: relative;
+  max-width: min(260px, calc(100vw - 2.5rem));
+  margin-bottom: 4px;
+  padding: 0.6rem 1.9rem 0.55rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px 16px 4px 16px;
+  background: var(--surface-solid);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  box-shadow: var(--shadow);
+  transform-origin: 85% 100%;
+  animation: board-open 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+.mascot-x {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.mascot-stow {
+  display: block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85em;
+  text-decoration: underline;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.mascot-x:hover,
+.mascot-stow:hover {
+  opacity: 1;
+}
+
+/* Gấu đã cất: nút tròn nhỏ để gọi lại */
+.mascot-restore {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 8;
+  width: 46px;
+  height: 46px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-solid);
+  cursor: pointer;
+  opacity: 0.85;
+}
+.mascot-restore svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mascot-restore:hover {
+  opacity: 1;
+}
+
+@keyframes pd-aura {
+  0%, 100% { opacity: 0.6; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+@keyframes pd-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes pd-breathe-idle {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-2px) scale(1, 1.015); }
+}
+@keyframes pd-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+@keyframes pd-twinkle {
+  0%, 100% { transform: scale(1) rotate(0); }
+  50% { transform: scale(1.15) rotate(18deg); }
+}
+@keyframes pd-swing {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes pd-talk {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes pd-point {
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
+}
+@keyframes pd-jump {
+  0%, 100% { transform: translateY(0) scale(1.04, 0.96); }
+  45% { transform: translateY(-22px) scale(0.97, 1.04); }
+}
+@keyframes mascot-walk {
+  0%, 100% { transform: translateX(0); }
+  45%, 55% { transform: translateX(var(--walk)); }
+}
+@keyframes pd-waddle {
+  0%, 100% { transform: rotate(-6deg) translateY(0) scale(1.03, 0.97); }
+  25% { transform: rotate(0) translateY(-4px) scale(0.98, 1.02); }
+  50% { transform: rotate(6deg) translateY(0) scale(1.03, 0.97); }
+  75% { transform: rotate(0) translateY(-4px) scale(0.98, 1.02); }
+}
+@keyframes pd-step {
+  0%, 50%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-6px); }
+}
+@keyframes bamboo-grow {
+  0% { clip-path: inset(100% 0 0 0); }
+  12%, 88% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(100% 0 0 0); }
+}
+@keyframes bamboo-sway {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+@keyframes mascot-climb {
+  0%, 12% { transform: translateY(0); }
+  20% { transform: translateY(-18%); }
+  28% { transform: translateY(-36%); }
+  36% { transform: translateY(-54%); }
+  44%, 64% { transform: translateY(-72%); }
+  86%, 100% { transform: translateY(0); }
+}
+@keyframes pd-reach {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+@keyframes mascot-roll-move {
+  0%, 4% { transform: translateX(0); }
+  42%, 52% { transform: translateX(var(--walk)); }
+  92%, 100% { transform: translateX(0); }
+}
+/* -280° ≈ quãng 130px / bán kính bóng (~27px); lắc nhẹ khi dừng ở đầu bên kia */
+@keyframes pd-roll {
+  0%, 4% { transform: rotate(0); }
+  42% { transform: rotate(-280deg); }
+  46% { transform: rotate(-262deg); }
+  52% { transform: rotate(-280deg); }
+  92%, 100% { transform: rotate(0); }
+}
+@keyframes pd-bounce {
+  from { transform: translateY(0) scale(1.04, 0.96); }
+  to { transform: translateY(-7px) scale(0.98, 1.02); }
+}
+@keyframes pd-dust {
+  from { opacity: 0.9; transform: scale(0.6); }
+  to { opacity: 0; transform: translate(10px, -10px) scale(1.5); }
+}
+@keyframes pd-wobble {
+  from { transform: rotate(-6deg); }
+  to { transform: rotate(6deg); }
+}
+@keyframes pd-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pd-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.02, 1.05); }
+}
+@keyframes pd-z {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-12px, -22px); }
+}
+@keyframes board-open {
+  from { opacity: 0; transform: translateY(10px) scale(0.5); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ===== Pháo giấy (lib/celebrate.js) ===== */
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confetti span {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confetti-fall 2s ease-in forwards;
+}
+@keyframes confetti-fall {
+  to {
+    transform: translate(var(--drift), 105vh) rotate(var(--spin));
+    opacity: 0.6;
+  }
+}
+
+/* Điện thoại: gấu nhỏ hơn, đi / lăn quãng ngắn hơn */
+@media (max-width: 640px) {
+  .mascot {
+    --size: 76px;
+    --walk: -80px;
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+  .is-roll .pd-ball {
+    animation-name: pd-roll-sm;
+  }
+}
+/* -235° ≈ 80px / bán kính bóng (~20px) */
+@keyframes pd-roll-sm {
+  0%, 4% { transform: rotate(0); }
+  42% { transform: rotate(-235deg); }
+  46% { transform: rotate(-220deg); }
+  52% { transform: rotate(-235deg); }
+  92%, 100% { transform: rotate(0); }
+}

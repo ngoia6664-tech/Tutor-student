@@ -1,6 +1,7 @@
 /* Điểm vào CSS: chỉ gom các file trong styles/, thứ tự import = thứ tự áp dụng.
    Sửa giao diện thì mở đúng file con, xem CLAUDE.md. */
 @import './styles/base.css';
+@import './styles/space.css';
 @import './styles/layout.css';
 @import './styles/components.css';
 @import './styles/content.css';
@@ -12,3 +13,4 @@
 @import './styles/student-detail.css';
 @import './styles/tree-picker.css';
 @import './styles/reports.css';
+@import './styles/mascot.css';

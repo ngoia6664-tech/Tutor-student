@@ -15,6 +15,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
+import { celebrate } from '../../lib/celebrate.js'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
@@ -246,6 +247,7 @@ function AnswerView({ data, studentId, onSubmitted }) {
         onSubmitted={() => {
           writeDraft(key, null)
           window.scrollTo({ top: 0, behavior: 'smooth' })
+          celebrate('Nộp bài xong rồi! Giỏi lắm 🎉 Xem đáp án bên dưới nhé.')
           onSubmitted()
         }}
       />

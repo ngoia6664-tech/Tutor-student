@@ -1,0 +1,262 @@
+/* ===== Nền vũ trụ (components/SpaceBackdrop.jsx) =====
+   Nằm sau mọi nội dung (z-index âm). Sao nhỏ, mờ, trôi rất chậm: tạo chiều sâu nhưng không tranh chỗ với chữ. */
+:root,
+:root[data-theme='dark'] {
+  --star: #ece8ff;
+  --star-far: 0.4;
+  --star-mid: 0.55;
+  --star-near: 0.75;
+  --orbit-line: rgba(236, 232, 255, 0.11);
+  --solar-opacity: 0.6;
+}
+:root[data-theme='light'] {
+  --star: #6d5bd0;
+  --star-far: 0.22;
+  --star-mid: 0.3;
+  --star-near: 0.4;
+  --orbit-line: rgba(109, 91, 208, 0.16);
+  --solar-opacity: 0.5;
+}
+
+.space {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  /* Hai quầng sáng tím – hồng: chi tiết nhận diện của giao diện, giờ như tinh vân sau các lớp sao */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(60vw 50vh at 0% 0%, var(--aura-1), transparent 70%),
+    radial-gradient(50vw 45vh at 0% 100%, var(--aura-2), transparent 70%),
+    radial-gradient(40vw 40vh at 100% 30%, var(--aura-1), transparent 70%);
+}
+
+/* Lớp chiều sâu: khi cuộn trang, lớp gần dịch nhiều hơn lớp xa (trình duyệt hỗ trợ scroll-timeline) */
+.space-depth {
+  position: absolute;
+  inset: 0;
+}
+
+/* Một lớp sao: ô SVG lặp lại làm mask, màu = --star. Rộng hơn màn hình đúng 1 ô để trôi vòng lặp liền mạch */
+.space-stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + var(--tile));
+  height: calc(100% + var(--tile) + 160px);
+  background: var(--star);
+  -webkit-mask-image: var(--stars);
+  mask-image: var(--stars);
+  -webkit-mask-size: var(--tile) var(--tile);
+  mask-size: var(--tile) var(--tile);
+  animation: space-drift linear infinite;
+  will-change: transform;
+}
+.space-far {
+  opacity: var(--star-far);
+  animation-duration: 320s;
+}
+.space-mid {
+  opacity: var(--star-mid);
+  animation-duration: 210s;
+}
+.space-near {
+  opacity: var(--star-near);
+  animation-duration: 140s;
+}
+.space-twinkle-a,
+.space-twinkle-b {
+  opacity: 0;
+  animation:
+    space-drift 140s linear infinite,
+    space-twinkle 5.5s ease-in-out infinite;
+}
+.space-twinkle-b {
+  animation-delay: 0s, -2.7s;
+  animation-duration: 180s, 7s;
+}
+
+/* Hệ Mặt Trời mờ ở giữa. Mặt phẳng quỹ đạo nghiêng theo --tilt / --turn (SpaceBackdrop cập nhật khi cuộn).
+   Mỗi hành tinh: quỹ đạo quay, "carrier" quay ngược + "face" nghiêng ngược để hành tinh luôn tròn, nhìn thẳng. */
+.space {
+  --tilt: 72deg;
+  --turn: -14deg;
+}
+.solar {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 0;
+  height: 0;
+  perspective: 1600px;
+  opacity: var(--solar-opacity);
+}
+.solar-plane {
+  position: absolute;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt)) rotateZ(var(--turn));
+}
+.solar-orbit {
+  position: absolute;
+  left: calc(var(--d) / -2);
+  top: calc(var(--d) / -2);
+  width: var(--d);
+  height: var(--d);
+  border: 1px solid var(--orbit-line);
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  animation: solar-spin var(--period) linear infinite;
+  animation-delay: calc(var(--period) * var(--phase) * -1);
+}
+.solar-carrier {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform-style: preserve-3d;
+  animation: solar-spin var(--period) linear infinite reverse;
+  animation-delay: calc(var(--period) * var(--phase) * -1);
+}
+.solar-face {
+  position: absolute;
+  transform-style: preserve-3d;
+  transform: rotateZ(calc(var(--turn) * -1)) rotateX(calc(var(--tilt) * -1));
+}
+
+.solar-sun {
+  position: absolute;
+  left: -80px;
+  top: -80px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7d6 0, #fcd34d 16%, rgba(251, 146, 60, 0.55) 30%, rgba(236, 72, 153, 0.18) 48%, transparent 70%);
+}
+.solar-planet {
+  position: absolute;
+  left: calc(var(--s) / -2);
+  top: calc(var(--s) / -2);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  box-shadow: inset calc(var(--s) * -0.22) calc(var(--s) * -0.12) calc(var(--s) * 0.3) rgba(0, 0, 0, 0.45);
+}
+.solar-mercury {
+  background: #a8a29e;
+}
+.solar-venus {
+  background: radial-gradient(circle at 35% 35%, #fef3c7, #d6a756);
+}
+.solar-earth {
+  background: radial-gradient(circle at 35% 35%, #7dd3fc, #2563eb 60%, #166534);
+}
+.solar-mars {
+  background: radial-gradient(circle at 35% 35%, #fca5a5, #c2410c);
+}
+.solar-jupiter {
+  background: linear-gradient(170deg, #f5deb3 0 18%, #c08457 18% 30%, #f1d4a8 30% 46%, #b45309 46% 54%, #ead2ac 54% 72%, #c08457 72% 84%, #f5deb3 84%);
+}
+.solar-saturn {
+  background: radial-gradient(circle at 35% 35%, #fef3c7, #d4a76a);
+}
+.solar-saturn::after {
+  content: '';
+  position: absolute;
+  left: -55%;
+  top: 30%;
+  width: 210%;
+  height: 40%;
+  border: 2px solid rgba(253, 230, 138, 0.6);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+.solar-moon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  animation: solar-moon 7s linear infinite;
+}
+
+@keyframes solar-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes solar-moon {
+  from { transform: rotate(0) translateX(13px); }
+  to { transform: rotate(360deg) translateX(13px); }
+}
+
+/* Sao băng: ~16 giây vụt qua một lần */
+.space-shooting {
+  position: absolute;
+  top: 14%;
+  left: 62%;
+  width: 140px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--star));
+  opacity: 0;
+  transform: rotate(-18deg);
+  animation: space-shoot 16s ease-in 4s infinite;
+}
+
+@keyframes space-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-1 * var(--tile)), calc(-1 * var(--tile)), 0); }
+}
+@keyframes space-twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: var(--star-near); }
+}
+@keyframes space-shoot {
+  0%, 90% { opacity: 0; transform: rotate(-18deg) translateX(0); }
+  92% { opacity: 0.9; }
+  97%, 100% { opacity: 0; transform: rotate(-18deg) translateX(-420px); }
+}
+
+@supports (animation-timeline: scroll()) {
+  .space-depth-mid,
+  .space-depth-near,
+  .space-depth-twinkle-a,
+  .space-depth-twinkle-b {
+    animation: space-parallax linear both;
+    animation-timeline: scroll(root);
+  }
+  .space-depth-mid {
+    --depth: -50px;
+  }
+  .space-depth-near,
+  .space-depth-twinkle-a,
+  .space-depth-twinkle-b {
+    --depth: -140px;
+  }
+}
+@keyframes space-parallax {
+  to { transform: translateY(var(--depth)); }
+}
+
+@media (max-width: 640px) {
+  .solar {
+    scale: 0.55;
+  }
+}
+
+/* Giảm chuyển động: nền đứng yên, không sao băng */
+@media (prefers-reduced-motion: reduce) {
+  .space-stars,
+  .space-depth,
+  .solar-orbit,
+  .solar-carrier,
+  .solar-moon {
+    animation: none !important;
+  }
+  .space-twinkle-a,
+  .space-twinkle-b,
+  .space-shooting {
+    display: none;
+  }
+}
