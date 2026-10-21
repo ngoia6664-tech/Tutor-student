@@ -31,7 +31,7 @@
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
   --focus: rgba(192, 132, 252, 0.6);
   --skeleton: rgba(255, 255, 255, 0.06);
-  --topbar-bg: rgba(12, 10, 29, 0.9); /* nền header khi đã cuộn; không làm mờ phía sau để nhẹ máy */
+  --topbar-bg: rgba(12, 10, 29, 0.96); /* nền header khi đã cuộn (đủ che chữ phía dưới); không làm mờ nền để nhẹ máy */
   --topbar-glass: rgba(12, 10, 29, 0.72);
 }
 
@@ -63,7 +63,7 @@
   --shadow: 0 10px 30px -14px rgba(60, 30, 120, 0.25);
   --focus: rgba(124, 58, 237, 0.45);
   --skeleton: rgba(60, 30, 120, 0.07);
-  --topbar-bg: rgba(245, 243, 255, 0.92);
+  --topbar-bg: rgba(245, 243, 255, 0.96);
   --topbar-glass: rgba(245, 243, 255, 0.72);
 }
 

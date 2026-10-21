@@ -26,6 +26,50 @@ function unwrapDark(block) {
   return inner.replace(/([^{};]+:[^{};!]+?)\s*(;|(?=\}))/g, '$1 !important$2')
 }
 
+// ----- Hình không có bộ màu tối (vd. hình vẽ trong JSON): chữ / trục đen hoặc xám chìm vào nền tối -----
+// App tối: đảo các màu trung tính (đen / xám đậm → sáng, trắng / xám rất nhạt → tối) để chữ, trục, nền ô
+// đổi theo nhau; giữ nguyên màu có sắc (đường đỏ, xanh...). Chữ / hình không ghi màu (mặc định đen) cũng thành sáng.
+const INK_LIGHT = '#ece8ff'
+const PAPER_DARK = '#1e1a3d'
+const NAMED = {
+  black: '#000000', gray: '#808080', grey: '#808080', dimgray: '#696969', dimgrey: '#696969',
+  darkgray: '#a9a9a9', darkgrey: '#a9a9a9', white: '#ffffff', whitesmoke: '#f5f5f5', gainsboro: '#dcdcdc',
+}
+const COLOR_ATTR = /\b(fill|stroke|color|stop-color)(\s*=\s*["']|\s*:\s*)(#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|[a-z]+)/gi
+
+function toRgb(c) {
+  c = c.toLowerCase()
+  if (NAMED[c]) c = NAMED[c]
+  let m = c.match(/^#([0-9a-f]{3,4})$/)
+  if (m) return [...m[1].slice(0, 3)].map((h) => parseInt(h + h, 16))
+  m = c.match(/^#([0-9a-f]{6})([0-9a-f]{2})?$/)
+  if (m) return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16))
+  m = c.match(/^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/)
+  if (m) return [+m[1], +m[2], +m[3]]
+  return null
+}
+
+// Màu trung tính (ít sắc): tối → sáng, rất sáng → tối; còn lại (màu có sắc, xám vừa) giữ nguyên
+function flipNeutral(color) {
+  const rgb = toRgb(color)
+  if (!rgb) return null
+  const [r, g, b] = rgb
+  if (Math.max(r, g, b) - Math.min(r, g, b) >= 40) return null
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  if (lum < 0.55) return INK_LIGHT
+  if (lum > 0.85) return PAPER_DARK
+  return null
+}
+
+function lightenInk(svg) {
+  const recolored = svg.replace(COLOR_ATTR, (m, prop, sep, value) => {
+    const flipped = flipNeutral(value)
+    return flipped ? `${prop}${sep}${flipped}` : m
+  })
+  // Màu mặc định (không ghi fill) của chữ / hình là đen: đặt mặc định sáng trên thẻ <svg> gốc
+  return recolored.replace(/<svg\b([^>]*)>/i, (tag) => `${tag}<style>svg{fill:${INK_LIGHT};color:${INK_LIGHT}}</style>`)
+}
+
 const cache = new Map()
 
 export function themedSvg(uri, theme) {
@@ -35,7 +79,9 @@ export function themedSvg(uri, theme) {
   let out = uri
   try {
     const svg = decodeBase64Utf8(uri.replace(SVG_B64, ''))
-    const rewritten = svg.replace(DARK_MEDIA, (block) => (theme === 'dark' ? unwrapDark(block) : ''))
+    let rewritten = svg.replace(DARK_MEDIA, (block) => (theme === 'dark' ? unwrapDark(block) : ''))
+    // Hình đã có bộ màu tối riêng thì tôn trọng; không có thì tự làm sáng chữ / trục khi app tối
+    if (theme === 'dark' && rewritten === svg) rewritten = lightenInk(svg)
     if (rewritten !== svg) out = `data:image/svg+xml;base64,${encodeBase64Utf8(rewritten)}`
   } catch {
     // Không giải mã được: giữ nguyên ảnh gốc

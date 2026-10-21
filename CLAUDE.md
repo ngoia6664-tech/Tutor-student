@@ -28,6 +28,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   CSS `styles/mascot.css` (bảng đen font Patrick Hand). mood: idle / climb / walk / roll → dizzy / teach / talk / cheer / sleep;
   mỗi ~10s chọn trò theo `ACTIVITIES` (leo 50%, đi 30%, lăn 20%), ngủ sau 30s; tự ẩn khi có `.exam-timer-float`.
   Trang khác gọi `celebrate(text)` / `mascotSay(text)` từ `lib/celebrate.js` (pháo giấy + bé nói).
+- Hình SVG nhúng: `lib/svg.js` `themedSvg` — app tối: dùng khối @media dark nếu có, không thì tự đảo màu trung tính (`lightenInk`).
 - `src/lib/` — `supabase` client · `useAsync` hook tải dữ liệu · `errors` lỗi→tiếng Việt · `format` ngày/nhãn ·
   `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
   `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập ·
