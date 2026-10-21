@@ -7,6 +7,7 @@ import ErrorBoundary from './ErrorBoundary.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
 import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
+import InstallBanner from './InstallBanner.jsx'
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 
@@ -22,6 +23,7 @@ const NAV = {
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
     { to: '/student/results', label: 'Kết quả', icon: 'results' },
+    { to: '/student/mistakes', label: 'Ôn câu sai', icon: 'refresh' },
     { to: '/student/library', label: 'Thư viện', icon: 'library' },
   ],
 }
@@ -77,6 +79,7 @@ export default function Layout() {
         </nav>
       </header>
       <main className="page">
+        <InstallBanner />
         {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
         <div key={pageKey} className="page-enter">
           <ErrorBoundary>

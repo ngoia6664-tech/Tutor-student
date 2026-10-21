@@ -1,0 +1,16 @@
+{
+  "name": "Study with Duy Anh",
+  "short_name": "Duy Anh",
+  "description": "Bài giảng và bài tập Vật lý",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c0a1d",
+  "theme_color": "#0c0a1d",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

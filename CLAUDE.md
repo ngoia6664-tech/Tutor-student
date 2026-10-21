@@ -19,7 +19,10 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm),
   `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề).
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
+  `StudentMistakes` (Ôn câu sai: câu `is_correct=false`, làm lại chấm trên máy qua `lib/practice.js`),
   `StudentLibrary`, `StudentLesson`.
+- PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
+  đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
 - `src/lib/` — `supabase` client · `useAsync` hook tải dữ liệu · `errors` lỗi→tiếng Việt · `format` ngày/nhãn ·
   `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
   `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập ·
@@ -53,6 +56,9 @@ Tìm bằng `grep -n "<tên bảng hoặc hàm>"`. Các phần (số dòng xấp
    bảng `question_reports` + `report_exercise`
 7. Storage ~984–cuối: bucket riêng tư + policy
 Đổi schema: thêm khối idempotent (`if not exists`, `create or replace`) để người dùng chạy lại cả file trong SQL Editor.
+
+## Phạm vi
+App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh, học phí (đã có app khác).
 
 ## Bất biến quan trọng
 - Đáp án nằm ở `answer_keys` (tách khỏi `exercises`); học sinh chỉ đọc được sau khi nộp (RLS). Không bao giờ gửi đáp án

@@ -6,6 +6,7 @@ const loaders = {
     StudentHome: () => import('./student/StudentHome.jsx'),
     StudentAssignment: () => import('./student/StudentAssignment.jsx'),
     StudentResults: () => import('./student/StudentResults.jsx'),
+    StudentMistakes: () => import('./student/StudentMistakes.jsx'),
     StudentLibrary: () => import('./student/StudentLibrary.jsx'),
     StudentLesson: () => import('./student/StudentLesson.jsx'),
   },

@@ -8,6 +8,11 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import App from './App.jsx'
 
+// Service worker (cài app lên màn hình chính). Chỉ bản build, để lúc dev không bị dùng file cũ
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+}
+
 const root = createRoot(document.getElementById('root'))
 
 // Thiếu .env thì báo lỗi rõ ràng thay vì trang trắng
