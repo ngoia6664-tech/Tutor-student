@@ -50,6 +50,17 @@ const norm = (s) =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/đ/g, 'd')
 
+// Đường dẫn tới nhóm có key: [nhóm…]
+function pathToKey(nodes, key) {
+  for (const n of nodes) {
+    if (!n.children) continue
+    if (n.key === key) return [n]
+    const p = pathToKey(n.children, key)
+    if (p) return [n, ...p]
+  }
+  return null
+}
+
 // Đường dẫn tới lá có value: [nhóm…, lá]
 function pathTo(nodes, value) {
   for (const n of nodes) {
@@ -81,14 +92,17 @@ const countLeaves = (nodes) => nodes.reduce((s, n) => s + (n.children ? countLea
 /**
  * Ô chọn dạng cây (thay cho <select> dài): bấm mở bảng, có ô tìm, nhóm mở/đóng được.
  * - nodes: cây (xem chapterNodes / lessonNodes)
+ * - focusKey: nhóm cần mở sẵn + cuộn tới khi mở bảng (vd. chương đang chọn ở trên)
+ * - clearLabel: đã chọn thì hiện gọn tên + nút "Đổi" và nút xoá (chọn lại value '')
  * - top: lựa chọn đặc biệt hiện trên cùng, vd. [{ value:'', label:'— Chưa xếp chương —' }, { value:'new', label:'+ Tạo chương mới…' }]
  */
-export default function TreePicker({ label, labelExtra, nodes, value, onChange, top = [], placeholder = 'Chọn…', disabled = false, hint, searchPlaceholder = 'Tìm theo tên…' }) {
+export default function TreePicker({ label, labelExtra, nodes, value, onChange, top = [], placeholder = 'Chọn…', disabled = false, hint, searchPlaceholder = 'Tìm theo tên…', focusKey, clearLabel }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState(() => new Set())
   const boxRef = useRef(null)
   const searchRef = useRef(null)
+  const panelRef = useRef(null)
 
   const path = useMemo(() => (value ? pathTo(nodes, value) : null), [nodes, value])
   const special = top.find((t) => t.value === value)
@@ -99,7 +113,8 @@ export default function TreePicker({ label, labelExtra, nodes, value, onChange, 
   function toggleOpen() {
     if (disabled) return
     if (!open) {
-      setExpanded(new Set((path || []).slice(0, -1).map((n) => n.key)))
+      const focusPath = focusKey ? pathToKey(nodes, focusKey) || [] : []
+      setExpanded(new Set([...(path || []).slice(0, -1), ...focusPath].map((n) => n.key)))
       setQuery('')
     }
     setOpen((v) => !v)
@@ -107,6 +122,13 @@ export default function TreePicker({ label, labelExtra, nodes, value, onChange, 
   useEffect(() => {
     if (!open) return
     searchRef.current?.focus()
+    // Cuộn tới mục đang chọn, không thì tới nhóm cần mở sẵn
+    const panel = panelRef.current
+    const target = panel?.querySelector('.tp-leaf.active:not(.tp-top)') || (focusKey && panel?.querySelector(`[data-key="${CSS.escape(focusKey)}"]`))
+    if (panel && target) {
+      const list = panel.querySelector('.tp-root')
+      list.scrollTop = target.offsetTop - list.offsetTop - 8
+    }
     const onDown = (e) => !boxRef.current?.contains(e.target) && setOpen(false)
     const onKey = (e) => e.key === 'Escape' && setOpen(false)
     document.addEventListener('pointerdown', onDown)
@@ -147,7 +169,7 @@ export default function TreePicker({ label, labelExtra, nodes, value, onChange, 
       }
       const isOpen = q !== '' || expanded.has(n.key)
       return (
-        <li key={n.key} role="none">
+        <li key={n.key} role="none" data-key={n.key}>
           <button type="button" className="tp-group" aria-expanded={isOpen} style={{ paddingLeft: `${0.35 + depth * 1.05}rem` }} onClick={() => toggle(n.key)}>
             <span className={isOpen ? 'tp-caret open' : 'tp-caret'} aria-hidden="true">
               ›
@@ -182,8 +204,20 @@ export default function TreePicker({ label, labelExtra, nodes, value, onChange, 
             ▾
           </span>
         </button>
+        {clearLabel && value && !special && (
+          <div className="tp-actions">
+            <button type="button" className="btn btn-small" onClick={toggleOpen} disabled={disabled}>
+              <Icon name="edit" size={15} />
+              Đổi
+            </button>
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => onChange('')} disabled={disabled}>
+              <Icon name="close" size={15} />
+              {clearLabel}
+            </button>
+          </div>
+        )}
         {open && (
-          <div className="tp-panel" role="listbox" aria-label={label}>
+          <div ref={panelRef} className="tp-panel" role="listbox" aria-label={label}>
             <input ref={searchRef} type="search" className="tp-search" placeholder={searchPlaceholder} value={query} onChange={(e) => setQuery(e.target.value)} />
             <ul className="tp-list tp-root">
               {top.map((t) => (

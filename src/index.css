@@ -2628,6 +2628,19 @@ details.method-box:not([open]) > summary {
 /* ===== Ô chọn dạng cây (chương / bài giảng) ===== */
 .tp-anchor {
   position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.tp-anchor > .tp-trigger {
+  flex: 1 1 16rem;
+  width: auto;
+  min-width: 0; /* đường dẫn dài thì cắt "…" thay vì tràn ngang */
+}
+.tp-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 .tp-trigger {
   display: flex;

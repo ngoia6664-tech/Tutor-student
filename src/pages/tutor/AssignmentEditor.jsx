@@ -312,7 +312,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
             <input type="date" value={form.due_date} onChange={(e) => set('due_date', e.target.value)} />
           </label>
         </div>
-        <LessonSelect lessons={lessons} chapters={chapters} value={form.lesson_id} onChange={(v) => set('lesson_id', v)} emptyLabel="— Không —" />
+        <LessonSelect lessons={lessons} chapters={chapters} value={form.lesson_id} onChange={(v) => set('lesson_id', v)} emptyLabel="— Không —" focusChapterId={form.chapter_id} />
       </div>
 
       <ExamToggle form={form} onChange={(v) => set('is_exam', v)} onSet={set} />

@@ -377,6 +377,7 @@ export default function ImportJson() {
                   chapters={chapters}
                   value={linkLessonId}
                   onChange={setLinkLessonId}
+                  focusChapterId={chapterChoice !== 'new' ? chapterChoice : ''}
                   disabled={lessonsList.loading}
                   hint={lessonsList.error ? `Không tải được danh sách bài giảng: ${lessonsList.error}` : null}
                 />
