@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -11,6 +11,7 @@ import MarkdownField from '../../components/MarkdownField.jsx'
 import StudentPicker from '../../components/StudentPicker.jsx'
 import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
+import LessonSelect from '../../components/LessonSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import Markdown from '../../components/Markdown.jsx'
@@ -132,7 +133,7 @@ export default function AssignmentEditor() {
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [lessons, chapters] = await Promise.all([
-      supabase.from('lessons').select('id, title').order('created_at', { ascending: false }).then(unwrap),
+      supabase.from('lessons').select('id, title, chapter_id').order('created_at', { ascending: false }).then(unwrap),
       fetchChapters(),
     ])
     if (id) {
@@ -187,15 +188,28 @@ export default function AssignmentEditor() {
       </div>
     )
 
-  return <AssignmentForm key={id || 'new'} {...data} fromImport={!!draft && !id} />
+  return (
+    <AssignmentForm
+      key={id || 'new'}
+      {...data}
+      fromImport={!!draft && !id}
+      focusId={location.state?.focusExercise || null}
+      returnTo={location.state?.returnTo || null}
+    />
+  )
 }
 
-function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }) {
+// focusId: câu cần sửa (mở từ trang Báo lỗi đề) → cuộn tới và tô sáng; lưu xong quay về returnTo
+function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, focusId, returnTo }) {
   const navigate = useNavigate()
   const [form, setForm] = useState(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const isEdit = !!initial.id
+
+  useEffect(() => {
+    if (focusId) document.getElementById(`ex-${focusId}`)?.scrollIntoView({ block: 'center' })
+  }, [focusId])
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const updateEx = (index, patch) =>
@@ -250,7 +264,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         student_ids: form.student_ids,
       }
       const newId = unwrap(await supabase.rpc('save_assignment', { p: payload }))
-      navigate(`/tutor/assignments/${newId}`, { replace: true })
+      navigate(returnTo || `/tutor/assignments/${newId}`, { replace: true })
     } catch (err) {
       setError(errMsg(err))
       setSaving(false)
@@ -266,6 +280,11 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         <Link to="/tutor/assignments">← Danh sách</Link>
       </div>
 
+      {focusId && returnTo && (
+        <div className="alert alert-warn">
+          Đang sửa câu bị học sinh báo lỗi (tô viền đỏ bên dưới). Lưu xong sẽ quay về trang Báo lỗi đề để bạn đánh dấu đã sửa.
+        </div>
+      )}
       {fromImport && <div className="alert alert-info">Đã nạp nội dung từ JSON. Kiểm tra lại, chọn học sinh nhận rồi bấm Lưu.</div>}
       {isEdit && submittedIds.length > 0 && (
         <div className="alert alert-info">
@@ -293,17 +312,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
             <input type="date" value={form.due_date} onChange={(e) => set('due_date', e.target.value)} />
           </label>
         </div>
-        <label className="field">
-          <span>Bài giảng liên quan (không bắt buộc)</span>
-          <select value={form.lesson_id} onChange={(e) => set('lesson_id', e.target.value)}>
-            <option value="">— Không —</option>
-            {lessons.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        <LessonSelect lessons={lessons} chapters={chapters} value={form.lesson_id} onChange={(v) => set('lesson_id', v)} emptyLabel="— Không —" />
       </div>
 
       <ExamToggle form={form} onChange={(v) => set('is_exam', v)} onSet={set} />
@@ -314,7 +323,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport }
         Đáp án và phương pháp chỉ hiện cho học sinh sau khi nộp.
       </p>
       {form.exercises.map((ex, i) => (
-        <div key={ex.key} className="exercise-edit">
+        <div key={ex.key} id={ex.id ? `ex-${ex.id}` : undefined} className={ex.id && ex.id === focusId ? 'exercise-edit exercise-focus' : 'exercise-edit'}>
           <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
             <div className="row">
               <strong>Câu {i + 1}</strong>

@@ -19,6 +19,7 @@ const {
   AssignmentEditor,
   AssignmentTracking,
   ImportJson,
+  TutorReports,
   TutorLessons,
   TutorLessonView,
   LessonEditor,
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="lessons/:id" element={<TutorLessonView />} />
         <Route path="lessons/:id/edit" element={<LessonEditor />} />
         <Route path="import" element={<ImportJson />} />
+        <Route path="reports" element={<TutorReports />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

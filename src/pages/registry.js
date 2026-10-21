@@ -17,6 +17,7 @@ const loaders = {
     AssignmentEditor: () => import('./tutor/AssignmentEditor.jsx'),
     AssignmentTracking: () => import('./tutor/AssignmentTracking.jsx'),
     ImportJson: () => import('./tutor/ImportJson.jsx'),
+    TutorReports: () => import('./tutor/TutorReports.jsx'),
     TutorLessons: () => import('./tutor/TutorLessons.jsx'),
     TutorLessonView: () => import('./tutor/TutorLessonView.jsx'),
     LessonEditor: () => import('./tutor/LessonEditor.jsx'),

@@ -67,7 +67,8 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
             ├── TutorLessons.jsx       # danh sách bài giảng
             ├── TutorLessonView.jsx    # xem bài giảng + ai đã nhận
             ├── LessonEditor.jsx       # soạn/sửa bài giảng
-            └── ImportJson.jsx         # Dán JSON → xem trước → soạn
+            ├── ImportJson.jsx         # Dán JSON → xem trước → soạn
+            └── TutorReports.jsx       # Báo lỗi đề: câu bị học sinh báo lỗi, xếp theo cây
 ```
 
 ### Các route
@@ -80,6 +81,7 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
 | `/tutor/lessons`, `/new`, `/:id`, `/:id/edit` | gia sư | Bài giảng |
 | `/tutor/library`, `/:id` | gia sư | Thư viện: mục lục Lớp › Môn › Chuyên đề › Chương, xem bài trong chương (link cũ `/tutor/chapters` tự chuyển sang đây) |
 | `/tutor/import` | gia sư | Dán JSON |
+| `/tutor/reports` | gia sư | Báo lỗi đề: các câu học sinh báo lỗi, xếp theo cây |
 | `/student` | học sinh | Bài cần làm |
 | `/student/assignments/:id` | học sinh | Làm và nộp bài |
 | `/student/results` | học sinh | Điểm và nhận xét |
@@ -287,6 +289,8 @@ Với dạng ngắn (`"kind"`), quy trình giống hệt: xem trước → chọ
 - Chương tạo trước khi có cấp Lớp/Môn: lớp được đoán từ tên chuyên đề (vd. `L11_...`, `Lớp 12 ...`), môn để "Chưa rõ môn". Trong Thư viện, bấm "Chưa rõ môn" dưới lớp đó rồi bấm **Sửa môn** để điền môn cho cả nhóm một lần.
 - Mở một chương để xem các bài bên trong và tình hình nộp bài. Trong chương có nút **+ Bài giảng trong chương** / **+ Bài tập trong chương** (tự điền sẵn chương).
 - Trang **Bài tập** và **Bài giảng** gom theo chương, có ô lọc theo chương; bài chưa xếp chương nằm ở nhóm cuối. Trang soạn có ô **Chương**.
+- Ô chọn **Chương** và **Bài giảng liên quan** (trang soạn, Dán JSON) là cây **Lớp › Môn › Chuyên đề › Chương (› Bài giảng)**: bấm để mở, bấm nhóm để mở/thu, có ô tìm (gõ không dấu cũng được). Nút hiện đường dẫn của mục đang chọn.
+- **Dán JSON nhớ chương lần trước:** lưu xong, chương vừa liên kết được nhớ trên máy này. Lần dán sau: file có chương trùng tên thì dùng chương đó; không thì chọn sẵn chương lần trước (có ghi chú "Đã chọn sẵn chương bạn liên kết ở lần dán trước"), kèm gợi ý bài giảng cùng chương. Muốn tạo chương theo file thì mở ô và chọn **+ Tạo chương mới**.
 - Xóa một chương **không xóa bài**; các bài chỉ chuyển sang "Chưa xếp chương".
 - Học sinh: menu **Thư viện** có cây giống gia sư nhưng **chỉ của lớp mình** (theo ô "Lớp" trong hồ sơ học sinh ở trang Học sinh) và chỉ gồm bài được giao. Bấm chương để xem bài giảng, bài tập (bài chưa làm lên trước, thanh tiến độ đã nộp). Số nhỏ cạnh tên chương là số bài chưa làm. Bài chưa xếp chương hoặc thuộc chương của lớp khác nằm ở mục **Bài khác**, để không bị sót. Học sinh chưa được ghi lớp thì thấy tất cả. Bài tập ở trang chủ vẫn có nhãn tên chương.
 - Ô "Lớp" của học sinh nay chọn được Lớp 6–12 (trước chỉ 11, 12); cần chạy lại `schema.sql` để cơ sở dữ liệu nhận lớp mới.
@@ -339,6 +343,12 @@ Có xem trước; chương đã có (cùng tên, lớp, môn) được giữ ngu
 - Giờ bắt đầu do máy chủ ghi (`assignment_recipients.started_at`, hàm `start_assignment`), học sinh không sửa được; tải lại trang, đổi máy hay để sai giờ trên máy đều không được thêm giờ.
 - Hết giờ: đề bị khóa và bài **tự nộp** với các câu đã làm, không hỏi lại. Mạng lỗi thì học sinh bấm "Nộp bài" lại (máy chủ vẫn nhận).
 - Gia sư thấy "Làm trong x/50 phút" ở từng bài nộp, nộp muộn hơn giới hạn thì có nhãn "Quá giờ". "Mở lại" bài cho học sinh thì đồng hồ được làm mới.
+
+## 3e. Báo lỗi đề
+
+- Học sinh: mỗi câu (khi làm bài và khi xem lại) có nút **Báo lỗi đề**. Bấm vào, ghi câu bị lỗi như thế nào rồi **Gửi cho gia sư**. Câu đã báo hiện nhãn "Đã báo lỗi"; bấm **Sửa báo lỗi** để đổi ghi chú. Gia sư xử lý xong thì học sinh thấy "Gia sư đã sửa câu này" hoặc "Gia sư đã xem: không lỗi".
+- Gia sư: menu **Báo lỗi đề** (số đỏ = số câu đang chờ). Các câu xếp theo cây **Lớp › Môn › Chuyên đề › Chương › Bài tập › Câu**, mỗi câu có đề, đáp án, tên học sinh, thời gian và ghi chú. Bấm **Sửa câu** để mở trang sửa bài, cuộn sẵn tới câu đó (viền đỏ); lưu xong quay lại trang Báo lỗi. Sau đó bấm **Đã sửa xong**, hoặc **Câu không lỗi** nếu đề đúng. Tab **Đã xử lý** giữ lịch sử.
+- Dữ liệu: bảng `question_reports`; học sinh gửi qua hàm `report_exercise()` (chỉ câu của bài được giao cho mình, bắt buộc có ghi chú, mỗi câu 1 báo lỗi đang mở), chỉ xem được báo lỗi của mình. Sửa câu không làm mất báo lỗi; xóa câu thì báo lỗi của câu đó cũng bị xóa. **Cần chạy lại `schema.sql`.**
 
 ---
 

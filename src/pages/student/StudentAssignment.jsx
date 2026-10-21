@@ -18,6 +18,7 @@ import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
+import ReportQuestion from '../../components/ReportQuestion.jsx'
 
 // Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài)
 const draftKey = (assignmentId, studentId) => `draft-answers:${studentId}:${assignmentId}`
@@ -77,7 +78,8 @@ export default function StudentAssignment() {
       images = await loadSubmissionImages(rec.submission_path)
     }
     const answers = Object.fromEntries(myAnswers.map((a) => [a.exercise_id, a]))
-    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers }
+    const reports = await loadMyReports(exercises.map((e) => e.id), profile.id)
+    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports }
   }, [id, profile.id])
 
   if (loading && !data) return <Loading />
@@ -116,6 +118,19 @@ export default function StudentAssignment() {
       {submitted ? <ReviewView data={data} /> : <AnswerView data={data} studentId={profile.id} onSubmitted={reload} />}
     </div>
   )
+}
+
+// Báo lỗi đề gần nhất của học sinh cho từng câu. Bảng chưa có (chưa chạy lại schema.sql) thì bỏ qua, không làm hỏng trang.
+async function loadMyReports(exerciseIds, studentId) {
+  if (!exerciseIds.length) return {}
+  const { data, error } = await supabase
+    .from('question_reports')
+    .select('id, exercise_id, note, status, created_at, resolved_at')
+    .eq('student_id', studentId)
+    .in('exercise_id', exerciseIds)
+    .order('created_at', { ascending: true })
+  if (error) return {}
+  return Object.fromEntries(data.map((r) => [r.exercise_id, r]))
 }
 
 // Đang làm bài: chọn / gõ câu trả lời rồi nộp.
@@ -207,6 +222,7 @@ function AnswerView({ data, studentId, onSubmitted }) {
               <div key={ex.id} className="question" id={`q-${ex.id}`}>
                 <div className="question-label">
                   Câu {no} {!isExam && <span className="badge">{KIND_LABEL[ex.kind]}</span>}
+                  <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                 </div>
                 <ExerciseBody
                   ex={ex}
@@ -366,6 +382,7 @@ function ReviewView({ data }) {
                         {mine?.is_correct === false && <span className="badge badge-danger">Sai</span>}
                       </>
                     )}
+                    <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                   </div>
                   <ExerciseBody ex={ex} mode="review" name={`r-${ex.id}`} value={mine?.answer} correct={k?.correct ?? null} />
                   {ex.kind === 'essay' && k?.answer_md && (

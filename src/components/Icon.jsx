@@ -39,6 +39,7 @@ const PATHS = {
   bell: 'M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2h15L18 16Zm-8 4a2 2 0 0 0 4 0',
   up: 'M12 19V5M5 12l7-7 7 7',
   down: 'M12 5v14M19 12l-7 7-7-7',
+  flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
 }
 
 export default function Icon({ name, size = 18, className = '', title }) {

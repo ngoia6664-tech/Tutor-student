@@ -18,6 +18,24 @@ import StudentPicker from '../../components/StudentPicker.jsx'
 import Icon from '../../components/Icon.jsx'
 import { ExamTimer } from '../../components/ExamParts.jsx'
 import { EXAM_MINUTES } from '../../lib/exam.js'
+import LessonSelect from '../../components/LessonSelect.jsx'
+
+// Chương liên kết lần dán trước (lưu trên máy này)
+const LAST_CHAPTER_KEY = 'import.lastChapterId'
+function readLastChapter() {
+  try {
+    return localStorage.getItem(LAST_CHAPTER_KEY)
+  } catch {
+    return null
+  }
+}
+function writeLastChapter(id) {
+  try {
+    localStorage.setItem(LAST_CHAPTER_KEY, id)
+  } catch {
+    /* trình duyệt chặn lưu: bỏ qua */
+  }
+}
 
 // Số phút làm bài gửi lên máy chủ: chỉ đề thi có bật tính giờ (số phút sai thì dùng 50)
 function timeLimitOf(o) {
@@ -41,6 +59,7 @@ export default function ImportJson() {
   const [saveError, setSaveError] = useState(null)
   const [linkLessonId, setLinkLessonId] = useState('') // bài giảng có sẵn để gắn bài tập (khi file không có bài giảng)
   const [chapterChoice, setChapterChoice] = useState('') // '' = không xếp chương | 'new' = tạo theo file | chapter_id
+  const [fromLast, setFromLast] = useState(false) // chương được chọn sẵn theo lần dán trước
   const [reloadKey, setReloadKey] = useState(0)
   // Danh sách bài giảng + chương có sẵn (tải lại sau mỗi lần lưu để chương mới xuất hiện)
   const lists = useAsync(async () => {
@@ -78,13 +97,15 @@ export default function ImportJson() {
           time_limit: String(d.time_limit_minutes || EXAM_MINUTES),
         }))
       )
-      // Chọn sẵn chương: có chương trùng tên thì dùng, chưa có thì đề xuất tạo mới
+      // Chọn sẵn chương: trùng tên thì dùng; không thì lấy chương đã liên kết lần trước; không có nữa mới đề xuất tạo mới
       const match = r.chapter ? findChapter(chapters, r.chapter) : null
-      const choice = match ? match.id : r.chapter?.title ? 'new' : ''
-      setChapterChoice(choice)
+      const last = chapters.find((c) => c.id === readLastChapter())
+      const choiceId = match?.id || last?.id || null
+      setChapterChoice(choiceId || (r.chapter?.title ? 'new' : ''))
+      setFromLast(!match && !!last)
       // File chỉ có bài tập: gợi ý bài giảng cùng chương (ưu tiên cùng "Dạng")
-      if (match && !r.drafts.some((d) => d.kind === 'lesson')) {
-        const inChapter = (lists.data?.lessons || []).filter((l) => l.chapter_id === match.id)
+      if (choiceId && !r.drafts.some((d) => d.kind === 'lesson')) {
+        const inChapter = (lists.data?.lessons || []).filter((l) => l.chapter_id === choiceId)
         const sameDang = r.dang != null ? inChapter.find((l) => new RegExp(`Dạng\\s*${r.dang}(?!\\d)`, 'i').test(l.title)) : null
         setLinkLessonId((sameDang || inChapter[0])?.id || '')
       } else setLinkLessonId('')
@@ -170,6 +191,8 @@ export default function ImportJson() {
         )
         setSaved({ ...done })
       }
+      // Nhớ chương vừa liên kết cho lần dán sau
+      if (chapterId) writeLastChapter(chapterId)
     } catch (e) {
       setSaveError(`${errMsg(e)}. Những phần đã lưu được đánh dấu ✅; bấm lưu lại sẽ chỉ lưu phần còn thiếu.`)
     } finally {
@@ -330,30 +353,33 @@ export default function ImportJson() {
               <ChapterSelect
                 chapters={chapters}
                 value={chapterChoice}
-                onChange={setChapterChoice}
+                onChange={(v) => {
+                  setChapterChoice(v)
+                  setFromLast(false)
+                }}
                 label="Xếp vào chương"
-                extraOptions={
-                  result.chapter?.title && !findChapter(chapters, result.chapter) ? (
-                    <option value="new">
-                      + Tạo chương mới: {result.chapter.title}
-                      {chapterGroupLabel(result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(result.chapter)})` : ''}
-                    </option>
-                  ) : null
+                extraTop={
+                  result.chapter?.title && !findChapter(chapters, result.chapter)
+                    ? [
+                        {
+                          value: 'new',
+                          label: `+ Tạo chương mới: ${result.chapter.title}${chapterGroupLabel(result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(result.chapter)})` : ''}`,
+                        },
+                      ]
+                    : []
                 }
+                hint={fromLast && chapterChoice !== 'new' ? 'Đã chọn sẵn chương bạn liên kết ở lần dán trước.' : null}
               />
               {!fileHasLesson && (
-                <label className="field">
-                  <span>Liên kết bài tập với bài giảng có sẵn (không bắt buộc)</span>
-                  <select value={linkLessonId} onChange={(e) => setLinkLessonId(e.target.value)} disabled={lessonsList.loading}>
-                    <option value="">— Không liên kết —</option>
-                    {(lessonsList.data || []).map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.title}
-                      </option>
-                    ))}
-                  </select>
-                  {lessonsList.error && <span className="muted small">Không tải được danh sách bài giảng: {lessonsList.error}</span>}
-                </label>
+                <LessonSelect
+                  label="Liên kết bài tập với bài giảng có sẵn (không bắt buộc)"
+                  lessons={lessonsList.data}
+                  chapters={chapters}
+                  value={linkLessonId}
+                  onChange={setLinkLessonId}
+                  disabled={lessonsList.loading}
+                  hint={lessonsList.error ? `Không tải được danh sách bài giảng: ${lessonsList.error}` : null}
+                />
               )}
               <h2>Học sinh nhận</h2>
               <p className="muted small" style={{ marginTop: 0 }}>

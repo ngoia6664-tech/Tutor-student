@@ -907,6 +907,77 @@ $$;
 revoke all on function public.mark_notifications_seen() from public;
 grant execute on function public.mark_notifications_seen() to authenticated;
 
+-- ---------- Báo lỗi đề ----------
+-- Học sinh báo một câu bị lỗi (kèm ghi chú); gia sư xem ở trang "Báo lỗi đề" rồi
+-- đánh dấu 'fixed' (đã sửa) hoặc 'dismissed' (câu không lỗi).
+create table if not exists public.question_reports (
+  id           uuid primary key default gen_random_uuid(),
+  exercise_id  uuid not null references public.exercises (id) on delete cascade,
+  student_id   uuid not null references public.profiles (id) on delete cascade,
+  note         text not null default '',
+  status       text not null default 'open' check (status in ('open', 'fixed', 'dismissed')),
+  created_at   timestamptz not null default now(),
+  resolved_at  timestamptz
+);
+-- Mỗi học sinh chỉ có 1 báo lỗi đang mở cho mỗi câu (báo lại = sửa ghi chú)
+create unique index if not exists question_reports_open_uniq
+  on public.question_reports (exercise_id, student_id) where status = 'open';
+create index if not exists question_reports_status_idx on public.question_reports (status, created_at desc);
+
+alter table public.question_reports enable row level security;
+
+drop policy if exists question_reports_tutor_all      on public.question_reports;
+drop policy if exists question_reports_student_select on public.question_reports;
+
+create policy question_reports_tutor_all on public.question_reports
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Học sinh chỉ xem báo lỗi của mình; gửi thì qua report_exercise()
+create policy question_reports_student_select on public.question_reports
+  for select to authenticated
+  using (student_id = auth.uid());
+
+create or replace function public.report_exercise(p_exercise_id uuid, p_note text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_note text := trim(coalesce(p_note, ''));
+  v_row question_reports;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập để báo lỗi';
+  end if;
+  if v_note = '' then
+    raise exception 'Hãy ghi rõ câu này bị lỗi như thế nào';
+  end if;
+  if length(v_note) > 2000 then
+    raise exception 'Ghi chú quá dài (tối đa 2000 ký tự)';
+  end if;
+  if not exists (
+    select 1 from exercises e
+    join assignment_recipients ar on ar.assignment_id = e.assignment_id
+    where e.id = p_exercise_id and ar.student_id = v_uid
+  ) then
+    raise exception 'Câu này không thuộc bài được giao cho bạn';
+  end if;
+
+  insert into question_reports (exercise_id, student_id, note)
+  values (p_exercise_id, v_uid, v_note)
+  on conflict (exercise_id, student_id) where status = 'open'
+  do update set note = excluded.note, created_at = now()
+  returning * into v_row;
+  return to_jsonb(v_row);
+end;
+$$;
+
+revoke all on function public.report_exercise(uuid, text) from public;
+grant execute on function public.report_exercise(uuid, text) to authenticated;
+
 
 -- =====================================================================
 -- 7. STORAGE (bucket riêng tư + policy)

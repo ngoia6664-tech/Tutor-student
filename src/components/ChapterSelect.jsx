@@ -1,30 +1,26 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { groupBySection } from '../lib/chapters.js'
+import TreePicker, { chapterNodes } from './TreePicker.jsx'
 
-// Ô chọn chương (chia nhóm theo chuyên đề). value = chapter_id hoặc ''.
-export default function ChapterSelect({ chapters, value, onChange, label = 'Chương', extraOptions = null }) {
-  const groups = groupBySection(chapters || [])
+// Ô chọn chương dạng cây Lớp › Môn › Chuyên đề › Chương. value = chapter_id hoặc ''.
+// extraTop: lựa chọn thêm ở đầu danh sách, vd. [{ value: 'new', label: '+ Tạo chương mới…' }]
+export default function ChapterSelect({ chapters, value, onChange, label = 'Chương', extraTop = [], hint }) {
+  const nodes = useMemo(() => chapterNodes(chapters || []), [chapters])
   return (
-    <label className="field">
-      <span>
-        {label}{' '}
+    <TreePicker
+      label={label}
+      labelExtra={
         <Link to="/tutor/library" className="small" style={{ fontWeight: 400 }}>
           (mở Thư viện)
         </Link>
-      </span>
-      <select value={value || ''} onChange={(e) => onChange(e.target.value)}>
-        <option value="">— Chưa xếp chương —</option>
-        {extraOptions}
-        {groups.map((g) => (
-          <optgroup key={g.key} label={g.label}>
-            {g.chapters.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </label>
+      }
+      nodes={nodes}
+      value={value || ''}
+      onChange={onChange}
+      top={[{ value: '', label: '— Chưa xếp chương —' }, ...extraTop]}
+      placeholder="— Chưa xếp chương —"
+      searchPlaceholder="Tìm chương, chuyên đề…"
+      hint={hint}
+    />
   )
 }

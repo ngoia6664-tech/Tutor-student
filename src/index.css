@@ -2624,3 +2624,322 @@ details.method-box:not([open]) > summary {
 .tree-title {
   white-space: nowrap;
 }
+
+/* ===== Ô chọn dạng cây (chương / bài giảng) ===== */
+.tp-anchor {
+  position: relative;
+}
+.tp-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  min-height: 2.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.tp-trigger:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+.tp-trigger.open,
+.tp-trigger:focus-visible {
+  outline: 2px solid var(--focus);
+  border-color: var(--primary);
+}
+.tp-trigger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.tp-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tp-crumbs {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-current {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-current.muted {
+  font-weight: 400;
+}
+.tp-arrow {
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.tp-trigger.open .tp-arrow {
+  transform: rotate(180deg);
+}
+.tp-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(420px, 60vh);
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.tp-panel .tp-search {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.tp-panel .tp-search:focus {
+  outline: none;
+}
+.tp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tp-root {
+  overflow-y: auto;
+  padding: 0.3rem;
+  overscroll-behavior: contain;
+}
+.tp-group,
+.tp-leaf {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.42rem 0.6rem;
+  cursor: pointer;
+}
+.tp-group {
+  font-weight: 600;
+}
+.tp-group .icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.tp-group:hover,
+.tp-leaf:hover {
+  background: var(--primary-soft);
+}
+.tp-group-label {
+  flex: 1;
+  min-width: 0;
+}
+.tp-caret {
+  display: inline-block;
+  width: 0.8rem;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.tp-caret.open {
+  transform: rotate(90deg);
+}
+.tp-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+.tp-leaf .icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.tp-leaf.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+.tp-leaf.tp-top {
+  color: var(--muted);
+}
+.tp-leaf.tp-top.active {
+  color: var(--primary);
+}
+.tp-empty {
+  padding: 0.6rem;
+}
+
+/* ===== Báo lỗi đề (học sinh) ===== */
+.qr-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  font-weight: 400;
+}
+.qr-btn {
+  color: var(--muted);
+}
+.qr-btn:hover {
+  color: var(--danger);
+}
+.qr-form {
+  flex-basis: 100%;
+  font-weight: 400;
+  color: var(--text);
+  margin-top: 0.4rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.qr-form .qr-note {
+  font-family: inherit;
+  font-size: 16px;
+  background: var(--surface-solid);
+}
+.qr-error {
+  color: var(--danger);
+  margin: 0 0 0.5rem;
+}
+
+/* Số câu bị báo lỗi trên menu */
+.nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  margin-left: 0.3rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ===== Trang Báo lỗi đề (gia sư) ===== */
+.rp-branch > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.rp-branch > summary::-webkit-details-marker {
+  display: none;
+}
+.rp-branch > summary:hover {
+  background: var(--primary-soft);
+}
+.rp-branch > summary .icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.rp-l0 > summary {
+  font-size: 1.05rem;
+}
+.rp-label {
+  flex: 1;
+  min-width: 0;
+}
+.rp-caret {
+  display: inline-block;
+  width: 0.8rem;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.rp-branch[open] > summary .rp-caret {
+  transform: rotate(90deg);
+}
+.rp-children {
+  margin-left: 0.85rem;
+  padding-left: 0.6rem;
+  border-left: 1px dashed var(--border-strong);
+}
+.rp-assignment {
+  margin: 0.4rem 0 0.8rem;
+}
+.rp-assignment-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.3rem 0.5rem;
+  font-weight: 600;
+}
+.rp-assignment-head .icon {
+  color: var(--accent);
+}
+.rp-question {
+  margin: 0.5rem 0 0.75rem;
+}
+.rp-key {
+  margin: 0.5rem 0;
+}
+.rp-key > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+.rp-notes {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.rp-notes li {
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+}
+.rp-note-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.rp-note {
+  margin: 0.3rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.exercise-focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+@media (max-width: 520px) {
+  .rp-children {
+    margin-left: 0.35rem;
+    padding-left: 0.4rem;
+  }
+}
+/* Thẻ đang mở ô chọn cây nổi lên trên các thẻ phía sau (thẻ có backdrop-filter tạo lớp xếp chồng riêng) */
+.card:has(.tp-panel) {
+  position: relative;
+  z-index: 9; /* dưới thanh menu (10) */
+}
