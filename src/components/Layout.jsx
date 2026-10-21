@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
@@ -9,6 +9,9 @@ import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
 import Mascot from './Mascot.jsx'
+
+// Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
+const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 
@@ -41,6 +44,16 @@ export default function Layout() {
   useEffect(() => {
     prefetchPages(profile.role)
   }, [profile.role])
+  // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
+  const [scrolled, setScrolled] = useState(false)
+  const [exploring, setExploring] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   // Đổi trang thì về đầu trang
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -48,7 +61,7 @@ export default function Layout() {
 
   const content = (
     <div className="app">
-      <header className="topbar">
+      <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="topbar-inner">
           <span className="brand">
             <span className="brand-mark">⚛</span> Study with Duy Anh
@@ -58,6 +71,9 @@ export default function Layout() {
               {profile.full_name || 'Tài khoản'}
             </span>
             <NotificationBell />
+            <button type="button" className="btn btn-ghost theme-toggle" onClick={() => setExploring(true)} aria-label="Ngắm vũ trụ" title="Ngắm vũ trụ">
+              <Icon name="telescope" />
+            </button>
             <ThemeToggle />
             <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất">
               <Icon name="logout" />
@@ -91,6 +107,11 @@ export default function Layout() {
         </div>
       </main>
       <Mascot />
+      {exploring && (
+        <Suspense fallback={null}>
+          <SpaceExplorer onClose={() => setExploring(false)} />
+        </Suspense>
+      )}
     </div>
   )
   // Học sinh: thông báo bài mới (chuông + thông báo nổi)

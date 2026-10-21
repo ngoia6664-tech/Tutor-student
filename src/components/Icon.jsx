@@ -40,6 +40,7 @@ const PATHS = {
   up: 'M12 19V5M5 12l7-7 7 7',
   down: 'M12 5v14M19 12l-7 7-7-7',
   flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
+  telescope: 'm3 13.5 12.5-6 2 4.2-12.5 6-2-4.2ZM15.5 7.5l3.6-1.7 2 4.2-3.6 1.7M11 15.7 8 21M11 15.7l3 5.3M11 15.7V14',
 }
 
 export default function Icon({ name, size = 18, className = '', title }) {

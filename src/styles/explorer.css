@@ -1,0 +1,161 @@
+/* ===== Chế độ ngắm vũ trụ (components/SpaceExplorer.jsx, chỉ tải khi mở) =====
+   <html class="space-exploring">: ẩn app, đưa lớp nền .space lên trên để kéo / bấm được. */
+html.space-exploring {
+  overflow: hidden;
+  /* Không bôi đen / kéo-thả khi đang kéo xoay (gây con trỏ "cấm", mất thao tác xoay) */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.space-exploring .app {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.35s ease,
+    visibility 0s linear 0.35s;
+}
+.space-exploring .space {
+  z-index: 40;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.space-exploring .space:active {
+  cursor: grabbing;
+}
+.space-exploring .solar {
+  top: 52%;
+  opacity: 1;
+  scale: var(--zoom, 1);
+}
+/* Vòng quỹ đạo phủ chồng lên nhau: cho chuột xuyên qua, chỉ hành tinh / Mặt Trời nhận bấm */
+.space-exploring .solar-orbit {
+  pointer-events: none;
+}
+.space-exploring .solar-planet,
+.space-exploring .solar-sun {
+  pointer-events: auto;
+}
+/* Vùng bấm rộng hơn hành tinh để dễ chạm trên điện thoại */
+.space-exploring .solar-planet::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+}
+.solar .is-picked {
+  /* Vòng viền gọn (quầng nhòe bị lớp 3D cắt thành hình vuông) */
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 5px rgba(168, 85, 247, 0.55);
+}
+.solar-sun.is-picked {
+  box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.6);
+}
+
+.explorer-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  animation: explorer-in 0.4s ease both;
+}
+.explorer-ui > * {
+  pointer-events: auto;
+}
+.explorer-top {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  pointer-events: none;
+}
+.explorer-top > * {
+  pointer-events: auto;
+}
+.explorer-title {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.explorer-hint {
+  max-width: 26rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.explorer-card {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  width: min(340px, calc(100vw - 6rem));
+  padding: 0.9rem 1.1rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+  animation: explorer-in 0.25s ease both;
+}
+.explorer-card h3 {
+  margin: 0 1.5rem 0.2rem 0;
+}
+.explorer-card p {
+  margin: 0 0 0.4rem;
+  font-size: 0.92rem;
+}
+.explorer-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.explorer-card li + li {
+  margin-top: 0.2rem;
+}
+.explorer-g {
+  font-weight: 700;
+  color: var(--primary);
+}
+.explorer-card-x {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.6rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.explorer-zoom {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.explorer-zoom .theme-toggle {
+  background: var(--surface-solid);
+}
+
+@keyframes explorer-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (max-width: 640px) {
+  .explorer-hint {
+    font-size: 0.8rem;
+  }
+  .explorer-top .btn-text {
+    display: none;
+  }
+}

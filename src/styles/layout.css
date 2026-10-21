@@ -1,10 +1,41 @@
 /* ===== Khung trang ===== */
+/* Ở đầu trang: gần trong suốt, nền vũ trụ hiện trọn (chỉ phủ nhẹ phía trên cho chữ menu rõ).
+   Khi cuộn (.is-scrolled): lớp nền đặc hiện dần + mép dưới nhạt dần thay cho đường viền cứng.
+   Không dùng backdrop-filter: nền phía sau chuyển động, làm nhòe lại mỗi khung hình rất nặng. */
 .topbar {
-  background: var(--topbar-bg);
-  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
+  background: linear-gradient(var(--topbar-glass), transparent);
+}
+.topbar::before,
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.topbar::before {
+  top: 0;
+  bottom: 0;
+  background: var(--topbar-bg);
+}
+.topbar::after {
+  top: 100%;
+  height: 22px;
+  background: linear-gradient(var(--topbar-bg), transparent);
+}
+.topbar.is-scrolled::before,
+.topbar.is-scrolled::after {
+  opacity: 1;
+}
+.topbar-inner,
+.topbar .nav {
+  position: relative;
+  z-index: 1;
 }
 .topbar-inner {
   max-width: 980px;

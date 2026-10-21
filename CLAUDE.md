@@ -45,6 +45,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 theme qua `<html data-theme="dark|light">`. Nền trang (màu, quầng sáng, 3 lớp sao, hệ Mặt Trời 3D, sao băng) KHÔNG ở body
 mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space.css`; body trong suốt. Góc nhìn hệ Mặt Trời
 = biến `--tilt`/`--turn` trên `.solar`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
+Chế độ ngắm vũ trụ: `components/SpaceExplorer.jsx` + `styles/explorer.css` (lazy, mở từ nút kính viễn vọng ở header),
+thêm class `space-exploring` vào `<html>` để ẩn `.app` và cho kéo / bấm hệ Mặt Trời; số liệu hành tinh ở `BODIES`.
+Header: trong suốt ở đầu trang, `.topbar.is-scrolled` (Layout theo dõi scroll) mới hiện nền + mép mờ.
 Hiệu năng: KHÔNG dùng `backdrop-filter` (nền chuyển động → làm nhòe lại mỗi khung hình); tránh filter nặng / animation liên tục bên trong SVG gấu.
 - `base` biến màu, nền, chữ · `layout` khung trang, thanh trên, menu · `components` khối, nhãn, nút, skeleton, form,
   thông báo, loading, đăng nhập · `content` bài giảng, markdown, câu hỏi/đáp án, ảnh nộp, bảng, soạn thảo, video, điểm
