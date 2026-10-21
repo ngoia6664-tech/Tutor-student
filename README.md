@@ -27,7 +27,8 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
 └── src/
     ├── main.jsx              # điểm vào; báo lỗi nếu thiếu .env
     ├── App.jsx               # khai báo route /login, /tutor/..., /student/...
-    ├── index.css             # giao diện (responsive, ưu tiên điện thoại)
+    ├── index.css             # chỉ @import các file giao diện trong styles/
+    ├── styles/               # giao diện tách theo chủ đề (responsive, ưu tiên điện thoại)
     ├── contexts/
     │   └── AuthContext.jsx   # phiên đăng nhập + hồ sơ (role)
     ├── lib/

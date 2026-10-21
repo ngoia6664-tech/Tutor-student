@@ -1,0 +1,155 @@
+/* =====================================================================
+   Giao diện: tông tím – hồng trên nền xanh tím than (tối) hoặc oải hương (sáng).
+   Màu đặt bằng biến; <html data-theme="dark|light"> quyết định bộ màu.
+   ===================================================================== */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c0a1d;
+  --surface: rgba(24, 20, 50, 0.78);
+  --surface-solid: #16132e;
+  --surface-2: #1e1a3d;
+  --border: #2a2550;
+  --border-strong: #3b3470;
+  --text: #ece9ff;
+  --muted: #a29dc4;
+  --primary: #c084fc;
+  --accent: #f472b6;
+  --on-primary: #ffffff;
+  --grad: linear-gradient(100deg, #a855f7 0%, #d946ef 55%, #ec4899 100%);
+  --grad-soft: linear-gradient(100deg, rgba(168, 85, 247, 0.18), rgba(236, 72, 153, 0.18));
+  --glow: 0 8px 28px -6px rgba(217, 70, 239, 0.55);
+  --primary-soft: rgba(192, 132, 252, 0.14);
+  --ok: #4ade80;
+  --ok-soft: rgba(74, 222, 128, 0.12);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.13);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.13);
+  --aura-1: rgba(124, 58, 237, 0.28);
+  --aura-2: rgba(219, 39, 119, 0.2);
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --focus: rgba(192, 132, 252, 0.6);
+  --skeleton: rgba(255, 255, 255, 0.06);
+  --topbar-bg: rgba(12, 10, 29, 0.96); /* trình duyệt không làm mờ nền được: gần như đặc */
+  --topbar-glass: rgba(12, 10, 29, 0.72);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f5f3ff;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-solid: #ffffff;
+  --surface-2: #f1edfd;
+  --border: #e2dcf5;
+  --border-strong: #cfc5ee;
+  --text: #1a1433;
+  --muted: #645d84;
+  --primary: #7c3aed;
+  --accent: #db2777;
+  --on-primary: #ffffff;
+  --grad: linear-gradient(100deg, #7c3aed 0%, #c026d3 55%, #db2777 100%);
+  --grad-soft: linear-gradient(100deg, rgba(124, 58, 237, 0.1), rgba(219, 39, 119, 0.1));
+  --glow: 0 8px 24px -8px rgba(192, 38, 211, 0.45);
+  --primary-soft: rgba(124, 58, 237, 0.09);
+  --ok: #15803d;
+  --ok-soft: rgba(21, 128, 61, 0.09);
+  --danger: #be123c;
+  --danger-soft: rgba(190, 18, 60, 0.08);
+  --warn: #a16207;
+  --warn-soft: rgba(161, 98, 7, 0.1);
+  --aura-1: rgba(124, 58, 237, 0.12);
+  --aura-2: rgba(219, 39, 119, 0.08);
+  --shadow: 0 10px 30px -14px rgba(60, 30, 120, 0.25);
+  --focus: rgba(124, 58, 237, 0.45);
+  --skeleton: rgba(60, 30, 120, 0.07);
+  --topbar-bg: rgba(245, 243, 255, 0.97);
+  --topbar-glass: rgba(245, 243, 255, 0.72);
+}
+
+:root {
+  --radius: 16px;
+  --radius-sm: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Hai quầng sáng tím – hồng cố định sau nền: chi tiết nhận diện của giao diện */
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image: radial-gradient(60vw 50vh at 0% 0%, var(--aura-1), transparent 70%),
+    radial-gradient(50vw 45vh at 0% 100%, var(--aura-2), transparent 70%),
+    radial-gradient(40vw 40vh at 100% 30%, var(--aura-1), transparent 70%);
+  background-attachment: fixed;
+}
+
+a {
+  color: var(--primary);
+  text-underline-offset: 3px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: 1.2rem;
+}
+h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* Chữ chuyển màu tím – hồng (dùng tiết kiệm: số điểm) */
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+code {
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 0.3em;
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.875rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(217, 70, 239, 0.35);
+}

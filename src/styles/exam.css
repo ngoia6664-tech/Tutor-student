@@ -1,0 +1,542 @@
+/* ===================== Đề thi THPT ===================== */
+
+/* --- Câu đúng/sai: bảng 4 ý --- */
+.tf-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.tf-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+}
+.tf-table td {
+  border-top: 1px solid var(--border);
+  padding: 0.5rem;
+  vertical-align: middle;
+}
+.tf-table .tf-id {
+  width: 2.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: center;
+}
+.tf-table .tf-col {
+  width: 3.6rem;
+  text-align: center;
+}
+.tf-statement .md > :first-child {
+  margin-top: 0;
+}
+.tf-statement .md > :last-child {
+  margin-bottom: 0;
+}
+.tf-table tr.is-right td {
+  background: var(--ok-soft);
+}
+.tf-table tr.is-wrong td {
+  background: var(--danger-soft);
+}
+/* Nút chọn Đ / S: ô tròn lớn, dễ bấm trên điện thoại */
+.tf-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-solid);
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.tf-pick input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: inherit;
+}
+.tf-pick:hover {
+  border-color: var(--primary);
+}
+.tf-pick:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.tf-pick.is-picked {
+  background: var(--grad);
+  border-color: transparent;
+  color: var(--on-primary);
+  box-shadow: var(--glow);
+}
+.tf-pick.is-key {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.tf-pick:has(input:disabled) {
+  cursor: default;
+}
+.tr-review .tf-pick {
+  cursor: default;
+}
+.tf-key {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.tf-true {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.tf-false {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.chip.active.tf-true {
+  background: var(--ok);
+  color: var(--surface-solid);
+  box-shadow: none;
+}
+.chip.active.tf-false {
+  background: var(--danger);
+  color: var(--surface-solid);
+  box-shadow: none;
+}
+
+/* --- Câu trả lời ngắn --- */
+.short-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+  max-width: 320px;
+}
+.short-answer input {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.short-review {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  margin-top: 0.6rem;
+}
+.short-key {
+  color: var(--ok);
+}
+
+/* --- Soạn đề: bật đề thi + cấu trúc --- */
+.exam-toggle.on {
+  border-color: var(--primary);
+  background: linear-gradient(var(--primary-soft), var(--primary-soft)), var(--surface);
+}
+.exam-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+}
+.exam-switch input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--primary);
+}
+.exam-structure {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+.tf-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.tf-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.tf-edit-row input[type='text'] {
+  flex: 1;
+  min-width: 0;
+}
+.tf-edit-pick {
+  display: flex;
+  gap: 0.3rem;
+}
+.tf-edit-pick .chip {
+  padding: 0.3rem 0.7rem;
+}
+
+/* --- Học sinh làm đề: tiêu đề phần + phiếu trả lời --- */
+.exam-part-head {
+  margin: 1.4rem 0 0.2rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--grad-soft);
+  border-left: 3px solid var(--primary);
+  scroll-margin-top: 8rem;
+}
+.exam-part-head:first-of-type {
+  margin-top: 0.4rem;
+}
+.exam-part-title {
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.exam-part-head + .question {
+  border-top: 0;
+  margin-top: 0.4rem;
+}
+.question {
+  scroll-margin-top: 8rem;
+}
+.exam-nav-part {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.45rem;
+}
+.exam-nav-label {
+  flex: none;
+  width: 4.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding-top: 0.35rem;
+}
+.exam-nav-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.exam-nav-cell {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.exam-nav-cell:hover {
+  border-color: var(--primary);
+}
+.exam-nav-cell.done {
+  background: var(--grad);
+  border-color: transparent;
+  color: var(--on-primary);
+}
+
+/* --- Điểm máy chấm theo thang THPT --- */
+.exam-score-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+.exam-score-total {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.exam-score-total .muted {
+  -webkit-text-fill-color: var(--muted);
+  font-size: 1rem;
+}
+.exam-score-parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+.exam-score-part {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.exam-mini {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.92rem;
+}
+
+/* --- Bảng đáp án cho gia sư --- */
+.key-table section {
+  margin-bottom: 1.2rem;
+}
+.key-title {
+  font-size: 0.95rem;
+  margin: 0 0 0.55rem;
+  color: var(--primary);
+}
+.key-no {
+  font-weight: 700;
+  color: var(--muted);
+}
+.key-mcq {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.35rem;
+}
+.key-mcq-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.55rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 0.9rem;
+}
+.key-ans {
+  font-weight: 800;
+  color: var(--ok);
+}
+.key-tf {
+  border-collapse: separate;
+  border-spacing: 0.3rem;
+  margin-left: -0.3rem;
+}
+.key-tf th {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+  min-width: 2.4rem;
+}
+.key-tf td {
+  text-align: center;
+}
+.key-short {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.key-short-cell {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.key-short-cell strong {
+  color: var(--ok);
+}
+.key-line {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+.key-blank {
+  margin-right: 0.9rem;
+}
+.key-essay {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.6rem;
+}
+.key-essay-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+.key-essay-q .md > * {
+  margin: 0;
+}
+details.method-box > summary {
+  cursor: pointer;
+  list-style: revert;
+}
+details.method-box:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .tf-table .tf-col {
+    width: 2.9rem;
+  }
+  .tf-table th,
+  .tf-table td {
+    padding: 0.4rem 0.3rem;
+  }
+  .tf-pick {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+  .tf-edit-row {
+    flex-wrap: wrap;
+  }
+  .tf-edit-row input[type='text'] {
+    flex-basis: calc(100% - 2rem);
+  }
+  .exam-nav-label {
+    width: 100%;
+    padding-top: 0;
+  }
+  .exam-nav-part {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* ===================== Tính giờ làm đề ===================== */
+.exam-timer-set {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  flex-basis: 100%;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+.exam-minutes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.exam-minutes input {
+  width: 5.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+.exam-fieldset {
+  min-width: 0;
+  margin-inline: 0;
+}
+.exam-fieldset:disabled {
+  opacity: 0.75;
+}
+.exam-start {
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+.exam-start-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  background: var(--grad);
+  color: var(--on-primary);
+  font-size: 1.6rem;
+  box-shadow: var(--glow);
+  margin-bottom: 0.6rem;
+}
+.exam-start-rules {
+  text-align: left;
+  max-width: 34rem;
+  margin: 0.8rem auto 1.2rem;
+  padding-left: 1.2rem;
+  line-height: 1.6;
+}
+.exam-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.exam-timer-num {
+  margin-left: auto;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.exam-timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  margin-top: 0.55rem;
+  overflow: hidden;
+}
+.exam-timer-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad);
+  transition: width 1s linear;
+}
+.exam-timer-warn .exam-timer-fill {
+  background: var(--warn);
+}
+.exam-timer-danger .exam-timer-fill {
+  background: var(--danger);
+}
+.exam-timer-warn .exam-timer-num {
+  color: var(--warn);
+}
+.exam-timer-danger .exam-timer-num {
+  color: var(--danger);
+}
+/* Ô đồng hồ nổi góc dưới, luôn thấy khi cuộn đề */
+.exam-timer-float {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow, 0 6px 20px rgba(0, 0, 0, 0.18));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.exam-timer-float.exam-timer-warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.exam-timer-float.exam-timer-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: exam-pulse 1s ease-in-out infinite;
+}
+@keyframes exam-pulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exam-timer-float.exam-timer-danger {
+    animation: none;
+  }
+  .exam-timer-fill {
+    transition: none;
+  }
+}
