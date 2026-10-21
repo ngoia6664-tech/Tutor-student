@@ -9,6 +9,8 @@ import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
 import Mascot from './Mascot.jsx'
+import { mascotSay } from '../lib/celebrate.js'
+import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
@@ -47,6 +49,7 @@ export default function Layout() {
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
+  const studying = useStudying()
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
     onScroll()
@@ -71,8 +74,19 @@ export default function Layout() {
               {profile.full_name || 'Tài khoản'}
             </span>
             <NotificationBell />
-            <button type="button" className="btn btn-ghost theme-toggle" onClick={() => setExploring(true)} aria-label="Ngắm vũ trụ" title="Ngắm vũ trụ">
+            <button
+              type="button"
+              className={`btn btn-ghost theme-toggle telescope-btn ${studying ? 'is-locked' : ''}`}
+              onClick={() => (studying ? mascotSay(TELESCOPE_LOCKED) : setExploring(true))}
+              aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
+              title={studying ? 'Nộp bài xong để mở khóa' : 'Ngắm vũ trụ'}
+            >
               <Icon name="telescope" />
+              {studying && (
+                <span className="telescope-lock">
+                  <Icon name="lock" size={11} />
+                </span>
+              )}
             </button>
             <ThemeToggle />
             <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất">

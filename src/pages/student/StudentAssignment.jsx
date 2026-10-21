@@ -16,6 +16,7 @@ import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import { celebrate } from '../../lib/celebrate.js'
+import { UNLOCK_PRAISE, useStudyLock } from '../../lib/studyLock.js'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
@@ -181,6 +182,8 @@ function useExamClock(assignmentId, initialStarted, limitMinutes) {
 }
 
 function AnswerView({ data, studentId, onSubmitted }) {
+  // Đang làm bài: khóa chế độ ngắm vũ trụ, gấu ngồi đợi. Nộp xong (sang ReviewView) tự mở khóa
+  useStudyLock()
   const { rec, assignment: a, exercises } = data
   const isExam = !!a.is_exam
   const key = draftKey(a.id, studentId)
@@ -247,7 +250,7 @@ function AnswerView({ data, studentId, onSubmitted }) {
         onSubmitted={() => {
           writeDraft(key, null)
           window.scrollTo({ top: 0, behavior: 'smooth' })
-          celebrate('Nộp bài xong rồi! Giỏi lắm 🎉 Xem đáp án bên dưới nhé.')
+          celebrate(UNLOCK_PRAISE)
           onSubmitted()
         }}
       />

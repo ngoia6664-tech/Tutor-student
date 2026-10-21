@@ -3,11 +3,13 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { supabase } from '../lib/supabase.js'
 import { countOpenReports } from '../lib/reports.js'
 import { MASCOT_EVENT } from '../lib/celebrate.js'
+import { LOCK_MESSAGE, useStudying } from '../lib/studyLock.js'
 import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './PandaArt.jsx'
 
 // Giáo sư Gấu Trúc: linh vật góc dưới phải.
 // mood: idle ngồi · climb leo tre (quay lưng, ôm cây) · walk đi bộ ục ịch · roll lăn tròn → dizzy chóng mặt
-//       · teach giảng bài (bảng đen mini) · talk nói · cheer ăn mừng · sleep cuộn tròn ngủ.
+//       · teach giảng bài (bảng đen mini) · talk nói · cheer ăn mừng · sleep cuộn tròn ngủ
+//       · wait ngồi đọc sách đợi (khi học sinh đang làm bài: không đi dạo / leo / lăn / ngủ).
 // - Bấm vào: giảng một mẹo trên bảng đen; lần đầu ưu tiên nhắc bài (học sinh: quá hạn / sắp hết hạn; gia sư: câu bị báo lỗi).
 // - Nghe sự kiện 'mascot' (lib/celebrate.js) để nói / nhảy lên ăn mừng.
 // - Rảnh thì cứ ~10 giây làm một trò (leo tre hay gặp nhất); 30 giây không thao tác thì ngủ.
@@ -90,6 +92,9 @@ export default function Mascot() {
   const sleepy = useRef(false)
   const timers = useRef({})
   const reminded = useRef(false)
+  const studying = useStudying()
+  const studyingRef = useRef(studying)
+  studyingRef.current = studying
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
   function setMood(m) {
@@ -129,6 +134,7 @@ export default function Mascot() {
       sleepy.current = false
       if (moodRef.current === 'sleep') setMood('idle')
       timers.current.sleep = setTimeout(() => {
+        if (studyingRef.current) return // đang làm bài: gấu ngồi đợi, không ngủ
         sleepy.current = true
         if (moodRef.current === 'idle') setMood('sleep')
       }, SLEEP_AFTER)
@@ -148,7 +154,7 @@ export default function Mascot() {
   useEffect(() => {
     if (reduceMotion) return
     const id = setInterval(() => {
-      if (moodRef.current !== 'idle') return
+      if (moodRef.current !== 'idle' || studyingRef.current) return
       const a = pickActivity()
       setMood(a.mood)
       timers.current.activity = setTimeout(() => {
@@ -163,6 +169,7 @@ export default function Mascot() {
   }, [reduceMotion])
 
   async function onPoke() {
+    if (studying) return say(LOCK_MESSAGE)
     if (mood === 'sleep') {
       sleepy.current = false
       return say('Ơ... thầy chỉ chợp mắt chút thôi. Học tiếp nào!')
@@ -206,14 +213,17 @@ export default function Mascot() {
     )
   }
 
+  // Đang làm bài: mọi trạng thái rảnh (kể cả đang dở trò) hiện thành ngồi đọc sách đợi
+  const shown = studying && ['idle', 'sleep', 'walk', 'climb', 'roll', 'dizzy'].includes(mood) ? 'wait' : mood
+
   let art
-  if (mood === 'climb') art = <BackPanda />
-  else if (mood === 'roll') art = <BallPanda />
-  else if (mood === 'sleep') art = <SleepingPanda />
-  else art = <FrontPanda pose={['teach', 'cheer', 'dizzy'].includes(mood) ? mood : 'sit'} />
+  if (shown === 'climb') art = <BackPanda />
+  else if (shown === 'roll') art = <BallPanda />
+  else if (shown === 'sleep') art = <SleepingPanda />
+  else art = <FrontPanda pose={['teach', 'cheer', 'dizzy', 'wait'].includes(shown) ? shown : 'sit'} />
 
   return (
-    <div className={`mascot is-${mood}`}>
+    <div className={`mascot is-${shown}`}>
       {bubble?.kind === 'board' && (
         <div key={bubble.id} className="mascot-board" role="status">
           <div className="mascot-board-title">Gấu Trúc giảng bài</div>
@@ -230,10 +240,17 @@ export default function Mascot() {
         </div>
       )}
       <div className="mascot-stage">
-        {mood === 'climb' && <Bamboo />}
+        {shown === 'climb' && <Bamboo />}
         <button type="button" className="mascot-body" onClick={onPoke} aria-label="Giáo sư Gấu Trúc: bấm để nghe giảng">
           {art}
-          {mood === 'sleep' && (
+          {shown === 'wait' && (
+            <span className="mascot-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
+          {shown === 'sleep' && (
             <span className="mascot-z" aria-hidden="true">
               z<span>z</span>
             </span>

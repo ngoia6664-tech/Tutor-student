@@ -69,8 +69,8 @@ function Face({ dizzy = false }) {
         <g className="pd-eyes">
           <circle cx="49" cy="53" r="4.4" fill={FUR} />
           <circle cx="71" cy="53" r="4.4" fill={FUR} />
-          <circle cx="49.6" cy="53.8" r="2.7" fill={INK} />
-          <circle cx="71.6" cy="53.8" r="2.7" fill={INK} />
+          <circle className="pd-pupil" cx="49.6" cy="53.8" r="2.7" fill={INK} />
+          <circle className="pd-pupil" cx="71.6" cy="53.8" r="2.7" fill={INK} />
           <circle cx="48.5" cy="52.3" r="1.1" fill={FUR} />
           <circle cx="70.5" cy="52.3" r="1.1" fill={FUR} />
         </g>
@@ -96,6 +96,7 @@ function Book({ x, y, angle }) {
 }
 
 // Gấu ngồi nhìn thẳng. pose: 'sit' | 'teach' (giơ đũa chỉ bảng) | 'cheer' (giơ cả sách lẫn đũa) | 'dizzy' (chóng mặt)
+//   | 'wait' (ngồi đọc sách đợi học sinh làm bài)
 export function FrontPanda({ pose = 'sit' }) {
   const wandUp = pose === 'teach' || pose === 'cheer'
   return (
@@ -126,8 +127,10 @@ export function FrontPanda({ pose = 'sit' }) {
       <path d="M60 80 L72 73 L72 87 Z" fill={VIOLET} stroke={VIOLET_EDGE} strokeWidth="1.2" strokeLinejoin="round" />
       <circle cx="60" cy="80" r="3.2" fill={VIOLET_DARK} />
 
-      {/* Tay phải: ôm sách (giơ cao khi ăn mừng) */}
-      {pose === 'cheer' ? (
+      {/* Tay phải: ôm sách (giơ cao khi ăn mừng); khi đợi thì hai tay cầm sách mở đọc */}
+      {pose === 'wait' ? (
+        <ReadingArms />
+      ) : pose === 'cheer' ? (
         <g className="pd-arm pd-arm-r">
           <Book x={82} y={40} angle={12} />
           <ellipse cx="87" cy="73" rx="8" ry="13" transform="rotate(43 87 73)" fill={INK} />
@@ -140,7 +143,7 @@ export function FrontPanda({ pose = 'sit' }) {
       )}
 
       {/* Tay trái: cầm đũa ngôi sao (giơ lên khi giảng / ăn mừng) */}
-      {wandUp ? (
+      {pose === 'wait' ? null : wandUp ? (
         <g className="pd-arm pd-arm-l pd-wand-up">
           <path d="M27 66 L12 40" stroke="#92400e" strokeWidth="2.6" strokeLinecap="round" />
           <path className="pd-star" d={starPath(11, 36, 7.5)} fill={GOLD} stroke="#d97706" strokeWidth="1" strokeLinejoin="round" />
@@ -154,6 +157,20 @@ export function FrontPanda({ pose = 'sit' }) {
         </g>
       )}
     </svg>
+  )
+}
+
+// Hai tay cầm cuốn sách mở trước bụng (tư thế ngồi đợi); trang phải lật nhẹ bằng CSS (.pd-page)
+function ReadingArms() {
+  return (
+    <g className="pd-reading">
+      <path d="M60 90 Q49 85 37 88 L39 108 Q50 105 60 110 Z" fill="#f5f3ff" stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
+      <path className="pd-page" d="M60 90 Q71 85 83 88 L81 108 Q70 105 60 110 Z" fill="#f5f3ff" stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M43 93 h12 M43 97 h12 M43 101 h9 M65 93 h12 M65 97 h12 M65 101 h8" stroke="#c4b5fd" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M60 90 V110" stroke={VIOLET} strokeWidth="2" />
+      <ellipse cx="37" cy="98" rx="7.5" ry="11" transform="rotate(15 37 98)" fill={INK} />
+      <ellipse cx="83" cy="98" rx="7.5" ry="11" transform="rotate(-15 83 98)" fill={INK} />
+    </g>
   )
 }
 

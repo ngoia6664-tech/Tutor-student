@@ -122,6 +122,26 @@
   border-radius: 50%;
   font-size: 1.05rem;
 }
+/* Nút ngắm vũ trụ: khóa khi đang làm bài (lib/studyLock.js), có ổ khóa nhỏ ở góc */
+.telescope-btn {
+  position: relative;
+}
+.telescope-btn.is-locked > .icon {
+  opacity: 0.45;
+}
+.telescope-lock {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--warn);
+}
 .login-theme {
   position: fixed;
   top: 0.75rem;

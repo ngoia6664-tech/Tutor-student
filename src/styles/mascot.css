@@ -161,6 +161,45 @@ body:has(.exam-timer-float) .mascot-restore {
   animation: pd-point 0.8s ease-in-out infinite alternate;
 }
 
+/* Ngồi đọc sách đợi (học sinh đang làm bài): đung đưa nhẹ, mắt nhìn xuống sách, thỉnh thoảng lật trang, "…" chờ */
+.is-wait .mascot-body {
+  animation: pd-read 4.5s ease-in-out infinite;
+}
+.is-wait .pd-pupil {
+  transform: translateY(1.6px);
+}
+.pd-page {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+.is-wait .pd-page {
+  animation: pd-page 7s ease-in-out infinite;
+}
+.mascot-dots {
+  position: absolute;
+  top: -4%;
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  transform: translateX(-50%);
+}
+.mascot-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pd-spark);
+  animation: pd-dot 1.4s ease-in-out infinite;
+}
+.mascot-dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.mascot-dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.is-wait .mascot-body::after {
+  display: none;
+}
+
 /* Ăn mừng: miệng cười to, nhảy */
 .is-cheer .pd-mouth-open {
   opacity: 1;
@@ -413,6 +452,18 @@ body:has(.exam-timer-float) .mascot-restore {
   opacity: 1;
 }
 
+@keyframes pd-read {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg) translateY(-1px); }
+}
+@keyframes pd-page {
+  0%, 86%, 100% { transform: scaleX(1); }
+  92% { transform: scaleX(0.55) skewY(-6deg); }
+}
+@keyframes pd-dot {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
 @keyframes pd-aura {
   0%, 100% { opacity: 0.6; transform: scale(0.94); }
   50% { opacity: 1; transform: scale(1.06); }

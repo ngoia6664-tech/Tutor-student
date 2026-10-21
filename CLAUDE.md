@@ -47,6 +47,8 @@ mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space
 = biến `--tilt`/`--turn` trên `.solar`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
 Chế độ ngắm vũ trụ: `components/SpaceExplorer.jsx` + `styles/explorer.css` (lazy, mở từ nút kính viễn vọng ở header),
 thêm class `space-exploring` vào `<html>` để ẩn `.app` và cho kéo / bấm hệ Mặt Trời; số liệu hành tinh ở `BODIES`.
+Khóa khi làm bài: `lib/studyLock.js` — `useStudyLock()` gọi trong AnswerView (StudentAssignment) → `useStudying()` true:
+nút kính viễn vọng khóa (bấm thì gấu nhắc), gấu chỉ ngồi đọc sách (`shown = 'wait'`), không đi/leo/lăn/ngủ. Nộp xong tự mở.
 Header: trong suốt ở đầu trang, `.topbar.is-scrolled` (Layout theo dõi scroll) mới hiện nền + mép mờ.
 Hiệu năng: KHÔNG dùng `backdrop-filter` (nền chuyển động → làm nhòe lại mỗi khung hình); tránh filter nặng / animation liên tục bên trong SVG gấu.
 - `base` biến màu, nền, chữ · `layout` khung trang, thanh trên, menu · `components` khối, nhãn, nút, skeleton, form,
