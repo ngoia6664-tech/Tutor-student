@@ -51,6 +51,10 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
+**Tiếng gấu + tô công thức** (22/10/2026, chờ QA): gấu ngoài kính viễn vọng có tiếng hiệu ứng (nói líu lo, "ting ting" khi giảng bảng đen,
+kèn nhỏ khi ăn mừng, tiếng trượt khi cất gấu); theo "Hiệu ứng âm thanh", im khi làm bài / tab ẩn / đang ngắm vũ trụ.
+Công thức trong lời gấu (mẹo bảng đen, 25 kiến thức vũ trụ, giải thích hành tinh) được tô vàng. Không làm giọng đọc AI (Owner thấy chưa hợp).
+
 **Nhạc nền trên điện thoại** (22/10/2026, commit `461a1f3`, chờ QA): thêm file nhạc `public/audio/space-music.mp3`; mặc định chưa phát, lần đầu mở kính viễn vọng
 hỏi "Bạn có muốn bật nhạc nền không?" (lựa chọn lưu localStorage suốt phiên đăng nhập, đăng xuất thì xóa); đã chọn bật thì mỗi lần mở kính viễn vọng tự phát, không cần bấm ▶;
 cú bấm luôn mở khóa AudioContext (tiếng "vút" trên iPhone); YouTube dự phòng 4 s không phát → tiếng tổng hợp.

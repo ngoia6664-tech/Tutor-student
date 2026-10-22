@@ -5,6 +5,8 @@ import { countOpenReports } from '../lib/reports.js'
 import { MASCOT_EVENT } from '../lib/celebrate.js'
 import { LOCK_MESSAGE, useStudying } from '../lib/studyLock.js'
 import { prefersReducedMotion, useSettings } from '../lib/settings.js'
+import { mascotSound } from '../lib/spaceSound.js'
+import FormulaText, { plainText } from './FormulaText.jsx'
 import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './PandaArt.jsx'
 
 // Giáo sư Gấu Trúc: linh vật góc dưới phải.
@@ -26,14 +28,14 @@ const ACTIVITIES = [
 ]
 
 const TIPS = [
-  'Vận tốc trung bình v = s / t. Đổi km/h sang m/s thì chia 3,6 nhé!',
+  'Vận tốc trung bình `v = s / t`. Đổi km/h sang m/s thì chia 3,6 nhé!',
   'Vẽ hình và chọn chiều dương trước khi viết phương trình.',
-  'Định luật II Newton: F = m·a. Lực tổng hợp mới là F, đừng quên lực ma sát!',
+  'Định luật II Newton: `F = m·a`. Lực tổng hợp mới là F, đừng quên lực ma sát!',
   'Kiểm tra lại đơn vị của đáp số, sai đơn vị là mất điểm oan đó.',
-  'g ≈ 9,8 m/s², nhưng đề cho 10 thì dùng 10 nha.',
+  '`g ≈ 9,8 m/s²`, nhưng đề cho 10 thì dùng 10 nha.',
   'Gặp bài khó? Viết ra đại lượng đã cho và đại lượng cần tìm trước.',
-  'Cơ năng = động năng + thế năng. Không có ma sát thì cơ năng bảo toàn.',
-  'Định luật Ôm: I = U / R. Nối tiếp thì cùng I, song song thì cùng U.',
+  '`Cơ năng = động năng + thế năng`. Không có ma sát thì cơ năng bảo toàn.',
+  'Định luật Ôm: `I = U / R`. Nối tiếp thì cùng I, song song thì cùng U.',
   'Đọc kỹ đề: "đúng" hay "không đúng"? Một chữ đổi cả đáp án!',
   'Ôn câu sai là cách tiến bộ nhanh nhất đó!',
   'Học một chút mỗi ngày tốt hơn học dồn một lần.',
@@ -117,10 +119,17 @@ function MascotBody() {
     setMood(sleepy.current ? 'sleep' : 'idle')
   }
 
+  // Tiếng hiệu ứng của gấu: im khi đang làm bài, tab ẩn hoặc đang ngắm vũ trụ (gấu bị che, explorer có tiếng riêng)
+  function sound(kind) {
+    if (studyingRef.current || document.hidden || document.documentElement.classList.contains('space-exploring')) return
+    mascotSound(kind)
+  }
+
   function say(text, m = 'talk') {
     clearTimeout(timers.current.bubble)
     clearTimeout(timers.current.activity)
     const kind = m === 'teach' ? 'board' : 'speech'
+    sound(m === 'cheer' || m === 'teach' ? m : 'talk')
     setBubble({ kind, text, id: Date.now() })
     setMood(m)
     timers.current.bubble = setTimeout(() => {
@@ -214,6 +223,7 @@ function MascotBody() {
   }
 
   function hide() {
+    sound('hide')
     writeHidden(true)
     setHidden(true)
     setBubble(null)
@@ -287,19 +297,20 @@ function MascotBody() {
   )
 }
 
-// Chữ hiện dần như đang viết phấn (animation gấu tắt / giảm chuyển động: hiện ngay, không chạy hẹn giờ)
+// Chữ hiện dần như đang viết phấn (animation gấu tắt / giảm chuyển động: hiện ngay, không chạy hẹn giờ). Công thức trong `...` được tô nổi bật
 function Typed({ text, instant }) {
-  const [typed, setN] = useState(instant ? text.length : 0)
+  const plain = plainText(text)
+  const [typed, setN] = useState(instant ? plain.length : 0)
   useEffect(() => {
     if (instant) return
-    const id = setInterval(() => setN((k) => (k >= text.length ? (clearInterval(id), k) : k + 1)), 28)
+    const id = setInterval(() => setN((k) => (k >= plain.length ? (clearInterval(id), k) : k + 1)), 28)
     return () => clearInterval(id)
-  }, [text, instant])
-  const n = instant ? text.length : typed
+  }, [plain, instant])
+  const n = instant ? plain.length : typed
   return (
     <>
-      {text.slice(0, n)}
-      <span className="sr-only">{text.slice(n)}</span>
+      <FormulaText text={text} shown={n} />
+      <span className="sr-only">{plain.slice(n)}</span>
     </>
   )
 }

@@ -357,6 +357,26 @@ body:has(.exam-timer-float) .mascot-restore {
   line-height: 1.25;
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.4);
 }
+/* Công thức trong lời gấu (components/FormulaText, cả bong bóng ngắm vũ trụ): tô vàng nổi bật */
+.formula {
+  padding: 0 0.2em;
+  border-radius: 4px;
+  background: rgba(250, 204, 21, 0.35);
+  color: inherit;
+  font-weight: 600;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+:root[data-theme='dark'] .formula {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde047;
+}
+/* Bảng đen: phấn vàng, không nền */
+.mascot-board .formula {
+  padding: 0;
+  background: none;
+  color: #fde047;
+}
 /* Khay phấn + 2 viên phấn */
 .mascot-board::after {
   content: '';

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import FormulaText from './FormulaText.jsx'
 import Icon from './Icon.jsx'
 import { FrontPanda } from './PandaArt.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
@@ -39,7 +40,7 @@ const BODIES = {
     stats: [['Bán kính', '696 000 km (≈ 109 lần Trái Đất)'], ['Nhiệt độ', 'bề mặt ≈ 5 500 °C, lõi ≈ 15 triệu °C'], ['Tự quay', '≈ 25 ngày (ở xích đạo)']],
     about: [
       'Mặt Trời là một ngôi sao, chiếm khoảng 99,86% khối lượng cả hệ. Vì nặng như vậy nên lực hấp dẫn của nó giữ được mọi hành tinh, tiểu hành tinh và sao chổi quay quanh.',
-      'Năng lượng sinh ra ở lõi nhờ phản ứng nhiệt hạch: 4 hạt nhân hiđrô tổng hợp thành 1 hạt nhân heli, phần khối lượng hao hụt (khoảng 0,7%) biến thành năng lượng theo E = mc².',
+      'Năng lượng sinh ra ở lõi nhờ phản ứng nhiệt hạch: 4 hạt nhân hiđrô tổng hợp thành 1 hạt nhân heli, phần khối lượng hao hụt (khoảng 0,7%) biến thành năng lượng theo `E = mc²`.',
       'Mặt Trời không có bề mặt rắn, nó là khối plasma nóng nên quay không đều: xích đạo quay hết khoảng 25 ngày, gần hai cực mất tới khoảng 35 ngày.',
       'Ánh sáng đi từ Mặt Trời tới Trái Đất mất khoảng 8 phút 20 giây, nên khi nhìn Mặt Trời ta đang thấy nó của hơn 8 phút trước.',
     ],
@@ -82,10 +83,10 @@ const BODIES = {
     ],
     about: [
       'Trái Đất nằm trong "vùng có thể sống được": không quá nóng, không quá lạnh để nước tồn tại ở thể lỏng. Khoảng 71% bề mặt là nước, nên nhìn từ vũ trụ nó là một viên bi xanh.',
-      '"Cân" Trái Đất bằng Vật lý: từ g = GM/R² suy ra M = gR²/G. Thay g = 9,8 m/s², R = 6,37·10⁶ m, G = 6,67·10⁻¹¹ được M ≈ 6·10²⁴ kg. Năm 1798, Cavendish đo được G bằng cân xoắn, nên ông được gọi là "người đầu tiên cân Trái Đất".',
+      '"Cân" Trái Đất bằng Vật lý: từ `g = GM/R²` suy ra `M = gR²/G`. Thay `g = 9,8 m/s²`, `R = 6,37·10⁶ m`, `G = 6,67·10⁻¹¹` được `M ≈ 6·10²⁴ kg`. Năm 1798, Cavendish đo được G bằng cân xoắn, nên ông được gọi là "người đầu tiên cân Trái Đất".',
       'Trái Đất không tròn tuyệt đối: do tự quay, nó hơi phình ở xích đạo, bán kính xích đạo lớn hơn bán kính cực khoảng 21 km. Cộng thêm hiệu ứng quay, g ở xích đạo khoảng 9,78 m/s², ở hai cực khoảng 9,83 m/s².',
-      'Đứng yên mà bạn vẫn đang bay rất nhanh: người ở xích đạo quay theo Trái Đất với tốc độ khoảng 465 m/s (≈ 1 670 km/h), và cả Trái Đất lao quanh Mặt Trời với khoảng 30 km/s. Lực hấp dẫn của Mặt Trời đóng vai trò lực hướng tâm: GMm/r² = mv²/r.',
-      'Khí quyển gồm khoảng 78% nitơ, 21% ôxi. Bầu trời màu xanh vì phân tử khí tán xạ ánh sáng bước sóng ngắn mạnh hơn nhiều (cường độ tán xạ tỉ lệ 1/λ⁴, tán xạ Rayleigh). Lúc hoàng hôn ánh sáng đi qua lớp khí dày, màu xanh bị tán xạ hết, còn lại đỏ cam.',
+      'Đứng yên mà bạn vẫn đang bay rất nhanh: người ở xích đạo quay theo Trái Đất với tốc độ khoảng 465 m/s (≈ 1 670 km/h), và cả Trái Đất lao quanh Mặt Trời với khoảng 30 km/s. Lực hấp dẫn của Mặt Trời đóng vai trò lực hướng tâm: `GMm/r² = mv²/r`.',
+      'Khí quyển gồm khoảng 78% nitơ, 21% ôxi. Bầu trời màu xanh vì phân tử khí tán xạ ánh sáng bước sóng ngắn mạnh hơn nhiều (cường độ tán xạ tỉ lệ `1/λ⁴`, tán xạ Rayleigh). Lúc hoàng hôn ánh sáng đi qua lớp khí dày, màu xanh bị tán xạ hết, còn lại đỏ cam.',
       'Bên trong gồm vỏ mỏng, lớp manti đá nóng, lõi ngoài sắt – niken lỏng và lõi trong rắn nóng khoảng 5 400 °C (ngang bề mặt Mặt Trời). Kim loại lỏng chuyển động ở lõi ngoài tạo ra từ trường, như tấm khiên làm lệch gió Mặt Trời và sinh ra cực quang.',
       'Trục quay nghiêng khoảng 23,5° nên có bốn mùa. Chính Mặt Trăng giữ cho độ nghiêng này khá ổn định qua hàng triệu năm, nhờ vậy khí hậu Trái Đất không bị đảo lộn thất thường.',
       'Ngày đang dài ra: ma sát thủy triều do Mặt Trăng gây ra hãm dần sự tự quay, mỗi thế kỉ một ngày dài thêm khoảng 2 mili giây. Cuối thời khủng long (khoảng 70 triệu năm trước), một ngày chỉ khoảng 23,5 giờ.',
@@ -106,11 +107,11 @@ const BODIES = {
     ],
     about: [
       'Mặt Trăng có lẽ sinh ra từ một vụ va chạm khổng lồ khoảng 4,5 tỉ năm trước: một thiên thể cỡ Sao Hỏa (gọi là Theia) đâm vào Trái Đất trẻ, vật chất văng ra quay quanh Trái Đất rồi kết tụ thành Mặt Trăng.',
-      '"Phép thử Mặt Trăng" của Newton: Mặt Trăng cách tâm Trái Đất khoảng 60 lần bán kính, nên nếu lực hấp dẫn giảm theo 1/r² thì gia tốc của nó phải bằng g/60² ≈ 0,0027 m/s². Tính từ chu kì 27,3 ngày đúng ra a = 4π²r/T² ≈ 0,0027 m/s². Quả táo rơi và Mặt Trăng quay cùng chung một lực!',
+      '"Phép thử Mặt Trăng" của Newton: Mặt Trăng cách tâm Trái Đất khoảng 60 lần bán kính, nên nếu lực hấp dẫn giảm theo `1/r²` thì gia tốc của nó phải bằng `g/60² ≈ 0,0027 m/s²`. Tính từ chu kì 27,3 ngày đúng ra `a = 4π²r/T² ≈ 0,0027 m/s²`. Quả táo rơi và Mặt Trăng quay cùng chung một lực!',
       'Mặt Trăng luôn quay một mặt về Trái Đất vì chu kì tự quay bằng chu kì quay quanh Trái Đất (khóa thủy triều). Mặt sau không phải "mặt tối": nó vẫn được Mặt Trời chiếu sáng, chỉ là ta không bao giờ thấy từ Trái Đất.',
       'Không có khí quyển nên không có lực cản: năm 1971, phi hành gia David Scott (Apollo 15) thả một cái búa và một chiếc lông chim cùng lúc, cả hai chạm đất cùng lúc, đúng như Galilê dự đoán: mọi vật rơi tự do với cùng gia tốc.',
       'Cũng vì không có khí quyển giữ nhiệt và không có gió, nhiệt độ chênh lệch cực lớn giữa ngày và đêm, còn dấu chân phi hành gia Apollo có thể tồn tại hàng triệu năm.',
-      'Trọng lực chỉ bằng khoảng 1/6 Trái Đất: với cùng vận tốc bật nhảy, độ cao h = v²/(2g) gấp khoảng 6 lần, nên phi hành gia đi lại bằng những bước nhảy lò cò.',
+      'Trọng lực chỉ bằng khoảng 1/6 Trái Đất: với cùng vận tốc bật nhảy, độ cao `h = v²/(2g)` gấp khoảng 6 lần, nên phi hành gia đi lại bằng những bước nhảy lò cò.',
       'Mặt Trăng đang rời xa ta khoảng 3,8 cm mỗi năm, đo được nhờ chiếu laser vào các gương phản xạ các phi hành gia Apollo để lại và đo thời gian ánh sáng đi – về (khoảng 2,6 s). Mômen động lượng Trái Đất mất do ngày dài ra được chuyển sang cho Mặt Trăng.',
       'Các vùng tối ta thấy trên mặt trăng (hình "chú Cuội ngồi gốc cây đa") là các "biển" (maria): đồng bằng dung nham bazan đông cứng từ hàng tỉ năm trước, chứ không có nước.',
     ],
@@ -157,14 +158,14 @@ const BODIES = {
 const SPACE_FACTS = [
   ['Hệ Mặt Trời ra đời thế nào?', 'Khoảng 4,6 tỉ năm trước, một đám mây khí và bụi co lại do lực hấp dẫn. Khi co lại nó quay nhanh dần (bảo toàn mômen động lượng) và dẹt thành một cái đĩa. Phần giữa nóng và đặc nhất thành Mặt Trời, phần còn lại trong đĩa kết tụ thành hành tinh. Vì vậy các hành tinh gần như cùng một mặt phẳng và cùng quay một chiều.'],
   ['8 hành tinh, 2 nhóm', 'Thủy, Kim, Trái Đất, Hỏa là hành tinh đá: nhỏ, đặc, ở gần. Mộc, Thổ, Thiên Vương, Hải Vương là hành tinh khí / băng khổng lồ ở xa. Lý do: gần Mặt Trời quá nóng, chỉ đá và kim loại ngưng tụ được; ở xa đủ lạnh để băng đóng lại, các lõi lớn dần và hút thêm rất nhiều hiđrô, heli.'],
-  ['Mặt Trời phát sáng nhờ đâu?', 'Ở lõi Mặt Trời nhiệt độ khoảng 15 triệu °C, các hạt nhân hiđrô chuyển động nhanh tới mức thắng được lực đẩy tĩnh điện và tổng hợp thành heli. Đó là phản ứng nhiệt hạch. Khối lượng heli tạo thành nhỏ hơn tổng khối lượng hiđrô ban đầu khoảng 0,7%, phần hụt này biến thành năng lượng theo E = mc².'],
+  ['Mặt Trời phát sáng nhờ đâu?', 'Ở lõi Mặt Trời nhiệt độ khoảng 15 triệu °C, các hạt nhân hiđrô chuyển động nhanh tới mức thắng được lực đẩy tĩnh điện và tổng hợp thành heli. Đó là phản ứng nhiệt hạch. Khối lượng heli tạo thành nhỏ hơn tổng khối lượng hiđrô ban đầu khoảng 0,7%, phần hụt này biến thành năng lượng theo `E = mc²`.'],
   ['Mặt Trời đang "giảm cân"', 'Mỗi giây Mặt Trời biến khoảng 4 triệu tấn khối lượng thành năng lượng bức xạ. Nghe rất nhiều, nhưng khối lượng Mặt Trời tới khoảng 2·10³⁰ kg, nên nó vẫn đủ "nhiên liệu" để sáng ổn định thêm khoảng 5 tỉ năm nữa.'],
-  ['Ánh sáng đi 8 phút', 'Khoảng cách Trái Đất – Mặt Trời khoảng 1,5·10¹¹ m, tốc độ ánh sáng 3·10⁸ m/s, nên t = s/v ≈ 500 s ≈ 8 phút 20 giây. Nhìn lên trời là nhìn về quá khứ: nếu Mặt Trời đột ngột tắt, hơn 8 phút sau ta mới biết.'],
-  ['Định luật vạn vật hấp dẫn', 'Newton phát hiện hai vật bất kì hút nhau với lực F = G·m₁m₂/r², với G ≈ 6,67·10⁻¹¹ N·m²/kg². Lực tỉ lệ với tích khối lượng và giảm theo bình phương khoảng cách: xa gấp đôi thì lực chỉ còn 1/4. Cũng lực này làm quả táo rơi và giữ Mặt Trăng quay quanh Trái Đất.'],
-  ['Vì sao hành tinh không rơi vào Mặt Trời?', 'Hành tinh vẫn đang "rơi" về Mặt Trời, nhưng nó có vận tốc ngang rất lớn nên rơi mãi mà không chạm. Lực hấp dẫn đóng vai trò lực hướng tâm: GMm/r² = mv²/r, suy ra v = √(GM/r). Hành tinh càng xa thì chạy càng chậm: Trái Đất khoảng 30 km/s, Sao Hải Vương chỉ khoảng 5,4 km/s.'],
+  ['Ánh sáng đi 8 phút', 'Khoảng cách Trái Đất – Mặt Trời khoảng 1,5·10¹¹ m, tốc độ ánh sáng 3·10⁸ m/s, nên `t = s/v ≈ 500 s` ≈ 8 phút 20 giây. Nhìn lên trời là nhìn về quá khứ: nếu Mặt Trời đột ngột tắt, hơn 8 phút sau ta mới biết.'],
+  ['Định luật vạn vật hấp dẫn', 'Newton phát hiện hai vật bất kì hút nhau với lực `F = G·m₁m₂/r²`, với `G ≈ 6,67·10⁻¹¹ N·m²/kg²`. Lực tỉ lệ với tích khối lượng và giảm theo bình phương khoảng cách: xa gấp đôi thì lực chỉ còn 1/4. Cũng lực này làm quả táo rơi và giữ Mặt Trăng quay quanh Trái Đất.'],
+  ['Vì sao hành tinh không rơi vào Mặt Trời?', 'Hành tinh vẫn đang "rơi" về Mặt Trời, nhưng nó có vận tốc ngang rất lớn nên rơi mãi mà không chạm. Lực hấp dẫn đóng vai trò lực hướng tâm: `GMm/r² = mv²/r`, suy ra `v = √(GM/r)`. Hành tinh càng xa thì chạy càng chậm: Trái Đất khoảng 30 km/s, Sao Hải Vương chỉ khoảng 5,4 km/s.'],
   ['Định luật Kepler I: quỹ đạo elip', 'Mỗi hành tinh chuyển động trên một elip, Mặt Trời nằm ở một tiêu điểm. Elip của Trái Đất rất gần tròn: gần Mặt Trời nhất khoảng 147 triệu km (đầu tháng 1), xa nhất khoảng 152 triệu km (đầu tháng 7). Lạ là Bắc bán cầu lại đang mùa đông khi Trái Đất gần Mặt Trời nhất!'],
   ['Định luật Kepler II: quét diện tích đều', 'Đoạn thẳng nối Mặt Trời với hành tinh quét những diện tích bằng nhau trong những khoảng thời gian bằng nhau. Hệ quả: hành tinh chạy nhanh khi ở gần Mặt Trời và chậm khi ở xa. Đây thực chất là định luật bảo toàn mômen động lượng.'],
-  ['Định luật Kepler III: T² ~ a³', 'Bình phương chu kì tỉ lệ với lập phương bán trục lớn quỹ đạo. Nếu đo T bằng năm và a bằng AU thì T² = a³. Ví dụ Sao Mộc có a ≈ 5,2 AU thì T ≈ √(5,2³) ≈ 11,9 năm. Từ định luật này, biết chu kì và khoảng cách còn tính được khối lượng Mặt Trời.'],
+  ['Định luật Kepler III: `T² ~ a³`', 'Bình phương chu kì tỉ lệ với lập phương bán trục lớn quỹ đạo. Nếu đo T bằng năm và a bằng AU thì `T² = a³`. Ví dụ Sao Mộc có a ≈ 5,2 AU thì `T ≈ √(5,2³) ≈ 11,9 năm`. Từ định luật này, biết chu kì và khoảng cách còn tính được khối lượng Mặt Trời.'],
   ['AU và năm ánh sáng', '1 đơn vị thiên văn (AU) là khoảng cách trung bình Trái Đất – Mặt Trời, khoảng 1,5·10¹¹ m. 1 năm ánh sáng là quãng đường ánh sáng đi trong một năm, khoảng 9,46·10¹⁵ m (≈ 63 000 AU). Ngôi sao gần nhất ngoài Mặt Trời là Proxima Centauri, cách khoảng 4,2 năm ánh sáng.'],
   ['Vì sao có bốn mùa?', 'Không phải do Trái Đất lúc gần lúc xa Mặt Trời, mà do trục quay nghiêng khoảng 23,5°. Bán cầu nào nghiêng về phía Mặt Trời thì nhận ánh sáng chiếu gần thẳng góc hơn (năng lượng tập trung trên diện tích nhỏ) và ngày dài hơn, nên đó là mùa hè. Bằng chứng: Nam bán cầu luôn ngược mùa với Bắc bán cầu.'],
   ['Ngày và đêm', 'Trái Đất tự quay quanh trục từ tây sang đông, nên ta thấy Mặt Trời và các sao mọc ở đông, lặn ở tây. Quay một vòng so với các sao xa mất khoảng 23 giờ 56 phút; nhưng vì Trái Đất cũng đi trên quỹ đạo, phải quay thêm chút nữa mới thấy Mặt Trời về đúng chỗ cũ, nên một ngày là 24 giờ.'],
@@ -172,7 +173,7 @@ const SPACE_FACTS = [
   ['Trăng tròn, trăng khuyết', 'Mặt Trăng không tự phát sáng, nó phản chiếu ánh sáng Mặt Trời. Luôn có một nửa được chiếu sáng, nhưng tùy vị trí trên quỹ đạo mà ta thấy nhiều hay ít phần sáng đó. Một chu kì tuần trăng là khoảng 29,5 ngày, dài hơn 27,3 ngày vì Trái Đất cũng đã đi thêm một đoạn quanh Mặt Trời.'],
   ['Nhật thực và nguyệt thực', 'Mặt Trời to gấp khoảng 400 lần Mặt Trăng nhưng cũng xa gấp khoảng 400 lần, nên hai đĩa nhìn từ Trái Đất gần như bằng nhau, nhờ vậy Mặt Trăng có thể che kín Mặt Trời (nhật thực toàn phần). Quỹ đạo Mặt Trăng nghiêng khoảng 5° so với quỹ đạo Trái Đất, nên không phải tháng nào cũng có nhật thực hay nguyệt thực.'],
   ['Thủy triều', 'Lực hấp dẫn của Mặt Trăng lên phía gần nó mạnh hơn phía xa, sự chênh lệch này kéo nước đại dương phình ra ở cả hai phía. Trái Đất quay qua hai chỗ phình nên mỗi ngày thường có hai lần nước lớn. Khi Mặt Trời, Trái Đất, Mặt Trăng thẳng hàng (trăng tròn, trăng mới), hai tác dụng cộng lại thành triều cường.'],
-  ['Vận tốc vũ trụ', 'Muốn bay vòng quanh Trái Đất sát mặt đất cần v₁ = √(gR) ≈ 7,9 km/s (vận tốc vũ trụ cấp I). Muốn thoát hẳn khỏi lực hút Trái Đất cần v₂ = √(2gR) ≈ 11,2 km/s (cấp II). Muốn bay ra khỏi cả hệ Mặt Trời từ Trái Đất cần khoảng 16,7 km/s (cấp III).'],
+  ['Vận tốc vũ trụ', 'Muốn bay vòng quanh Trái Đất sát mặt đất cần `v₁ = √(gR) ≈ 7,9 km/s` (vận tốc vũ trụ cấp I). Muốn thoát hẳn khỏi lực hút Trái Đất cần `v₂ = √(2gR) ≈ 11,2 km/s` (cấp II). Muốn bay ra khỏi cả hệ Mặt Trời từ Trái Đất cần khoảng 16,7 km/s (cấp III).'],
   ['Vệ tinh địa tĩnh', 'Theo định luật Kepler III, quỹ đạo càng cao thì chu kì càng dài. Ở độ cao khoảng 36 000 km trên xích đạo, vệ tinh quay một vòng mất đúng 24 giờ, cùng nhịp với Trái Đất tự quay, nên nhìn từ mặt đất nó như đứng yên. Vì vậy chảo thu truyền hình chỉ cần hướng cố định một chỗ.'],
   ['Phi hành gia có "mất trọng lực"?', 'Trạm vũ trụ ISS bay ở độ cao khoảng 400 km, ở đó gia tốc trọng trường vẫn còn khoảng 8,7 m/s², gần 90% so với mặt đất. Phi hành gia lơ lửng không phải vì hết trọng lực, mà vì cả người lẫn trạm đều đang rơi tự do quanh Trái Đất với cùng gia tốc: đó là trạng thái không trọng lượng.'],
   ['Gió Mặt Trời và cực quang', 'Mặt Trời liên tục thổi ra dòng hạt mang điện (gió Mặt Trời) với tốc độ khoảng 400 km/s. Từ trường Trái Đất làm lệch hướng các hạt này (lực Lorentz) và dẫn chúng về gần hai cực. Tại đó chúng va chạm với nguyên tử ôxi, nitơ trong khí quyển, làm các nguyên tử phát sáng xanh lục, đỏ: đó là cực quang.'],
@@ -508,9 +509,11 @@ export default function SpaceExplorer({ onClose }) {
               {mode === 'fact' && fact && (
                 <>
                   <h3>
-                    <span className="explorer-num">{factIdx + 1}.</span> {fact[0]}
+                    <span className="explorer-num">{factIdx + 1}.</span> <FormulaText text={fact[0]} />
                   </h3>
-                  <p>{fact[1]}</p>
+                  <p>
+                    <FormulaText text={fact[1]} />
+                  </p>
                 </>
               )}
 
@@ -521,7 +524,7 @@ export default function SpaceExplorer({ onClose }) {
                     {SPACE_FACTS.map(([title], i) => (
                       <li key={title}>
                         <button type="button" className={i === factIdx ? 'is-current' : ''} onClick={() => showFact(i)}>
-                          <span className="explorer-num">{i + 1}.</span> {title}
+                          <span className="explorer-num">{i + 1}.</span> <FormulaText text={title} />
                         </button>
                       </li>
                     ))}
@@ -550,7 +553,9 @@ export default function SpaceExplorer({ onClose }) {
                     ))}
                   </dl>
                   {b.about.map((t) => (
-                    <p key={t}>{t}</p>
+                    <p key={t}>
+                      <FormulaText text={t} />
+                    </p>
                   ))}
                 </>
               )}

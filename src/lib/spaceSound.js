@@ -185,6 +185,25 @@ export function playFocus() {
   ;[1046.5, 1318.5, 1568, 2093].forEach((f, i) => note(f, { at: i * 0.07, dur: 0.5, type: 'triangle', gain: 0.07, wet: true }))
 }
 
+// ===== Tiếng của gấu ngoài chế độ ngắm vũ trụ (components/Mascot) =====
+// talk: líu lo khi nói · teach: "ting ting" mở bảng đen · cheer: kèn nhỏ đi lên khi ăn mừng · hide: trượt xuống khi cất gấu.
+// Chưa có cú bấm nào trên trang thì bỏ qua (trình duyệt chặn tiếng; tạo AudioContext lúc này chỉ sinh cảnh báo).
+// Kêu xong thì treo AudioContext nếu không đang ngắm vũ trụ (vòng vang chạy mãi tốn CPU).
+const MASCOT_SOUNDS = {
+  talk: playPandaTalk,
+  teach: () => [784, 1046.5].forEach((f, i) => note(f, { at: i * 0.11, dur: 0.4, type: 'triangle', gain: 0.07, wet: true })),
+  cheer: () => {
+    ;[523.3, 659.3, 784, 1046.5].forEach((f, i) => note(f, { at: i * 0.09, dur: 0.35, type: 'triangle', gain: 0.08, wet: true }))
+    note(2093, { at: 0.42, dur: 0.6, gain: 0.04, wet: true })
+  },
+  hide: () => note(700, { dur: 0.25, gain: 0.08, glide: 0.5 }),
+}
+export function mascotSound(kind) {
+  if (!fx() || navigator.userActivation?.hasBeenActive === false || !audio()) return
+  MASCOT_SOUNDS[kind]?.()
+  if (!document.documentElement.classList.contains('space-exploring')) releaseAudio()
+}
+
 // ===== Trạng thái nhạc nền THẬT (nút ▶ / ‖ trong chế độ ngắm vũ trụ đọc ở đây) =====
 // Ba nguồn: file mp3 (<audio> qua Web Audio), YouTube (components/SpaceMusic đăng ký qua registerExternalMusic), tiếng vũ trụ tổng hợp.
 // "Đang phát" = <audio> chưa pause hoặc tiếng tổng hợp đang chạy, khi AudioContext 'running'; hoặc YouTube báo PLAYING.

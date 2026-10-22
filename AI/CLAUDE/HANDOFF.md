@@ -52,6 +52,16 @@ video; lệnh `playVideo()` từ trang bị chặn → nút ▶ không có tiế
 9. Thanh âm lượng có tác dụng với nhạc file (kể cả iPhone).
 10. Chặn mạng tới `/audio/space-music.mp3` (giả lập lỗi file) → rơi xuống YouTube; trên iPhone sau 4 s chuyển tiếng tổng hợp.
 
+## Ca tiếp theo: tiếng gấu + tô công thức (chờ QA)
+- `lib/spaceSound.js` `mascotSound(kind)`: talk / teach / cheer / hide. Chưa có cú bấm trên trang thì bỏ qua (không tạo AudioContext);
+  kêu xong thì `releaseAudio()` nếu không đang ngắm vũ trụ.
+- `components/Mascot.jsx`: `say()` phát tiếng theo mood; `hide()` phát "hide". Im khi `useStudying()`, tab ẩn, đang ngắm vũ trụ.
+- `components/FormulaText.jsx` (mới): đoạn trong `` `...` `` → `<mark class="formula">`; `Typed` gõ dần vẫn đúng (không tính dấu `).
+  Đã đánh dấu công thức trong TIPS (Mascot), BODIES.about + SPACE_FACTS (SpaceExplorer). CSS `.formula` trong `styles/mascot.css`
+  (sáng: nền vàng nhạt; tối: chữ vàng; bảng đen: phấn vàng).
+- Needs QA: nghe tiếng khi bấm gấu / nộp bài (ăn mừng) / cất gấu; không kêu khi đang làm bài; tắt "Hiệu ứng âm thanh" thì im;
+  công thức tô vàng hiển thị đẹp ở theme sáng + tối, bảng đen, bong bóng ngắm vũ trụ, mục lục; chữ gõ dần không lộ dấu `.
+
 ## Known limits
 - Ra nền trên điện thoại thì nhạc dừng có chủ đích; quay lại phải bấm ▶ (không đổi).
 - Lựa chọn nhạc lưu theo trình duyệt (localStorage): máy / trình duyệt khác thì hỏi lại.
