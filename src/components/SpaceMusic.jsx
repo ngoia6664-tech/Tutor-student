@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { canPlayNow, registerExternalMusic, setExternalPlaying } from '../lib/spaceSound.js'
+import { canPlayNow, getMusicChoice, registerExternalMusic, setExternalPlaying } from '../lib/spaceSound.js'
 
 // Nhạc nền chế độ ngắm vũ trụ: phát video YouTube qua IFrame API (nhạc có bản quyền nên chỉ nhúng, không tải về).
 // Trình phát ẩn (trong suốt, không bấm được), chỉ nghe tiếng; tự lặp lại. Lỗi / không có mạng → onFail (dùng âm thanh tổng hợp).
@@ -49,8 +49,9 @@ export default function SpaceMusic({ volume, enabled, onFail }) {
     const host = document.createElement('div')
     wrap.current.appendChild(host)
     const fail = () => !dead && latest.current.onFail?.()
-    // Chỉ tự phát khi nhạc bật và đang nhìn app (máy tính: phát cả khi ở tab khác; điện thoại ra nền thì để người dùng bấm ▶)
-    const autoplay = () => latest.current.enabled && canPlayNow()
+    // Chỉ tự phát khi nhạc bật, người dùng đã chọn bật nhạc trong phiên và đang nhìn app
+    // (máy tính: phát cả khi ở tab khác; điện thoại ra nền thì để người dùng bấm ▶)
+    const autoplay = () => latest.current.enabled && getMusicChoice() === 'on' && canPlayNow()
 
     loadApi()
       .then((YT) => {

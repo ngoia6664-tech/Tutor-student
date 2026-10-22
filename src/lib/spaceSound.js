@@ -223,6 +223,38 @@ export function setExternalPlaying(value) {
 // Phải gọi trong cú bấm (nút ▶ / nút loa) để điện thoại cho phát
 export const playExternalMusic = () => external?.play()
 
+// ===== Lựa chọn nhạc nền trong phiên đăng nhập =====
+// Mặc định chưa phát: lần đầu mở kính viễn vọng hỏi "Bật nhạc nền không?" (cú bấm trả lời = thao tác người dùng → điện thoại cho phát).
+// 'on' | 'off' | null (chưa hỏi). Lưu sessionStorage (đóng tab là hết), đăng xuất thì xóa (AuthContext).
+const CHOICE_KEY = 'space-music-choice'
+let choice = null
+try {
+  choice = sessionStorage.getItem(CHOICE_KEY)
+} catch {
+  // trình duyệt chặn lưu trữ: chỉ nhớ trong bộ nhớ
+}
+export const getMusicChoice = () => choice
+export function setMusicChoice(value) {
+  choice = value
+  try {
+    if (value) sessionStorage.setItem(CHOICE_KEY, value)
+    else sessionStorage.removeItem(CHOICE_KEY)
+  } catch {
+    // như trên
+  }
+}
+
+// Mở khóa AudioContext ngay trong cú bấm: sau đó tiếng tổng hợp phát được kể cả khi cú bấm đã qua (iPhone)
+export const unlockAudio = () => !!audio()
+
+// Nút kính viễn vọng: luôn mở khóa AudioContext trong cú bấm (tiếng "vút" phát sau khi màn ngắm tải xong, iPhone mới cho nghe);
+// đã chọn bật nhạc trong phiên này thì phát nhạc luôn
+export function openExplorerSound() {
+  if (!fx() && !musicOn()) return
+  unlockAudio()
+  if (choice === 'on' && musicOn()) startMusic()
+}
+
 // Dừng mọi nguồn nhạc nền (mp3 / YouTube giữ vị trí bài). fade = giây giảm dần, 0 = dừng ngay
 export function pauseAllMusic(fade) {
   stopMusic(fade)

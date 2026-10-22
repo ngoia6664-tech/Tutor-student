@@ -38,8 +38,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   ăn mừng, hiệu ứng âm thanh, nhạc nền, âm lượng nhạc; preset hiệu năng Đầy đủ/Tối ưu; cờ `data-static-bg`/`data-still-mascot` trên `<html>`
   → `styles/settings.css`; bảng `components/SettingsPanel.jsx` mở từ nút bánh răng ở header) ·
   `spaceSound` âm thanh ngắm vũ trụ (Web Audio tổng hợp, bật/tắt + âm lượng nhạc lấy từ `settings`; bus hiệu ứng tách bus nhạc;
-  nhạc nền: file `public/audio/space-music.mp3` qua Web Audio, `startMusic()` gọi ngay trong onClick nút kính viễn vọng (Layout)
-  vì iPhone chặn tự phát; không có file → YouTube ẩn `components/SpaceMusic.jsx` → lỗi nữa thì tiếng vũ trụ tổng hợp;
+  nhạc nền: mặc định chưa phát; lần đầu mở kính viễn vọng trong phiên SpaceExplorer hỏi `.explorer-ask` → lựa chọn `getMusicChoice()`
+  ('on'|'off'|null, sessionStorage, đăng xuất thì xóa); 'on' thì `openExplorerSound()` phát ngay trong onClick nút kính viễn vọng (Layout)
+  vì iPhone chặn tự phát; file `public/audio/space-music.mp3` (CHƯA có file) qua Web Audio; YouTube 4s chưa phát (iPhone) → tổng hợp; không có file → YouTube ẩn `components/SpaceMusic.jsx` → lỗi nữa thì tiếng vũ trụ tổng hợp;
   trạng thái nhạc THẬT `useMusicPlaying()` (gộp 3 nguồn, YouTube báo qua `registerExternalMusic`/`setExternalPlaying`) cho nút ▶/‖ `.music-toggle`
   trong SpaceExplorer; `pauseAllMusic()`; điện thoại ẩn tab → dừng nhạc + treo AudioContext, quay lại không tự phát (máy tính vẫn phát nền, `canPlayNow`); đóng explorer → `releaseAudio()`) ·
   `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.

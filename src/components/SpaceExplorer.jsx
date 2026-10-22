@@ -5,8 +5,10 @@ import { FrontPanda } from './PandaArt.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
 import {
+  getMusicChoice,
   getMusicStatus,
   canPlayNow,
+  isMusicPlaying,
   onMusicStatus,
   pauseAllMusic,
   playExternalMusic,
@@ -14,10 +16,12 @@ import {
   playPandaTalk,
   playWhoosh,
   releaseAudio,
+  setMusicChoice,
   setSoundOn,
   setVolume,
   startAmbient,
   startMusic,
+  unlockAudio,
   useMusicPlaying,
 } from '../lib/spaceSound.js'
 import { useSettings } from '../lib/settings.js'
@@ -341,15 +345,42 @@ export default function SpaceExplorer({ onClose }) {
   useEffect(() => onMusicStatus((s) => s === 'missing' && setMusicMode((m) => (m === 'file' ? 'youtube' : m))), [])
   // Nút ▶ / ‖: trạng thái lấy từ âm thanh thật (lib/spaceSound), không tự đoán → không lệch khi điện thoại tự dừng nhạc
   const playing = useMusicPlaying()
+  // Lần đầu mở kính viễn vọng trong phiên: hỏi có bật nhạc nền không (mặc định chưa phát)
+  const [asking, setAsking] = useState(() => getMusicChoice() === null)
+  // iPhone chỉ cho YouTube phát khi chạm thẳng vào khung video, lệnh phát từ trang bị chặn:
+  // đã chọn bật nhạc mà 4 giây sau vẫn chưa có tiếng thì chuyển sang tiếng vũ trụ tổng hợp (AudioContext đã mở khóa trong cú bấm)
+  const fallback = useRef(0)
+  function watchYoutube() {
+    clearTimeout(fallback.current)
+    fallback.current = setTimeout(() => {
+      if (!isMusicPlaying() && getMusicChoice() === 'on' && canPlayNow()) musicFail()
+    }, 4000)
+  }
+  useEffect(() => {
+    if (musicMode === 'youtube' && getMusicChoice() === 'on') watchYoutube()
+    return () => clearTimeout(fallback.current)
+  }, [musicMode])
   // Gọi trong cú bấm: điện thoại chỉ cho phát tiếng bắt đầu từ thao tác người dùng
   function playMusic() {
+    setMusicChoice('on')
+    unlockAudio()
     if (musicMode === 'file') startMusic()
-    else if (musicMode === 'youtube') playExternalMusic()
-    else startAmbient()
+    else if (musicMode === 'youtube') {
+      playExternalMusic()
+      watchYoutube()
+    } else startAmbient()
   }
   function toggleMusic() {
-    if (playing) pauseAllMusic(0.15)
-    else playMusic()
+    setAsking(false)
+    if (playing) {
+      setMusicChoice('off')
+      pauseAllMusic(0.15)
+    } else playMusic()
+  }
+  function answerMusic(yes) {
+    setAsking(false)
+    if (yes) playMusic()
+    else setMusicChoice('off')
   }
   function toggleSound() {
     setSoundOn(!sound)
@@ -363,7 +394,7 @@ export default function SpaceExplorer({ onClose }) {
   }
   function musicFail() {
     setMusicMode('synth')
-    if (canPlayNow()) startAmbient()
+    if (canPlayNow() && getMusicChoice() === 'on') startAmbient()
   }
   const [factIdx, setFactIdx] = useState(-1)
   const bubbleRef = useRef(null)
@@ -427,6 +458,22 @@ export default function SpaceExplorer({ onClose }) {
           </button>
         </div>
       </div>
+
+      {asking && settings.music && (
+        <div className="explorer-ask" role="alertdialog" aria-label="Bật nhạc nền">
+          <p>
+            <Icon name="sound" /> Bạn có muốn bật nhạc nền không?
+          </p>
+          <div className="explorer-ask-actions">
+            <button type="button" className="btn btn-primary btn-small" onClick={() => answerMusic(true)}>
+              Bật nhạc
+            </button>
+            <button type="button" className="btn btn-ghost btn-small" onClick={() => answerMusic(false)}>
+              Không
+            </button>
+          </div>
+        </div>
+      )}
 
       {musicMode === 'youtube' && <SpaceMusic volume={volume} enabled={settings.music} onFail={musicFail} />}
 

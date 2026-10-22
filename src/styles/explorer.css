@@ -514,6 +514,35 @@ html.space-exploring {
 }
 
 /* Nhạc nền YouTube: trình phát ẩn hẳn (chỉ nghe tiếng); phát / dừng bằng nút ▶ / ‖. */
+/* Lần đầu mở trong phiên: hỏi bật nhạc nền (cú bấm trả lời cho điện thoại phép phát tiếng) */
+.explorer-ask {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(320px, calc(100vw - 2rem));
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+  text-align: center;
+  translate: -50% -50%;
+  animation: explorer-in 0.25s ease both;
+}
+.explorer-ask p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0 0 0.8rem;
+  font-weight: 600;
+}
+.explorer-ask-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
 .explorer-music {
   position: absolute;
   right: 4.25rem;

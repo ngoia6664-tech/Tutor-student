@@ -36,8 +36,8 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - CSS chia theo chủ đề trong `src/styles/`; không dùng `backdrop-filter` (hiệu năng nền động).
 
 ## Current known issues
-- Nhạc nền ngắm vũ trụ: chưa có file `public/audio/space-music.mp3` → đang dùng YouTube ẩn (Interstellar). Trên iPhone
-  vẫn phải bấm ▶ để phát và thanh âm lượng không tác dụng với YouTube. Phát YouTube ẩn trái điều khoản YouTube.
+- Nhạc nền ngắm vũ trụ: đã có file `public/audio/space-music.mp3` (nguồn chính). Mặc định chưa phát; lần đầu mở kính viễn vọng
+  trong phiên thì hỏi bật nhạc. Chưa xác nhận trên iPhone / Android thật. YouTube ẩn chỉ còn là dự phòng khi file lỗi.
 - Máy tính: nhạc ngắm vũ trụ vẫn phát khi sang tab / app khác. Điện thoại: ra nền thì nhạc dừng có chủ đích; quay lại không tự phát, bấm ▶ để nghe tiếp.
 - Bấm hành tinh trên Android: đã sửa (commit `3066328`) nhưng chưa xác nhận trên máy thật.
 - Nút "Quay lại học" khi đang xem hành tinh chỉ đóng chi tiết (bấm lần nữa mới thoát): hành vi mong muốn, không phải bug.
@@ -48,16 +48,20 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - QA phân trang bài giảng (nhập JSON mới, bài cũ hiển thị như trước).
 - QA hiệu năng (Đầy đủ / Tối ưu) + nút nhạc ▶ / ‖ (desktop, mobile, PWA) — xem `AI/CLAUDE/HANDOFF.md`.
 - QA chức năng Cài đặt (desktop, Android, iPhone, persistence, chế độ Tối ưu).
-- QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone).
-- Owner quyết định file nhạc nền (bản quyền) để bỏ phụ thuộc YouTube.
+- QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
-**Hiệu năng + nút nhạc ▶ / ‖** (22/10/2026, chưa commit, chờ QA): nút phát / tạm dừng nhạc nền trong chế độ ngắm vũ trụ, trạng thái
+**Nhạc nền trên điện thoại** (22/10/2026, đã push): thêm file nhạc `public/audio/space-music.mp3`; mặc định chưa phát, lần đầu mở kính viễn vọng
+hỏi "Bạn có muốn bật nhạc nền không?" (lựa chọn lưu sessionStorage, đăng xuất thì xóa); đã chọn bật thì mỗi lần mở kính viễn vọng phát ngay trong cú bấm;
+cú bấm luôn mở khóa AudioContext (tiếng "vút" trên iPhone); YouTube dự phòng 4 s không phát → tiếng tổng hợp.
+
+
+**Hiệu năng + nút nhạc ▶ / ‖** (22/10/2026, commit `3785ff7`, chờ QA): nút phát / tạm dừng nhạc nền trong chế độ ngắm vũ trụ, trạng thái
 lấy từ âm thanh thật (`lib/spaceSound.js` `useMusicPlaying`); điện thoại ẩn tab thì dừng nhạc + treo AudioContext (máy tính vẫn phát nền); tắt Linh vật thì gỡ hẳn timer / listener;
 gấu không chạy trò khi tab ẩn / đang ngắm vũ trụ; animation của app dừng khi bị explorer che.
 
-**Phân trang bài giảng** (22/10/2026, chưa commit): file JSON có `page` ở từng mục → dấu `<!-- trang -->` trong `content_md`,
+**Phân trang bài giảng** (22/10/2026, commit `e05cf05`): file JSON có `page` ở từng mục → dấu `<!-- trang -->` trong `content_md`,
 học sinh xem từng trang (`?trang=n`); bài cũ không đổi dữ liệu, mặc định xem cả bài, có nút "Xem theo trang". Không đổi schema.
 
-Thêm chức năng **Cài đặt** (22/10/2026, chưa commit): `lib/settings.js` + `components/SettingsPanel.jsx` + `styles/settings.css`;
+Thêm chức năng **Cài đặt** (22/10/2026, commit `e05cf05`): `lib/settings.js` + `components/SettingsPanel.jsx` + `styles/settings.css`;
 âm thanh tách hiệu ứng / nhạc nền, âm lượng chỉ áp cho nhạc; key cũ `space-sound` / `space-volume` được đọc một lần để giữ lựa chọn người dùng cũ.

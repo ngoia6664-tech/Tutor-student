@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { errMsg } from '../lib/errors.js'
+import { setMusicChoice } from '../lib/spaceSound.js'
 
 const AuthContext = createContext(null)
 
@@ -53,7 +54,11 @@ export function AuthProvider({ children }) {
       setProfileState({ userId: null, profile: null, error: null })
       setReloadKey((k) => k + 1)
     },
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => {
+      // Phiên mới thì hỏi lại "Bật nhạc nền không?" khi mở kính viễn vọng
+      setMusicChoice(null)
+      return supabase.auth.signOut()
+    },
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

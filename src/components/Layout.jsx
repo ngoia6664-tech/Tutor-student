@@ -11,7 +11,7 @@ import InstallBanner from './InstallBanner.jsx'
 import Mascot from './Mascot.jsx'
 import { mascotSay } from '../lib/celebrate.js'
 import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
-import { startMusic } from '../lib/spaceSound.js'
+import { openExplorerSound } from '../lib/spaceSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
@@ -83,8 +83,9 @@ export default function Layout() {
               className={`btn btn-ghost theme-toggle telescope-btn ${studying ? 'is-locked' : ''}`}
               onClick={() => {
                 if (studying) return mascotSay(TELESCOPE_LOCKED)
-                // Bật nhạc ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ)
-                startMusic()
+                // Đã chọn bật nhạc trong phiên này: phát ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ).
+                // Lần đầu chưa chọn: SpaceExplorer hỏi người dùng
+                openExplorerSound()
                 setExploring(true)
               }}
               aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
