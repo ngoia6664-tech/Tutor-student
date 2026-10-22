@@ -411,6 +411,25 @@ html.space-exploring {
   }
 }
 
+/* Điện thoại xoay ngang (màn thấp): hành tinh nhỏ lại ở góc phải, bong bóng nằm bên trái nên
+   không cần trừ chiều cao hành tinh — chỉ chừa thanh trên và gấu */
+@media (orientation: landscape) and (max-height: 500px) {
+  .explorer-ui {
+    --pf: clamp(90px, 30vh, 150px);
+  }
+  .explorer-focus {
+    top: 0.5rem;
+  }
+  .explorer-focus strong {
+    font-size: 1.2rem;
+  }
+  .explorer-bubble,
+  .explorer-ui.is-focus .explorer-bubble {
+    width: min(360px, calc(100vw - var(--pf) - 3rem));
+    max-height: calc(100dvh - 0.6rem - 68px - 4rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pf-spin,
   .pf-corona,

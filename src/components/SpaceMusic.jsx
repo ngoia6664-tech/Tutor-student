@@ -54,12 +54,16 @@ export default function SpaceMusic({ volume, muted, onFail }) {
           videoId: VIDEO,
           width: '200',
           height: '112',
-          playerVars: { autoplay: 1, loop: 1, playlist: VIDEO, playsinline: 1, rel: 0, controls: 0, disablekb: 1 },
+          // Đang tắt tiếng thì không tự phát (player khởi tạo bất đồng bộ, effect tắt tiếng chạy trước đó)
+          playerVars: { autoplay: latest.current.muted ? 0 : 1, loop: 1, playlist: VIDEO, playsinline: 1, rel: 0, controls: 0, disablekb: 1 },
           events: {
             onReady: (e) => {
               const { volume: v, muted: m } = latest.current
               e.target.setVolume(v)
-              if (m) return
+              if (m) {
+                e.target.pauseVideo()
+                return
+              }
               e.target.playVideo()
               timer = setTimeout(() => {
                 if (!dead && !latest.current.muted && e.target.getPlayerState?.() !== YT.PlayerState.PLAYING) setBlocked(true)
