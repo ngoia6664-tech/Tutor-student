@@ -8,7 +8,7 @@ import { removeLessonFile, uploadLessonFile } from '../../lib/lessons.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import MarkdownField from '../../components/MarkdownField.jsx'
-import { LessonBody } from '../../components/LessonView.jsx'
+import { LessonBody, PAGE_BREAK } from '../../components/LessonView.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import { packImages, unpackImages } from '../../lib/svg.js'
@@ -166,9 +166,10 @@ function LessonForm({ initial, fromImport }) {
           onChange={(v) => set('content_md', v)}
           renderPreview={(v) => <LessonBody content={unpackImages(v, packed.images)} />}
           hint={
-            packed.images.length
+            (packed.images.length
               ? `Có ${packed.images.length} hình nhúng, hiển thị gọn là (hinh-1), (hinh-2)... Giữ nguyên các mã này để không mất hình; có thể di chuyển chúng. Mỗi mục "## Tiêu đề" là một thẻ khi học sinh xem.`
-              : 'Mỗi mục bắt đầu bằng "## Tiêu đề" sẽ thành một thẻ riêng khi học sinh xem; "### ..." là tiêu đề nhỏ trong mục.'
+              : 'Mỗi mục bắt đầu bằng "## Tiêu đề" sẽ thành một thẻ riêng khi học sinh xem; "### ..." là tiêu đề nhỏ trong mục.') +
+            ` Một dòng riêng "${PAGE_BREAK}" bắt đầu trang mới (học sinh xem từng trang).`
           }
           placeholder={'## Tiêu đề mục\n\nCông thức: $F = ma$\n\n$$T = \\frac{2\\pi}{\\omega}$$'}
         />

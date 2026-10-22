@@ -1,59 +1,36 @@
+import { getSettings, subscribeSettings, updateSettings } from './settings.js'
+
 // Âm thanh chế độ ngắm vũ trụ, tổng hợp bằng Web Audio (không cần file âm thanh).
 // Nền chính là nhạc YouTube (components/SpaceMusic); tiếng vũ trụ trầm tổng hợp ở đây chỉ dùng khi nhạc lỗi. Gấu: tiếng "líu lo" khi nói, tiếng chuông khi soi hành tinh.
-// Bật/tắt nhớ trong localStorage ('space-sound' = 'off' là tắt).
-const KEY = 'space-sound'
-let on = (() => {
-  try {
-    return localStorage.getItem(KEY) !== 'off'
-  } catch {
-    return true
-  }
-})()
+// Bật/tắt + âm lượng lấy từ Cài đặt (lib/settings.js): soundEffects = tiếng hiệu ứng, music = nhạc nền, musicVolume = âm lượng nhạc nền.
+const fx = () => getSettings().soundEffects
+const musicOn = () => getSettings().music
 
-// Âm lượng chung 0–100 (nhạc nền YouTube + hiệu ứng), nhớ trong localStorage 'space-volume'
-const VOL_KEY = 'space-volume'
-let volume = (() => {
-  try {
-    const v = Number(localStorage.getItem(VOL_KEY))
-    return localStorage.getItem(VOL_KEY) !== null && v >= 0 && v <= 100 ? v : 60
-  } catch {
-    return 60
-  }
-})()
 // Tai người nghe theo thang log: bình phương cho thanh trượt "ăn" đều, kéo xuống thấy nhỏ hẳn
-const masterLevel = () => 1.2 * (volume / 100) ** 2
+const musicLevel = () => 1.2 * (getSettings().musicVolume / 100) ** 2
+const FX_LEVEL = 1.2 * 0.6 ** 2 // hiệu ứng giữ mức cũ (âm lượng 60%)
 
-export const getVolume = () => volume
-
-export function setVolume(value) {
-  volume = value
-  try {
-    localStorage.setItem(VOL_KEY, String(value))
-  } catch {
-    // không lưu được thì thôi
-  }
-  if (master) master.gain.setTargetAtTime(masterLevel(), ctx.currentTime, 0.05)
-}
+export const getVolume = () => getSettings().musicVolume
+export const setVolume = (value) => updateSettings({ musicVolume: value })
 
 let ctx = null
-let master = null
+let master = null // hiệu ứng
+let musicBus = null // nhạc nền (file mp3 + tiếng vũ trụ tổng hợp), theo âm lượng nhạc nền
 let echo = null // bus vang (delay có phản hồi) cho cảm giác không gian rộng
 let ambient = null
 
-export const isSoundOn = () => on
+// Nút loa trong chế độ ngắm vũ trụ: "có tiếng" khi bật ít nhất một loại; bấm thì tắt / bật cả hai
+export const isSoundOn = () => fx() || musicOn()
+export const setSoundOn = (value) => updateSettings({ soundEffects: value, music: value })
 
-export function setSoundOn(value) {
-  on = value
-  try {
-    localStorage.setItem(KEY, value ? 'on' : 'off')
-  } catch {
-    // trình duyệt chặn lưu: chỉ nhớ trong phiên
-  }
-  if (!value) {
+// Cài đặt đổi: tắt nhạc thì dừng ngay, đổi âm lượng thì chỉnh bus nhạc
+subscribeSettings((s) => {
+  if (!s.music) {
     stopAmbient()
     stopMusic()
   }
-}
+  if (musicBus) musicBus.gain.setTargetAtTime(musicLevel(), ctx.currentTime, 0.05)
+})
 
 function audio() {
   if (!ctx) {
@@ -67,8 +44,11 @@ function audio() {
     }
     ctx = new AC()
     master = ctx.createGain()
-    master.gain.value = masterLevel()
+    master.gain.value = FX_LEVEL
     master.connect(ctx.destination)
+    musicBus = ctx.createGain()
+    musicBus.gain.value = musicLevel()
+    musicBus.connect(ctx.destination)
     const delay = ctx.createDelay(1)
     delay.delayTime.value = 0.33
     const feedback = ctx.createGain()
@@ -79,12 +59,13 @@ function audio() {
     delay.connect(wet).connect(master)
     echo = delay
   }
-  if (ctx.state === 'suspended') ctx.resume()
+  // Chưa có cú bấm thì trình duyệt có thể từ chối resume: bỏ qua, lần bấm sau thử lại
+  if (ctx.state === 'suspended') ctx.resume()?.catch?.(() => {})
   return ctx
 }
 
 // Một nốt ngắn có bao âm (attack nhanh, tắt dần), tùy chọn trượt cao độ và gửi sang bus vang
-function note(freq, { at = 0, dur = 0.12, type = 'sine', gain = 0.12, glide = 0, wet = false } = {}) {
+function note(freq, { at = 0, dur = 0.12, type = 'sine', gain = 0.12, glide = 0, wet = false, out = master } = {}) {
   const t = ctx.currentTime + at
   const osc = ctx.createOscillator()
   const g = ctx.createGain()
@@ -94,7 +75,7 @@ function note(freq, { at = 0, dur = 0.12, type = 'sine', gain = 0.12, glide = 0,
   g.gain.setValueAtTime(0.0001, t)
   g.gain.exponentialRampToValueAtTime(gain, t + 0.012)
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
-  osc.connect(g).connect(master)
+  osc.connect(g).connect(out)
   if (wet) g.connect(echo)
   osc.start(t)
   osc.stop(t + dur + 0.05)
@@ -109,7 +90,7 @@ function noiseBuffer(seconds) {
 
 // Mở kính viễn vọng: tiếng "vút" gió vũ trụ quét lên rồi lắng xuống
 export function playWhoosh() {
-  if (!on || !audio()) return
+  if (!fx() || !audio()) return
   const t = ctx.currentTime
   const src = ctx.createBufferSource()
   src.buffer = noiseBuffer(1.6)
@@ -130,7 +111,7 @@ export function playWhoosh() {
 
 // Nền vũ trụ: hai nốt trầm lệch nhau (quãng 5) qua bộ lọc thở chậm + tiếng lấp lánh rải rác thang ngũ cung
 export function startAmbient() {
-  if (!on || ambient || !audio()) return
+  if (!musicOn() || ambient || !audio()) return
   const t = ctx.currentTime
   const bus = ctx.createGain()
   bus.gain.setValueAtTime(0.0001, t)
@@ -144,7 +125,7 @@ export function startAmbient() {
   lfo.frequency.value = 0.06
   lfoAmt.gain.value = 220
   lfo.connect(lfoAmt).connect(lp.frequency)
-  lp.connect(bus).connect(master)
+  lp.connect(bus).connect(musicBus)
   const oscs = [
     [55, 'sawtooth', 0.5, 0],
     [55, 'sawtooth', 0.5, 7],
@@ -166,7 +147,7 @@ export function startAmbient() {
   const scale = [1046.5, 1174.7, 1318.5, 1568, 1760, 2093]
   let timer = 0
   const twinkle = () => {
-    note(scale[Math.floor(Math.random() * scale.length)], { dur: 1.6, gain: 0.025, wet: true })
+    note(scale[Math.floor(Math.random() * scale.length)], { dur: 1.6, gain: 0.025, wet: true, out: musicBus })
     timer = setTimeout(twinkle, 1800 + Math.random() * 3500)
   }
   timer = setTimeout(twinkle, 1500)
@@ -188,7 +169,7 @@ export function stopAmbient() {
 
 // Gấu nói: 3–5 tiếng "bíp" cao độ ngẫu nhiên, trượt lên nhẹ như tiếng líu lo
 export function playPandaTalk() {
-  if (!on || !audio()) return
+  if (!fx() || !audio()) return
   const n = 3 + Math.floor(Math.random() * 3)
   for (let i = 0; i < n; i++) {
     note(520 + Math.random() * 420, { at: i * 0.085, dur: 0.075, type: 'triangle', gain: 0.1, glide: 1.25 })
@@ -197,7 +178,7 @@ export function playPandaTalk() {
 
 // Soi hành tinh: chuỗi chuông lấp lánh đi lên (Đô – Mi – Son – Đô)
 export function playFocus() {
-  if (!on || !audio()) return
+  if (!fx() || !audio()) return
   ;[1046.5, 1318.5, 1568, 2093].forEach((f, i) => note(f, { at: i * 0.07, dur: 0.5, type: 'triangle', gain: 0.07, wet: true }))
 }
 
@@ -220,7 +201,7 @@ export function onMusicStatus(fn) {
 }
 
 export function startMusic() {
-  if (!on || musicStatus === 'missing' || !audio()) return
+  if (!musicOn() || musicStatus === 'missing' || !audio()) return
   if (!music) {
     const el = new Audio(MUSIC_URL)
     el.loop = true
@@ -228,7 +209,7 @@ export function startMusic() {
     el.setAttribute('playsinline', '')
     const gain = ctx.createGain()
     gain.gain.value = 0.0001
-    ctx.createMediaElementSource(el).connect(gain).connect(master)
+    ctx.createMediaElementSource(el).connect(gain).connect(musicBus)
     el.addEventListener('error', () => setMusicStatus('missing'))
     el.addEventListener('playing', () => setMusicStatus('playing'))
     music = { el, gain }

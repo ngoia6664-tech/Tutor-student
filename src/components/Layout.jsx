@@ -15,6 +15,8 @@ import { startMusic } from '../lib/spaceSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
+// Bảng Cài đặt (nút bánh răng): bảng nổi, không đổi trang
+const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 
@@ -50,6 +52,7 @@ export default function Layout() {
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const studying = useStudying()
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -68,7 +71,7 @@ export default function Layout() {
       <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="topbar-inner">
           <span className="brand">
-            <span className="brand-mark">⚛</span> Study with Duy Anh
+            <span className="brand-mark">⚛</span> <span className="brand-text">Study with Duy Anh</span>
           </span>
           <div className="topbar-user">
             <span className="user-name" title={profile.full_name}>
@@ -95,6 +98,9 @@ export default function Layout() {
               )}
             </button>
             <ThemeToggle />
+            <button type="button" className="btn btn-ghost theme-toggle" onClick={() => setSettingsOpen(true)} aria-label="Cài đặt" title="Cài đặt">
+              <Icon name="settings" />
+            </button>
             <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất">
               <Icon name="logout" />
               <span className="btn-text">Đăng xuất</span>
@@ -130,6 +136,11 @@ export default function Layout() {
       {exploring && (
         <Suspense fallback={null}>
           <SpaceExplorer onClose={() => setExploring(false)} />
+        </Suspense>
+      )}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsPanel onClose={() => setSettingsOpen(false)} />
         </Suspense>
       )}
     </div>

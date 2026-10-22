@@ -6,8 +6,6 @@ import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
 import {
   getMusicStatus,
-  getVolume,
-  isSoundOn,
   onMusicStatus,
   playFocus,
   playPandaTalk,
@@ -19,6 +17,7 @@ import {
   stopAmbient,
   stopMusic,
 } from '../lib/spaceSound.js'
+import { useSettings } from '../lib/settings.js'
 import '../styles/explorer.css'
 
 // Chế độ ngắm vũ trụ (tải lười từ Layout): dùng lại chính hệ Mặt Trời của nền (SpaceBackdrop), không vẽ thêm.
@@ -328,16 +327,16 @@ export default function SpaceExplorer({ onClose }) {
 
   // Bong bóng của gấu. mode: 'hint' lời chào | 'fact' một câu | 'menu' mục lục | 'body' giải thích hành tinh | null đóng
   const [mode, setMode] = useState('hint')
-  // Âm thanh (nền vũ trụ + tiếng gấu), nhớ lựa chọn giữa các lần mở
-  const [sound, setSound] = useState(isSoundOn)
-  const [volume, setVol] = useState(getVolume)
+  // Âm thanh (nhạc nền + tiếng gấu) theo Cài đặt (lib/settings.js), nhớ giữa các lần mở
+  const settings = useSettings()
+  const sound = settings.soundEffects || settings.music
+  const volume = settings.musicVolume
   // Nguồn nhạc nền: 'file' (mp3 trong app, Layout đã bắt đầu phát ngay trong cú bấm kính viễn vọng)
   // → không có file thì 'youtube' → YouTube lỗi (chặn nhúng / mất mạng) thì 'synth' (tiếng vũ trụ tổng hợp)
   const [musicMode, setMusicMode] = useState(() => (getMusicStatus() === 'missing' ? 'youtube' : 'file'))
   useEffect(() => onMusicStatus((s) => s === 'missing' && setMusicMode((m) => (m === 'file' ? 'youtube' : m))), [])
   function toggleSound() {
     setSoundOn(!sound)
-    setSound(!sound)
     if (!sound) {
       if (musicMode === 'file') startMusic()
       if (musicMode === 'synth') startAmbient()
@@ -346,7 +345,6 @@ export default function SpaceExplorer({ onClose }) {
   }
   function changeVolume(v) {
     setVolume(v)
-    setVol(v)
   }
   function musicFail() {
     setMusicMode('synth')
@@ -397,10 +395,10 @@ export default function SpaceExplorer({ onClose }) {
             max="100"
             step="5"
             value={volume}
-            disabled={!sound}
+            disabled={!settings.music}
             onChange={(e) => changeVolume(Number(e.target.value))}
-            aria-label="Âm lượng"
-            title={`Âm lượng ${volume}%`}
+            aria-label="Âm lượng nhạc nền"
+            title={`Âm lượng nhạc nền ${volume}%`}
             style={{ '--vol': `${volume}%` }}
           />
           <button type="button" className="btn btn-primary btn-small" onClick={onClose}>
@@ -409,7 +407,7 @@ export default function SpaceExplorer({ onClose }) {
         </div>
       </div>
 
-      {musicMode === 'youtube' && <SpaceMusic volume={volume} muted={!sound} onFail={musicFail} />}
+      {musicMode === 'youtube' && <SpaceMusic volume={volume} muted={!settings.music} onFail={musicFail} />}
 
       {/* Soi một hành tinh: phủ tối mọi thứ (z 100), chỉ gấu và chân dung hành tinh nổi lên trên (z 101) */}
       {b && (

@@ -1,47 +1,59 @@
-﻿# Codex — QA retest gần nhất
+﻿# Codex — Kết quả QA
 
-> Ngày 22/10/2026 (Asia/Saigon). Retest theo Claude handoff và yêu cầu Owner.
+**Ngày:** 22/10/2026  
+**Phạm vi:** Phân trang bài giảng, Cài đặt và luồng gia sư/học sinh theo bàn giao Claude. Không sửa source code.
 
-## Tested version / commit
-- Base: `main @ 306632838132d8b2492de47c73f67bac52db19bf`.
-- Claude thay đổi chưa commit ở `src/styles/explorer.css` và `src/components/SpaceMusic.jsx`.
-- Đã đọc `CURRENT_STATE.md`, `AI/CODEX/ROLE.md`, `AI/CLAUDE/HANDOFF.md`; Git diff chỉ ra hai file trên là source đã sửa.
-- BUG-1 (“Quay lại học” cần hai lần khi đang xem hành tinh) được Owner xác nhận là hành vi mong muốn; đóng phát hiện này, không retest như bug.
+## Kết quả
 
-## Test scope
-- Retest lỗi bong bóng chi tiết ở landscape `640×360` và màn thấp/hẹp `568×320`.
-- Regression ở portrait `360×800`, `390×844`.
-- Kiểm tra build và thay đổi YouTube mute bằng harness logic.
-- Không bắt đầu/nộp bài, không sửa dữ liệu; cuối ca đăng xuất tài khoản test. Không lưu thông tin đăng nhập vào báo cáo.
+### Build
 
-## Environment
-- Windows, Edge desktop, Vite local `http://127.0.0.1:5173`, app role học sinh.
-- Viewport thay bằng công cụ trình duyệt, không phải thiết bị thật; browser zoom làm CSS viewport khác kích thước chỉ định. Số đo dưới đây là `innerWidth × innerHeight` thực tế.
-- YouTube IFrame API/iframe không tải trong phiên này nên không thể xác nhận âm thanh thực sự qua loa.
+- `npm.cmd run build`: **PASS** trong lượt QA trước; source không đổi sau lần build đó.
 
-## Result
-**PASS cho BUG-2 tại các viewport đã kiểm tra.** Build PASS. UI/harness mute có trạng thái đúng; phát âm thanh thật còn chưa xác minh do YouTube không tải.
+### Phân trang bài giảng
 
-| Kiểm tra | Kết quả |
-| --- | --- |
-| `npm.cmd run build` | PASS, 340 modules transformed. |
-| BUG-2, `640×360` CSS | PASS: bong bóng rộng 360px, cao 218.4px; vùng nội dung cuộn `170/550px`; footer cao 47px nằm trong khung; chân dung rộng 108px ở bên phải, không chồng bong bóng. |
-| BUG-2, `567×320` CSS (mục tiêu 568×320) | PASS: bong bóng 360×178.4px; vùng nội dung cuộn `130/550px`; footer nằm trong khung; chân dung ở bên phải, không chồng bong bóng. Không tràn ngang (`scrollWidth=567`). |
-| Portrait `360×800` CSS | PASS: bong bóng cao 505px, vùng nội dung cuộn `452/741px`, chân dung nằm phía trên; không tràn ngang. |
-| Portrait `390×844` CSS | PASS: bong bóng cao 537px, chân dung nằm phía trên, không tràn ngang (`scrollWidth=390`). |
-| Harness YouTube ở trạng thái muted | PASS: cập nhật script QA để kỳ vọng `autoplay=0`, `pauseVideo` một lần và không gọi `playVideo`. Kết quả `AI/CODEX/qa-logic-results.txt`. Đây là mock; không chứng minh tiếng phát thực tế. |
-| YouTube trong trình duyệt | CHƯA XÁC MINH: iframe không xuất hiện trong tối đa 10 giây; không thể kiểm tra trạng thái player hoặc nghe audio trong lần chạy này. UI vẫn giữ trạng thái tắt tiếng và slider disabled sau reload. |
+Đã kiểm tra bài có sẵn (7 trang) và JSON QA được nhập/lưu qua giao diện gia sư:
 
-## Findings
-- **BUG-2 đã sửa đạt retest** tại 640×360 và 567×320; portrait được kiểm tra lại và không thấy regression.
-- **BUG-1 đóng theo xác nhận Owner:** hành vi thiết kế, không phải bug.
-- **QA-CANDIDATE-1:** nhánh logic đã sửa PASS bằng mock; không kết luận autoplay/âm thanh thực tế do YouTube iframe/API không tải.
-- Không thực hiện kiểm thử Android/iPhone thật, pinch cảm ứng, hay luồng end-to-end nộp/chấm.
+- Bài có sẵn: chỉ hiện mục trang đang chọn; **Sau**, bộ chọn trang, URL `?xem=trang&trang=2` và reload giữ đúng trang 2.
+- JSON QA: 2 mục ở trang 1/2 và Tóm tắt 1 phút thành trang 3. Preview trước khi lưu hiển thị vạch TRANG 1–3.
+- Sau lưu: màn hình gia sư và học sinh đều hiển thị 3 trang. Trang soạn giữ dấu `<!-- trang -->`; Preview trang soạn hiển thị đúng các mốc trang.
+- Tại tài khoản học sinh `testuser`: bài giảng xuất hiện trong thư viện, mặc định ở chế độ phân trang; chuyển trang 1 → 2 chỉ hiện nội dung trang 2, URL là `?trang=2`, reload vẫn giữ trang 2. **Xem cả bài** chuyển sang nội dung liền mạch với các vạch trang; **Xem theo trang** quay lại đúng chế độ phân trang.
+- Bài giảng liên kết đúng với bài tập mẫu.
 
-## Regression / hygiene
-- Build thành công trên source hiện tại.
-- Trả sound về bật/60, reset viewport và đăng xuất tài khoản thử nghiệm.
-- Không chỉnh source app, tạo/nộp bài hoặc ghi trực tiếp database.
+**PASS** cho luồng preview, lưu, mở, sửa và xem bài giảng từ phía học sinh.
 
-## Recommended next action
-Có thể đóng BUG-2 cho các viewport đã thử. Để xác nhận QA-CANDIDATE-1, retest trên mạng/trình duyệt cho phép YouTube IFrame API; sau đó thử bật tiếng và xác nhận phát thực tế. Thiết bị Android/iPhone thật vẫn cần chạy riêng.
+### Dán JSON và chức năng gia sư
+
+Đã dùng JSON tổng hợp riêng cho QA: bài giảng hai trang và một câu trắc nghiệm mẫu trên lớp. Preview chia thành **2 phần** (bài giảng + bài tập), nội dung câu hỏi/đáp án hợp lệ. Chương tự khớp với chương hiện có.
+
+Danh sách người nhận hiển thị **testuser** (chưa có nhóm); đã chọn tài khoản này theo tài khoản test đang dùng. Lưu thành công cả hai phần:
+
+- Bài giảng: `QA phân trang Codex 22-10-2026` — ID `e5edd03d-88e6-4d8e-ace6-74069bd1767d`.
+- Bài tập trên lớp: `QA phân trang Codex 22-10-2026 – Bài tập trên lớp` — ID `9527d5cf-49b0-4cfb-8666-b5db75b1b487`.
+
+Đã xác minh màn hình gia sư: bài giảng có 3 trang, người nhận là testuser, bài tập liên quan được liên kết; trang theo dõi hiện đáp án B và trạng thái **Chưa nộp**; form sửa giữ nguyên loại câu, lựa chọn đúng và người nhận. Hồ sơ testuser cập nhật bài tập/bài giảng QA.
+
+Tại phía học sinh, bài tập xuất hiện trong thư viện và đường dẫn liên kết; trang bài tập hiển thị đúng câu trắc nghiệm, trạng thái **Chưa nộp**, và không hiện đáp án trước khi nộp. Không chọn đáp án, không bấm nộp, không chấm hoặc thay đổi bài cũ đang chờ chấm.
+
+Dữ liệu QA vẫn được giữ lại để dễ nhận diện; nội dung ghi rõ là dữ liệu thử, không phải kiến thức học tập.
+
+### Cài đặt
+
+- Trên giao diện học sinh desktop: preset **Tối ưu** tắt đúng nền động, animation Panda, hiệu ứng ăn mừng.
+- Tuỳ chỉnh từng mục hiện “Đang tùy chỉnh”; tắt Panda vô hiệu hóa công tắc animation. Trạng thái tùy chỉnh giữ sau reload.
+- Tắt hiệu ứng âm thanh phản ánh đúng trạng thái; tắt nhạc làm khóa thanh âm lượng. Đã khôi phục giá trị mặc định.
+- Theme sáng/tối đổi được.
+- Trên giao diện gia sư, bảng Cài đặt mở được và phím Escape đóng được.
+
+**PASS** cho các luồng cài đặt đã thử trên desktop.
+
+## Giới hạn kiểm thử
+
+- Chưa tìm thấy bài giảng cũ không có dấu trang để xác minh tương thích.
+- Chưa thử điện thoại vật lý, Safari/iPhone hoặc viewport mobile thực.
+- Chưa thử âm thanh phát thực tế, nút loa trong ngắm vũ trụ, hoặc luồng nộp/chấm bài thật.
+- Tài khoản nhận hiển thị là `testuser`; nếu “test” là tài khoản khác, cần chọn tài khoản khác cho các lượt gửi tiếp theo.
+
+## Bug
+
+Không phát hiện bug trong các luồng đã thử. Kết quả QA **một phần**; các giới hạn trên vẫn cần kiểm tra để kết luận toàn diện.
+

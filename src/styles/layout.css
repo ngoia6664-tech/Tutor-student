@@ -53,9 +53,17 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   white-space: nowrap;
+  min-width: 0;
+}
+/* Màn rất hẹp: tên app tự rút gọn "…" thay vì đẩy các nút bên phải ra ngoài */
+.brand-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* Logo: ô vuông bo góc chuyển màu */
 .brand-mark {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;

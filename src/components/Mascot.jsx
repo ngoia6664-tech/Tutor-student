@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js'
 import { countOpenReports } from '../lib/reports.js'
 import { MASCOT_EVENT } from '../lib/celebrate.js'
 import { LOCK_MESSAGE, useStudying } from '../lib/studyLock.js'
+import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './PandaArt.jsx'
 
 // Giáo sư Gấu Trúc: linh vật góc dưới phải.
@@ -95,7 +96,10 @@ export default function Mascot() {
   const studying = useStudying()
   const studyingRef = useRef(studying)
   studyingRef.current = studying
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const settings = useSettings()
+  const reduceMotion = prefersReducedMotion()
+  // Tắt "Animation của Panda" (Cài đặt): không đi dạo / leo / lăn, chuyển động nhẹ tắt bằng CSS (styles/settings.css)
+  const stillMascot = reduceMotion || !settings.mascotAnimation
 
   function setMood(m) {
     moodRef.current = m
@@ -152,7 +156,7 @@ export default function Mascot() {
 
   // Rảnh thì cứ ~10 giây làm một trò
   useEffect(() => {
-    if (reduceMotion) return
+    if (stillMascot) return
     const id = setInterval(() => {
       if (moodRef.current !== 'idle' || studyingRef.current) return
       const a = pickActivity()
@@ -166,7 +170,16 @@ export default function Mascot() {
     }, ACTIVITY_EVERY)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduceMotion])
+  }, [stillMascot])
+
+  // Vừa tắt animation khi gấu đang dở trò: về ngồi yên
+  useEffect(() => {
+    if (stillMascot && ['walk', 'climb', 'roll', 'dizzy'].includes(moodRef.current)) {
+      clearTimeout(timers.current.activity)
+      rest()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stillMascot])
 
   async function onPoke() {
     if (studying) return say(LOCK_MESSAGE)
@@ -204,6 +217,9 @@ export default function Mascot() {
     setBubble(null)
     rest()
   }
+
+  // Tắt linh vật trong Cài đặt: không vẽ gì (khác "Cất gấu" vẫn để nút nhỏ gọi lại)
+  if (!settings.mascot) return null
 
   if (hidden) {
     return (

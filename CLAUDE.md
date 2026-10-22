@@ -31,9 +31,13 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Hình SVG nhúng: `lib/svg.js` `themedSvg` — app tối: dùng khối @media dark nếu có, không thì tự đảo màu trung tính (`lightenInk`).
 - `src/lib/` — `supabase` client · `useAsync` hook tải dữ liệu · `errors` lỗi→tiếng Việt · `format` ngày/nhãn ·
   `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
-  `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập ·
+  `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập (mục có `page` → dòng `<!-- trang -->` trong `content_md`;
+  `components/LessonView.jsx` tách trang, `?xem=trang|ca-bai&trang=n`; bài không có dấu xem cả bài, nút "Xem theo trang" chia theo `##`) ·
   `outline` đọc mục lục dán vào · `studentReport` thống kê học sinh · `svg` đổi màu SVG theo theme, gói ảnh ·
-  `theme` · `spaceSound` âm thanh ngắm vũ trụ (Web Audio tổng hợp, bật/tắt + âm lượng nhớ ở localStorage `space-sound`/`space-volume`;
+  `theme` · `settings` Cài đặt (store `useSettings()`/`getSettings()`, localStorage `app-settings`: nền động, linh vật, animation gấu,
+  ăn mừng, hiệu ứng âm thanh, nhạc nền, âm lượng nhạc; preset hiệu năng Đầy đủ/Tối ưu; cờ `data-static-bg`/`data-still-mascot` trên `<html>`
+  → `styles/settings.css`; bảng `components/SettingsPanel.jsx` mở từ nút bánh răng ở header) ·
+  `spaceSound` âm thanh ngắm vũ trụ (Web Audio tổng hợp, bật/tắt + âm lượng nhạc lấy từ `settings`; bus hiệu ứng tách bus nhạc;
   nhạc nền: file `public/audio/space-music.mp3` qua Web Audio, `startMusic()` gọi ngay trong onClick nút kính viễn vọng (Layout)
   vì iPhone chặn tự phát; không có file → YouTube ẩn `components/SpaceMusic.jsx` → lỗi nữa thì tiếng vũ trụ tổng hợp) · `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.
 - `src/components/` — `ExerciseBody` (hiển thị 1 câu theo loại), `ExamParts` (phần đề, phiếu trả lời, đồng hồ),

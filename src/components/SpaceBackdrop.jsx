@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 
 // Nền vũ trụ phía sau toàn app: 3 lớp sao ở 3 độ xa (trôi chậm, lớp gần trôi nhanh hơn → có chiều sâu),
 // vài sao lấp lánh, hệ Mặt Trời mờ ở giữa (cuộn trang thì đổi góc nhìn), thỉnh thoảng một sao băng.
@@ -57,10 +58,12 @@ const TURN_BOTTOM = 18
 
 export default function SpaceBackdrop() {
   const ref = useRef(null)
+  // Tắt "Background động" (Cài đặt): nền đứng yên (CSS ở styles/settings.css), không đổi góc nhìn theo cuộn
+  const animated = useSettings().animatedBackground
 
   useEffect(() => {
     const el = ref.current.querySelector('.solar') // chỉ hệ Mặt Trời dùng góc nhìn: đổi biến ở đây để không tính lại các lớp sao
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    if (!animated || prefersReducedMotion()) return
     let frame = 0
     const update = () => {
       frame = 0
@@ -80,7 +83,7 @@ export default function SpaceBackdrop() {
       window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(frame)
     }
-  }, [])
+  }, [animated])
 
   return (
     <div ref={ref} className="space" aria-hidden="true">

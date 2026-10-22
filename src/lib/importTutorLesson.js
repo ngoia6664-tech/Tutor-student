@@ -1,7 +1,10 @@
 // Chuyển file định dạng "tutor-lesson/v1" (lý thuyết + trắc nghiệm + điền khuyết + tự luận)
 // thành: 1 bài giảng + tối đa 2 bài tập (làm trên lớp / về nhà, theo trường "assignment").
 
-const TYPE_TITLE = { classwork: 'Bài tập trên lớp', homework: 'Bài tập về nhà' }
+// Dấu phân trang bài giảng (trùng với PAGE_BREAK trong components/LessonView.jsx)
+const PAGE_BREAK = '<!-- trang -->'
+
+const TYPE_TITLE ={ classwork: 'Bài tập trên lớp', homework: 'Bài tập về nhà' }
 
 const str = (v) => (typeof v === 'string' ? v.trim() : v === undefined || v === null ? '' : String(v))
 const arr = (v) => (Array.isArray(v) ? v : [])
@@ -44,15 +47,29 @@ function metaLine(lesson) {
   return [str(lesson.subject), lesson.grade ? `Lớp ${str(lesson.grade)}` : '', str(lesson.chapter), str(lesson.part)].filter(Boolean).join(' · ')
 }
 
-// Bài giảng: mỗi mục là một "## tiêu đề" → hiển thị thành một thẻ riêng (xem LessonView)
+// Kế hoạch bài: chuỗi → khung trích dẫn; danh sách (file mới) → "Nội dung bài học" đánh số
+function planMd(theory, lesson) {
+  const minutes = lesson.estimated_minutes ? `Thời lượng khoảng ${lesson.estimated_minutes} phút.` : ''
+  if (Array.isArray(theory.plan)) {
+    const list = numbered(theory.plan)
+    return list ? `> **Nội dung bài học**${minutes ? ` · ${minutes}` : ''}\n>\n${list.replace(/^/gm, '> ')}` : minutes ? `> ${minutes}` : ''
+  }
+  const plan = str(theory.plan) || minutes
+  return plan ? `> ${plan}` : ''
+}
+
+// Bài giảng: mỗi mục là một "## tiêu đề" → hiển thị thành một thẻ riêng (xem LessonView).
+// Mục có "page" → gom các mục cùng trang, mỗi trang mở đầu bằng dấu PAGE_BREAK; tóm tắt và phương pháp là các trang cuối.
 function buildLessonMd(lesson, warnings) {
   const theory = lesson.theory || {}
   const meta = metaLine(lesson)
-  const plan = str(theory.plan) || (lesson.estimated_minutes ? `Thời lượng khoảng ${lesson.estimated_minutes} phút.` : '')
+  const list = arr(theory.sections)
+  const paged = list.some((s) => Number.isFinite(Number(s?.page)) && s?.page !== null && s?.page !== '')
 
-  const sections = arr(theory.sections).map((s, i) =>
+  const sectionMd = (s, i) =>
     join([
       `## ${str(s.title) || 'Mục ' + (i + 1)}`,
+      s.intro ? `> **Đặt vấn đề:** ${str(s.intro)}` : '',
       str(s.explain),
       ...arr(s.paragraphs).map(str),
       ...arr(s.diagrams).map((d) => diagramMd(d, `Mục "${str(s.title)}"`, warnings)),
@@ -63,7 +80,21 @@ function buildLessonMd(lesson, warnings) {
       s.comparison ? `### Ghi nhớ\n\n${str(s.comparison)}` : '',
       arr(s.common_mistakes).length ? `### Lỗi hay gặp\n\n${bullets(s.common_mistakes)}` : '',
     ])
-  )
+
+  // Gom theo trang (giữ thứ tự trong file khi cùng trang); mục thiếu "page" đi theo trang của mục ngay trước
+  let lastPage = 1
+  const groups = new Map()
+  list.forEach((s, i) => {
+    const n = Number(s?.page)
+    const p = paged && s?.page !== null && s?.page !== '' && Number.isFinite(n) ? n : lastPage
+    lastPage = p
+    if (!groups.has(p)) groups.set(p, [])
+    groups.get(p).push(sectionMd(s, i))
+  })
+  const sections = paged
+    ? [...groups.keys()].sort((a, b) => a - b).map((p) => join([PAGE_BREAK, ...groups.get(p)]))
+    : list.map(sectionMd)
+  const pageBreak = paged ? PAGE_BREAK : ''
 
   const methods = arr(lesson.exercises?.problem_types)
     .filter((pt) => arr(pt.method).length)
@@ -71,10 +102,10 @@ function buildLessonMd(lesson, warnings) {
 
   return join([
     meta ? `_${meta}_` : '',
-    plan ? `> ${plan}` : '',
+    planMd(theory, lesson),
     ...sections,
-    arr(theory.summary_1_min).length ? `## Tóm tắt 1 phút\n\n${bullets(theory.summary_1_min)}` : '',
-    methods.length ? `## Phương pháp giải các dạng bài\n\n${methods.join('\n\n')}` : '',
+    arr(theory.summary_1_min).length ? join([pageBreak, `## Tóm tắt 1 phút\n\n${bullets(theory.summary_1_min)}`]) : '',
+    methods.length ? join([pageBreak, `## Phương pháp giải các dạng bài\n\n${methods.join('\n\n')}`]) : '',
   ])
 }
 

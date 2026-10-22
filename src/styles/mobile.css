@@ -56,4 +56,8 @@
   .topbar .btn { white-space: nowrap; }
   .topbar-user { gap: 0.3rem; }
   .bell-btn { width: 2.2rem; height: 2.2rem; }
+  .topbar .theme-toggle { width: 34px; height: 34px; min-height: 34px; }
+  /* Cụm nút giữ nguyên cỡ, tên app (.brand-text) rút gọn "…" để nhường chỗ */
+  .topbar-user { flex-shrink: 0; }
+  .topbar-user > .btn { flex-shrink: 0; }
 }
