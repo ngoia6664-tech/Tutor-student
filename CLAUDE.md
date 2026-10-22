@@ -20,7 +20,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề).
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
   `StudentMistakes` (Ôn câu sai: câu `is_correct=false`, làm lại chấm trên máy qua `lib/practice.js`),
-  `StudentLibrary`, `StudentLesson`.
+  `StudentLibrary`, `StudentLessons` (/student/lessons: mọi bài giảng được giao, gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
+  (vào từ Bài giảng → state `from: 'lessons'` để nút quay lại về Bài giảng). Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
 - Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout),

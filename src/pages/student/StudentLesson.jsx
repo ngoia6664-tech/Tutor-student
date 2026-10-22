@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import Loading from '../../components/Loading.jsx'
@@ -7,6 +7,7 @@ import LessonView from '../../components/LessonView.jsx'
 
 export default function StudentLesson() {
   const { id } = useParams()
+  const fromLessons = useLocation().state?.from === 'lessons'
 
   const { data, loading, error, reload } = useAsync(async () => {
     // RLS chỉ trả về bài giảng được giao cho học sinh này
@@ -21,14 +22,19 @@ export default function StudentLesson() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/student/library">← Thư viện</Link>
+        <Link to={fromLessons ? '/student/lessons' : '/student/library'}>{fromLessons ? '← Bài giảng' : '← Thư viện'}</Link>
       </div>
     )
 
+  // Vào từ trang Bài giảng thì quay lại Bài giảng, còn lại về chương trong Thư viện
+  const back = fromLessons
+    ? { to: '/student/lessons', label: '← Bài giảng' }
+    : { to: data.lesson.chapter_id ? `/student/library/${data.lesson.chapter_id}` : '/student/library', label: '← Thư viện' }
+
   return (
     <div>
-      <Link to={data.lesson.chapter_id ? `/student/library/${data.lesson.chapter_id}` : '/student/library'} className="small">
-        ← Thư viện
+      <Link to={back.to} className="small">
+        {back.label}
       </Link>
       <div style={{ marginTop: '0.5rem' }}>
         <LessonView lesson={data.lesson} />

@@ -52,7 +52,7 @@ export default function TutorLessons() {
     return (
       <div key={l.id} className="list-item">
         <Link to={`/tutor/lessons/${l.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
-          {l.title}
+          📘 {l.title}
         </Link>
         <div className="row small" style={{ marginBottom: '0.5rem' }}>
           <span className="badge">{l.lesson_recipients.length} học sinh</span>

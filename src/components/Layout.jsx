@@ -31,6 +31,7 @@ const NAV = {
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
+    { to: '/student/lessons', label: 'Bài giảng', icon: 'lesson' },
     { to: '/student/results', label: 'Kết quả', icon: 'results' },
     { to: '/student/mistakes', label: 'Ôn câu sai', icon: 'refresh' },
     { to: '/student/library', label: 'Thư viện', icon: 'library' },
