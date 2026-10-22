@@ -88,34 +88,6 @@ html.space-exploring {
   color: var(--muted);
 }
 
-.explorer-card {
-  position: absolute;
-  left: 1rem;
-  bottom: 1rem;
-  width: min(340px, calc(100vw - 6rem));
-  padding: 0.9rem 1.1rem 0.7rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface-solid);
-  box-shadow: var(--shadow);
-  animation: explorer-in 0.25s ease both;
-}
-.explorer-card h3 {
-  margin: 0 1.5rem 0.2rem 0;
-}
-.explorer-card p {
-  margin: 0 0 0.4rem;
-  font-size: 0.92rem;
-}
-.explorer-card ul {
-  margin: 0;
-  padding-left: 1.1rem;
-  font-size: 0.88rem;
-  color: var(--muted);
-}
-.explorer-card li + li {
-  margin-top: 0.2rem;
-}
 .explorer-g {
   font-weight: 700;
   color: var(--primary);
@@ -157,5 +129,293 @@ html.space-exploring {
   }
   .explorer-top .btn-text {
     display: none;
+  }
+}
+
+/* Gấu kể chuyện vũ trụ (góc trái dưới; bên phải là nút phóng to) */
+.explorer-panda {
+  position: absolute;
+  z-index: 101;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.explorer-panda-btn {
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.9));
+  transition: transform 0.15s ease;
+  animation: explorer-float 3.6s ease-in-out infinite;
+}
+.explorer-panda-btn:active {
+  transform: scale(0.92);
+}
+.explorer-panda-btn svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.explorer-bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 5rem));
+  /* Chừa chỗ cho tiêu đề phía trên và gấu phía dưới; bề ngang chừa cột nút phóng to bên phải */
+  max-height: calc(100dvh - 0.6rem - 84px - 7rem);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  animation: explorer-in 0.25s ease both;
+}
+.explorer-bubble-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem 1rem 0.4rem;
+}
+.explorer-bubble h3 {
+  margin: 0 1.4rem 0.4rem 0;
+  font-size: 1rem;
+}
+.explorer-bubble-body p + p {
+  margin-top: 0.5rem;
+}
+.explorer-num {
+  color: var(--primary);
+}
+.explorer-stats {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.2rem 0 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--surface-2, rgba(127, 127, 127, 0.1));
+  font-size: 0.85rem;
+}
+.explorer-stats div {
+  display: flex;
+  gap: 0.5rem;
+}
+.explorer-stats dt {
+  flex: none;
+  min-width: 6.5rem;
+  color: var(--muted);
+}
+.explorer-stats dd {
+  margin: 0;
+}
+.explorer-menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.explorer-menu button {
+  width: 100%;
+  padding: 0.35rem 0.4rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.explorer-menu button:hover,
+.explorer-menu button.is-current {
+  background: rgba(168, 85, 247, 0.15);
+}
+.explorer-bubble-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem 0.5rem 1rem;
+  border-top: 1px solid var(--border-strong);
+}
+.explorer-bubble-nav button {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.explorer-bubble-nav .explorer-menu-btn {
+  margin-left: auto;
+  font-size: 0.8rem;
+}
+/* Đuôi bong bóng chỉ xuống gấu */
+.explorer-bubble::after {
+  content: '';
+  position: absolute;
+  left: 34px;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface-solid);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  rotate: 45deg;
+}
+.explorer-bubble p {
+  margin: 0;
+}
+.explorer-bubble-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+@keyframes explorer-float {
+  50% {
+    translate: 0 -5px;
+  }
+}
+
+@media (max-width: 640px) {
+  .explorer-panda-btn {
+    width: 68px;
+    height: 68px;
+  }
+  .explorer-bubble {
+    max-height: calc(100dvh - 0.6rem - 68px - 7rem);
+  }
+}
+
+/* ===== Soi một hành tinh: nền tối phủ (z 100), gấu + chân dung hành tinh nổi lên (z 101) ===== */
+.explorer-ui {
+  --pf: clamp(150px, 38vmin, 320px);
+}
+.explorer-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: zoom-out;
+  animation: explorer-dim-in 0.3s ease both;
+}
+.explorer-focus {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 101;
+  width: var(--pf);
+  margin: 0;
+  text-align: right;
+  pointer-events: none;
+  /* Màu quầng sáng sau hành tinh, đổi theo từng thiên thể */
+  --glow: rgba(147, 197, 253, 0.35);
+}
+.explorer-focus.is-sun { --glow: rgba(251, 191, 36, 0.5); }
+.explorer-focus.is-mercury { --glow: rgba(203, 213, 225, 0.25); }
+.explorer-focus.is-venus { --glow: rgba(250, 204, 21, 0.3); }
+.explorer-focus.is-earth { --glow: rgba(56, 189, 248, 0.4); }
+.explorer-focus.is-mars { --glow: rgba(249, 115, 22, 0.35); }
+.explorer-focus.is-jupiter { --glow: rgba(217, 160, 102, 0.35); }
+.explorer-focus.is-saturn { --glow: rgba(234, 205, 140, 0.35); }
+.explorer-focus::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--pf);
+  height: var(--pf);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow), transparent);
+  scale: 1.25;
+}
+.explorer-focus .pf {
+  position: relative;
+  display: block;
+  width: var(--pf);
+  height: var(--pf);
+  overflow: visible;
+  animation: pf-arrive 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+.explorer-focus figcaption {
+  position: relative;
+  margin-top: -0.4rem;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  animation: explorer-in 0.4s 0.25s ease both;
+}
+.explorer-focus strong {
+  display: block;
+  font-size: clamp(1.4rem, 4.5vmin, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.explorer-focus figcaption span {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Chi tiết bề mặt trôi ngang = hành tinh tự quay (chỉ chạy khi đang soi) */
+.pf-spin {
+  animation: pf-spin var(--pf-speed, 60s) linear infinite;
+}
+.pf-corona {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: pf-corona 4s ease-in-out infinite alternate;
+}
+.pf-moon {
+  transform-origin: 0 0;
+  animation: pf-arrive 0.9s 0.2s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+@keyframes explorer-dim-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pf-arrive {
+  from {
+    opacity: 0;
+    scale: 0.35;
+    rotate: -25deg;
+  }
+}
+@keyframes pf-spin {
+  to {
+    transform: translateX(var(--pf-loop));
+  }
+}
+@keyframes pf-corona {
+  to {
+    transform: scale(1.06);
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 640px) {
+  .explorer-ui {
+    --pf: clamp(120px, 36vw, 170px);
+  }
+  .explorer-focus {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+  /* Hành tinh chiếm phần trên: bong bóng gấu thấp lại cho khỏi đè */
+  .explorer-ui.is-focus .explorer-bubble {
+    max-height: calc(100dvh - 0.6rem - 68px - var(--pf) - 5.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-spin,
+  .pf-corona,
+  .explorer-focus .pf,
+  .pf-moon {
+    animation: none;
   }
 }
