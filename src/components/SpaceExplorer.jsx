@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
 import { FrontPanda } from './PandaArt.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
+import SpaceMusic from './SpaceMusic.jsx'
+import { getVolume, isSoundOn, playFocus, playPandaTalk, playWhoosh, setSoundOn, setVolume, startAmbient, stopAmbient } from '../lib/spaceSound.js'
 import '../styles/explorer.css'
 
 // Chế độ ngắm vũ trụ (tải lười từ Layout): dùng lại chính hệ Mặt Trời của nền (SpaceBackdrop), không vẽ thêm.
@@ -179,6 +181,7 @@ export default function SpaceExplorer({ onClose }) {
     const saved = { tilt: solar.style.getPropertyValue('--tilt'), turn: solar.style.getPropertyValue('--turn') }
     const root = document.documentElement
     root.classList.add('space-exploring')
+    playWhoosh()
 
     let frame = 0
     const apply = () => {
@@ -269,6 +272,7 @@ export default function SpaceExplorer({ onClose }) {
       space.removeEventListener('wheel', wheel)
       window.removeEventListener('keydown', key)
       root.classList.remove('space-exploring')
+      stopAmbient()
       solar.style.setProperty('--tilt', saved.tilt)
       solar.style.setProperty('--turn', saved.turn)
       solar.style.removeProperty('--zoom')
@@ -292,10 +296,32 @@ export default function SpaceExplorer({ onClose }) {
 
   // Bong bóng của gấu. mode: 'hint' lời chào | 'fact' một câu | 'menu' mục lục | 'body' giải thích hành tinh | null đóng
   const [mode, setMode] = useState('hint')
+  // Âm thanh (nền vũ trụ + tiếng gấu), nhớ lựa chọn giữa các lần mở
+  const [sound, setSound] = useState(isSoundOn)
+  const [volume, setVol] = useState(getVolume)
+  // Nhạc YouTube lỗi (video chặn nhúng / không có mạng) → thay bằng tiếng vũ trụ tổng hợp
+  const [musicFailed, setMusicFailed] = useState(false)
+  function toggleSound() {
+    setSoundOn(!sound)
+    setSound(!sound)
+    if (!sound) {
+      if (musicFailed) startAmbient()
+      playPandaTalk()
+    }
+  }
+  function changeVolume(v) {
+    setVolume(v)
+    setVol(v)
+  }
+  function musicFail() {
+    setMusicFailed(true)
+    startAmbient()
+  }
   const [factIdx, setFactIdx] = useState(-1)
   const bubbleRef = useRef(null)
   const total = SPACE_FACTS.length
   function showFact(i) {
+    playPandaTalk()
     setFactIdx((i + total) % total)
     setMode('fact')
     setPicked(null)
@@ -306,8 +332,10 @@ export default function SpaceExplorer({ onClose }) {
   }
   // Bấm hành tinh thì gấu chuyển sang giải thích; bỏ chọn thì đóng phần giải thích
   useEffect(() => {
-    if (picked) setMode('body')
-    else setMode((m) => (m === 'body' ? null : m))
+    if (picked) {
+      setMode('body')
+      playFocus()
+    } else setMode((m) => (m === 'body' ? null : m))
   }, [picked])
   // Nội dung mới: cuộn bong bóng về đầu
   useEffect(() => {
@@ -323,10 +351,30 @@ export default function SpaceExplorer({ onClose }) {
           <h2 className="explorer-title">Hệ Mặt Trời</h2>
           <p className="explorer-hint">Kéo để xoay, lăn chuột hoặc chụm hai ngón để phóng to, bấm vào hành tinh để gấu giải thích.</p>
         </div>
-        <button type="button" className="btn btn-primary btn-small" onClick={onClose}>
-          <Icon name="close" /> Quay lại học
-        </button>
+        <div className="explorer-actions">
+          <button type="button" className="btn btn-ghost theme-toggle" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Tắt âm thanh' : 'Bật âm thanh'} title={sound ? 'Tắt âm thanh' : 'Bật âm thanh'}>
+            <Icon name={sound ? 'sound' : 'mute'} />
+          </button>
+          <input
+            type="range"
+            className="explorer-volume"
+            min="0"
+            max="100"
+            step="5"
+            value={volume}
+            disabled={!sound}
+            onChange={(e) => changeVolume(Number(e.target.value))}
+            aria-label="Âm lượng"
+            title={`Âm lượng ${volume}%`}
+            style={{ '--vol': `${volume}%` }}
+          />
+          <button type="button" className="btn btn-primary btn-small" onClick={onClose}>
+            <Icon name="close" /> Quay lại học
+          </button>
+        </div>
       </div>
+
+      {!musicFailed && <SpaceMusic volume={volume} muted={!sound} onFail={musicFail} />}
 
       {/* Soi một hành tinh: phủ tối mọi thứ (z 100), chỉ gấu và chân dung hành tinh nổi lên trên (z 101) */}
       {b && (

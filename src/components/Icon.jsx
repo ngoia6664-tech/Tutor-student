@@ -41,7 +41,9 @@ const PATHS = {
   down: 'M12 5v14M19 12l-7 7-7-7',
   flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
   lock: 'M6 11h12v10H6V11ZM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11',
-  telescope: 'm3 13.5 12.5-6 2 4.2-12.5 6-2-4.2ZM15.5 7.5l3.6-1.7 2 4.2-3.6 1.7M11 15.7 8 21M11 15.7l3 5.3M11 15.7V14',
+  sound: 'M11 5 6 9H2v6h4l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14',
+  mute: 'M11 5 6 9H2v6h4l5 4V5ZM23 9l-6 6M17 9l6 6',
+  telescope:'m3 13.5 12.5-6 2 4.2-12.5 6-2-4.2ZM15.5 7.5l3.6-1.7 2 4.2-3.6 1.7M11 15.7 8 21M11 15.7l3 5.3M11 15.7V14',
 }
 
 export default function Icon({ name, size = 18, className = '', title }) {

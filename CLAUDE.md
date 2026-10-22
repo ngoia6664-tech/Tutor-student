@@ -33,7 +33,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
   `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập ·
   `outline` đọc mục lục dán vào · `studentReport` thống kê học sinh · `svg` đổi màu SVG theo theme, gói ảnh ·
-  `theme` · `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.
+  `theme` · `spaceSound` âm thanh ngắm vũ trụ (Web Audio tổng hợp, bật/tắt + âm lượng nhớ ở localStorage `space-sound`/`space-volume`;
+  nhạc nền là YouTube nhúng qua `components/SpaceMusic.jsx`, lỗi thì dùng tiếng vũ trụ tổng hợp) · `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.
 - `src/components/` — `ExerciseBody` (hiển thị 1 câu theo loại), `ExamParts` (phần đề, phiếu trả lời, đồng hồ),
   `AnswerKey` (bảng đáp án gia sư), `TreePicker`/`ChapterSelect`/`LessonSelect` (ô chọn dạng cây),
   `TreeNav` (cây mục lục, nhớ nút mở), `FilterTree` (lọc theo cây qua URL `?lop=&mon=&cd=&ch=`),

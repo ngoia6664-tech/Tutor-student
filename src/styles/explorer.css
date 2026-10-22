@@ -432,3 +432,76 @@ html.space-exploring {
   border-radius: 50%;
 }
 .explorer-focus.is-moon { --glow: rgba(226, 232, 240, 0.3); }
+
+.explorer-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+.explorer-actions .theme-toggle {
+  background: var(--surface-solid);
+}
+
+/* Thanh âm lượng: vạch đã chọn tô màu chính qua biến --vol */
+.explorer-volume {
+  width: 96px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--primary) var(--vol), var(--border-strong) var(--vol));
+  accent-color: var(--primary);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+.explorer-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.explorer-volume::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.explorer-volume:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Nhạc nền YouTube: trình phát ẩn hẳn (chỉ nghe tiếng). Nút "Phát nhạc" chỉ hiện khi trình duyệt chặn tự phát. */
+.explorer-music {
+  position: absolute;
+  right: 4.25rem;
+  bottom: 1rem;
+}
+.explorer-music-frame {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 200px;
+  height: 112px;
+  opacity: 0;
+  pointer-events: none;
+}
+.explorer-music-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .explorer-volume {
+    width: 64px;
+  }
+  /* Màn hẹp: cụm nút xuống dòng dưới tiêu đề cho khỏi chật */
+  .explorer-top {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
