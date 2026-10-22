@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { getSettings, subscribeSettings, updateSettings } from './settings.js'
 
 // Âm thanh chế độ ngắm vũ trụ, tổng hợp bằng Web Audio (không cần file âm thanh).
@@ -23,12 +24,9 @@ let ambient = null
 export const isSoundOn = () => fx() || musicOn()
 export const setSoundOn = (value) => updateSettings({ soundEffects: value, music: value })
 
-// Cài đặt đổi: tắt nhạc thì dừng ngay, đổi âm lượng thì chỉnh bus nhạc
+// Cài đặt đổi: tắt nhạc thì dừng ngay (cả YouTube), đổi âm lượng thì chỉnh bus nhạc
 subscribeSettings((s) => {
-  if (!s.music) {
-    stopAmbient()
-    stopMusic()
-  }
+  if (!s.music) pauseAllMusic()
   if (musicBus) musicBus.gain.setTargetAtTime(musicLevel(), ctx.currentTime, 0.05)
 })
 
@@ -43,6 +41,8 @@ function audio() {
       // trình duyệt không hỗ trợ
     }
     ctx = new AC()
+    // iPhone treo context khi ra nền / có cuộc gọi: nút ▶ / ‖ phải biết nhạc đã im
+    ctx.onstatechange = syncPlaying
     master = ctx.createGain()
     master.gain.value = FX_LEVEL
     master.connect(ctx.destination)
@@ -59,6 +59,7 @@ function audio() {
     delay.connect(wet).connect(master)
     echo = delay
   }
+  clearTimeout(idleTimer)
   // Chưa có cú bấm thì trình duyệt có thể từ chối resume: bỏ qua, lần bấm sau thử lại
   if (ctx.state === 'suspended') ctx.resume()?.catch?.(() => {})
   return ctx
@@ -153,12 +154,14 @@ export function startAmbient() {
   timer = setTimeout(twinkle, 1500)
 
   ambient = { bus, nodes: [...oscs, lfo], timer: () => timer }
+  syncPlaying()
 }
 
 export function stopAmbient() {
   if (!ambient || !ctx) return
   const { bus, nodes, timer } = ambient
   ambient = null
+  syncPlaying()
   clearTimeout(timer())
   const t = ctx.currentTime
   bus.gain.cancelScheduledValues(t)
@@ -180,6 +183,76 @@ export function playPandaTalk() {
 export function playFocus() {
   if (!fx() || !audio()) return
   ;[1046.5, 1318.5, 1568, 2093].forEach((f, i) => note(f, { at: i * 0.07, dur: 0.5, type: 'triangle', gain: 0.07, wet: true }))
+}
+
+// ===== Trạng thái nhạc nền THẬT (nút ▶ / ‖ trong chế độ ngắm vũ trụ đọc ở đây) =====
+// Ba nguồn: file mp3 (<audio> qua Web Audio), YouTube (components/SpaceMusic đăng ký qua registerExternalMusic), tiếng vũ trụ tổng hợp.
+// "Đang phát" = <audio> chưa pause hoặc tiếng tổng hợp đang chạy, khi AudioContext 'running'; hoặc YouTube báo PLAYING.
+let playing = false
+let ytPlaying = false
+let external = null // { play, pause } của trình phát YouTube đang mở
+const playListeners = new Set()
+function syncPlaying() {
+  const running = ctx?.state === 'running'
+  const next = ytPlaying || (running && ((!!music && !music.el.paused && !music.stopping) || !!ambient))
+  if (next === playing) return
+  playing = next
+  playListeners.forEach((f) => f())
+}
+const subscribePlaying = (fn) => {
+  playListeners.add(fn)
+  return () => playListeners.delete(fn)
+}
+export const isMusicPlaying = () => playing
+export const useMusicPlaying = () => useSyncExternalStore(subscribePlaying, isMusicPlaying, isMusicPlaying)
+
+// SpaceMusic gọi khi trình phát YouTube sẵn sàng; hàm trả về dùng khi gỡ trình phát
+export function registerExternalMusic(ctrl) {
+  external = ctrl
+  return () => {
+    if (external !== ctrl) return
+    external = null
+    ytPlaying = false
+    syncPlaying()
+  }
+}
+export function setExternalPlaying(value) {
+  ytPlaying = value
+  syncPlaying()
+}
+// Phải gọi trong cú bấm (nút ▶ / nút loa) để điện thoại cho phát
+export const playExternalMusic = () => external?.play()
+
+// Dừng mọi nguồn nhạc nền (mp3 / YouTube giữ vị trí bài). fade = giây giảm dần, 0 = dừng ngay
+export function pauseAllMusic(fade) {
+  stopMusic(fade)
+  stopAmbient()
+  external?.pause()
+}
+
+// Đóng chế độ ngắm vũ trụ: hết tiếng thì treo AudioContext (vòng vang + bus vẫn tốn CPU dù im lặng)
+let idleTimer = 0
+export function releaseAudio() {
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    if (ctx && !ambient && (!music || music.el.paused)) ctx.suspend?.()?.catch?.(() => {})
+  }, 1200)
+}
+
+// Điện thoại / máy tính bảng (màn cảm ứng, không chuột): ra nền thì dừng nhạc. Máy tính: nhạc vẫn phát khi sang tab / app khác
+const pausesInBackground = () => !!window.matchMedia?.('(hover: none) and (pointer: coarse)').matches
+// Lúc này được tự phát / tự lặp lại không (tab đang hiện, hoặc máy tính cho phát nền)
+export const canPlayNow = () => !document.hidden || !pausesInBackground()
+
+// Điện thoại ra nền (chuyển app, khóa máy): dừng nhạc ngay + treo AudioContext. Quay lại KHÔNG tự phát:
+// điện thoại thường chặn, nút ▶ cho người dùng phát tiếp bằng một cú bấm.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden || !pausesInBackground()) return
+    pauseAllMusic(0)
+    clearTimeout(idleTimer)
+    if (ctx?.state === 'running') ctx.suspend?.()?.catch?.(() => {})
+  })
 }
 
 // ===== Nhạc nền từ file trong app (public/audio/space-music.mp3) =====
@@ -212,8 +285,12 @@ export function startMusic() {
     ctx.createMediaElementSource(el).connect(gain).connect(musicBus)
     el.addEventListener('error', () => setMusicStatus('missing'))
     el.addEventListener('playing', () => setMusicStatus('playing'))
-    music = { el, gain }
+    ;['play', 'playing', 'pause', 'ended', 'error'].forEach((ev) => el.addEventListener(ev, syncPlaying))
+    music = { el, gain, stopping: false, pauseTimer: 0 }
   }
+  // Bấm phát lại trong lúc đang giảm dần để dừng: hủy lệnh dừng cũ (trước đây có thể pause nhầm bài vừa phát lại)
+  clearTimeout(music.pauseTimer)
+  music.stopping = false
   const t = ctx.currentTime
   music.gain.gain.cancelScheduledValues(t)
   music.gain.gain.setValueAtTime(Math.max(music.gain.gain.value, 0.0001), t)
@@ -221,17 +298,25 @@ export function startMusic() {
   music.el.play().catch((err) => {
     // NotAllowedError = bị chặn tự phát (hiếm khi xảy ra vì đã gọi trong cú bấm); lỗi khác = không có file
     if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') setMusicStatus('missing')
+    syncPlaying()
   })
+  syncPlaying()
 }
 
-export function stopMusic() {
+// fade: giây giảm dần trước khi pause (mặc định 0.8); 0 = pause ngay (ra nền: hẹn giờ bị trình duyệt hoãn)
+export function stopMusic(fade = 0.8) {
   if (!music || !ctx) return
   const { el, gain } = music
+  clearTimeout(music.pauseTimer)
+  music.stopping = true
+  syncPlaying()
+  if (!fade) {
+    el.pause()
+    return
+  }
   const t = ctx.currentTime
   gain.gain.cancelScheduledValues(t)
   gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t)
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.8)
-  setTimeout(() => {
-    if (gain.gain.value < 0.01) el.pause()
-  }, 850)
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + fade)
+  music.pauseTimer = setTimeout(() => el.pause(), fade * 1000 + 50)
 }

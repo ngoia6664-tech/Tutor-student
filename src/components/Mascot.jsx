@@ -84,7 +84,13 @@ async function reminder(profile) {
   return null
 }
 
+// Tắt "Linh vật Panda" (Cài đặt): không vẽ gì và không chạy gì (timer, lắng nghe sự kiện gỡ hết theo component).
+// Khác "Cất gấu" vẫn để nút nhỏ gọi lại.
 export default function Mascot() {
+  return useSettings().mascot ? <MascotBody /> : null
+}
+
+function MascotBody() {
   const { profile } = useAuth()
   const [hidden, setHidden] = useState(readHidden)
   const [mood, setMoodState] = useState('idle')
@@ -133,7 +139,12 @@ export default function Mascot() {
 
   // 30 giây không thao tác thì buồn ngủ; thao tác lại thì tỉnh
   useEffect(() => {
+    let last = 0
     const wake = () => {
+      // Cuộn bắn sự kiện liên tục: đặt lại hẹn giờ tối đa 1 lần/giây (trừ khi gấu đang ngủ thì tỉnh ngay)
+      const now = Date.now()
+      if (now - last < 1000 && moodRef.current !== 'sleep') return
+      last = now
       clearTimeout(timers.current.sleep)
       sleepy.current = false
       if (moodRef.current === 'sleep') setMood('idle')
@@ -154,11 +165,13 @@ export default function Mascot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Rảnh thì cứ ~10 giây làm một trò
+  // Rảnh thì cứ ~10 giây làm một trò. Không chạy khi animation tắt / gấu đã cất;
+  // bỏ lượt khi tab ẩn hoặc đang ngắm vũ trụ (app bị che, không ai nhìn)
   useEffect(() => {
-    if (stillMascot) return
+    if (stillMascot || hidden) return
     const id = setInterval(() => {
       if (moodRef.current !== 'idle' || studyingRef.current) return
+      if (document.hidden || document.documentElement.classList.contains('space-exploring')) return
       const a = pickActivity()
       setMood(a.mood)
       timers.current.activity = setTimeout(() => {
@@ -170,7 +183,7 @@ export default function Mascot() {
     }, ACTIVITY_EVERY)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stillMascot])
+  }, [stillMascot, hidden])
 
   // Vừa tắt animation khi gấu đang dở trò: về ngồi yên
   useEffect(() => {
@@ -218,9 +231,6 @@ export default function Mascot() {
     rest()
   }
 
-  // Tắt linh vật trong Cài đặt: không vẽ gì (khác "Cất gấu" vẫn để nút nhỏ gọi lại)
-  if (!settings.mascot) return null
-
   if (hidden) {
     return (
       <button type="button" className="mascot-restore" onClick={show} aria-label="Gọi Giáo sư Gấu Trúc" title="Gọi Giáo sư Gấu Trúc">
@@ -244,14 +254,14 @@ export default function Mascot() {
         <div key={bubble.id} className="mascot-board" role="status">
           <div className="mascot-board-title">Gấu Trúc giảng bài</div>
           <p className="mascot-board-text">
-            <Typed text={bubble.text} instant={reduceMotion} />
+            <Typed text={bubble.text} instant={stillMascot} />
           </p>
           <BubbleActions onClose={closeBubble} onHide={hide} />
         </div>
       )}
       {bubble?.kind === 'speech' && (
         <div key={bubble.id} className="mascot-speech" role="status">
-          <Typed text={bubble.text} instant={reduceMotion} />
+          <Typed text={bubble.text} instant={stillMascot} />
           <BubbleActions onClose={closeBubble} onHide={hide} />
         </div>
       )}
@@ -277,14 +287,15 @@ export default function Mascot() {
   )
 }
 
-// Chữ hiện dần như đang viết phấn
+// Chữ hiện dần như đang viết phấn (animation gấu tắt / giảm chuyển động: hiện ngay, không chạy hẹn giờ)
 function Typed({ text, instant }) {
-  const [n, setN] = useState(instant ? text.length : 0)
+  const [typed, setN] = useState(instant ? text.length : 0)
   useEffect(() => {
     if (instant) return
     const id = setInterval(() => setN((k) => (k >= text.length ? (clearInterval(id), k) : k + 1)), 28)
     return () => clearInterval(id)
   }, [text, instant])
+  const n = instant ? text.length : typed
   return (
     <>
       {text.slice(0, n)}

@@ -3,126 +3,95 @@
 > Ghi đè mỗi ca, không giữ lịch sử dài hạn (lịch sử xem `git log`).
 
 ## Last task
-Ca 22/10/2026 gồm 2 task, cả hai chưa QA:
-1. **Phân trang bài giảng** (mục ngay dưới đây).
-2. **Cài đặt (Settings)**: chế độ hiệu năng, hình ảnh, âm thanh, lưu trên máy (từ mục "Files changed" trở xuống).
+Ca 22/10/2026 (sau commit `e05cf05`): **tối ưu hiệu năng (mobile / máy yếu)** + **nút nhạc nền ▶ / ‖**. Không thêm chức năng khác,
+không đổi schema / dữ liệu / bài giảng / bài tập / chấm điểm / timer bài thi.
 
 ## Status
-DONE (chờ Codex QA)
-
----
-
-# Task 1 — Phân trang bài giảng
+DONE (chờ Codex QA). Chưa commit.
 
 ## Files changed
-- `src/components/LessonView.jsx`: `PAGE_BREAK = '<!-- trang -->'`; `splitLesson` trả thêm `pages`, `marked`; `LessonBody` có chế độ `paged`;
-  thanh chuyển trang `Pager` (Trước / chọn trang / Sau, ở trên và dưới); `LessonView` đọc/ghi `?xem=trang|ca-bai&trang=n` (replace, không thêm lịch sử).
-- `src/lib/importTutorLesson.js`: `buildLessonMd` gom mục theo `page` → mỗi trang mở đầu bằng `PAGE_BREAK`; "Tóm tắt 1 phút" và "Phương pháp giải"
-  là trang riêng; `intro` của mục → `> **Đặt vấn đề:** ...`; `theory.plan` dạng mảng → khung "Nội dung bài học" đánh số (trước đây hiện "a,b,c").
-- `src/pages/tutor/LessonEditor.jsx`: gợi ý dòng `<!-- trang -->` trong ô soạn.
-- `src/styles/content.css`: `.lesson-meta`, `.lesson-pager`, `.lesson-pager-select`, `.lesson-page-divider`.
-
-## What was implemented
-- **Không đổi cơ sở dữ liệu / schema.** Dấu trang nằm trong `content_md`; bài cũ không bị sửa.
-- Bài **có dấu trang** (nhập JSON có `page`): mặc định xem từng trang, nút "Xem cả bài" để xem liền.
-- Bài **cũ** (không dấu): mặc định xem cả bài như trước; nút "Xem theo trang" → mỗi mục `##` là một trang. Bài chỉ 1 mục: không có nút.
-- Phần mở đầu (dòng thông tin + kế hoạch) chỉ hiện ở trang 1. `?trang=` sai/quá lớn → kẹp về trang hợp lệ.
-- Xem trước khi nhập JSON / khi soạn bài: hiện cả bài kèm vạch "TRANG n" để gia sư thấy cách chia.
-- File JSON không có `page` ở mục nào → không chèn dấu (giữ nguyên cách cũ). Mục thiếu `page` đi theo trang của mục ngay trước.
-
-## Tests performed
-- `npm run build`: PASS.
-- Chrome headless (trang tạm, đã xóa) với bản rút gọn file mẫu "Chủ đề 1 – Cấu trúc của chất" (6 mục page 1–6, plan mảng, intro, hình base64)
-  + một bài cũ 3 mục: 7 dấu trang (6 + tóm tắt); trang 1 có khung kế hoạch, Sau/chọn trang/Trước đổi đúng, nút Sau khóa ở trang cuối,
-  `?trang=99` → trang 7; "Xem cả bài" hiện đủ 7 mục + vạch trang; bài cũ mặc định cả bài, bật theo trang chạy đúng; không lộ chữ `<!--`;
-  360px không cuộn ngang; không lỗi console.
-- **Chưa test**: nhập thật qua trang Dán JSON + lưu Supabase, trang học sinh thật, file mẫu đầy đủ (ảnh lớn).
-
-## Needs QA (task 1)
-1. Dán file mẫu đầy đủ ở `/tutor/import` → xem trước có vạch trang → lưu → mở ở gia sư và học sinh: 7 trang, chuyển trang, tải lại giữ trang.
-2. Bài giảng cũ (đã có trên Supabase): hiển thị **y như trước**; "Xem theo trang" / "Xem cả bài" đổi đúng; nút quay lại trình duyệt.
-3. Sửa bài mới ở LessonEditor rồi lưu: dấu `<!-- trang -->` còn nguyên, hình nhúng không mất. Tự thêm dấu vào một bài cũ → thành bài phân trang.
-4. Điện thoại (360/390, xoay ngang): thanh chuyển trang, ô chọn trang tên dài.
-5. File JSON cũ không có `page`: nhập vẫn như trước (không phân trang).
-
----
-
-# Task 2 — Cài đặt (Settings)
-
-## Files changed
-- **Mới** `src/lib/settings.js` — store cài đặt duy nhất (`useSyncExternalStore`, giống `studyLock`/`theme`), lưu localStorage
-  `app-settings` (JSON), làm sạch dữ liệu hỏng, đọc giá trị cũ, preset hiệu năng, gắn cờ `data-static-bg` / `data-still-mascot` lên `<html>`.
-- **Mới** `src/components/SettingsPanel.jsx` — bảng Cài đặt (lazy, portal), mở từ nút bánh răng ở header.
-- **Mới** `src/styles/settings.css` — luật tắt animation theo cờ + giao diện bảng (đã `@import` trong `index.css`).
-- `src/lib/spaceSound.js` — bỏ key riêng `space-sound` / `space-volume`, đọc từ store; tách bus **hiệu ứng** (mức cố định như cũ)
-  và bus **nhạc nền** (theo âm lượng); `ctx.resume()` bắt lỗi khi bị chặn.
-- `src/components/SpaceExplorer.jsx` — nút loa / thanh âm lượng đọc store (`useSettings`); thanh là "Âm lượng nhạc nền".
-- `src/components/Mascot.jsx` — tắt linh vật → không render; tắt animation → không đi dạo / leo / lăn (dừng trò đang dở).
-- `src/components/SpaceBackdrop.jsx` — nền tĩnh → không cập nhật góc nhìn theo cuộn.
-- `src/lib/celebrate.js` — tắt ăn mừng → không pháo giấy, gấu nói (`talk`) thay vì nhảy (`cheer`).
-- `src/components/Layout.jsx` — nút bánh răng + lazy `SettingsPanel`; tên app bọc `.brand-text`.
-- `src/components/Icon.jsx` — icon `settings` (bánh răng).
-- `src/styles/layout.css`, `src/styles/mobile.css` — header ≤ 420px: nút tròn 34px, cụm nút không co, tên app rút gọn "…".
+- `src/lib/spaceSound.js` — nguồn sự thật cho trạng thái nhạc nền (`useMusicPlaying`, `isMusicPlaying`), `pauseAllMusic(fade)`,
+  `registerExternalMusic` / `setExternalPlaying` / `playExternalMusic` (YouTube), `releaseAudio()`, listener `visibilitychange` cấp module (1 cái duy nhất);
+  `stopMusic(fade)` có hủy lệnh dừng cũ; `ctx.onstatechange` cập nhật trạng thái.
+- `src/components/SpaceMusic.jsx` — bỏ prop `muted` + nút "▶ Phát nhạc" riêng; prop `enabled`; báo trạng thái PLAYING thật; đăng ký play/pause với spaceSound.
+- `src/components/SpaceExplorer.jsx` — nút ▶ / ‖ (`.music-toggle`), `playMusic()` theo nguồn (file / YouTube / tổng hợp), thoát thì `pauseAllMusic()` + `releaseAudio()`.
+- `src/components/Mascot.jsx` — tách `Mascot` (vỏ) / `MascotBody`; throttle sự kiện cuộn; trò rảnh bỏ lượt khi tab ẩn / đang ngắm vũ trụ, không chạy khi đã "Cất gấu";
+  animation tắt → chữ bong bóng hiện ngay (không hẹn giờ 28ms).
+- `src/lib/celebrate.js` — tab ẩn thì không tạo pháo giấy.
+- `src/components/Icon.jsx` — icon `resume` (▶), `pause` (‖).
+- `src/styles/explorer.css` — style `.music-toggle` (vùng chạm nới rộng); dừng animation CSS của `.app` khi bị explorer che; sửa comment phần nhạc YouTube.
 - `CLAUDE.md`, `CURRENT_STATE.md` — cập nhật bản đồ / trạng thái.
 
-## What was implemented
-| Nhóm | Cài đặt | Mặc định | Tác dụng |
-|---|---|---|---|
-| Hiệu năng | Đầy đủ / Tối ưu | Đầy đủ | Preset: Tối ưu = tắt Background động + Animation Panda + Hiệu ứng ăn mừng. Không đụng âm thanh. Đổi lẻ một mục → hiện "Đang tùy chỉnh" (chế độ suy ra, không lưu riêng). |
-| Hình ảnh | Background động | Bật | Tắt: sao / hành tinh / Mặt Trăng đứng yên, ẩn lấp lánh + sao băng + thị sai cuộn. Nền vẫn hiện (không trống). **Chế độ ngắm vũ trụ vẫn chuyển động** (`:not(.space-exploring)`). |
-| | Linh vật Panda | Bật | Tắt: không render (không còn nút "gọi gấu"; padding cuối trang tự bỏ vì `body:has(.mascot)`). "Cất gấu" cũ vẫn giữ nguyên. |
-| | Animation của Panda | Bật | Tắt: không đi dạo / leo / lăn, tắt mọi animation CSS của gấu. Mờ đi khi linh vật tắt. |
-| | Hiệu ứng ăn mừng | Bật | Tắt: không pháo giấy, gấu chỉ nói. Nộp bài / chấm điểm không đổi. |
-| Âm thanh | Hiệu ứng âm thanh | Bật | Tiếng gấu, "vút" kính viễn vọng, chuông hành tinh. |
-| | Nhạc nền | Bật | Nhạc mp3 / YouTube / tiếng vũ trụ tổng hợp trong chế độ ngắm vũ trụ. Tắt khi đang phát → dừng ngay. |
-| | Âm lượng nhạc nền | 60% | 0–100, chỉ áp cho nhạc (trước đây là âm lượng chung). |
+## Phần 1 — Hiệu năng: đã áp dụng
+Kết quả rà (không sửa vì đã đúng): nền vũ trụ là CSS thuần; tắt "Background động" → `animation: none` thật + gỡ listener cuộn/resize + rAF (đã có);
+trình duyệt tự dừng animation CSS / rAF khi tab ẩn. Pháo giấy: 70 phần tử, tự xóa sau 3,2 s, tắt "Ăn mừng" thì không tạo (đã có).
+Chế độ ngắm vũ trụ đã lazy-load: `SpaceExplorer` + `SpaceMusic` + `PlanetPortrait` + `explorer.css` là chunk riêng (~44 kB), chỉ tải khi bấm kính viễn vọng;
+YouTube API chỉ tải khi dùng nguồn YouTube.
 
-- Nút loa trong chế độ ngắm vũ trụ: "có tiếng" khi bật ít nhất một loại; bấm thì tắt / bật **cả hai** (đồng bộ với Cài đặt).
-- **Khôi phục mặc định**: bấm lần 1 đổi chữ "Bấm lần nữa để khôi phục" (3 giây), bấm lần 2 mới reset + lưu.
-- **Người dùng cũ**: chưa có `app-settings` thì đọc `space-sound='off'` → tắt hiệu ứng + nhạc; `space-volume` → âm lượng nhạc. Key cũ không bị xóa.
-- **Dữ liệu hỏng** (JSON lỗi, sai kiểu, âm lượng ngoài 0–100, localStorage ném lỗi) → mặc định cho từng mục, không crash.
-- **prefers-reduced-motion**: không đổi cài đặt người dùng; nền đứng yên (đã có), không pháo giấy (đã có), gấu không đi dạo (đã có) +
-  **mới**: tắt animation CSS của gấu; bảng Cài đặt hiện ghi chú "Thiết bị đang bật Giảm chuyển động".
-- Autoplay: nhạc chỉ bắt đầu trong cú bấm nút kính viễn vọng / nút loa như cũ; bật "Nhạc nền" trong Cài đặt **không** tự phát.
-- Bảng Cài đặt là bảng nổi (không đổi trang) → mở khi đang làm bài không mất bài. Desktop: hộp giữa màn hình; ≤ 520px: trượt từ đáy.
-  Đóng: nút ×, bấm nền tối, phím Esc.
+Đã sửa:
+| Chỗ | Trước | Sau |
+|---|---|---|
+| Linh vật tắt | Component trả `null` nhưng hook vẫn chạy: `setInterval` 10 s (setState → render), 3 listener `pointerdown/keydown/scroll`, hẹn giờ ngủ 30 s, listener sự kiện `mascot` | Component con bị gỡ → mọi timer + listener được cleanup |
+| Gấu đã "Cất gấu" | Interval trò rảnh vẫn chạy | Không chạy |
+| Cuộn trang | Mỗi sự kiện `scroll` `clearTimeout` + `setTimeout` | Tối đa 1 lần/giây (gấu đang ngủ thì tỉnh ngay) |
+| Tab ẩn / đang ngắm vũ trụ | Gấu vẫn đổi trò (render) | Bỏ lượt |
+| Animation gấu tắt | Chữ bong bóng vẫn chạy interval 28 ms | Hiện ngay |
+| Đang ngắm vũ trụ | Animation CSS của app bị che (gấu thở, chớp mắt, skeleton...) vẫn tính | `animation-play-state: paused` |
+| Đóng kính viễn vọng | AudioContext (vòng vang có phản hồi) chạy mãi sau khi đóng | `releaseAudio()`: im lặng 1,2 s thì `ctx.suspend()`; mở lại tự `resume` trong cú bấm |
+| Tab/app ra nền | Nhạc mp3 / YouTube / tiếng tổng hợp vẫn phát, AudioContext chạy | **Điện thoại / máy tính bảng** (`hover: none` + `pointer: coarse`): dừng ngay (giữ vị trí) + treo AudioContext. **Máy tính**: theo yêu cầu Owner, nhạc vẫn phát khi sang tab / app khác (Zalo...) |
+| Bấm phát lại khi đang fade dừng | Hẹn giờ dừng cũ (850 ms) có thể pause nhầm bài vừa phát lại | Hủy hẹn giờ cũ |
+| Tab ẩn khi `celebrate()` | Tạo 70 hạt | Không tạo |
+
+Chế độ **Tối ưu** (preset không đổi): nền đứng yên (không animation, không listener cuộn), gấu ngồi yên (không interval trò, không animation CSS,
+filter drop-shadow chỉ vẽ một lần), không pháo giấy, chữ bong bóng hiện ngay. **Đầy đủ**: hình ảnh y như trước.
+`prefers-reduced-motion`: giữ như cũ (nền đứng, không pháo, gấu không đi dạo / không animation) + chữ bong bóng hiện ngay.
+
+## Phần 2 — Nút nhạc ▶ / ‖
+- **Vị trí**: thanh nút chế độ ngắm vũ trụ, bên trái nút loa (nhạc nền chỉ tồn tại trong chế độ này; đóng explorer là nhạc dừng như trước).
+  Nút tròn 38px như các nút khác, vùng chạm ~50×46px (`::after`), không chữ / không tooltip (chỉ `aria-label` cho trình đọc màn hình).
+- **Quản lý ở** `lib/spaceSound.js`: `playing` = `<audio>` mp3 chưa pause **hoặc** tiếng tổng hợp đang chạy (khi AudioContext `running`) **hoặc** YouTube báo `PLAYING`.
+  Cập nhật từ sự kiện thật (`play/playing/pause/ended/error`, `ctx.onstatechange`, `onStateChange` của YouTube). YouTube `BUFFERING` giữ nguyên icon.
+- **Bấm ‖**: `pauseAllMusic(0.15)` — mp3 giảm 0,15 s rồi `pause()` (giữ vị trí), YouTube `pauseVideo()` (giữ vị trí), tổng hợp dừng. Icon → ▶ ngay.
+- **Bấm ▶**: phát trong chính cú bấm theo nguồn hiện tại: `startMusic()` / `playExternalMusic()` (YouTube `playVideo`) / `startAmbient()`.
+- **Autoplay bị chặn**: không bypass; trạng thái không phải "đang phát" → hiện ▶. Nút "▶ Phát nhạc" riêng của YouTube đã bỏ (nút ▶ thay thế).
+- **Ra nền**: máy tính → nhạc tiếp tục phát (YouTube hết bài vẫn tự lặp). Điện thoại → dừng nhạc + treo AudioContext; quay lại không tự phát, ▶ phát tiếp.
+  Phân biệt bằng `pausesInBackground()` / `canPlayNow()` trong `spaceSound.js` (media query, laptop màn cảm ứng có chuột vẫn tính là máy tính).
+- **Cài đặt "Nhạc nền" OFF**: nhạc dừng (cả YouTube), nút ▶ / ‖ ẩn. Bật lại: không tự phát (như cũ); nút loa trong explorer bật lại thì phát trong cú bấm.
+- Nút ▶ / ‖ **không** đụng hiệu ứng âm thanh. Nút loa giữ hành vi cũ (bật / tắt cả hai).
+- **Chống trùng**: một `<audio>` duy nhất (module-level), một listener `visibilitychange` cấp module, một trình phát YouTube gắn với component explorer
+  (gỡ → `destroy()` + hủy đăng ký); đổi route không tạo player (explorer nằm trong Layout, nhạc chỉ sống khi explorer mở).
 
 ## Tests performed
-- `npm run build`: PASS.
-- Test logic Node (script tạm, không commit): store — mặc định, JSON hỏng, sai kiểu, âm lượng 999 → 100, `null`, người dùng cũ,
-  preset lite / custom, lưu + nạp lại, reset, localStorage ném lỗi: PASS. Âm thanh (AudioContext giả) — tắt cả hai không tạo
-  AudioContext; chỉ hiệu ứng thì nhạc không phát; `play()` bị chặn `NotAllowedError` + `resume()` bị từ chối → không throw,
-  không unhandled rejection, trạng thái giữ `idle`; tắt nhạc khi đang phát không lỗi: PASS.
-- Chrome headless (Layout thật, đăng nhập giả bằng alias Vite, file tạm đã xóa):
-  - Desktop 1280×800 sáng / tối: mở bảng, Tối ưu → cờ `<html>` bật, `animation-name: none` cho sao / quỹ đạo / gấu;
-    đổi lẻ → "Đang tùy chỉnh"; tắt Panda → không còn `.mascot`; tắt nhạc → thanh âm lượng khóa; **reload giữ nguyên**;
-    reset 2 bước; Esc đóng; ăn mừng bật = pháo giấy + `is-cheer`, tắt = không pháo + `is-talk`; JSON hỏng → mặc định.
-  - Nền tĩnh + mở kính viễn vọng: quỹ đạo quay lại trong explorer, đóng thì đứng yên lại; nút loa explorer cập nhật `app-settings`; thanh âm lượng lưu.
-  - Giả lập `prefers-reduced-motion: reduce`: gấu không animation, không pháo giấy, có ghi chú.
-  - Viewport 320 / 360 / 390 (mobile): không cuộn ngang; header vừa khít kể cả có nút chuông (giả lập); bảng trượt từ đáy, cuộn được tới nút khôi phục.
-  - Không có lỗi / cảnh báo console.
-- **Chưa test**: điện thoại thật, Safari / iPhone, luồng nộp bài thật với Supabase, nghe âm thanh thật.
+- `npm run build`: PASS (SpaceExplorer chunk riêng 43,8 kB).
+- Test logic Node (script tạm ở scratchpad, không commit; AudioContext + `<audio>` giả): mp3 phát → ‖; ‖ → ▶ ngay; phát lại trong lúc fade không bị pause nhầm;
+  ẩn tab → dừng; quay lại không tự phát; ▶ sau khi quay lại phát được; Nhạc OFF → dừng + `startMusic` không phát; bật lại không tự phát;
+  autoplay bị chặn (`NotAllowedError`) → ▶, không throw; YouTube PLAYING/pause/gỡ; tổng hợp phát/dừng; sau `releaseAudio` bấm ▶ resume được: **16/16 PASS**.
+- **Chưa test**: trình duyệt thật, điện thoại thật, PWA đã cài, nghe tiếng thật, YouTube thật.
 
-## Known issues
-- Tắt Linh vật Panda thì lời gấu từ trang khác (vd. "Nộp bài xong rồi! … bấm 🔭") không hiện (không có ai nói). Nộp / chấm vẫn bình thường.
-- Harness `AI/CODEX/qa-logic.mjs` phần đầu sẽ FAIL vì kiểm tra key cũ `space-volume` / `space-sound` — cần cập nhật sang `app-settings`.
-- Các vấn đề cũ: xem `CURRENT_STATE.md`.
+## Known issues / giới hạn trình duyệt
+- iPhone: YouTube iframe có thể không nhận `playVideo()` gọi qua postMessage như một cú bấm → lần đầu có thể phải bấm ▶ 2 lần (hành vi YouTube, không hack).
+  Âm lượng không tác dụng với YouTube trên iPhone (cũ).
+- iOS có thể tự dừng `<audio>` / treo AudioContext khi có cuộc gọi / mở Control Center; trạng thái nút theo sự kiện thật nên sẽ về ▶.
+- Một số trình duyệt không bắn `pause` của YouTube khi hệ điều hành tự dừng tiếng → icon có thể lệch tới lần bấm sau (bấm ‖ vẫn an toàn: thành ▶).
+- Chưa có file `public/audio/space-music.mp3` → nguồn thực tế là YouTube (cũ).
+- Tắt Linh vật thì lời gấu từ trang khác không hiện (cũ).
 
 ## Needs QA
-1. **Desktop** (Chrome, Edge, Firefox): mở / đóng bảng (×, nền, Esc), từng công tắc, preset Đầy đủ / Tối ưu / "Đang tùy chỉnh", khôi phục mặc định 2 bước, giao diện sáng + tối.
-2. **Android / mobile viewport** (320, 360, 390, 414 + xoay ngang): header không tràn (gia sư có thêm cờ báo lỗi; học sinh có chuông),
-   bảng trượt từ đáy, cuộn được, công tắc dễ bấm, thanh âm lượng kéo được.
-3. **iPhone / Safari** nếu có thể: bảng (safe-area đáy), `dvh`; nhạc nền chỉ phát sau cú bấm kính viễn vọng; tắt "Nhạc nền" khi đang
-   ngắm → dừng; âm lượng nhạc đổi được (mp3 qua Web Audio; YouTube vẫn không chỉnh được trên iPhone — vấn đề cũ).
-4. **Persistence**: reload, đóng / mở lại tab, PWA đã cài; người dùng cũ có `space-sound=off` / `space-volume=35` → mở app lần đầu sau cập nhật
-   phải ra Hiệu ứng tắt, Nhạc tắt, Âm lượng 35%. `app-settings` hỏng → mặc định, không crash.
-5. **Performance mode "Tối ưu"**: nền đứng yên, gấu ngồi yên, không pháo giấy; đo cảm nhận cuộn / CPU trên máy yếu nếu có.
-6. **Tương tác Panda / nền / âm thanh / kính viễn vọng**: nền tĩnh + mở kính viễn vọng (hành tinh phải quay, bấm hành tinh được, đóng thì đứng yên lại);
-   Panda tắt + kính viễn vọng (gấu riêng của explorer vẫn có); khóa kính viễn vọng khi đang làm bài vẫn đúng (Panda tắt thì không có lời nhắc, nút vẫn khóa);
-   nút loa explorer ⇄ công tắc trong Cài đặt đồng bộ; hiệu ứng tắt nhưng nhạc bật (và ngược lại).
-7. **Regression học tập**: làm + nộp bài (thường và đề THPT tính giờ), xem kết quả, Ôn câu sai (ăn mừng bật / tắt), bài giảng, thư viện, gia sư soạn / chấm —
-   ở cả chế độ Đầy đủ và Tối ưu. Mở Cài đặt khi đang làm bài không được mất câu trả lời.
-8. Cập nhật `AI/CODEX/qa-logic.mjs` theo key `app-settings` rồi chạy lại (phần YouTube autoplay không đổi).
+1. **Đầy đủ vs Tối ưu**: Đầy đủ nhìn y như trước; Tối ưu nền đứng, gấu ngồi yên, chữ bong bóng hiện ngay, không pháo giấy. DevTools Performance: Tối ưu ít khung hình/scripting hơn rõ.
+2. **Bật/tắt Background động**: animation dừng thật, cuộn không còn đổi góc hệ Mặt Trời; mở kính viễn vọng vẫn quay.
+3. **Bật/tắt Panda và Animation Panda**: tắt Panda → không còn `.mascot`, DevTools không còn interval/listener của gấu; tắt animation → gấu ngồi yên, không đi/leo/lăn; "Cất gấu" rồi gọi lại.
+4. **Celebration**: nộp bài / ôn đúng với Ăn mừng bật / tắt; hạt pháo giấy bị xóa khỏi DOM sau ~3 s; bấm liên tiếp không tồn đọng `.confetti`.
+5. **Mở / đóng Stargazing nhiều lần** (5–10 lần): không nhạc chồng, không iframe YouTube thừa (`.explorer-music-frame iframe` ≤ 1), gấu app không đổi trò khi đang ngắm,
+   sau khi đóng không còn tiếng; mở lại có nhạc.
+6. **Chuyển tab / app rồi quay lại** (đang phát): **máy tính** — nhạc vẫn phát khi sang tab khác / Zalo / thu nhỏ cửa sổ, quay lại icon vẫn ‖, không có 2 nguồn;
+   **điện thoại** — nhạc dừng khi ẩn, quay lại hiện ▶, bấm ▶ phát tiếp đúng vị trí (YouTube). iPad / laptop cảm ứng: ghi lại hành vi thực tế.
+7. **▶ / ‖ desktop** (Chrome, Edge, Firefox): icon khớp tiếng thật, bấm nhanh liên tục không lệch, tab ẩn hiện lại không lệch.
+8. **▶ / ‖ mobile** (Android Chrome, iPhone Safari): autoplay bị chặn → ▶, bấm là phát; khóa màn hình rồi mở lại; vùng chạm dễ bấm, không bấm nhầm nút loa; 320–414px không tràn.
+9. **Settings Music ON/OFF**: OFF → nhạc dừng, nút ▶ / ‖ ẩn; ON → nút hiện, không tự phát; hiệu ứng âm thanh vẫn độc lập (▶ / ‖ không tắt tiếng gấu / chuông).
+10. **Không duplicate music** ở mọi kịch bản trên, kể cả nút loa bật / tắt xen kẽ ▶ / ‖.
+11. **Không chạy ngầm bất thường**: DevTools (Performance monitor) sau khi đóng explorer / khi Panda tắt / tab ẩn.
+12. **Installed PWA** (Android, iPhone nếu có): ▶ / ‖, ra màn hình chính rồi mở lại.
+13. **Regression**: làm + nộp bài (thường + đề THPT tính giờ), kết quả, ôn câu sai, bài giảng — ở cả Đầy đủ và Tối ưu.
 
 ## Commit / branch
 Branch `main`, chưa commit.

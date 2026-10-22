@@ -6,16 +6,19 @@ import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
 import {
   getMusicStatus,
+  canPlayNow,
   onMusicStatus,
+  pauseAllMusic,
+  playExternalMusic,
   playFocus,
   playPandaTalk,
   playWhoosh,
+  releaseAudio,
   setSoundOn,
   setVolume,
   startAmbient,
   startMusic,
-  stopAmbient,
-  stopMusic,
+  useMusicPlaying,
 } from '../lib/spaceSound.js'
 import { useSettings } from '../lib/settings.js'
 import '../styles/explorer.css'
@@ -302,8 +305,9 @@ export default function SpaceExplorer({ onClose }) {
       space.removeEventListener('wheel', wheel)
       window.removeEventListener('keydown', key)
       root.classList.remove('space-exploring')
-      stopAmbient()
-      stopMusic()
+      // Thoát: tắt dần mọi nguồn nhạc (YouTube tự gỡ cùng component), rồi treo AudioContext khi đã im
+      pauseAllMusic()
+      releaseAudio()
       solar.style.setProperty('--tilt', saved.tilt)
       solar.style.setProperty('--turn', saved.turn)
       solar.style.removeProperty('--zoom')
@@ -335,11 +339,22 @@ export default function SpaceExplorer({ onClose }) {
   // → không có file thì 'youtube' → YouTube lỗi (chặn nhúng / mất mạng) thì 'synth' (tiếng vũ trụ tổng hợp)
   const [musicMode, setMusicMode] = useState(() => (getMusicStatus() === 'missing' ? 'youtube' : 'file'))
   useEffect(() => onMusicStatus((s) => s === 'missing' && setMusicMode((m) => (m === 'file' ? 'youtube' : m))), [])
+  // Nút ▶ / ‖: trạng thái lấy từ âm thanh thật (lib/spaceSound), không tự đoán → không lệch khi điện thoại tự dừng nhạc
+  const playing = useMusicPlaying()
+  // Gọi trong cú bấm: điện thoại chỉ cho phát tiếng bắt đầu từ thao tác người dùng
+  function playMusic() {
+    if (musicMode === 'file') startMusic()
+    else if (musicMode === 'youtube') playExternalMusic()
+    else startAmbient()
+  }
+  function toggleMusic() {
+    if (playing) pauseAllMusic(0.15)
+    else playMusic()
+  }
   function toggleSound() {
     setSoundOn(!sound)
     if (!sound) {
-      if (musicMode === 'file') startMusic()
-      if (musicMode === 'synth') startAmbient()
+      playMusic()
       playPandaTalk()
     }
   }
@@ -348,7 +363,7 @@ export default function SpaceExplorer({ onClose }) {
   }
   function musicFail() {
     setMusicMode('synth')
-    startAmbient()
+    if (canPlayNow()) startAmbient()
   }
   const [factIdx, setFactIdx] = useState(-1)
   const bubbleRef = useRef(null)
@@ -385,6 +400,12 @@ export default function SpaceExplorer({ onClose }) {
           <p className="explorer-hint">Kéo để xoay, lăn chuột hoặc chụm hai ngón để phóng to, bấm vào hành tinh để gấu giải thích.</p>
         </div>
         <div className="explorer-actions">
+          {/* Tắt "Nhạc nền" trong Cài đặt thì ẩn nút (không có gì để phát); nút này không đụng tới hiệu ứng âm thanh */}
+          {settings.music && (
+            <button type="button" className="btn btn-ghost theme-toggle music-toggle" onClick={toggleMusic} aria-pressed={playing} aria-label={playing ? 'Tạm dừng nhạc' : 'Phát nhạc'}>
+              <Icon name={playing ? 'pause' : 'resume'} />
+            </button>
+          )}
           <button type="button" className="btn btn-ghost theme-toggle" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Tắt âm thanh' : 'Bật âm thanh'} title={sound ? 'Tắt âm thanh' : 'Bật âm thanh'}>
             <Icon name={sound ? 'sound' : 'mute'} />
           </button>
@@ -407,7 +428,7 @@ export default function SpaceExplorer({ onClose }) {
         </div>
       </div>
 
-      {musicMode === 'youtube' && <SpaceMusic volume={volume} muted={!settings.music} onFail={musicFail} />}
+      {musicMode === 'youtube' && <SpaceMusic volume={volume} enabled={settings.music} onFail={musicFail} />}
 
       {/* Soi một hành tinh: phủ tối mọi thứ (z 100), chỉ gấu và chân dung hành tinh nổi lên trên (z 101) */}
       {b && (

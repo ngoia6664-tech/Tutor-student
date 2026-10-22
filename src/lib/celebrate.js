@@ -19,7 +19,8 @@ export function celebrate(text) {
 const COLORS = ['#a855f7', '#ec4899', '#facc15', '#22d3ee', '#4ade80']
 
 function confetti() {
-  if (prefersReducedMotion()) return
+  // Giảm chuyển động / tab đang ẩn (không ai xem): không tạo hạt
+  if (prefersReducedMotion() || document.hidden) return
   const box = document.createElement('div')
   box.className = 'confetti'
   box.setAttribute('aria-hidden', 'true')

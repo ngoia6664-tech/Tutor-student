@@ -14,6 +14,12 @@ html.space-exploring {
     opacity 0.35s ease,
     visibility 0s linear 0.35s;
 }
+/* App bị ẩn phía sau: dừng mọi animation CSS trong đó (gấu thở / chớp mắt, skeleton...) cho đỡ tính style mỗi khung hình */
+.space-exploring .app *,
+.space-exploring .app *::before,
+.space-exploring .app *::after {
+  animation-play-state: paused !important;
+}
 .space-exploring .space {
   z-index: 40;
   pointer-events: auto;
@@ -493,7 +499,21 @@ html.space-exploring {
   cursor: not-allowed;
 }
 
-/* Nhạc nền YouTube: trình phát ẩn hẳn (chỉ nghe tiếng). Nút "Phát nhạc" chỉ hiện khi trình duyệt chặn tự phát. */
+/* Nút nhạc nền ▶ / ‖: icon gọn như các nút tròn khác (38px), vùng chạm nới thêm (trên/dưới 6px, hai bên 4px < khe 8px
+   nên không lấn nút loa) cho dễ bấm trên điện thoại */
+.music-toggle {
+  position: relative;
+}
+.music-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+.music-toggle .icon {
+  fill: currentColor;
+}
+
+/* Nhạc nền YouTube: trình phát ẩn hẳn (chỉ nghe tiếng); phát / dừng bằng nút ▶ / ‖. */
 .explorer-music {
   position: absolute;
   right: 4.25rem;

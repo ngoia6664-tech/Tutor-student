@@ -39,7 +39,10 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   → `styles/settings.css`; bảng `components/SettingsPanel.jsx` mở từ nút bánh răng ở header) ·
   `spaceSound` âm thanh ngắm vũ trụ (Web Audio tổng hợp, bật/tắt + âm lượng nhạc lấy từ `settings`; bus hiệu ứng tách bus nhạc;
   nhạc nền: file `public/audio/space-music.mp3` qua Web Audio, `startMusic()` gọi ngay trong onClick nút kính viễn vọng (Layout)
-  vì iPhone chặn tự phát; không có file → YouTube ẩn `components/SpaceMusic.jsx` → lỗi nữa thì tiếng vũ trụ tổng hợp) · `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.
+  vì iPhone chặn tự phát; không có file → YouTube ẩn `components/SpaceMusic.jsx` → lỗi nữa thì tiếng vũ trụ tổng hợp;
+  trạng thái nhạc THẬT `useMusicPlaying()` (gộp 3 nguồn, YouTube báo qua `registerExternalMusic`/`setExternalPlaying`) cho nút ▶/‖ `.music-toggle`
+  trong SpaceExplorer; `pauseAllMusic()`; điện thoại ẩn tab → dừng nhạc + treo AudioContext, quay lại không tự phát (máy tính vẫn phát nền, `canPlayNow`); đóng explorer → `releaseAudio()`) ·
+  `reports` đếm báo lỗi · `assignments`/`lessons`/`students`/`submissions` truy vấn.
 - `src/components/` — `ExerciseBody` (hiển thị 1 câu theo loại), `ExamParts` (phần đề, phiếu trả lời, đồng hồ),
   `AnswerKey` (bảng đáp án gia sư), `TreePicker`/`ChapterSelect`/`LessonSelect` (ô chọn dạng cây),
   `TreeNav` (cây mục lục, nhớ nút mở), `FilterTree` (lọc theo cây qua URL `?lop=&mon=&cd=&ch=`),

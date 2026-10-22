@@ -15,7 +15,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Production / deployment
 - Deploy Vercel (SPA rewrite mọi đường dẫn về `index.html`), từ branch `main`.
-- Làm việc trực tiếp trên `main`; commit gần nhất `3066328`.
+- Làm việc trực tiếp trên `main`; commit gần nhất `e05cf05`.
 
 ## Main functional areas
 - **Gia sư:** danh sách / chi tiết học sinh, thư viện dạng cây (Lớp › Môn › Chuyên đề › Chương), soạn bài tập,
@@ -37,7 +37,8 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Current known issues
 - Nhạc nền ngắm vũ trụ: chưa có file `public/audio/space-music.mp3` → đang dùng YouTube ẩn (Interstellar). Trên iPhone
-  vẫn phải bấm "Phát nhạc" và thanh âm lượng không tác dụng với YouTube. Phát YouTube ẩn trái điều khoản YouTube.
+  vẫn phải bấm ▶ để phát và thanh âm lượng không tác dụng với YouTube. Phát YouTube ẩn trái điều khoản YouTube.
+- Máy tính: nhạc ngắm vũ trụ vẫn phát khi sang tab / app khác. Điện thoại: ra nền thì nhạc dừng có chủ đích; quay lại không tự phát, bấm ▶ để nghe tiếp.
 - Bấm hành tinh trên Android: đã sửa (commit `3066328`) nhưng chưa xác nhận trên máy thật.
 - Nút "Quay lại học" khi đang xem hành tinh chỉ đóng chi tiết (bấm lần nữa mới thoát): hành vi mong muốn, không phải bug.
 
@@ -45,11 +46,16 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Current priorities
 - QA phân trang bài giảng (nhập JSON mới, bài cũ hiển thị như trước).
-- QA chức năng Cài đặt (desktop, Android, iPhone, persistence, chế độ Tối ưu) — xem `AI/CLAUDE/HANDOFF.md`.
+- QA hiệu năng (Đầy đủ / Tối ưu) + nút nhạc ▶ / ‖ (desktop, mobile, PWA) — xem `AI/CLAUDE/HANDOFF.md`.
+- QA chức năng Cài đặt (desktop, Android, iPhone, persistence, chế độ Tối ưu).
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone).
 - Owner quyết định file nhạc nền (bản quyền) để bỏ phụ thuộc YouTube.
 
 ## Last meaningful change
+**Hiệu năng + nút nhạc ▶ / ‖** (22/10/2026, chưa commit, chờ QA): nút phát / tạm dừng nhạc nền trong chế độ ngắm vũ trụ, trạng thái
+lấy từ âm thanh thật (`lib/spaceSound.js` `useMusicPlaying`); điện thoại ẩn tab thì dừng nhạc + treo AudioContext (máy tính vẫn phát nền); tắt Linh vật thì gỡ hẳn timer / listener;
+gấu không chạy trò khi tab ẩn / đang ngắm vũ trụ; animation của app dừng khi bị explorer che.
+
 **Phân trang bài giảng** (22/10/2026, chưa commit): file JSON có `page` ở từng mục → dấu `<!-- trang -->` trong `content_md`,
 học sinh xem từng trang (`?trang=n`); bài cũ không đổi dữ liệu, mặc định xem cả bài, có nút "Xem theo trang". Không đổi schema.
 

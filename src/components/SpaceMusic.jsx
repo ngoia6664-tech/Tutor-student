@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { canPlayNow, registerExternalMusic, setExternalPlaying } from '../lib/spaceSound.js'
 
 // Nhạc nền chế độ ngắm vũ trụ: phát video YouTube qua IFrame API (nhạc có bản quyền nên chỉ nhúng, không tải về).
 // Trình phát ẩn (trong suốt, không bấm được), chỉ nghe tiếng; tự lặp lại. Lỗi / không có mạng → onFail (dùng âm thanh tổng hợp).
+// Phát / tạm dừng do nút ▶ / ‖ của SpaceExplorer (qua lib/spaceSound: registerExternalMusic); trạng thái thật báo về bằng setExternalPlaying.
+// Điện thoại chặn tự phát → trạng thái không phải PLAYING → nút hiện ▶ để người dùng tự bấm phát.
 const VIDEO = 'JuSsvM8B4Jc'
 
 let apiPromise = null
@@ -32,20 +35,22 @@ function loadApi() {
   return apiPromise
 }
 
-export default function SpaceMusic({ volume, muted, onFail }) {
+// enabled = Cài đặt "Nhạc nền" đang bật
+export default function SpaceMusic({ volume, enabled, onFail }) {
   const wrap = useRef(null)
   const player = useRef(null)
-  const [blocked, setBlocked] = useState(false) // trình duyệt chặn tự phát → cần bấm "Phát nhạc"
-  const latest = useRef({ volume, muted, onFail })
-  latest.current = { volume, muted, onFail }
+  const latest = useRef({ volume, enabled, onFail })
+  latest.current = { volume, enabled, onFail }
 
   useEffect(() => {
     let dead = false
-    let timer = 0
+    let unregister = () => {}
     // YouTube thay thế phần tử được giao bằng iframe: tạo div con thủ công để React không đụng tới
     const host = document.createElement('div')
     wrap.current.appendChild(host)
     const fail = () => !dead && latest.current.onFail?.()
+    // Chỉ tự phát khi nhạc bật và đang nhìn app (máy tính: phát cả khi ở tab khác; điện thoại ra nền thì để người dùng bấm ▶)
+    const autoplay = () => latest.current.enabled && canPlayNow()
 
     loadApi()
       .then((YT) => {
@@ -54,28 +59,28 @@ export default function SpaceMusic({ volume, muted, onFail }) {
           videoId: VIDEO,
           width: '200',
           height: '112',
-          // Đang tắt tiếng thì không tự phát (player khởi tạo bất đồng bộ, effect tắt tiếng chạy trước đó)
-          playerVars: { autoplay: latest.current.muted ? 0 : 1, loop: 1, playlist: VIDEO, playsinline: 1, rel: 0, controls: 0, disablekb: 1 },
+          playerVars: { autoplay: autoplay() ? 1 : 0, loop: 1, playlist: VIDEO, playsinline: 1, rel: 0, controls: 0, disablekb: 1 },
           events: {
             onReady: (e) => {
-              const { volume: v, muted: m } = latest.current
-              e.target.setVolume(v)
-              if (m) {
-                e.target.pauseVideo()
-                return
-              }
-              e.target.playVideo()
-              timer = setTimeout(() => {
-                if (!dead && !latest.current.muted && e.target.getPlayerState?.() !== YT.PlayerState.PLAYING) setBlocked(true)
-              }, 2500)
+              if (dead) return
+              const p = e.target
+              p.setVolume(latest.current.volume)
+              unregister = registerExternalMusic({ play: () => p.playVideo(), pause: () => p.pauseVideo() })
+              if (autoplay()) p.playVideo()
+              else p.pauseVideo()
             },
             onStateChange: (e) => {
-              if (e.data === YT.PlayerState.PLAYING) setBlocked(false)
+              if (dead) return
+              const S = YT.PlayerState
               // Lặp lại: loop + playlist đôi khi không ăn, hết bài thì tự tua về đầu
-              if (e.data === YT.PlayerState.ENDED && !latest.current.muted) {
+              if (e.data === S.ENDED && latest.current.enabled && canPlayNow()) {
                 e.target.seekTo(0)
                 e.target.playVideo()
+                return
               }
+              // Đang tải (BUFFERING) giữ nguyên trạng thái nút cho khỏi nhấp nháy
+              if (e.data === S.PLAYING) setExternalPlaying(true)
+              else if (e.data !== S.BUFFERING) setExternalPlaying(false)
             },
             onError: fail,
           },
@@ -85,30 +90,25 @@ export default function SpaceMusic({ volume, muted, onFail }) {
 
     return () => {
       dead = true
-      clearTimeout(timer)
+      unregister()
       player.current?.destroy?.()
       player.current = null
       host.remove()
     }
   }, [])
 
-  // Đổi âm lượng / tắt tiếng: tắt thì tạm dừng hẳn cho đỡ tốn mạng
   useEffect(() => {
-    const p = player.current
-    if (!p?.setVolume) return
-    p.setVolume(volume)
-    if (muted) p.pauseVideo()
-    else p.playVideo()
-  }, [volume, muted])
+    player.current?.setVolume?.(volume)
+  }, [volume])
+
+  // Tắt "Nhạc nền": dừng hẳn cho đỡ tốn mạng. Bật lại KHÔNG tự phát (nút loa / ▶ gọi phát trong cú bấm)
+  useEffect(() => {
+    if (!enabled) player.current?.pauseVideo?.()
+  }, [enabled])
 
   return (
     <div className="explorer-music">
       <div className="explorer-music-frame" ref={wrap} />
-      {blocked && !muted && (
-        <button type="button" className="btn btn-primary btn-small explorer-music-play" onClick={() => player.current?.playVideo()}>
-          ▶ Phát nhạc
-        </button>
-      )}
     </div>
   )
 }
