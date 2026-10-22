@@ -7,7 +7,7 @@ Ca 22/10/2026 (sau commit `3785ff7`): **sửa nhạc nền ngắm vũ trụ trê
 kính viễn vọng nút hiện "đang phát" nhưng không có tiếng (điện thoại chặn tự phát). Không đổi schema / dữ liệu / bài tập / chấm điểm.
 
 ## Status
-DONE, đã push. Chờ Codex QA trên điện thoại thật.
+DONE, đã push (commit `461a1f3`). Chờ Codex QA trên điện thoại thật.
 
 ## Nguyên nhân
 Chưa có file `public/audio/space-music.mp3` → mọi lần đều rơi xuống YouTube ẩn. iPhone chỉ cho YouTube phát khi chạm thẳng vào khung

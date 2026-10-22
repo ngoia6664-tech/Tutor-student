@@ -15,7 +15,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Production / deployment
 - Deploy Vercel (SPA rewrite mọi đường dẫn về `index.html`), từ branch `main`.
-- Làm việc trực tiếp trên `main`; commit gần nhất `e05cf05`.
+- Làm việc trực tiếp trên `main`; commit tính năng gần nhất `461a1f3` (đã push).
 
 ## Main functional areas
 - **Gia sư:** danh sách / chi tiết học sinh, thư viện dạng cây (Lớp › Môn › Chuyên đề › Chương), soạn bài tập,
@@ -51,7 +51,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
-**Nhạc nền trên điện thoại** (22/10/2026, đã push): thêm file nhạc `public/audio/space-music.mp3`; mặc định chưa phát, lần đầu mở kính viễn vọng
+**Nhạc nền trên điện thoại** (22/10/2026, commit `461a1f3`, chờ QA): thêm file nhạc `public/audio/space-music.mp3`; mặc định chưa phát, lần đầu mở kính viễn vọng
 hỏi "Bạn có muốn bật nhạc nền không?" (lựa chọn lưu sessionStorage, đăng xuất thì xóa); đã chọn bật thì mỗi lần mở kính viễn vọng phát ngay trong cú bấm;
 cú bấm luôn mở khóa AudioContext (tiếng "vút" trên iPhone); YouTube dự phòng 4 s không phát → tiếng tổng hợp.
 
