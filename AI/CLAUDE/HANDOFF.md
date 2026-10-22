@@ -18,7 +18,9 @@ video; lệnh `playVideo()` từ trang bị chặn → nút ▶ không có tiế
   Tách bằng ffmpeg từ video Owner cung cấp (`Downloads/Nhạc nền.mp4`); Owner chịu trách nhiệm về quyền dùng nhạc.
   Nguồn ưu tiên giờ là file → phát qua Web Audio ngay trong cú bấm, chạy được cả iPhone; YouTube chỉ còn là dự phòng.
 - **Mặc định chưa phát + hỏi lần đầu**: `lib/spaceSound.js` thêm lựa chọn phiên `getMusicChoice()` / `setMusicChoice()`
-  ('on' | 'off' | null, sessionStorage `space-music-choice`; đăng xuất thì xóa trong `AuthContext.signOut`).
+  ('on' | 'off' | null, localStorage `space-music-choice` — nhớ suốt phiên đăng nhập kể cả đóng tab / mở lại app; đăng xuất thì xóa trong `AuthContext.signOut`).
+  Owner sửa lại (commit sau `461a1f3`): đã chọn bật thì mỗi lần mở kính viễn vọng **tự phát**; `SpaceExplorer` lúc mount gọi lại `playMusic()`
+  nếu choice 'on' mà chưa phát (StrictMode lúc dev chạy cleanup → `pauseAllMusic` làm nhạc vừa phát bị dừng).
   Lần đầu mở kính viễn vọng (choice = null, Cài đặt "Nhạc nền" bật) → `SpaceExplorer` hiện hộp `.explorer-ask`
   "Bạn có muốn bật nhạc nền không?" [Bật nhạc] [Không]. Trả lời xong không hỏi lại trong phiên.
   Bấm ▶ → choice 'on'; bấm ‖ → choice 'off' (lần mở sau không tự phát).
@@ -39,7 +41,7 @@ video; lệnh `playVideo()` từ trang bị chặn → nút ▶ không có tiế
 - Chưa thử trên điện thoại thật.
 
 ## Needs QA (Codex)
-1. Phiên mới (tab mới / sau đăng xuất): bấm kính viễn vọng → hiện hộp hỏi; nút ▶ ở trạng thái chưa phát.
+1. Lần đầu sau đăng nhập: bấm kính viễn vọng → hiện hộp hỏi; nút ▶ ở trạng thái chưa phát.
 2. Chọn "Bật nhạc" → có tiếng ngay (iPhone Safari, Chrome Android, desktop); nút chuyển ‖.
 3. Đóng rồi mở lại kính viễn vọng → không hỏi lại, nhạc tự phát ngay (đặc biệt iPhone).
 4. Chọn "Không" → không có nhạc; mở lại không hỏi, không phát; bấm ▶ thì phát.
@@ -52,4 +54,4 @@ video; lệnh `playVideo()` từ trang bị chặn → nút ▶ không có tiế
 
 ## Known limits
 - Ra nền trên điện thoại thì nhạc dừng có chủ đích; quay lại phải bấm ▶ (không đổi).
-- Lựa chọn nhạc lưu theo tab (sessionStorage): mở tab mới cũng được hỏi lại.
+- Lựa chọn nhạc lưu theo trình duyệt (localStorage): máy / trình duyệt khác thì hỏi lại.

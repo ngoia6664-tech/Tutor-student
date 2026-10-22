@@ -377,6 +377,11 @@ export default function SpaceExplorer({ onClose }) {
       pauseAllMusic(0.15)
     } else playMusic()
   }
+  // Đã chọn bật nhạc: mở là phát, không cần bấm ▶. Layout đã phát trong cú bấm kính viễn vọng (bắt buộc với iPhone);
+  // gọi lại ở đây phòng khi nhạc bị dừng ngay lúc mở (vd. StrictMode lúc dev chạy cleanup một lần → pauseAllMusic)
+  useEffect(() => {
+    if (getMusicChoice() === 'on' && settings.music && !isMusicPlaying()) playMusic()
+  }, [])
   function answerMusic(yes) {
     setAsking(false)
     if (yes) playMusic()

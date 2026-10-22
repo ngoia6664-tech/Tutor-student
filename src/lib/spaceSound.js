@@ -225,11 +225,11 @@ export const playExternalMusic = () => external?.play()
 
 // ===== Lựa chọn nhạc nền trong phiên đăng nhập =====
 // Mặc định chưa phát: lần đầu mở kính viễn vọng hỏi "Bật nhạc nền không?" (cú bấm trả lời = thao tác người dùng → điện thoại cho phát).
-// 'on' | 'off' | null (chưa hỏi). Lưu sessionStorage (đóng tab là hết), đăng xuất thì xóa (AuthContext).
+// 'on' | 'off' | null (chưa hỏi). Lưu localStorage suốt phiên đăng nhập (đóng tab / mở lại app vẫn nhớ), đăng xuất thì xóa (AuthContext).
 const CHOICE_KEY = 'space-music-choice'
 let choice = null
 try {
-  choice = sessionStorage.getItem(CHOICE_KEY)
+  choice = localStorage.getItem(CHOICE_KEY)
 } catch {
   // trình duyệt chặn lưu trữ: chỉ nhớ trong bộ nhớ
 }
@@ -237,8 +237,8 @@ export const getMusicChoice = () => choice
 export function setMusicChoice(value) {
   choice = value
   try {
-    if (value) sessionStorage.setItem(CHOICE_KEY, value)
-    else sessionStorage.removeItem(CHOICE_KEY)
+    if (value) localStorage.setItem(CHOICE_KEY, value)
+    else localStorage.removeItem(CHOICE_KEY)
   } catch {
     // như trên
   }

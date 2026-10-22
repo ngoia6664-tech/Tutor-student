@@ -52,7 +52,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Last meaningful change
 **Nhạc nền trên điện thoại** (22/10/2026, commit `461a1f3`, chờ QA): thêm file nhạc `public/audio/space-music.mp3`; mặc định chưa phát, lần đầu mở kính viễn vọng
-hỏi "Bạn có muốn bật nhạc nền không?" (lựa chọn lưu sessionStorage, đăng xuất thì xóa); đã chọn bật thì mỗi lần mở kính viễn vọng phát ngay trong cú bấm;
+hỏi "Bạn có muốn bật nhạc nền không?" (lựa chọn lưu localStorage suốt phiên đăng nhập, đăng xuất thì xóa); đã chọn bật thì mỗi lần mở kính viễn vọng tự phát, không cần bấm ▶;
 cú bấm luôn mở khóa AudioContext (tiếng "vút" trên iPhone); YouTube dự phòng 4 s không phát → tiếng tổng hợp.
 
 
