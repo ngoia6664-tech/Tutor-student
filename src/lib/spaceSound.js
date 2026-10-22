@@ -20,7 +20,8 @@ let volume = (() => {
     return 60
   }
 })()
-const masterLevel = () => 0.9 * (volume / 100)
+// Tai người nghe theo thang log: bình phương cho thanh trượt "ăn" đều, kéo xuống thấy nhỏ hẳn
+const masterLevel = () => 1.2 * (volume / 100) ** 2
 
 export const getVolume = () => volume
 
@@ -48,13 +49,22 @@ export function setSoundOn(value) {
   } catch {
     // trình duyệt chặn lưu: chỉ nhớ trong phiên
   }
-  if (!value) stopAmbient()
+  if (!value) {
+    stopAmbient()
+    stopMusic()
+  }
 }
 
 function audio() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext
     if (!AC) return null
+    // iPhone: mặc định Web Audio bị tắt theo nút gạt im lặng; 'playback' cho phát như nghe nhạc (iOS 17+)
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = 'playback'
+    } catch {
+      // trình duyệt không hỗ trợ
+    }
     ctx = new AC()
     master = ctx.createGain()
     master.gain.value = masterLevel()
@@ -189,4 +199,58 @@ export function playPandaTalk() {
 export function playFocus() {
   if (!on || !audio()) return
   ;[1046.5, 1318.5, 1568, 2093].forEach((f, i) => note(f, { at: i * 0.07, dur: 0.5, type: 'triangle', gain: 0.07, wet: true }))
+}
+
+// ===== Nhạc nền từ file trong app (public/audio/space-music.mp3) =====
+// Phải gọi startMusic() NGAY TRONG sự kiện bấm (nút kính viễn vọng / nút loa): iPhone chỉ cho phát tiếng khi bắt đầu trong cú bấm.
+// Đi qua Web Audio (GainNode) vì iOS bỏ qua thuộc tính volume của <audio> → thanh âm lượng mới có tác dụng.
+// status: 'idle' | 'playing' | 'missing' (không có file / lỗi → SpaceExplorer chuyển sang YouTube rồi âm thanh tổng hợp)
+const MUSIC_URL = '/audio/space-music.mp3'
+let music = null
+let musicStatus = 'idle'
+const musicListeners = new Set()
+const setMusicStatus = (s) => {
+  musicStatus = s
+  musicListeners.forEach((f) => f(s))
+}
+export const getMusicStatus = () => musicStatus
+export function onMusicStatus(fn) {
+  musicListeners.add(fn)
+  return () => musicListeners.delete(fn)
+}
+
+export function startMusic() {
+  if (!on || musicStatus === 'missing' || !audio()) return
+  if (!music) {
+    const el = new Audio(MUSIC_URL)
+    el.loop = true
+    el.preload = 'auto'
+    el.setAttribute('playsinline', '')
+    const gain = ctx.createGain()
+    gain.gain.value = 0.0001
+    ctx.createMediaElementSource(el).connect(gain).connect(master)
+    el.addEventListener('error', () => setMusicStatus('missing'))
+    el.addEventListener('playing', () => setMusicStatus('playing'))
+    music = { el, gain }
+  }
+  const t = ctx.currentTime
+  music.gain.gain.cancelScheduledValues(t)
+  music.gain.gain.setValueAtTime(Math.max(music.gain.gain.value, 0.0001), t)
+  music.gain.gain.exponentialRampToValueAtTime(1, t + 2)
+  music.el.play().catch((err) => {
+    // NotAllowedError = bị chặn tự phát (hiếm khi xảy ra vì đã gọi trong cú bấm); lỗi khác = không có file
+    if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') setMusicStatus('missing')
+  })
+}
+
+export function stopMusic() {
+  if (!music || !ctx) return
+  const { el, gain } = music
+  const t = ctx.currentTime
+  gain.gain.cancelScheduledValues(t)
+  gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t)
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.8)
+  setTimeout(() => {
+    if (gain.gain.value < 0.01) el.pause()
+  }, 850)
 }

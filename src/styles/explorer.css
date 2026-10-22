@@ -505,3 +505,13 @@ html.space-exploring {
     gap: 0.5rem;
   }
 }
+
+/* Màn cảm ứng: vùng chạm hành tinh / Mặt Trăng rộng hơn cho dễ trúng bằng ngón tay */
+@media (pointer: coarse) {
+  .space-exploring .solar-planet::before {
+    inset: -18px;
+  }
+  .space-exploring .solar-moon::before {
+    inset: -12px;
+  }
+}

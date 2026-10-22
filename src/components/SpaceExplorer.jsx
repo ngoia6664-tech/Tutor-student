@@ -4,7 +4,21 @@ import Icon from './Icon.jsx'
 import { FrontPanda } from './PandaArt.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
-import { getVolume, isSoundOn, playFocus, playPandaTalk, playWhoosh, setSoundOn, setVolume, startAmbient, stopAmbient } from '../lib/spaceSound.js'
+import {
+  getMusicStatus,
+  getVolume,
+  isSoundOn,
+  onMusicStatus,
+  playFocus,
+  playPandaTalk,
+  playWhoosh,
+  setSoundOn,
+  setVolume,
+  startAmbient,
+  startMusic,
+  stopAmbient,
+  stopMusic,
+} from '../lib/spaceSound.js'
 import '../styles/explorer.css'
 
 // Chế độ ngắm vũ trụ (tải lười từ Layout): dùng lại chính hệ Mặt Trời của nền (SpaceBackdrop), không vẽ thêm.
@@ -171,6 +185,8 @@ export default function SpaceExplorer({ onClose }) {
   // Giữ onClose mới nhất mà không phải gắn lại sự kiện mỗi lần Layout render
   const closeRef = useRef(onClose)
   closeRef.current = onClose
+  // Lúc mở soi hành tinh: Android bắn thêm "click" sau khi nhấc tay, rơi trúng lớp nền tối vừa hiện và đóng ngay → bỏ qua click quá sớm
+  const openedAt = useRef(0)
   const pickedRef = useRef(picked)
   pickedRef.current = picked
 
@@ -200,6 +216,13 @@ export default function SpaceExplorer({ onClose }) {
     const pointers = new Map()
     let moved = 0
     let pinch = 0
+    let downHit = null
+    // Thiên thể dưới điểm bấm (hoặc null)
+    const bodyAt = (x, y) => {
+      const hit = document.elementFromPoint(x, y)?.closest('.solar-moon, .solar-planet, .solar-sun')
+      const key = hit && (hit.classList.contains('solar-sun') ? 'sun' : [...hit.classList].find((c) => c.startsWith('solar-') && c !== 'solar-planet')?.slice(6))
+      return key && BODIES[key] ? key : null
+    }
     const down = (e) => {
       if (e.target.closest('.explorer-ui')) return
       // Chặn hành vi mặc định (bôi đen / kéo-thả chữ): nếu không, trình duyệt có lúc hiện con trỏ "cấm" và không xoay được
@@ -207,6 +230,8 @@ export default function SpaceExplorer({ onClose }) {
       window.getSelection?.()?.removeAllRanges()
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
       moved = 0
+      // Nhớ thiên thể lúc chạm xuống: hành tinh đang chạy trên quỹ đạo, lúc nhấc tay có thể đã lệch khỏi ngón
+      downHit = bodyAt(e.clientX, e.clientY)
       space.setPointerCapture?.(e.pointerId)
     }
     const move = (e) => {
@@ -236,12 +261,18 @@ export default function SpaceExplorer({ onClose }) {
     const up = (e) => {
       if (!pointers.has(e.pointerId)) return
       pointers.delete(e.pointerId)
-      // Bấm (không kéo) vào hành tinh / Mặt Trời: xem số liệu
-      if (moved < 6 && !pinch) {
-        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('.solar-moon, .solar-planet, .solar-sun')
-        const key = hit && (hit.classList.contains('solar-sun') ? 'sun' : [...hit.classList].find((c) => c.startsWith('solar-') && c !== 'solar-planet')?.slice(6))
-        setPicked(key && BODIES[key] ? key : null)
+      // Bấm (không kéo) vào hành tinh / Mặt Trời: xem số liệu. Ngón tay rung nhiều hơn chuột nên ngưỡng "kéo" rộng hơn
+      if (moved < (e.pointerType === 'mouse' ? 6 : 14) && !pinch) {
+        const key = bodyAt(e.clientX, e.clientY) || downHit
+        if (key) openedAt.current = performance.now()
+        setPicked(key)
+        // Chạm vùng trống trên điện thoại: thu bong bóng gấu lại cho thoáng màn hình
+        if (!key && e.pointerType !== 'mouse') setMode(null)
       }
+      if (!pointers.size) pinch = 0
+    }
+    const cancel = (e) => {
+      pointers.delete(e.pointerId)
       if (!pointers.size) pinch = 0
     }
     const wheel = (e) => {
@@ -256,7 +287,7 @@ export default function SpaceExplorer({ onClose }) {
     space.addEventListener('pointerdown', down)
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
+    window.addEventListener('pointercancel', cancel)
     space.addEventListener('wheel', wheel, { passive: false })
     window.addEventListener('keydown', key)
     window.addEventListener('dragstart', noDrag)
@@ -268,11 +299,12 @@ export default function SpaceExplorer({ onClose }) {
       space.removeEventListener('pointerdown', down)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
+      window.removeEventListener('pointercancel', cancel)
       space.removeEventListener('wheel', wheel)
       window.removeEventListener('keydown', key)
       root.classList.remove('space-exploring')
       stopAmbient()
+      stopMusic()
       solar.style.setProperty('--tilt', saved.tilt)
       solar.style.setProperty('--turn', saved.turn)
       solar.style.removeProperty('--zoom')
@@ -299,13 +331,16 @@ export default function SpaceExplorer({ onClose }) {
   // Âm thanh (nền vũ trụ + tiếng gấu), nhớ lựa chọn giữa các lần mở
   const [sound, setSound] = useState(isSoundOn)
   const [volume, setVol] = useState(getVolume)
-  // Nhạc YouTube lỗi (video chặn nhúng / không có mạng) → thay bằng tiếng vũ trụ tổng hợp
-  const [musicFailed, setMusicFailed] = useState(false)
+  // Nguồn nhạc nền: 'file' (mp3 trong app, Layout đã bắt đầu phát ngay trong cú bấm kính viễn vọng)
+  // → không có file thì 'youtube' → YouTube lỗi (chặn nhúng / mất mạng) thì 'synth' (tiếng vũ trụ tổng hợp)
+  const [musicMode, setMusicMode] = useState(() => (getMusicStatus() === 'missing' ? 'youtube' : 'file'))
+  useEffect(() => onMusicStatus((s) => s === 'missing' && setMusicMode((m) => (m === 'file' ? 'youtube' : m))), [])
   function toggleSound() {
     setSoundOn(!sound)
     setSound(!sound)
     if (!sound) {
-      if (musicFailed) startAmbient()
+      if (musicMode === 'file') startMusic()
+      if (musicMode === 'synth') startAmbient()
       playPandaTalk()
     }
   }
@@ -314,7 +349,7 @@ export default function SpaceExplorer({ onClose }) {
     setVol(v)
   }
   function musicFail() {
-    setMusicFailed(true)
+    setMusicMode('synth')
     startAmbient()
   }
   const [factIdx, setFactIdx] = useState(-1)
@@ -374,12 +409,12 @@ export default function SpaceExplorer({ onClose }) {
         </div>
       </div>
 
-      {!musicFailed && <SpaceMusic volume={volume} muted={!sound} onFail={musicFail} />}
+      {musicMode === 'youtube' && <SpaceMusic volume={volume} muted={!sound} onFail={musicFail} />}
 
       {/* Soi một hành tinh: phủ tối mọi thứ (z 100), chỉ gấu và chân dung hành tinh nổi lên trên (z 101) */}
       {b && (
         <>
-          <div className="explorer-dim" onClick={() => setPicked(null)} aria-hidden="true" />
+          <div className="explorer-dim" onClick={() => performance.now() - openedAt.current > 500 && setPicked(null)} aria-hidden="true" />
           <figure className={`explorer-focus is-${picked}`} key={picked}>
             <PlanetPortrait body={picked} />
             <figcaption>
