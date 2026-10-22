@@ -419,3 +419,16 @@ html.space-exploring {
     animation: none;
   }
 }
+
+/* Mặt Trăng (chấm 4px quanh Trái Đất): khi ngắm thì quay chậm lại và có vùng bấm riêng, nằm trên vùng bấm của Trái Đất */
+.space-exploring .solar-moon {
+  pointer-events: auto;
+  animation-duration: 24s;
+}
+.space-exploring .solar-moon::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+}
+.explorer-focus.is-moon { --glow: rgba(226, 232, 240, 0.3); }

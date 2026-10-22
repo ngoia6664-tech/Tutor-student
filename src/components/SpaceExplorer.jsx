@@ -49,12 +49,48 @@ const BODIES = {
     name: 'Trái Đất',
     tag: 'Hành tinh xanh của chúng ta',
     g: 9.8,
-    stats: [['Cách Mặt Trời', '1 AU ≈ 150 triệu km'], ['Một năm', '365,25 ngày'], ['Tự quay', '≈ 23 giờ 56 phút']],
+    related: 'moon',
+    stats: [
+      ['Cách Mặt Trời', '1 AU ≈ 150 triệu km'],
+      ['Một năm', '365,25 ngày'],
+      ['Tự quay', '≈ 23 giờ 56 phút'],
+      ['Bán kính', '≈ 6 371 km'],
+      ['Khối lượng', '≈ 5,97·10²⁴ kg'],
+      ['Tuổi', '≈ 4,54 tỉ năm'],
+    ],
     about: [
-      'Trái Đất nằm trong "vùng có thể sống được": không quá nóng, không quá lạnh để nước tồn tại ở thể lỏng trên bề mặt.',
-      'Nó chạy trên quỹ đạo với tốc độ khoảng 30 km/s. Lực hấp dẫn của Mặt Trời đóng vai trò lực hướng tâm: GMm/r² = mv²/r.',
-      'Trục quay nghiêng khoảng 23,5° so với pháp tuyến mặt phẳng quỹ đạo, đó là nguyên nhân có bốn mùa.',
-      'Lõi sắt nóng chảy chuyển động tạo ra từ trường, như một tấm khiên làm lệch gió Mặt Trời và sinh ra cực quang ở hai cực.',
+      'Trái Đất nằm trong "vùng có thể sống được": không quá nóng, không quá lạnh để nước tồn tại ở thể lỏng. Khoảng 71% bề mặt là nước, nên nhìn từ vũ trụ nó là một viên bi xanh.',
+      '"Cân" Trái Đất bằng Vật lý: từ g = GM/R² suy ra M = gR²/G. Thay g = 9,8 m/s², R = 6,37·10⁶ m, G = 6,67·10⁻¹¹ được M ≈ 6·10²⁴ kg. Năm 1798, Cavendish đo được G bằng cân xoắn, nên ông được gọi là "người đầu tiên cân Trái Đất".',
+      'Trái Đất không tròn tuyệt đối: do tự quay, nó hơi phình ở xích đạo, bán kính xích đạo lớn hơn bán kính cực khoảng 21 km. Cộng thêm hiệu ứng quay, g ở xích đạo khoảng 9,78 m/s², ở hai cực khoảng 9,83 m/s².',
+      'Đứng yên mà bạn vẫn đang bay rất nhanh: người ở xích đạo quay theo Trái Đất với tốc độ khoảng 465 m/s (≈ 1 670 km/h), và cả Trái Đất lao quanh Mặt Trời với khoảng 30 km/s. Lực hấp dẫn của Mặt Trời đóng vai trò lực hướng tâm: GMm/r² = mv²/r.',
+      'Khí quyển gồm khoảng 78% nitơ, 21% ôxi. Bầu trời màu xanh vì phân tử khí tán xạ ánh sáng bước sóng ngắn mạnh hơn nhiều (cường độ tán xạ tỉ lệ 1/λ⁴, tán xạ Rayleigh). Lúc hoàng hôn ánh sáng đi qua lớp khí dày, màu xanh bị tán xạ hết, còn lại đỏ cam.',
+      'Bên trong gồm vỏ mỏng, lớp manti đá nóng, lõi ngoài sắt – niken lỏng và lõi trong rắn nóng khoảng 5 400 °C (ngang bề mặt Mặt Trời). Kim loại lỏng chuyển động ở lõi ngoài tạo ra từ trường, như tấm khiên làm lệch gió Mặt Trời và sinh ra cực quang.',
+      'Trục quay nghiêng khoảng 23,5° nên có bốn mùa. Chính Mặt Trăng giữ cho độ nghiêng này khá ổn định qua hàng triệu năm, nhờ vậy khí hậu Trái Đất không bị đảo lộn thất thường.',
+      'Ngày đang dài ra: ma sát thủy triều do Mặt Trăng gây ra hãm dần sự tự quay, mỗi thế kỉ một ngày dài thêm khoảng 2 mili giây. Cuối thời khủng long (khoảng 70 triệu năm trước), một ngày chỉ khoảng 23,5 giờ.',
+    ],
+  },
+  moon: {
+    name: 'Mặt Trăng',
+    tag: 'Người bạn đồng hành',
+    g: 1.62,
+    related: 'earth',
+    stats: [
+      ['Cách Trái Đất', '≈ 384 400 km (≈ 60 lần bán kính TĐ)'],
+      ['Quay quanh TĐ', '≈ 27,3 ngày'],
+      ['Tuần trăng', '≈ 29,5 ngày'],
+      ['Bán kính', '≈ 1 737 km (≈ 0,27 lần TĐ)'],
+      ['Khối lượng', '≈ 7,35·10²² kg (≈ 1/81 TĐ)'],
+      ['Nhiệt độ', 'ngày ≈ 120 °C, đêm ≈ −170 °C'],
+    ],
+    about: [
+      'Mặt Trăng có lẽ sinh ra từ một vụ va chạm khổng lồ khoảng 4,5 tỉ năm trước: một thiên thể cỡ Sao Hỏa (gọi là Theia) đâm vào Trái Đất trẻ, vật chất văng ra quay quanh Trái Đất rồi kết tụ thành Mặt Trăng.',
+      '"Phép thử Mặt Trăng" của Newton: Mặt Trăng cách tâm Trái Đất khoảng 60 lần bán kính, nên nếu lực hấp dẫn giảm theo 1/r² thì gia tốc của nó phải bằng g/60² ≈ 0,0027 m/s². Tính từ chu kì 27,3 ngày đúng ra a = 4π²r/T² ≈ 0,0027 m/s². Quả táo rơi và Mặt Trăng quay cùng chung một lực!',
+      'Mặt Trăng luôn quay một mặt về Trái Đất vì chu kì tự quay bằng chu kì quay quanh Trái Đất (khóa thủy triều). Mặt sau không phải "mặt tối": nó vẫn được Mặt Trời chiếu sáng, chỉ là ta không bao giờ thấy từ Trái Đất.',
+      'Không có khí quyển nên không có lực cản: năm 1971, phi hành gia David Scott (Apollo 15) thả một cái búa và một chiếc lông chim cùng lúc, cả hai chạm đất cùng lúc, đúng như Galilê dự đoán: mọi vật rơi tự do với cùng gia tốc.',
+      'Cũng vì không có khí quyển giữ nhiệt và không có gió, nhiệt độ chênh lệch cực lớn giữa ngày và đêm, còn dấu chân phi hành gia Apollo có thể tồn tại hàng triệu năm.',
+      'Trọng lực chỉ bằng khoảng 1/6 Trái Đất: với cùng vận tốc bật nhảy, độ cao h = v²/(2g) gấp khoảng 6 lần, nên phi hành gia đi lại bằng những bước nhảy lò cò.',
+      'Mặt Trăng đang rời xa ta khoảng 3,8 cm mỗi năm, đo được nhờ chiếu laser vào các gương phản xạ các phi hành gia Apollo để lại và đo thời gian ánh sáng đi – về (khoảng 2,6 s). Mômen động lượng Trái Đất mất do ngày dài ra được chuyển sang cho Mặt Trăng.',
+      'Các vùng tối ta thấy trên mặt trăng (hình "chú Cuội ngồi gốc cây đa") là các "biển" (maria): đồng bằng dung nham bazan đông cứng từ hàng tỉ năm trước, chứ không có nước.',
     ],
   },
   mars: {
@@ -199,7 +235,7 @@ export default function SpaceExplorer({ onClose }) {
       pointers.delete(e.pointerId)
       // Bấm (không kéo) vào hành tinh / Mặt Trời: xem số liệu
       if (moved < 6 && !pinch) {
-        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('.solar-planet, .solar-sun')
+        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('.solar-moon, .solar-planet, .solar-sun')
         const key = hit && (hit.classList.contains('solar-sun') ? 'sun' : [...hit.classList].find((c) => c.startsWith('solar-') && c !== 'solar-planet')?.slice(6))
         setPicked(key && BODIES[key] ? key : null)
       }
@@ -379,8 +415,12 @@ export default function SpaceExplorer({ onClose }) {
                     ›
                   </button>
                 </>
+              ) : mode === 'body' && b?.related ? (
+                <button type="button" onClick={() => setPicked(b.related)}>
+                  Xem {BODIES[b.related].name} ›
+                </button>
               ) : (
-                <span className="explorer-bubble-count">{mode === 'body' ? 'Bấm hành tinh khác để nghe tiếp' : 'Bấm gấu để nghe một câu'}</span>
+                <span className="explorer-bubble-count">{mode === 'body' ? 'Bấm vùng tối để xem hành tinh khác' : 'Bấm gấu để nghe một câu'}</span>
               )}
               <button type="button" className="explorer-menu-btn" onClick={() => setMode(mode === 'menu' ? (fact ? 'fact' : 'hint') : 'menu')}>
                 {mode === 'menu' ? 'Đóng mục lục' : '☰ Mục lục'}

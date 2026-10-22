@@ -294,7 +294,46 @@ function Saturn({ u }) {
   )
 }
 
-const ART = { sun: Sun, mercury: Mercury, venus: Venus, earth: Earth, mars: Mars, jupiter: Jupiter, saturn: Saturn }
+// Mặt Trăng: mặt gần (luôn hướng về Trái Đất) nên KHÔNG trôi như các hành tinh khác — đúng với khóa thủy triều.
+// Các "biển" dung nham đặt gần đúng vị trí thật, hố Tycho phía nam có tia sáng.
+function Moon({ u }) {
+  return (
+    <>
+      <defs>
+        <radialGradient id={`${u}base`} cx="42%" cy="40%">
+          <stop offset="0" stopColor="#ececec" />
+          <stop offset="1" stopColor="#a9a9ad" />
+        </radialGradient>
+      </defs>
+      <circle r={R} fill={`url(#${u}base)`} />
+      <g clipPath={`url(#${u}clip)`}>
+        <g fill="#7b7c82" opacity="0.75">
+          {/* Biển Mưa (Imbrium), Biển Trong Sáng (Serenitatis), Biển Yên Tĩnh (Tranquillitatis), Biển Khủng Hoảng (Crisium) */}
+          <path d="M-34 -40 Q-14 -50 -4 -36 Q-2 -22 -16 -16 Q-34 -18 -40 -28Z" />
+          <path d="M2 -34 Q16 -40 24 -28 Q22 -16 8 -16 Q0 -22 2 -34Z" />
+          <path d="M8 -12 Q26 -16 32 -2 Q28 12 12 10 Q2 2 8 -12Z" />
+          <ellipse cx="44" cy="-18" rx="9" ry="7" />
+          {/* Đại dương Bão Tố (Procellarum) bên trái */}
+          <path d="M-62 -16 Q-46 -24 -36 -10 Q-30 10 -40 30 Q-54 36 -62 20Z" opacity="0.8" />
+          <path d="M-22 4 Q-8 0 -4 14 Q-12 26 -24 20Z" opacity="0.7" />
+          <ellipse cx="22" cy="26" rx="10" ry="6" opacity="0.7" />
+        </g>
+        {/* Hố Tycho và các tia sáng */}
+        <g stroke="#f5f5f5" strokeLinecap="round" opacity="0.55">
+          <path d="M-8 46 L-30 18 M-8 46 L10 12 M-8 46 L30 40 M-8 46 L-44 50 M-8 46 L-2 70" strokeWidth="1.2" />
+        </g>
+        <circle cx="-8" cy="46" r="4" fill="#f8f8f8" />
+        <circle cx="-7.5" cy="46.5" r="2.2" fill="#9a9aa0" />
+        <Crater x={36} y={14} r={4} />
+        <Crater x={-46} y={-44} r={3} />
+        <Crater x={50} y={40} r={3.5} />
+        <Crater x={-28} y={56} r={3} />
+      </g>
+    </>
+  )
+}
+
+const ART = { sun: Sun, mercury: Mercury, venus: Venus, earth: Earth, moon: Moon, mars: Mars, jupiter: Jupiter, saturn: Saturn }
 
 export default function PlanetPortrait({ body }) {
   const u = useId().replace(/:/g, '')
@@ -316,6 +355,15 @@ export default function PlanetPortrait({ body }) {
           <circle cx="90" cy="-76" r="2" fill="#a1a1a6" />
           <circle cx="95" cy="-71" r="1.4" fill="#a1a1a6" />
           <circle cx="92" cy="-74" r="9" fill={`url(#${u}shade)`} />
+        </g>
+      )}
+      {/* Trái Đất nhỏ ở góc khi soi Mặt Trăng ("Trái Đất mọc") */}
+      {body === 'moon' && (
+        <g className="pf-moon">
+          <circle cx="-94" cy="-78" r="13" fill="#2f6db3" />
+          <path d="M-102 -84 Q-96 -90 -90 -86 Q-92 -78 -98 -76Z M-90 -74 Q-84 -78 -82 -72 Q-86 -68 -90 -70Z" fill="#5b8f3e" />
+          <path d="M-104 -76 Q-96 -80 -88 -78" stroke="#fff" strokeWidth="1.6" fill="none" opacity="0.8" />
+          <circle cx="-94" cy="-78" r="13" fill={`url(#${u}shade)`} />
         </g>
       )}
     </svg>

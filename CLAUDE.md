@@ -49,7 +49,7 @@ mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space
 Chế độ ngắm vũ trụ: `components/SpaceExplorer.jsx` + `styles/explorer.css` (lazy, mở từ nút kính viễn vọng ở header),
 thêm class `space-exploring` vào `<html>` để ẩn `.app` và cho kéo / bấm hệ Mặt Trời; gấu góc trái dưới nói trong bong bóng `.explorer-bubble`:
 bấm gấu kể lần lượt 25 câu `SPACE_FACTS` (có mục lục), bấm hành tinh thì giải thích theo `BODIES` (g, tag, stats, about) + chế độ soi: nền `.explorer-dim` (z 100),
-gấu + chân dung hành tinh `.explorer-focus` (z 101) vẽ ở `components/PlanetPortrait.jsx` (SVG từng hành tinh, `.pf-spin` = tự quay).
+Mặt Trăng (`.solar-moon`) bấm riêng được; Trái Đất ⇄ Mặt Trăng qua `related`. gấu + chân dung hành tinh `.explorer-focus` (z 101) vẽ ở `components/PlanetPortrait.jsx` (SVG từng hành tinh, `.pf-spin` = tự quay).
 Khóa khi làm bài: `lib/studyLock.js` — `useStudyLock()` gọi trong AnswerView (StudentAssignment) → `useStudying()` true:
 nút kính viễn vọng khóa (bấm thì gấu nhắc), gấu chỉ ngồi đọc sách (`shown = 'wait'`), không đi/leo/lăn/ngủ. Nộp xong tự mở.
 Header: trong suốt ở đầu trang, `.topbar.is-scrolled` (Layout theo dõi scroll) mới hiện nền + mép mờ.
