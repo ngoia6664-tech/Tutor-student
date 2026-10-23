@@ -12,12 +12,15 @@ import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 export default function TutorAssignments() {
   const [filter, setFilter] = useState('all')
   const sel = useTreeSelection()
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const pick = useAssignSelection()
+  const [assigning, setAssigning] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, chapters] = await Promise.all([
@@ -75,6 +78,7 @@ export default function TutorAssignments() {
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">
+            <SelectToggle sel={pick} />
             <Link className="btn" to="/tutor/import">
               <Icon name="import" />
               Dán JSON
@@ -105,16 +109,31 @@ export default function TutorAssignments() {
 
         {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderAssignment)}</div>}
         {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderAssignment} />}
+        <SelectBar sel={pick} onAssign={() => setAssigning(pick.items)} />
+        {assigning && (
+          <AssignDialog
+            items={assigning}
+            onClose={() => setAssigning(null)}
+            onSaved={() => {
+              if (assigning.length > 1) pick.stop()
+              reload()
+            }}
+          />
+        )}
       </section>
     </div>
   )
 
   function renderAssignment(a) {
+    const item = { kind: 'assignment', id: a.id, title: a.title }
     return (
-      <div key={a.id} className="list-item">
-        <Link to={`/tutor/assignments/${a.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
-          {a.title}
-        </Link>
+      <div key={a.id} className={pick.has('assignment', a.id) ? 'list-item is-picked' : 'list-item'}>
+        <div className="list-item-title assign-title">
+          <SelectCheck sel={pick} item={item} />
+          <Link to={`/tutor/assignments/${a.id}`} style={{ color: 'inherit' }}>
+            {a.title}
+          </Link>
+        </div>
         <div className="row" style={{ marginBottom: '0.5rem' }}>
           <TypeBadge type={a.type} />
           <DueBadge date={a.due_date} />
@@ -131,6 +150,10 @@ export default function TutorAssignments() {
             <Icon name="grade" />
             Theo dõi & chấm
           </Link>
+          <button type="button" className="btn btn-small" onClick={() => setAssigning([item])}>
+            <Icon name="users" />
+            Giao ({a.total})
+          </button>
           <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
             <Icon name="edit" />
             Sửa

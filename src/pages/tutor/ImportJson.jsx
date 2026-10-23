@@ -288,6 +288,51 @@ export default function ImportJson() {
             </div>
           )}
 
+          {!allSaved && (
+            <div className="card">
+              <h2 style={{ marginTop: 0 }}>Học sinh nhận</h2>
+              <p className="muted small" style={{ marginTop: 0 }}>
+                Áp dụng cho mọi phần được tick ở phần xem trước bên dưới.
+                {fileHasLesson ? ' Bài tập sẽ được liên kết với bài giảng trong cùng file.' : ''}
+              </p>
+              <StudentPicker value={studentIds} onChange={setStudentIds} />
+              <div style={{ marginTop: '1rem' }}>
+                <ChapterSelect
+                  chapters={chapters}
+                  value={chapterChoice}
+                  onChange={(v) => {
+                    setChapterChoice(v)
+                    setFromLast(false)
+                  }}
+                  label="Xếp vào chương"
+                  extraTop={
+                    result.chapter?.title && !findChapter(chapters, result.chapter)
+                      ? [
+                          {
+                            value: 'new',
+                            label: `+ Tạo chương mới: ${result.chapter.title}${chapterGroupLabel(result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(result.chapter)})` : ''}`,
+                          },
+                        ]
+                      : []
+                  }
+                  hint={fromLast && chapterChoice !== 'new' ? 'Đã chọn sẵn chương bạn liên kết ở lần dán trước.' : null}
+                />
+                {!fileHasLesson && (
+                  <LessonSelect
+                    label="Liên kết bài tập với bài giảng có sẵn (không bắt buộc)"
+                    lessons={lessonsList.data}
+                    chapters={chapters}
+                    value={linkLessonId}
+                    onChange={setLinkLessonId}
+                    focusChapterId={chapterChoice !== 'new' ? chapterChoice : ''}
+                    disabled={lessonsList.loading}
+                    hint={lessonsList.error ? `Không tải được danh sách bài giảng: ${lessonsList.error}` : null}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <h2>Xem trước ({drafts.length} phần)</h2>
           {drafts.map((d, i) => (
             <div key={i} className="card">
@@ -347,49 +392,6 @@ export default function ImportJson() {
               </details>
             </div>
           ))}
-
-          {!allSaved && (
-            <div className="card">
-              <ChapterSelect
-                chapters={chapters}
-                value={chapterChoice}
-                onChange={(v) => {
-                  setChapterChoice(v)
-                  setFromLast(false)
-                }}
-                label="Xếp vào chương"
-                extraTop={
-                  result.chapter?.title && !findChapter(chapters, result.chapter)
-                    ? [
-                        {
-                          value: 'new',
-                          label: `+ Tạo chương mới: ${result.chapter.title}${chapterGroupLabel(result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(result.chapter)})` : ''}`,
-                        },
-                      ]
-                    : []
-                }
-                hint={fromLast && chapterChoice !== 'new' ? 'Đã chọn sẵn chương bạn liên kết ở lần dán trước.' : null}
-              />
-              {!fileHasLesson && (
-                <LessonSelect
-                  label="Liên kết bài tập với bài giảng có sẵn (không bắt buộc)"
-                  lessons={lessonsList.data}
-                  chapters={chapters}
-                  value={linkLessonId}
-                  onChange={setLinkLessonId}
-                  focusChapterId={chapterChoice !== 'new' ? chapterChoice : ''}
-                  disabled={lessonsList.loading}
-                  hint={lessonsList.error ? `Không tải được danh sách bài giảng: ${lessonsList.error}` : null}
-                />
-              )}
-              <h2>Học sinh nhận</h2>
-              <p className="muted small" style={{ marginTop: 0 }}>
-                Áp dụng cho mọi phần được tick ở trên.
-                {fileHasLesson ? ' Bài tập sẽ được liên kết với bài giảng trong cùng file.' : ''}
-              </p>
-              <StudentPicker value={studentIds} onChange={setStudentIds} />
-            </div>
-          )}
 
           <div className="sticky-actions">
             <ErrorBox message={saveError} />

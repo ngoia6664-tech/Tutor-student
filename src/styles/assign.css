@@ -1,0 +1,47 @@
+/* Giao bài nhanh từ danh sách (components/QuickAssign.jsx). Bảng chọn học sinh dùng lại khung .settings-overlay/.settings-panel */
+
+.assign-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.assign-title > a {
+  flex: 1;
+  min-width: 0;
+}
+.assign-check {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0.05rem 0 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.list-item.is-picked {
+  border-color: var(--primary);
+}
+
+/* Thanh dưới màn hình khi đang chọn nhiều bài */
+.assign-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 55; /* dưới thông báo nổi (60) và bảng chọn (70) */
+  width: min(520px, calc(100% - 2rem));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--primary);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+}
+/* chừa chỗ cho thanh để không che bài cuối danh sách */
+.library-main:has(.assign-bar),
+.assign-space:has(.assign-bar) {
+  padding-bottom: 5rem;
+}

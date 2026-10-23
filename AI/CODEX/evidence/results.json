@@ -1,0 +1,659 @@
+[
+  {
+    "name": "desktop /student",
+    "status": "PASS",
+    "ms": 2271,
+    "detail": {
+      "heading": "Chào testuser 👋",
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900,
+      "overflow": []
+    }
+  },
+  {
+    "name": "desktop /student/results",
+    "status": "PASS",
+    "ms": 1988,
+    "detail": {
+      "heading": "Kết quả",
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900,
+      "overflow": []
+    }
+  },
+  {
+    "name": "desktop /student/mistakes",
+    "status": "PASS",
+    "ms": 3155,
+    "detail": {
+      "heading": "Ôn câu sai",
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900,
+      "overflow": []
+    }
+  },
+  {
+    "name": "desktop /student/library",
+    "status": "PASS",
+    "ms": 2359,
+    "detail": {
+      "heading": "Thư viện",
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900,
+      "overflow": []
+    }
+  },
+  {
+    "name": "desktop Settings preset/persistence/reset",
+    "status": "PASS",
+    "ms": 4951,
+    "detail": {
+      "settings": {
+        "animatedBackground": true,
+        "mascot": true,
+        "mascotAnimation": true,
+        "celebration": true,
+        "soundEffects": true,
+        "music": true,
+        "musicVolume": 60
+      },
+      "liteAnimations": 0,
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900,
+      "overflow": []
+    }
+  },
+  {
+    "name": "android /student",
+    "status": "PASS",
+    "ms": 3069,
+    "detail": {
+      "heading": "Chào testuser 👋",
+      "width": 412,
+      "scroll": 412,
+      "height": 839,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "android /student/results",
+    "status": "PASS",
+    "ms": 2467,
+    "detail": {
+      "heading": "Kết quả",
+      "width": 412,
+      "scroll": 412,
+      "height": 839,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "android /student/mistakes",
+    "status": "PASS",
+    "ms": 3409,
+    "detail": {
+      "heading": "Ôn câu sai",
+      "width": 412,
+      "scroll": 412,
+      "height": 839,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "android /student/library",
+    "status": "PASS",
+    "ms": 2388,
+    "detail": {
+      "heading": "Thư viện",
+      "width": 412,
+      "scroll": 412,
+      "height": 839,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link active",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "iphone /student",
+    "status": "PASS",
+    "ms": 4708,
+    "detail": {
+      "heading": "Chào testuser 👋",
+      "width": 390,
+      "scroll": 390,
+      "height": 664,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "iphone /student/results",
+    "status": "PASS",
+    "ms": 3895,
+    "detail": {
+      "heading": "Kết quả",
+      "width": 390,
+      "scroll": 390,
+      "height": 664,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "iphone /student/mistakes",
+    "status": "PASS",
+    "ms": 4720,
+    "detail": {
+      "heading": "Ôn câu sai",
+      "width": 390,
+      "scroll": 390,
+      "height": 664,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "iphone /student/library",
+    "status": "PASS",
+    "ms": 6895,
+    "detail": {
+      "heading": "Thư viện",
+      "width": 390,
+      "scroll": 390,
+      "height": 664,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link active",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "android Settings preset/persistence/reset",
+    "status": "PASS",
+    "ms": 7340,
+    "detail": {
+      "settings": {
+        "animatedBackground": true,
+        "mascot": true,
+        "mascotAnimation": true,
+        "celebration": true,
+        "soundEffects": true,
+        "music": true,
+        "musicVolume": 60
+      },
+      "liteAnimations": 0,
+      "width": 412,
+      "scroll": 412,
+      "height": 839,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link active",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "desktop lesson pagination",
+    "status": "FAIL",
+    "ms": 7402,
+    "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+  },
+  {
+    "name": "iphone Settings preset/persistence/reset",
+    "status": "PASS",
+    "ms": 26112,
+    "detail": {
+      "settings": {
+        "animatedBackground": true,
+        "mascot": true,
+        "mascotAnimation": true,
+        "celebration": true,
+        "soundEffects": true,
+        "music": true,
+        "musicVolume": 60
+      },
+      "liteAnimations": 0,
+      "width": 390,
+      "scroll": 390,
+      "height": 664,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "nav-link active",
+          "text": "Thư viện",
+          "right": 504
+        },
+        {
+          "tag": "svg",
+          "cls": {},
+          "right": 424
+        },
+        {
+          "tag": "path",
+          "cls": {},
+          "right": 422
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Thư viện",
+          "right": 491
+        }
+      ]
+    }
+  },
+  {
+    "name": "android lesson pagination",
+    "status": "FAIL",
+    "ms": 5793,
+    "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+  },
+  {
+    "name": "iphone lesson pagination",
+    "status": "FAIL",
+    "ms": 11573,
+    "error": "locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Sau →', exact: true }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn-small btn-primary\">Sau →</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <ellipse cx=\"60\" cy=\"97\" rx=\"16\" ry=\"13\" fill=\"#efe9fb\"></ellipse> from <div class=\"mascot is-idle\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <ellipse cx=\"60\" cy=\"97\" rx=\"16\" ry=\"13\" fill=\"#efe9fb\"></ellipse> from <div class=\"mascot is-idle\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
+  },
+  {
+    "name": "iphone pager touch blocker",
+    "status": "PASS",
+    "ms": 2736
+  },
+  {
+    "name": "iphone exam gate/start/reload",
+    "status": "PASS",
+    "ms": 27709,
+    "detail": {
+      "before": "00:45",
+      "after": "00:42",
+      "layout": {
+        "width": 390,
+        "scroll": 390,
+        "height": 664,
+        "overflow": [
+          {
+            "tag": "A",
+            "cls": "nav-link",
+            "text": "Thư viện",
+            "right": 504
+          },
+          {
+            "tag": "svg",
+            "cls": {},
+            "right": 424
+          },
+          {
+            "tag": "path",
+            "cls": {},
+            "right": 422
+          },
+          {
+            "tag": "SPAN",
+            "cls": "",
+            "text": "Thư viện",
+            "right": 491
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "android submission grading verified after reload",
+    "status": "FAIL",
+    "ms": 3717,
+    "error": "The expression evaluated to a falsy value:\n\n  qa.assert.ok(t.includes('8,25'))\n"
+  },
+  {
+    "name": "iphone exam automatic submit and scoring",
+    "status": "PASS",
+    "ms": 43,
+    "detail": {
+      "score": "6,67/10",
+      "time": "1/1 phút"
+    }
+  },
+  {
+    "name": "desktop explorer real player",
+    "status": "PASS",
+    "ms": 18557,
+    "detail": {
+      "initial": {
+        "playing": true,
+        "status": "missing",
+        "contexts": [
+          "running"
+        ],
+        "media": [
+          {
+            "paused": true,
+            "time": 0,
+            "error": 4
+          }
+        ],
+        "iframes": 0,
+        "hidden": false
+      },
+      "paused": {
+        "playing": false,
+        "status": "missing",
+        "contexts": [
+          "running"
+        ],
+        "media": [
+          {
+            "paused": true,
+            "time": 0,
+            "error": 4
+          }
+        ],
+        "iframes": 0,
+        "hidden": false
+      },
+      "resumed": {
+        "playing": true,
+        "status": "missing",
+        "contexts": [
+          "running"
+        ],
+        "media": [
+          {
+            "paused": true,
+            "time": 0,
+            "error": 4
+          }
+        ],
+        "iframes": 0,
+        "hidden": false
+      },
+      "closed": {
+        "playing": false,
+        "status": "missing",
+        "contexts": [
+          "suspended"
+        ],
+        "media": [
+          {
+            "paused": true,
+            "time": 0,
+            "error": 4
+          }
+        ],
+        "iframes": 0,
+        "hidden": false
+      },
+      "frames": []
+    }
+  },
+  {
+    "name": "desktop reopen explorer eight times",
+    "status": "PASS",
+    "ms": 7853,
+    "detail": {
+      "samples": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "closed": {
+        "playing": false,
+        "status": "missing",
+        "contexts": [
+          "suspended"
+        ],
+        "media": [
+          {
+            "paused": true,
+            "time": 0,
+            "error": 4
+          }
+        ],
+        "iframes": 0,
+        "hidden": false
+      }
+    }
+  },
+  {
+    "name": "desktop mascot disabled cleans intervals",
+    "status": "PASS",
+    "ms": 1679,
+    "detail": {
+      "before": [
+        {
+          "ms": 30000,
+          "mascot": false
+        },
+        {
+          "ms": 30000,
+          "mascot": false
+        },
+        {
+          "ms": 10000,
+          "mascot": true
+        },
+        {
+          "ms": 60000,
+          "mascot": false
+        }
+      ],
+      "after": [
+        {
+          "ms": 30000,
+          "mascot": false
+        },
+        {
+          "ms": 30000,
+          "mascot": false
+        },
+        {
+          "ms": 60000,
+          "mascot": false
+        }
+      ]
+    }
+  }
+]

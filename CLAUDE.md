@@ -51,7 +51,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `AnswerKey` (bảng đáp án gia sư), `TreePicker`/`ChapterSelect`/`LessonSelect` (ô chọn dạng cây),
   `TreeNav` (cây mục lục, nhớ nút mở), `FilterTree` (lọc theo cây qua URL `?lop=&mon=&cd=&ch=`),
   `ChapterForms`, `ChapterGroups`, `OutlineImport`, `ReportQuestion`, `NotificationBell`, `Layout`,
-  `ProtectedRoute`, `Markdown`/`MarkdownField`, `Icon`, `ThemeToggle`.
+  `ProtectedRoute`, `Markdown`/`MarkdownField`, `Icon`, `ThemeToggle`,
+  `QuickAssign` (nút "Giao (n)" + "Chọn nhiều để giao" ở TutorLessons/TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
+  nhiều bài = chỉ giao thêm; ghi qua `lib/recipients.js`, CSS `styles/assign.css`).
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
 ## CSS
@@ -71,7 +73,7 @@ Hiệu năng: KHÔNG dùng `backdrop-filter` (nền chuyển động → làm nh
   thông báo, loading, đăng nhập · `content` bài giảng, markdown, câu hỏi/đáp án, ảnh nộp, bảng, soạn thảo, video, điểm
 - `mobile` media query điện thoại chung · `library` thư viện dạng cây · `notifications` chuông + toast · `icons`
 - `exam` đề THPT + tính giờ · `student-detail` trang một học sinh · `tree-picker` nhập mục lục + ô chọn cây ·
-  `reports` báo lỗi đề
+  `reports` báo lỗi đề · `assign` giao bài nhanh
 Thêm style mới: đặt vào file đúng chủ đề (hoặc tạo file mới + thêm `@import`), không dồn vào `index.css`.
 
 ## Supabase (`supabase/schema.sql`, ~1050 dòng, chạy lại được nhiều lần)

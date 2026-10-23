@@ -11,12 +11,15 @@ import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 // Bài giảng (gia sư): cây Lớp › Môn › Chuyên đề › Chương bên trái để lọc, danh sách bên phải
 export default function TutorLessons() {
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const sel = useTreeSelection()
+  const pick = useAssignSelection()
+  const [assigning, setAssigning] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [list, chapters] = await Promise.all([
@@ -49,11 +52,15 @@ export default function TutorLessons() {
   }
 
   function renderLesson(l) {
+    const item = { kind: 'lesson', id: l.id, title: l.title }
     return (
-      <div key={l.id} className="list-item">
-        <Link to={`/tutor/lessons/${l.id}`} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
-          📘 {l.title}
-        </Link>
+      <div key={l.id} className={pick.has('lesson', l.id) ? 'list-item is-picked' : 'list-item'}>
+        <div className="list-item-title assign-title">
+          <SelectCheck sel={pick} item={item} />
+          <Link to={`/tutor/lessons/${l.id}`} style={{ color: 'inherit' }}>
+            📘 {l.title}
+          </Link>
+        </div>
         <div className="row small" style={{ marginBottom: '0.5rem' }}>
           <span className="badge">{l.lesson_recipients.length} học sinh</span>
           {l.file_path && <span className="badge">📎 File</span>}
@@ -65,6 +72,10 @@ export default function TutorLessons() {
             <Icon name="eye" />
             Xem
           </Link>
+          <button type="button" className="btn btn-small" onClick={() => setAssigning([item])}>
+            <Icon name="users" />
+            Giao ({l.lesson_recipients.length})
+          </button>
           <Link className="btn btn-small" to={`/tutor/lessons/${l.id}/edit`}>
             <Icon name="edit" />
             Sửa
@@ -90,6 +101,7 @@ export default function TutorLessons() {
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">
+            <SelectToggle sel={pick} />
             <Link className="btn" to="/tutor/import">
               <Icon name="import" />
               Dán JSON
@@ -109,6 +121,17 @@ export default function TutorLessons() {
 
         {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderLesson)}</div>}
         {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderLesson} />}
+        <SelectBar sel={pick} onAssign={() => setAssigning(pick.items)} />
+        {assigning && (
+          <AssignDialog
+            items={assigning}
+            onClose={() => setAssigning(null)}
+            onSaved={() => {
+              if (assigning.length > 1) pick.stop()
+              reload()
+            }}
+          />
+        )}
       </section>
     </div>
   )
