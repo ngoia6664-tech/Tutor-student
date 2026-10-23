@@ -65,8 +65,9 @@ function makeUrl(pathname, { lop, mon, cd, ch }) {
  * - hideEmpty: ẩn chương không có bài nào (học sinh)
  * - badgeIf: bài nào hiện thành số vàng cạnh chương (vd. bài chưa làm, bài chờ chấm)
  * - showCount: hiện số bài (xám) cạnh mỗi chương
+ * - nowId: chương học sinh đang học → 📍 trên lá + chuyên đề chứa nó, chưa chọn gì thì mở sẵn nhánh đó
  */
-export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chương', storageKey }) {
+export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chương', storageKey }) {
   const { pathname } = useLocation()
   const sel = useTreeSelection()
   const { open, toggle, ensure } = useOpenNodes(storageKey)
@@ -99,6 +100,14 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
     if (c !== undefined) keys.push(nodeKey('c', g, s, c))
     if (keys.length) ensure(keys)
   }, [selChapter, sel.lop, sel.mon, sel.cd, ensure])
+  // Chưa chọn gì: mở sẵn nhánh chương đang học
+  const nowChapter = nowId ? chapterById.get(nowId) : null
+  const nothingSelected = sel.lop === undefined && sel.ch === undefined
+  useEffect(() => {
+    if (!nowChapter || !nothingSelected) return
+    const [g, s, c] = [keyOf(nowChapter.grade), keyOf(nowChapter.subject), keyOf(nowChapter.section)]
+    ensure([nodeKey('g', g), nodeKey('s', g, s), nodeKey('c', g, s, c)])
+  }, [nowChapter, nothingSelected, ensure])
   // Chọn xong trên điện thoại thì gập mục lục
   useEffect(() => setShown(false), [sel.lop, sel.mon, sel.cd, sel.ch])
 
@@ -130,6 +139,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
             onToggle={() => toggle(nodeKey('c', g.key, s.key, x.key))}
             active={!sel.ch && sel.lop === g.key && sel.mon === s.key && sel.cd === x.key}
             depth={base + 1}
+            now={x.chapters.some((c) => c.id === nowId)}
           >
             {x.chapters.map((c) => (
               <TreeLeaf
@@ -140,6 +150,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
                 badge={badges.get(c.id) || null}
                 active={sel.ch === c.id}
                 dim={!perChapter.get(c.id) && !badges.get(c.id)}
+                now={c.id === nowId}
               />
             ))}
           </TreeGroup>

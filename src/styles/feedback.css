@@ -1,0 +1,199 @@
+/* ===== Góp ý (components/FeedbackButton.jsx, trang gia sư pages/tutor/TutorFeedback.jsx) ===== */
+
+/* Nút nổi góc trái dưới (gấu ở góc phải) */
+.feedback-fab {
+  position: fixed;
+  left: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 8; /* ngang gấu, dưới thanh menu và thông báo nổi */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem 0.5rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box, var(--grad) border-box;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow), 0 0 22px -8px rgba(217, 70, 239, 0.55);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.feedback-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow), 0 0 28px -6px rgba(217, 70, 239, 0.7);
+}
+.feedback-fab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.feedback-fab-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+  animation: feedback-wiggle 6s var(--ease) infinite;
+}
+@keyframes feedback-wiggle {
+  0%,
+  88%,
+  100% {
+    transform: rotate(0);
+  }
+  91% {
+    transform: rotate(-14deg);
+  }
+  94% {
+    transform: rotate(12deg);
+  }
+  97% {
+    transform: rotate(-6deg);
+  }
+}
+html[data-still-mascot] .feedback-fab-emoji {
+  animation: none;
+}
+/* Đang làm đề có đồng hồ / ngắm vũ trụ: ẩn */
+body:has(.exam-timer-float) .feedback-fab,
+.space-exploring .feedback-fab {
+  display: none;
+}
+@media (max-width: 640px) {
+  /* Điện thoại: chỉ còn nút tròn, không che nội dung */
+  .feedback-fab {
+    left: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+  .feedback-fab-text {
+    display: none;
+  }
+}
+
+/* Bảng gửi góp ý (dùng khung .settings-overlay / .settings-panel) */
+.feedback-panel textarea {
+  width: 100%;
+  resize: vertical;
+}
+.feedback-rating {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.35rem;
+}
+.feedback-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.feedback-face span {
+  font-size: 1.5rem;
+  line-height: 1.1;
+  filter: grayscale(0.6);
+  transition: filter 0.15s var(--ease);
+}
+.feedback-face small {
+  font-size: 0.7rem;
+}
+.feedback-face:hover span,
+.feedback-face.is-on span {
+  filter: none;
+}
+.feedback-face.is-on {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--text);
+  transform: translateY(-2px);
+}
+.feedback-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.feedback-kind {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.feedback-kind.is-on {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+.feedback-done {
+  padding: 1rem 0 0.25rem;
+  text-align: center;
+}
+.feedback-done-emoji {
+  font-size: 2.6rem;
+  animation: settings-in 0.4s var(--ease);
+}
+
+/* Trang gia sư: danh sách góp ý */
+.fb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.fb-item {
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.fb-item.is-new {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-soft);
+}
+.fb-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.45rem;
+}
+.fb-who {
+  font-weight: 600;
+}
+.fb-rating {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.fb-msg {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fb-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.fb-foot .spacer {
+  flex: 1;
+}
+.fb-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}

@@ -9,12 +9,16 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
+import StudyNow from '../../components/StudyNow.jsx'
+import StudyNowButton from '../../components/StudyNowButton.jsx'
+import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 
 // Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc theo chương của lớp mình
 export default function StudentHome() {
   const { profile } = useAuth()
   const { isNew } = useNotifications()
   const sel = useTreeSelection()
+  const studyId = useStudyChapterId()
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, chapters] = await Promise.all([
@@ -37,6 +41,7 @@ export default function StudentHome() {
   const chapterById = new Map(chapters.map((c) => [c.id, c]))
   const rows = (data?.list || []).filter((r) => matchItem(r, chapterById, sel))
   const where = selectionLabel(sel, chapterById, 'Bài khác')
+  const now = findStudyChapter(chapters, studyId)
 
   return (
     <div className="library">
@@ -50,6 +55,7 @@ export default function StudentHome() {
         hideEmpty
         noneLabel="Bài khác"
         storageKey="todo-tree-open"
+        nowId={now?.id}
       />
       <section className="library-main">
         <div className="page-head">
@@ -57,7 +63,10 @@ export default function StudentHome() {
             <h1>Chào {profile.full_name || 'bạn'} 👋</h1>
             <p className="muted small page-sub">{where ? `Bài cần làm · ${where}` : 'Bài cần làm, hạn gần nhất lên trước'}</p>
           </div>
+          {chapterById.has(sel.ch) && <StudyNowButton chapterId={sel.ch} />}
         </div>
+
+        {!where && !loading && <StudyNow chapter={now} />}
 
         {loading && <Loading />}
         <ErrorBox message={error} onRetry={reload} />

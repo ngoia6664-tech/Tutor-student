@@ -978,6 +978,75 @@ $$;
 revoke all on function public.report_exercise(uuid, text) from public;
 grant execute on function public.report_exercise(uuid, text) to authenticated;
 
+-- ---------- Góp ý của người dùng ----------
+-- Học sinh gửi góp ý (nút "Góp ý" ở góc trái dưới); gia sư xem hết ở trang "Góp ý".
+create table if not exists public.feedback (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  kind        text not null default 'idea' check (kind in ('idea', 'bug', 'praise', 'other')),
+  rating      smallint check (rating between 1 and 5),
+  message     text not null check (length(trim(message)) > 0 and length(message) <= 2000),
+  page        text,
+  seen        boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+create index if not exists feedback_created_idx on public.feedback (created_at desc);
+
+alter table public.feedback enable row level security;
+
+drop policy if exists feedback_tutor_all  on public.feedback;
+drop policy if exists feedback_own_insert on public.feedback;
+drop policy if exists feedback_own_select on public.feedback;
+
+create policy feedback_tutor_all on public.feedback
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Người dùng chỉ gửi góp ý dưới tên mình, chưa đánh dấu đã xem; không sửa/xóa
+create policy feedback_own_insert on public.feedback
+  for insert to authenticated
+  with check (user_id = auth.uid() and seen = false);
+
+create policy feedback_own_select on public.feedback
+  for select to authenticated
+  using (user_id = auth.uid());
+
+-- ---------- Chương đang học ----------
+-- Lưu theo học sinh. Tự đổi khi học sinh mở một bài tập chưa nộp để làm (chương của bài tập đó),
+-- hoặc khi học sinh tự bấm "Đánh dấu đang học" ở một chương / bài giảng. Không làm gì thì giữ nguyên.
+alter table public.profiles add column if not exists study_chapter_id uuid references public.chapters (id) on delete set null;
+alter table public.profiles add column if not exists study_chapter_at timestamptz;
+
+-- Học sinh không sửa được bảng profiles → đổi qua hàm này (chỉ chương có bài được giao cho mình; null = bỏ đánh dấu)
+create or replace function public.set_study_chapter(p_chapter_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập';
+  end if;
+  if p_chapter_id is not null and not exists (
+    select 1 from lessons l join lesson_recipients lr on lr.lesson_id = l.id
+     where l.chapter_id = p_chapter_id and lr.student_id = v_uid
+    union all
+    select 1 from assignments a join assignment_recipients ar on ar.assignment_id = a.id
+     where a.chapter_id = p_chapter_id and ar.student_id = v_uid
+  ) then
+    raise exception 'Chương này chưa có bài nào được giao cho bạn';
+  end if;
+  update profiles set study_chapter_id = p_chapter_id, study_chapter_at = now() where id = v_uid;
+  return p_chapter_id;
+end;
+$$;
+
+revoke all on function public.set_study_chapter(uuid) from public;
+grant execute on function public.set_study_chapter(uuid) to authenticated;
+
 
 -- =====================================================================
 -- 7. STORAGE (bucket riêng tư + policy)

@@ -11,6 +11,9 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
 import Icon from '../../components/Icon.jsx'
+import StudyNow from '../../components/StudyNow.jsx'
+import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
+import StudyNowButton from '../../components/StudyNowButton.jsx'
 
 const OTHER = 'khac' // mục "Bài khác": bài chưa xếp chương hoặc thuộc lớp khác
 const url = (id) => (id ? `/student/library/${id}` : '/student/library')
@@ -66,6 +69,13 @@ export default function StudentLibrary() {
   // Một lớp nên bỏ cấp Lớp, cây bắt đầu từ Môn
   const subjectsTree = buildTree(chapters.map((c) => ({ ...c, grade: myGrade })))[0]?.subjects || []
   const current = id && id !== OTHER ? chapters.find((c) => c.id === id) : null
+  const studyId = useStudyChapterId()
+  const now = findStudyChapter(chapters, studyId)
+
+  // Mở sẵn nhánh chương đang học
+  useEffect(() => {
+    if (now) ensure([nodeKey('s', keyOf(now.subject)), nodeKey('c', keyOf(now.subject), keyOf(now.section))])
+  }, [now, ensure])
 
   useEffect(() => {
     if (current) ensure([nodeKey('s', keyOf(current.subject)), nodeKey('c', keyOf(current.subject), keyOf(current.section))])
@@ -102,9 +112,10 @@ export default function StudentLibrary() {
                   open={open.has(nodeKey('c', s.key, x.key))}
                   onToggle={() => toggle(nodeKey('c', s.key, x.key))}
                   depth={1}
+                  now={x.chapters.some((c) => c.id === now?.id)}
                 >
                   {x.chapters.map((c) => (
-                    <TreeLeaf key={c.id} to={url(c.id)} label={c.title} badge={todoOf(c.id) || null} />
+                    <TreeLeaf key={c.id} to={url(c.id)} label={c.title} badge={todoOf(c.id) || null} now={c.id === now?.id} />
                   ))}
                 </TreeGroup>
               ))}
@@ -117,7 +128,7 @@ export default function StudentLibrary() {
       <section className="library-main">
         <ErrorBox message={error} onRetry={reload} />
         {loading && <Loading />}
-        {!loading && !error && !id && <Overview chapters={chapters} itemsOf={itemsOf} myGrade={myGrade} hasOther={hasOther} />}
+        {!loading && !error && !id && <Overview chapters={chapters} itemsOf={itemsOf} myGrade={myGrade} hasOther={hasOther} now={now} />}
         {!loading && !error && id && (current || id === OTHER) && <ChapterView chapter={current} items={itemsOf(id)} />}
         {!loading && !error && id && !current && id !== OTHER && (
           <div className="empty">
@@ -154,6 +165,7 @@ function ChapterView({ chapter, items }) {
       )}
       <div className="page-head">
         <h1>{chapter ? chapter.title : 'Bài khác'}</h1>
+        {chapter && <StudyNowButton chapterId={chapter.id} />}
       </div>
       {assignments.length > 0 && (
         <div className="progress-row">
@@ -215,7 +227,7 @@ function ChapterView({ chapter, items }) {
 }
 
 // Chưa chọn chương: tiến độ từng chương của lớp mình
-function Overview({ chapters, itemsOf, myGrade, hasOther }) {
+function Overview({ chapters, itemsOf, myGrade, hasOther, now }) {
   const total = chapters.reduce((n, c) => n + itemsOf(c.id).assignments.filter((r) => r.status === 'todo').length, 0) + (hasOther ? itemsOf(OTHER).assignments.filter((r) => r.status === 'todo').length : 0)
   const sections = []
   for (const c of chapters) {
@@ -230,6 +242,7 @@ function Overview({ chapters, itemsOf, myGrade, hasOther }) {
         <h1>
           <span className="title-icon"><Icon name="library" /></span>Thư viện {myGrade ? gradeLabel(myGrade) : ''}</h1>
       </div>
+      <StudyNow chapter={now} />
       <p className="muted">
         {total > 0 ? (
           <>
@@ -251,8 +264,10 @@ function Overview({ chapters, itemsOf, myGrade, hasOther }) {
               const done = assignments.filter((r) => r.status !== 'todo').length
               const todo = assignments.length - done
               return (
-                <Link key={c.id} to={url(c.id)} className="list-item overview-card">
-                  <div className="list-item-title">{c.title}</div>
+                <Link key={c.id} to={url(c.id)} className={c.id === now?.id ? 'list-item overview-card is-now' : 'list-item overview-card'}>
+                  <div className="list-item-title">
+                    {c.title} {c.id === now?.id && <span className="badge badge-now">📍 Đang học</span>}
+                  </div>
                   <div className="row small" style={{ margin: '0.4rem 0 0.6rem' }}>
                     <span className="badge">{lessons.length} bài giảng</span>
                     <span className="badge">{assignments.length} bài tập</span>

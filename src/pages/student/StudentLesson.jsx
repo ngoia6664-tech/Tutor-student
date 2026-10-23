@@ -4,6 +4,7 @@ import { useAsync } from '../../lib/useAsync.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import LessonView from '../../components/LessonView.jsx'
+import StudyNowButton from '../../components/StudyNowButton.jsx'
 
 export default function StudentLesson() {
   const { id } = useParams()
@@ -36,6 +37,11 @@ export default function StudentLesson() {
       <Link to={back.to} className="small">
         {back.label}
       </Link>
+      {data.lesson.chapter_id && (
+        <div className="row" style={{ marginTop: '0.5rem' }}>
+          <StudyNowButton chapterId={data.lesson.chapter_id} />
+        </div>
+      )}
       <div style={{ marginTop: '0.5rem' }}>
         <LessonView lesson={data.lesson} />
       </div>

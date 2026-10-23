@@ -331,3 +331,49 @@ select.grade-add {
   vertical-align: middle;
   margin-left: 0.25rem;
 }
+
+/* Chương đang học của học sinh (lib/studyNow.js): 📍 trên cây, nhãn, dòng nhắc */
+.tree-now {
+  flex: none;
+  font-size: 0.78rem;
+  line-height: 1.35rem;
+}
+.tree-row .tree-now {
+  align-self: center;
+}
+.tree-leaf.is-now:not(.active) {
+  background: var(--primary-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+.badge.badge-now {
+  background: var(--primary-soft);
+  color: var(--text);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.overview-card.is-now {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-soft);
+}
+.study-now {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--primary-soft);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  line-height: 1.45;
+}
+.study-now-pin {
+  flex: none;
+}
+.study-now a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--primary);
+  text-underline-offset: 3px;
+}

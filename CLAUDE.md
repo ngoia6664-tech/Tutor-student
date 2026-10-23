@@ -17,10 +17,16 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - `src/contexts/` — `AuthContext` (phiên + profile/role), `NotificationsContext` (bài mới cho học sinh).
 - `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương),
   `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm),
-  `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề).
+  `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề),
+  `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
+- Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.
+- Chương đang học: lưu `profiles.study_chapter_id` qua RPC `set_study_chapter`; `lib/studyNow.js` (`useStudyChapterId`, `setStudyChapter`).
+  Gia sư xem ở đầu trang StudentDetail.   Tự đổi khi mở bài tập chưa nộp (AnswerView trong StudentAssignment), hoặc học sinh bấm `components/StudyNowButton.jsx`
+  (Thư viện › chương, StudentLesson, đầu trang Bài cần làm / Bài giảng khi cây đang chọn một chương); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
+  `FilterTree` prop `nowId`) ở Thư viện + Bài giảng, dòng `components/StudyNow.jsx` ở Bài cần làm / Bài giảng / Thư viện.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
   `StudentMistakes` (Ôn câu sai: câu `is_correct=false`, làm lại chấm trên máy qua `lib/practice.js`),
-  `StudentLibrary`, `StudentLessons` (/student/lessons: mọi bài giảng được giao, gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
+  `StudentLibrary`, `StudentLessons` (/student/lessons: cây lọc FilterTree + gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
   (vào từ Bài giảng → state `from: 'lessons'` để nút quay lại về Bài giảng). Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
@@ -84,6 +90,7 @@ Tìm bằng `grep -n "<tên bảng hoặc hàm>"`. Các phần (số dòng xấp
 5. RLS ~262–420: policy theo từng bảng (comment `-- ---------- <bảng> ----------`)
 6. Hàm ~424–980: `save_lesson`, `save_assignment`, `ensure_chapter`, chấm điểm (`normalize_answer`, `short_match`,
    `tf_count`, `grade_answer`, `answer_points`), `submit_assignment`, `start_assignment`, `mark_notifications_seen`,
+   bảng `feedback` (góp ý), `set_study_chapter` (chương đang học),
    bảng `question_reports` + `report_exercise`
 7. Storage ~984–cuối: bucket riêng tư + policy
 Đổi schema: thêm khối idempotent (`if not exists`, `create or replace`) để người dùng chạy lại cả file trong SQL Editor.

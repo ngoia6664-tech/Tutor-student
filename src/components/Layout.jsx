@@ -19,6 +19,8 @@ const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
 const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
+import { countUnseenFeedback, FEEDBACK_CHANGED } from '../lib/feedback.js'
+import FeedbackButton from './FeedbackButton.jsx'
 
 const NAV = {
   tutor: [
@@ -28,6 +30,7 @@ const NAV = {
     { to: '/tutor/lessons', label: 'Bài giảng', icon: 'lesson' },
     { to: '/tutor/import', label: 'Dán JSON', icon: 'import' },
     { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports' },
+    { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback' },
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
@@ -45,7 +48,11 @@ export default function Layout() {
   // Trong Thư viện, đổi chương chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
   const pageKey = pathname.match(/^\/(tutor|student)\/library/)?.[0] ?? pathname
 
-  const reportCount = useOpenReportCount(profile.role === 'tutor', pathname)
+  const isTutor = profile.role === 'tutor'
+  const badges = {
+    reports: useLiveCount(isTutor, pathname, countOpenReports, REPORTS_CHANGED),
+    feedback: useLiveCount(isTutor, pathname, countUnseenFeedback, FEEDBACK_CHANGED),
+  }
 
   useEffect(() => {
     prefetchPages(profile.role)
@@ -114,9 +121,9 @@ export default function Layout() {
             <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
               <Icon name={it.icon} size={17} />
               <span>{it.label}</span>
-              {it.badge === 'reports' && reportCount > 0 && (
-                <span className="nav-badge" aria-label={`${reportCount} câu chờ xem`}>
-                  {reportCount}
+              {it.badge && badges[it.badge] > 0 && (
+                <span className="nav-badge" aria-label={`${badges[it.badge]} ${it.badge === 'reports' ? 'câu chờ xem' : 'góp ý chưa xem'}`}>
+                  {badges[it.badge]}
                 </span>
               )}
             </NavLink>
@@ -135,6 +142,7 @@ export default function Layout() {
         </div>
       </main>
       <Mascot />
+      {profile.role === 'student' && <FeedbackButton />}
       {exploring && (
         <Suspense fallback={null}>
           <SpaceExplorer onClose={() => setExploring(false)} />
@@ -151,22 +159,23 @@ export default function Layout() {
   return profile.role === 'student' ? <NotificationsProvider>{content}</NotificationsProvider> : content
 }
 
-// Gia sư: số câu bị báo lỗi đang chờ (cập nhật khi đổi trang, khi xử lý xong, khi quay lại tab)
-function useOpenReportCount(enabled, pathname) {
+// Gia sư: số đếm trên menu (câu bị báo lỗi đang chờ, góp ý chưa xem).
+// Cập nhật khi đổi trang, khi trang phát sự kiện eventName (xử lý xong), khi quay lại tab
+function useLiveCount(enabled, pathname, countFn, eventName) {
   const [count, setCount] = useState(0)
   useEffect(() => {
     if (!enabled) return
     let alive = true
-    const load = () => countOpenReports().then((n) => alive && setCount(n))
+    const load = () => countFn().then((n) => alive && setCount(n))
     load()
     const onVisible = () => document.visibilityState === 'visible' && load()
-    window.addEventListener(REPORTS_CHANGED, load)
+    window.addEventListener(eventName, load)
     document.addEventListener('visibilitychange', onVisible)
     return () => {
       alive = false
-      window.removeEventListener(REPORTS_CHANGED, load)
+      window.removeEventListener(eventName, load)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [enabled, pathname])
+  }, [enabled, pathname, countFn, eventName])
   return count
 }

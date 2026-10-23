@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAsync } from '../../lib/useAsync.js'
+import { supabase } from '../../lib/supabase.js'
 import { fetchStudentReport, STATE_LABEL, STATE_TONE } from '../../lib/studentReport.js'
 import { fetchChapters } from '../../lib/chapters.js'
 import { formatDate, formatDateTime, TYPE_LABEL } from '../../lib/format.js'
@@ -26,8 +27,13 @@ export default function StudentDetail() {
   const [editing, setEditing] = useState(false)
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [report, chapters] = await Promise.all([fetchStudentReport(id), fetchChapters()])
-    return { ...report, chapterById: new Map(chapters.map((c) => [c.id, c])) }
+    const [report, chapters, study] = await Promise.all([
+      fetchStudentReport(id),
+      fetchChapters(),
+      // Chương đang học (học sinh tự đánh dấu / bài tập đang làm). Chưa chạy lại schema.sql thì bỏ qua
+      supabase.from('profiles').select('study_chapter_id, study_chapter_at').eq('id', id).maybeSingle().then(({ data }) => data),
+    ])
+    return { ...report, study, chapterById: new Map(chapters.map((c) => [c.id, c])) }
   }, [id])
 
   if (loading && !data) return <Loading />
@@ -39,7 +45,8 @@ export default function StudentDetail() {
       </div>
     )
 
-  const { student: s, assignments, lessons, summary: sum, chapterById } = data
+  const { student: s, assignments, lessons, summary: sum, chapterById, study } = data
+  const studyChapter = study?.study_chapter_id ? chapterById.get(study.study_chapter_id) : null
   const chapterName = (cid) => chapterById.get(cid)?.title || ''
   const rows = assignments.filter((r) => matchFilter(r, filter))
   const countOf = (f) => assignments.filter((r) => matchFilter(r, f)).length
@@ -60,6 +67,20 @@ export default function StudentDetail() {
             <span className="badge">{s.grade ? `Lớp ${s.grade}` : 'Chưa rõ lớp'}</span>
             {s.subjects?.length > 0 && <span className="badge">{s.subjects.join(', ')}</span>}
           </div>
+          <p className="small study-now-line">
+            📍{' '}
+            {studyChapter ? (
+              <>
+                Đang học: {studyChapter.section && <>{studyChapter.section} › </>}
+                <Link to={`/tutor/library/${studyChapter.id}`}>
+                  <b>{studyChapter.title}</b>
+                </Link>
+                {study.study_chapter_at && <span className="muted"> · cập nhật {formatDateTime(study.study_chapter_at)}</span>}
+              </>
+            ) : (
+              <span className="muted">Chưa đánh dấu chương đang học</span>
+            )}
+          </p>
         </div>
         <button type="button" className="btn btn-small" onClick={() => setEditing((v) => !v)}>
           <Icon name="edit" />

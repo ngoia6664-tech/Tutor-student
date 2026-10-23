@@ -17,6 +17,7 @@ import ImageGallery from '../../components/ImageGallery.jsx'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import { celebrate } from '../../lib/celebrate.js'
 import { UNLOCK_PRAISE, useStudyLock } from '../../lib/studyLock.js'
+import { setStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
@@ -51,7 +52,7 @@ export default function StudentAssignment() {
     if (!rec) throw new Error('Không tìm thấy bài tập, hoặc bài này không được giao cho bạn.')
 
     const [assignment, exercises, myAnswers] = await Promise.all([
-      supabase.from('assignments').select('id, title, type, due_date, lesson_id, is_exam, time_limit_minutes').eq('id', id).single().then(unwrap),
+      supabase.from('assignments').select('id, title, type, due_date, lesson_id, chapter_id, is_exam, time_limit_minutes').eq('id', id).single().then(unwrap),
       supabase.from('exercises').select('id, sort_order, kind, question_md, options').eq('assignment_id', id).order('sort_order').then(unwrap),
       supabase
         .from('submission_answers')
@@ -185,6 +186,12 @@ function AnswerView({ data, studentId, onSubmitted }) {
   // Đang làm bài: khóa chế độ ngắm vũ trụ, gấu ngồi đợi. Nộp xong (sang ReviewView) tự mở khóa
   useStudyLock()
   const { rec, assignment: a, exercises } = data
+  // Mở bài chưa nộp để làm = đang học chương của bài này (lưu làm chương đang học, lỗi thì bỏ qua)
+  const studyId = useStudyChapterId()
+  useEffect(() => {
+    if (a.chapter_id) setStudyChapter(studentId, a.chapter_id, studyId).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [a.chapter_id, studentId])
   const isExam = !!a.is_exam
   const key = draftKey(a.id, studentId)
   // Ưu tiên bản nháp trên máy; nếu gia sư mở lại bài thì lấy câu trả lời lần trước

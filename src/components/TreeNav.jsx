@@ -66,7 +66,8 @@ export function useOpenNodes(storageKey) {
 }
 
 // Một nút nhóm trên cây: mũi tên mở/thu + tên (bấm để xem nhóm) + số đếm
-export function TreeGroup({ label, to, count, open, onToggle, active, depth, children }) {
+// now: nhóm chứa chương đang học (hiện 📍)
+export function TreeGroup({ label, to, count, open, onToggle, active, depth, now, children }) {
   return (
     <li role="treeitem" aria-expanded={open} className={`tree-node depth-${depth}`}>
       <div className={active ? 'tree-row active' : 'tree-row'}>
@@ -84,6 +85,11 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, chi
             {label}
           </button>
         )}
+        {now && (
+          <span className="tree-now" title="Chuyên đề đang học">
+            📍
+          </span>
+        )}
         {count !== undefined && <span className="tree-count">{count}</span>}
       </div>
       {open && (
@@ -97,15 +103,21 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, chi
 
 // Lá của cây: một chương (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
 // active: truyền vào khi lá phân biệt bằng ?tham số (NavLink chỉ so đường dẫn)
-export function TreeLeaf({ to, label, badge, count, active, dim }) {
+// now: chương học sinh đang học (hiện nhãn 📍)
+export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
   const body = (
     <>
       <span className="tree-leaf-text">{label}</span>
+      {now && (
+        <span className="tree-now" title="Đang học">
+          📍
+        </span>
+      )}
       {badge ? <span className="tree-leaf-badge">{badge}</span> : null}
       {count !== undefined && <span className="tree-count">{count}</span>}
     </>
   )
-  const cls = (on) => ['tree-leaf', on && 'active', dim && 'dim'].filter(Boolean).join(' ')
+  const cls = (on) => ['tree-leaf', on && 'active', dim && 'dim', now && 'is-now'].filter(Boolean).join(' ')
   return (
     <li role="treeitem">
       {active === undefined ? (

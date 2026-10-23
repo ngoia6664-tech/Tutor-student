@@ -118,3 +118,15 @@
     font-size: 1.3rem;
   }
 }
+
+/* Chương học sinh đang học (đầu trang) */
+.study-now-line {
+  margin: 0.45rem 0 0;
+  overflow-wrap: anywhere;
+}
+.study-now-line a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--primary);
+  text-underline-offset: 3px;
+}
