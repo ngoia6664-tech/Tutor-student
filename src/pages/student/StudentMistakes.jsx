@@ -12,6 +12,7 @@ import Markdown from '../../components/Markdown.jsx'
 import ExerciseBody, { isAnswered, KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import MarkHard from '../../components/MarkHard.jsx'
+import HardNote from '../../components/HardNote.jsx'
 import Icon from '../../components/Icon.jsx'
 
 const EXERCISE_FIELDS = 'id, sort_order, kind, question_md, options, assignment:assignments(id, title, chapter_id, chapter:chapters(title))'
@@ -30,6 +31,8 @@ export default function StudentMistakes() {
   const [showMastered, setShowMastered] = useState(false)
   // Câu vừa bấm đánh dấu / bỏ đánh dấu trên trang này: { exercise_id: true | false }
   const [marked, setMarkedState] = useState({})
+  // Ghi chú câu khó vừa sửa trên trang này: { exercise_id: note }
+  const [notes, setNotes] = useState({})
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, marks, recs, chapters] = await Promise.all([
@@ -42,7 +45,7 @@ export default function StudentMistakes() {
       // Bảng câu khó chưa có (chưa chạy lại schema.sql) thì coi như chưa đánh dấu câu nào
       supabase
         .from('question_marks')
-        .select(`exercise_id, created_at, exercise:exercises(${EXERCISE_FIELDS})`)
+        .select(`exercise_id, created_at, note, exercise:exercises(${EXERCISE_FIELDS})`)
         .eq('student_id', profile.id)
         .then(({ data, error }) => (error ? [] : data)),
       supabase.from('assignment_recipients').select('assignment_id, status').eq('student_id', profile.id).then(unwrap),
@@ -64,6 +67,7 @@ export default function StudentMistakes() {
       key: keyById[r.exercise_id],
       // Bài gốc chưa nộp: chưa có đáp án để kiểm tra (đáp án chỉ mở sau khi nộp)
       locked: statusOf[r.exercise.assignment.id] === 'todo',
+      note: r.note || '',
     })
     const order = (a, b) => a.assignment.title.localeCompare(b.assignment.title, 'vi') || a.ex.sort_order - b.ex.sort_order
     return { wrong: wrongList.map(toItem).sort(order), hard: hardList.map(toItem).sort(order), chapters }
@@ -79,6 +83,8 @@ export default function StudentMistakes() {
 
   function setMarked(id, on) {
     setMarkedState((prev) => ({ ...prev, [id]: on }))
+    // Bỏ đánh dấu thì máy chủ xóa luôn ghi chú
+    if (!on) setNotes((prev) => ({ ...prev, [id]: '' }))
   }
 
   const hardTab = tab === 'hard'
@@ -88,6 +94,8 @@ export default function StudentMistakes() {
   // Câu khó = câu đã đánh dấu lúc tải trang + câu sai vừa đánh dấu ở mục Câu sai, trừ câu vừa bỏ đánh dấu
   const hardIds = new Set((data?.hard || []).map((r) => r.exercise_id))
   const isMarked = (id) => marked[id] ?? hardIds.has(id)
+  const savedNotes = new Map((data?.hard || []).map((r) => [r.exercise_id, r.note]))
+  const noteOf = (id) => notes[id] ?? savedNotes.get(id) ?? ''
   const hardAll = [...(data?.hard || []), ...wrongAll.filter((r) => !hardIds.has(r.exercise_id))]
     .filter((r) => isMarked(r.exercise_id))
     .sort((a, b) => a.assignment.title.localeCompare(b.assignment.title, 'vi') || a.ex.sort_order - b.ex.sort_order)
@@ -195,8 +203,19 @@ export default function StudentMistakes() {
                         exerciseId={r.exercise_id}
                         studentId={profile.id}
                         marked={isMarked(r.exercise_id)}
+                        hasNote={!!noteOf(r.exercise_id)}
                         onChange={(on) => setMarked(r.exercise_id, on)}
                       />
+                    }
+                    note={
+                      hardTab && (
+                        <HardNote
+                          exerciseId={r.exercise_id}
+                          studentId={profile.id}
+                          note={noteOf(r.exercise_id)}
+                          onSaved={(text) => setNotes((prev) => ({ ...prev, [r.exercise_id]: text }))}
+                        />
+                      )
                     }
                   />
                 ))}
@@ -212,8 +231,8 @@ export default function StudentMistakes() {
 const PRAISE = ['Chính xác! Lần này bạn làm đúng rồi 🎉', 'Tuyệt vời, sửa sai thành công!', 'Đúng rồi! Tiến bộ thấy rõ luôn 🚀']
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
 
-// mark: nút "Câu khó" / "Bỏ đánh dấu"
-function PracticeQuestion({ item, mastered, onCorrect, mark }) {
+// mark: nút "Câu khó" / "Bỏ đánh dấu" · note: ô ghi chú riêng (mục Câu khó)
+function PracticeQuestion({ item, mastered, onCorrect, mark, note }) {
   const { ex, key: k, locked } = item
   const [value, setValue] = useState(null)
   const [result, setResult] = useState(undefined) // undefined: đang làm; true/false/null: đã kiểm tra
@@ -244,6 +263,7 @@ function PracticeQuestion({ item, mastered, onCorrect, mark }) {
         {result === false && <span className="badge badge-danger">Vẫn sai</span>}
         {mark}
       </div>
+      {note}
 
       <ExerciseBody
         ex={ex}

@@ -29,15 +29,21 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `StudentLibrary`, `StudentLessons` (/student/lessons: cây lọc FilterTree + gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
   (vào từ Bài giảng → state `from: 'lessons'` để nút quay lại về Bài giảng). Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
 - Làm bài (StudentAssignment): `components/AnswerProgress.jsx` thanh đã làm/chưa làm dính dưới header (thu gọn được, bấm câu chưa làm để nhảy);
-  `components/MarkHard.jsx` + `lib/marks.js` nút "Câu khó" (bảng `question_marks`, chỉ mất khi học sinh bỏ đánh dấu).
+  `components/MarkHard.jsx` + `lib/marks.js` nút "Câu khó" (bảng `question_marks`, chỉ mất khi học sinh bỏ đánh dấu;
+  cột `note` = ghi chú riêng của học sinh, sửa ở Ôn tập › Câu khó qua `components/HardNote.jsx`; gia sư không có policy đọc).
   Làm lại bài đã nộp tối đa 3 lần: `lib/retries.js`, RPC `submit_retry` → bảng `assignment_retries` (không đụng điểm chính thức =
   lần nộp đầu; gia sư "Cho nộp lại" thì lần nộp sau mới thay); `RetryCard` trong ReviewView, điểm làm lại hiện nhạt ở StudentResults + AssignmentTracking.
   CSS `styles/attempts.css`. Gia sư xem bài làm có đáp án + phương pháp giải (nút Ẩn/Hiện đáp án trong `AnswerSheet`).
+- Hộp thoại có gấu thay `window.confirm`: `lib/dialog.js` (`askConfirm` → Promise<boolean>, `notifyDone` tự tắt 2s,
+  `confirmDelete(kind, name, msg)`, `notifyDeleted(kind)`) + `components/DialogHost.jsx` (trong Layout, portal, Esc / bấm ngoài = hủy, giữ Tab)
+  + cảnh minh họa `components/DialogScene.jsx` (option `scene`: logout cửa EXIT · submit khay nộp bài · submitted bài có dấu tích ·
+  delete thùng rác mở + cảnh báo, hộp viền đỏ · deleted thùng rác sạch; gấu `FrontPanda` prop `face` normal/sad/serious/happy)
+  + CSS `styles/dialog.css`. Đang dùng: đăng xuất, xóa chương / chuyên đề (Library) / bài giảng / bài tập, nộp bài, bỏ đánh dấu câu khó có ghi chú.
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
 - Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout),
   hình vẽ `components/PandaArt.jsx` (FrontPanda pose sit/teach/cheer, BackPanda leo, BallPanda lăn, SleepingPanda, Bamboo),
-  CSS `styles/mascot.css` (bảng đen font Patrick Hand). mood: idle / climb / walk / roll → dizzy / teach / talk / cheer / sleep;
+  CSS `styles/mascot.css` (bảng đen font Patrick Hand). mood: idle / climb / walk / roll → dizzy / teach / talk / cheer / sleep / sulk (bị chọc ≥7 lần/4s: giả ngủ giận);
   mỗi ~10s chọn trò theo `ACTIVITIES` (leo 50%, đi 30%, lăn 20%), ngủ sau 30s; tự ẩn khi có `.exam-timer-float`.
   Trang khác gọi `celebrate(text)` / `mascotSay(text)` từ `lib/celebrate.js` (pháo giấy + bé nói).
   Tiếng gấu: `mascotSound('talk'|'teach'|'cheer'|'hide')` trong `lib/spaceSound.js` (theo "Hiệu ứng âm thanh"; im khi làm bài / tab ẩn / đang ngắm vũ trụ).

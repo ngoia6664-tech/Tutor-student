@@ -14,6 +14,7 @@ import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './Panda
 //       · teach giảng bài (bảng đen mini) · talk nói · cheer ăn mừng · sleep cuộn tròn ngủ
 //       · wait ngồi đọc sách đợi (khi học sinh đang làm bài: không đi dạo / leo / lăn / ngủ).
 // - Bấm vào: giảng một mẹo trên bảng đen; lần đầu ưu tiên nhắc bài (học sinh: quá hạn / sắp hết hạn; gia sư: câu bị báo lỗi).
+//   Bấm dồn dập (≥ 3 lần / 4 giây) thì trêu lại, nhắc làm bài, quá 7 lần thì giận: mood 'sulk' nằm cuộn giả ngủ vài giây.
 // - Nghe sự kiện 'mascot' (lib/celebrate.js) để nói / nhảy lên ăn mừng.
 // - Rảnh thì cứ ~10 giây làm một trò (leo tre hay gặp nhất); 30 giây không thao tác thì ngủ.
 // - Tự ẩn khi đang làm đề có tính giờ (styles/mascot.css). "Cất gấu" thu gấu lại thành nút nhỏ, nhớ trên máy này.
@@ -40,6 +41,14 @@ const TIPS = [
   'Ôn câu sai là cách tiến bộ nhanh nhất đó!',
   'Học một chút mỗi ngày tốt hơn học dồn một lần.',
 ]
+
+// Bị chọc dồn dập: đếm số lần bấm trong POKE_WINDOW. 1–2 lần phản hồi bình thường, 3–4 lần trêu lại,
+// 5–6 lần nhắc làm bài, từ 7 lần thì giận: nằm cuộn giả ngủ SULK_MS (bấm trong lúc đó không phản ứng)
+const POKE_WINDOW = 4_000
+const SULK_MS = 6_000
+const TEASE = ['Bạn thích bấm tôi lắm à? 👀', 'Ơ kìa, chọc hoài vậy? 👀', 'Bấm nhẹ thôi, tôi nhột đó 😆']
+const NAG = ['Bài tập vẫn còn kia kìa…', 'Chọc tôi không ra điểm đâu, làm bài đi nào…', 'Thôi mà, bài tập đang đợi bạn kìa…']
+const SULK = 'Hừm, giận rồi! Tôi đi ngủ đây, đừng chọc nữa 😤 Zzz…'
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
 
@@ -101,6 +110,7 @@ function MascotBody() {
   const sleepy = useRef(false)
   const timers = useRef({})
   const reminded = useRef(false)
+  const pokes = useRef([]) // thời điểm các lần bấm gần đây (chống bấm dồn dập)
   const studying = useStudying()
   const studyingRef = useRef(studying)
   studyingRef.current = studying
@@ -203,7 +213,30 @@ function MascotBody() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stillMascot])
 
+  // Đếm lần bấm gần đây; trả về true nếu đã phản ứng kiểu "bị chọc" (không cần giảng / nhắc nữa)
+  function reactToSpam() {
+    if (moodRef.current === 'sulk') return true // đang giận: lờ đi
+    const now = Date.now()
+    const recent = (pokes.current = [...pokes.current.filter((t) => now - t < POKE_WINDOW), now])
+    const n = recent.length
+    if (n >= 7) {
+      pokes.current = []
+      clearTimeout(timers.current.activity)
+      say(SULK, 'sulk')
+      clearTimeout(timers.current.bubble)
+      timers.current.bubble = setTimeout(() => setBubble(null), 2500)
+      timers.current.sulk = setTimeout(() => {
+        say('Thôi được rồi, hết giận rồi đó. Học tiếp nào! 🐼')
+      }, SULK_MS)
+      return true
+    }
+    if (n >= 5) return say(pick(NAG)), true
+    if (n >= 3) return say(pick(TEASE)), true
+    return false
+  }
+
   async function onPoke() {
+    if (reactToSpam()) return
     if (studying) return say(LOCK_MESSAGE)
     if (mood === 'sleep') {
       sleepy.current = false
@@ -255,7 +288,7 @@ function MascotBody() {
   let art
   if (shown === 'climb') art = <BackPanda />
   else if (shown === 'roll') art = <BallPanda />
-  else if (shown === 'sleep') art = <SleepingPanda />
+  else if (shown === 'sleep' || shown === 'sulk') art = <SleepingPanda /> // giận: nằm cuộn giả ngủ
   else art = <FrontPanda pose={['teach', 'cheer', 'dizzy', 'wait'].includes(shown) ? shown : 'sit'} />
 
   return (
@@ -286,7 +319,12 @@ function MascotBody() {
               <i />
             </span>
           )}
-          {shown === 'sleep' && (
+          {shown === 'sulk' && (
+            <span className="mascot-sulk" aria-hidden="true">
+              😤
+            </span>
+          )}
+          {(shown === 'sleep' || shown === 'sulk') && (
             <span className="mascot-z" aria-hidden="true">
               z<span>z</span>
             </span>

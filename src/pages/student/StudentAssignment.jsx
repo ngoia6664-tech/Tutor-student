@@ -17,7 +17,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
-import { celebrate } from '../../lib/celebrate.js'
+import { notifyDone } from '../../lib/dialog.js'
 import { UNLOCK_PRAISE, useStudyLock } from '../../lib/studyLock.js'
 import { setStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
@@ -186,7 +186,7 @@ async function loadMyReports(exerciseIds, studentId) {
 
 // Giữ tập câu khó đã tải khớp với nút vừa bấm, để chuyển giữa làm lại / xem kết quả không hiện trạng thái cũ
 function syncMark(marks, exerciseId, on) {
-  if (on) marks.add(exerciseId)
+  if (on) marks.set(exerciseId, marks.get(exerciseId) ?? '')
   else marks.delete(exerciseId)
 }
 
@@ -290,7 +290,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
               <div key={ex.id} className="question" id={`q-${ex.id}`}>
                 <div className="question-label">
                   Câu {no} {!isExam && <span className="badge">{KIND_LABEL[ex.kind]}</span>}
-                  <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
+                  <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} hasNote={!!data.marks.get(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
                   <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                 </div>
                 <ExerciseBody
@@ -317,7 +317,11 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
         onSubmitted={(row) => {
           writeDraft(key, null)
           window.scrollTo({ top: 0, behavior: 'smooth' })
-          celebrate(retry ? 'Nộp lần làm lại xong! So với lần đầu xem tiến bộ chưa nào 🚀' : UNLOCK_PRAISE)
+          notifyDone({
+            title: retry ? 'Nộp lần làm lại thành công!' : 'Nộp bài thành công!',
+            say: retry ? 'So với lần đầu xem tiến bộ chưa nào 🚀' : UNLOCK_PRAISE,
+            confetti: true,
+          })
           onSubmitted(row)
         }}
       />
@@ -463,7 +467,7 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
                         {mine?.is_correct === false && <span className="badge badge-danger">Sai</span>}
                       </>
                     )}
-                    <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
+                    <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} hasNote={!!data.marks.get(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
                     <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                   </div>
                   <ExerciseBody ex={ex} mode="review" name={`r-${ex.id}`} value={mine?.answer} correct={k?.correct ?? null} />

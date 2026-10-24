@@ -1,0 +1,347 @@
+/* ===== Hộp thoại có Gấu Trúc (components/DialogHost.jsx) ===== */
+.dlg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300; /* trên mọi thứ: thanh menu (10), gấu (8, bảng 70), ngắm vũ trụ (100–101) */
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(8, 6, 20, 0.62);
+  animation: dlg-fade 0.18s ease-out;
+}
+.dlg-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 1.15rem 1.15rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  color: var(--text);
+  box-shadow: var(--shadow, 0 18px 50px rgba(0, 0, 0, 0.35));
+  animation: dlg-pop 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+/* Có gấu: chừa chỗ cho gấu ngồi vắt vẻo ở góc trên bên trái */
+.dlg-card.has-panda {
+  margin-top: 48px;
+  padding-top: 2.6rem;
+}
+.dlg-card.is-danger {
+  border-color: var(--danger);
+}
+.dlg-panda {
+  position: absolute;
+  top: -60px;
+  left: 0.9rem;
+  height: 96px;
+}
+.dlg-panda svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+}
+
+/* Cảnh: gấu + đồ vật (components/DialogScene.jsx) */
+.dlg-scene {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100%;
+}
+.dlg-scene-panda {
+  width: 92px;
+  height: 92px;
+  animation: dlg-bob 2.4s ease-in-out infinite;
+}
+.dlg-scene-prop {
+  width: 66px;
+  height: 92px;
+}
+.dlg-scene-prop svg {
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.28));
+}
+/* Mặt gấu: nước mắt rơi (đăng xuất), giọt mồ hôi (xóa) */
+.dlg-scene .pd-tear {
+  animation: dlg-tear 1.8s ease-in infinite;
+}
+.dlg-scene .pd-sweat {
+  animation: dlg-sweat 2.2s ease-in-out infinite;
+}
+
+/* Đăng xuất: gấu buồn nghiêng về phía cửa, cánh cửa hé ra khép vào */
+.is-logout .dlg-scene-panda {
+  transform-origin: 50% 100%;
+  animation: dlg-lean 2.6s ease-in-out infinite;
+}
+.dlg-door-leaf {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  animation: dlg-door 2.6s ease-in-out infinite;
+}
+.dlg-card.scene-logout .dlg-say {
+  background: var(--surface-2);
+}
+.dlg-card.scene-logout.has-panda .dlg-say::before {
+  border-bottom-color: var(--surface-2);
+}
+
+/* Hỏi nộp bài: tờ giấy bay vào khay */
+.dlg-paper {
+  animation: dlg-paper 2s ease-in-out infinite;
+}
+
+/* Nộp xong / xóa xong: dấu tích tự vẽ, sao lấp lánh, gấu nhảy */
+.dlg-check {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: dlg-draw 0.6s 0.15s ease-out forwards;
+}
+.dlg-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dlg-twinkle 1.1s ease-in-out infinite;
+}
+.dlg-twinkle-2 {
+  animation-delay: 0.35s;
+}
+.dlg-twinkle-3 {
+  animation-delay: 0.7s;
+}
+.is-submitted .dlg-scene-panda,
+.is-deleted .dlg-scene-panda {
+  animation: dlg-hop 0.7s cubic-bezier(0.3, 0, 0.4, 1) 3;
+}
+
+/* Hỏi xóa: nghiêm trọng — gấu đứng im, nhíu mày; nắp thùng rác mở, biển cảnh báo nhấp nháy; hộp viền đỏ đậm */
+.is-delete .dlg-scene-panda {
+  animation: dlg-shake 0.5s ease-in-out 2;
+}
+.dlg-lid {
+  transform-box: fill-box;
+  transform-origin: 0 100%;
+}
+.dlg-lid.is-open {
+  animation: dlg-lid 1.6s ease-in-out infinite;
+  transform: rotate(-24deg);
+}
+.dlg-warn {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dlg-warn 1s ease-in-out infinite;
+}
+.dlg-card.scene-delete {
+  border-width: 2px;
+  box-shadow: 0 0 0 4px var(--danger-soft), var(--shadow, 0 18px 50px rgba(0, 0, 0, 0.35));
+}
+.dlg-card.scene-delete .dlg-title {
+  color: var(--danger);
+}
+.dlg-emoji {
+  position: absolute;
+  right: -10px;
+  top: 4px;
+  font-size: 1.35rem;
+  animation: dlg-wiggle 1.2s ease-in-out infinite;
+}
+.dlg-title {
+  margin: 0 2rem 0.35rem 0;
+  font-size: 1.12rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+/* Lời gấu: bong bóng nói nhỏ */
+.dlg-say {
+  position: relative;
+  margin: 0.5rem 0 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  font-size: 0.95rem;
+}
+.dlg-card.is-danger .dlg-say {
+  background: var(--danger-soft);
+}
+.dlg-card.has-panda .dlg-say::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 2.6rem;
+  border: 7px solid transparent;
+  border-top: 0;
+  border-bottom-color: var(--primary-soft);
+}
+.dlg-card.has-panda.is-danger .dlg-say::before {
+  border-bottom-color: var(--danger-soft);
+}
+.dlg-message {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}
+.dlg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.dlg-x {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.dlg-x:hover {
+  color: var(--text);
+}
+/* Vạch đếm ngược tự tắt */
+.dlg-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  border-radius: 0 0 0 var(--radius);
+  background: var(--grad);
+  transform-origin: left;
+  animation: dlg-timer linear forwards;
+}
+
+@media (max-width: 480px) {
+  .dlg-actions .btn {
+    flex: 1;
+  }
+}
+
+@keyframes dlg-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dlg-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+}
+@keyframes dlg-bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes dlg-wiggle {
+  50% {
+    transform: rotate(14deg) scale(1.1);
+  }
+}
+@keyframes dlg-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes dlg-tear {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+@keyframes dlg-sweat {
+  50% {
+    transform: translateY(3px);
+  }
+}
+@keyframes dlg-lean {
+  50% {
+    transform: rotate(5deg) translateX(3px);
+  }
+}
+@keyframes dlg-door {
+  50% {
+    transform: scaleX(0.55);
+  }
+}
+@keyframes dlg-paper {
+  0% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(22px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+}
+@keyframes dlg-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes dlg-twinkle {
+  50% {
+    transform: scale(0.4) rotate(45deg);
+    opacity: 0.5;
+  }
+}
+@keyframes dlg-hop {
+  40% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes dlg-shake {
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+@keyframes dlg-lid {
+  50% {
+    transform: rotate(-34deg);
+  }
+}
+@keyframes dlg-warn {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* Giảm chuyển động / tắt "Animation của Panda": cảnh đứng yên (dấu tích hiện sẵn, nắp vẫn mở) */
+@media (prefers-reduced-motion: reduce) {
+  .dlg-overlay,
+  .dlg-card,
+  .dlg-emoji,
+  .dlg-scene * {
+    animation: none !important;
+  }
+  .dlg-check {
+    stroke-dashoffset: 0;
+  }
+}
+html[data-still-mascot] .dlg-emoji,
+html[data-still-mascot] .dlg-scene * {
+  animation: none !important;
+}
+html[data-still-mascot] .dlg-check {
+  stroke-dashoffset: 0;
+}

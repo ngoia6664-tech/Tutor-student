@@ -14,6 +14,7 @@ import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import Icon from '../../components/Icon.jsx'
+import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
 import AnswerKey from '../../components/AnswerKey.jsx'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
@@ -49,12 +50,13 @@ export default function AssignmentTracking() {
   recipients.forEach((r) => (counts[r.status] += 1))
 
   async function handleDelete() {
-    if (!window.confirm(`Xóa bài tập "${a.title}"? Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.`)) return
+    if (!(await confirmDelete('bài tập', a.title, 'Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.'))) return
     setDeleting(true)
     setActionError(null)
     try {
       await deleteAssignment(a.id)
       navigate('/tutor/assignments', { replace: true })
+      notifyDeleted('bài tập')
     } catch (e) {
       setActionError(errMsg(e))
       setDeleting(false)

@@ -1057,17 +1057,24 @@ create table if not exists public.question_marks (
   primary key (exercise_id, student_id)
 );
 create index if not exists question_marks_student_idx on public.question_marks (student_id, created_at desc);
+-- note: ghi chú riêng của học sinh cho câu khó (kiến thức cần nhớ để làm bài). Bỏ đánh dấu thì mất cả ghi chú.
+alter table public.question_marks add column if not exists note text not null default '';
+alter table public.question_marks drop constraint if exists question_marks_note_len;
+alter table public.question_marks add constraint question_marks_note_len check (length(note) <= 4000);
 
 alter table public.question_marks enable row level security;
 
+-- Câu khó + ghi chú là của riêng học sinh: gia sư KHÔNG có policy đọc (bỏ policy cũ question_marks_tutor_all)
 drop policy if exists question_marks_tutor_all  on public.question_marks;
 drop policy if exists question_marks_own_select on public.question_marks;
 drop policy if exists question_marks_own_insert on public.question_marks;
+drop policy if exists question_marks_own_update on public.question_marks;
 drop policy if exists question_marks_own_delete on public.question_marks;
 
-create policy question_marks_tutor_all on public.question_marks
-  for all to authenticated
-  using (public.is_tutor()) with check (public.is_tutor());
+-- Sửa ghi chú câu khó của mình
+create policy question_marks_own_update on public.question_marks
+  for update to authenticated
+  using (student_id = auth.uid()) with check (student_id = auth.uid());
 
 create policy question_marks_own_select on public.question_marks
   for select to authenticated

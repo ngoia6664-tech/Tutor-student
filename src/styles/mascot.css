@@ -26,11 +26,13 @@
   --pd-spark: #a855f7;
 }
 /* Ngủ thì quầng sáng dịu đi */
-.is-sleep .mascot-body::before {
+.is-sleep .mascot-body::before,
+.is-sulk .mascot-body::before {
   opacity: 0.45;
   animation: none;
 }
-.is-sleep .mascot-body::after {
+.is-sleep .mascot-body::after,
+.is-sulk .mascot-body::after {
   display: none;
 }
 /* Chừa chỗ cuối trang để gấu không che nút cuối cùng (vd. Nộp bài) */
@@ -301,7 +303,8 @@ body:has(.exam-timer-float) .mascot-restore {
 }
 
 /* Ngủ */
-.is-sleep .mascot-body {
+.is-sleep .mascot-body,
+.is-sulk .mascot-body {
   animation: none;
 }
 .pd-breathe {
@@ -639,4 +642,19 @@ body:has(.exam-timer-float) .mascot-restore {
   46% { transform: rotate(-220deg); }
   52% { transform: rotate(-235deg); }
   92%, 100% { transform: rotate(0); }
+}
+
+/* Giận vì bị chọc dồn dập: nằm cuộn giả ngủ, phụng phịu */
+.mascot-sulk {
+  position: absolute;
+  top: 4%;
+  right: 6%;
+  font-size: 1.25rem;
+  line-height: 1;
+  animation: pd-sulk 0.9s ease-in-out infinite;
+}
+@keyframes pd-sulk {
+  50% {
+    transform: translateY(-3px) rotate(-10deg);
+  }
 }

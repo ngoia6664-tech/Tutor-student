@@ -18,6 +18,11 @@ export function celebrate(text) {
 
 const COLORS = ['#a855f7', '#ec4899', '#facc15', '#22d3ee', '#4ade80']
 
+// Pháo giấy riêng (hộp thoại xong việc dùng); tôn trọng "Hiệu ứng ăn mừng" trong Cài đặt
+export function burstConfetti() {
+  if (getSettings().celebration) confetti()
+}
+
 function confetti() {
   // Giảm chuyển động / tab đang ẩn (không ai xem): không tạo hạt
   if (prefersReducedMotion() || document.hidden) return

@@ -46,13 +46,17 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - Tắt "Linh vật Panda" thì lời gấu từ trang khác (vd. lời khen sau khi nộp bài) không hiện; nộp / chấm không ảnh hưởng.
 
 ## Current priorities
-- Owner chạy lại `supabase/schema.sql` (bảng `question_marks`, `assignment_retries`, hàm `submit_retry`), rồi QA 4 tính năng làm bài / chấm bài — xem `AI/CLAUDE/HANDOFF.md`.
+- Owner chạy lại `supabase/schema.sql` (bảng `question_marks` + cột `note`, `assignment_retries`, hàm `submit_retry`), rồi QA: gấu bị chọc,
+  hộp thoại có gấu, xóa chuyên đề, ghi chú câu khó; QA lại 4 tính năng làm bài / chấm bài (lỗi QA4-01..03 đã sửa) — xem `AI/CLAUDE/HANDOFF.md`.
 - QA phân trang bài giảng (nhập JSON mới, bài cũ hiển thị như trước).
 - QA hiệu năng (Đầy đủ / Tối ưu) + nút nhạc ▶ / ‖ (desktop, mobile, PWA) — xem `AI/CLAUDE/HANDOFF.md`.
 - QA chức năng Cài đặt (desktop, Android, iPhone, persistence, chế độ Tối ưu).
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
+**Gấu + hộp thoại + ghi chú** (24/10/2026, đã push, chờ chạy schema + QA): gấu bị bấm dồn dập thì trêu / nhắc bài / giận giả ngủ; hộp thoại có gấu thay confirm cho đăng xuất,
+xóa chương / chuyên đề (nút mới) / bài giảng / bài tập, nộp bài; xóa / nộp xong hiện hộp thành công tự tắt 2 s; ghi chú riêng cho câu khó (chỉ học sinh xem).
+
 **Làm bài / chấm bài** (24/10/2026, đã push, đã sửa 3 lỗi QA vòng 1, chờ chạy schema + QA lại): gia sư xem bài làm kèm đáp án + phương pháp giải (ẩn/hiện được);
 học sinh đánh dấu "Câu khó" (mục ⭐ Câu khó trong menu "Ôn tập", trước là "Ôn câu sai"; làm lại vô hạn, chỉ mất khi bỏ đánh dấu);
 làm lại bài đã nộp tối đa 3 lần (bảng `assignment_retries`, RPC `submit_retry`; điểm chính thức vẫn là lần nộp đầu, điểm làm lại hiện nhạt);

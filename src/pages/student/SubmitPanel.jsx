@@ -5,6 +5,7 @@ import { compressImage } from '../../lib/files.js'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { isAnswered } from '../../components/ExerciseBody.jsx'
 import Icon from '../../components/Icon.jsx'
+import { askConfirm } from '../../lib/dialog.js'
 
 const MAX_IMAGES = 15
 
@@ -63,12 +64,21 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
   async function submit(force = false) {
     // Câu tự luận chưa gõ nhưng có ảnh thì coi như đã làm
     const missing = unanswered.filter((ex) => !(ex.kind === 'essay' && items.length))
-    const ask = missing.length
-      ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => labels?.[ex.id] || exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
-      : retry
-        ? 'Nộp lần làm lại này? Điểm chính thức vẫn giữ theo lần nộp đầu.'
-        : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
-    if (!force && !window.confirm(ask)) return
+    if (!force) {
+      const ok = await askConfirm({
+        title: retry ? 'Nộp lần làm lại này?' : 'Nộp bài?',
+        say: missing.length
+          ? `Ơ, còn ${missing.length} câu chưa làm kìa (câu ${missing.map((ex) => labels?.[ex.id] || exercises.indexOf(ex) + 1).join(', ')}). Bạn vẫn muốn nộp chứ?`
+          : 'Bạn đã làm đủ các câu rồi. Kiểm tra lại lần cuối rồi nộp nhé!',
+        message: retry
+          ? 'Điểm chính thức vẫn giữ theo lần nộp đầu.'
+          : 'Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.',
+        scene: 'submit',
+        confirmText: 'Nộp bài',
+        cancelText: 'Làm tiếp',
+      })
+      if (!ok) return
+    }
 
     setBusy(true)
     setError(null)

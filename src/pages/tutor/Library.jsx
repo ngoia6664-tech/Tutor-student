@@ -22,6 +22,7 @@ import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../comp
 import ChapterDetail from './ChapterDetail.jsx'
 import Icon from '../../components/Icon.jsx'
 import OutlineImport from '../../components/OutlineImport.jsx'
+import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
 
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
 const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
@@ -158,15 +159,32 @@ export default function Library() {
   }
 
   async function handleDelete(c, n) {
-    const msg = n
-      ? `Xóa chương "${c.title}"? ${n} bài giảng / bài tập trong chương sẽ KHÔNG bị xóa, chỉ chuyển sang "Chưa xếp chương".`
-      : `Xóa chương "${c.title}"?`
-    if (!window.confirm(msg)) return
+    const msg = n ? `${n} bài giảng / bài tập trong chương sẽ KHÔNG bị xóa, chỉ chuyển sang "Chưa xếp chương".` : undefined
+    if (!(await confirmDelete('chương', c.title, msg))) return
     setActionError(null)
     try {
       unwrap(await supabase.from('chapters').delete().eq('id', c.id))
       if (id === c.id) navigate(libraryUrl(keyOf(c.grade), keyOf(c.subject), keyOf(c.section)))
       reload()
+      notifyDeleted('chương')
+    } catch (e) {
+      setActionError(errMsg(e))
+    }
+  }
+
+  // Xóa chuyên đề = xóa mọi chương trong chuyên đề; bài giảng / bài tập giữ lại, chuyển sang "Chưa xếp chương"
+  async function handleDeleteSection() {
+    const n = sum(inGroup, 'lessons') + sum(inGroup, 'assignments')
+    const msg =
+      `${inGroup.length} chương trong chuyên đề sẽ bị xóa.` +
+      (n ? ` ${n} bài giảng / bài tập KHÔNG bị xóa, chỉ chuyển sang "Chưa xếp chương".` : '')
+    if (!(await confirmDelete('chuyên đề', groupTitle, msg))) return
+    setActionError(null)
+    try {
+      unwrap(await supabase.from('chapters').delete().in('id', inGroup.map((c) => c.id)))
+      navigate(libraryUrl(lop, mon))
+      reload()
+      notifyDeleted('chuyên đề')
     } catch (e) {
       setActionError(errMsg(e))
     }
@@ -350,6 +368,12 @@ export default function Library() {
                   <button type="button" className="btn btn-small" onClick={openGroupForm}>
                     <Icon name="edit" />
                     Sửa {level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}
+                  </button>
+                )}
+                {level === 3 && inGroup.length > 0 && (
+                  <button type="button" className="btn btn-small btn-danger" onClick={handleDeleteSection}>
+                    <Icon name="trash" />
+                    Xóa chuyên đề
                   </button>
                 )}
                 <button type="button" className="btn btn-small" onClick={openImport}>

@@ -12,6 +12,7 @@ import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
 import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 export default function TutorAssignments() {
@@ -40,12 +41,13 @@ export default function TutorAssignments() {
   }, [])
 
   async function handleDelete(a) {
-    if (!window.confirm(`Xóa bài tập "${a.title}"? Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.`)) return
+    if (!(await confirmDelete('bài tập', a.title, 'Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.'))) return
     setDeleting(a.id)
     setActionError(null)
     try {
       await deleteAssignment(a.id)
       reload()
+      notifyDeleted('bài tập')
     } catch (e) {
       setActionError(errMsg(e))
     } finally {

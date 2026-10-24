@@ -11,6 +11,7 @@ import ChapterGroups from '../../components/ChapterGroups.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
 import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 // Bài giảng (gia sư): cây Lớp › Môn › Chuyên đề › Chương bên trái để lọc, danh sách bên phải
@@ -38,12 +39,13 @@ export default function TutorLessons() {
   const where = selectionLabel(sel, chapterById, 'Chưa xếp chương')
 
   async function handleDelete(lesson) {
-    if (!window.confirm(`Xóa bài giảng "${lesson.title}"? File đính kèm cũng bị xóa. Bài tập liên kết vẫn giữ.`)) return
+    if (!(await confirmDelete('bài giảng', lesson.title, 'File đính kèm cũng bị xóa. Bài tập liên kết vẫn giữ.'))) return
     setDeleting(lesson.id)
     setActionError(null)
     try {
       await deleteLesson(lesson)
       reload()
+      notifyDeleted('bài giảng')
     } catch (e) {
       setActionError(errMsg(e))
     } finally {

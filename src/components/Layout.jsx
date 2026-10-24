@@ -21,6 +21,11 @@ import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 import { countUnseenFeedback, FEEDBACK_CHANGED } from '../lib/feedback.js'
 import FeedbackButton from './FeedbackButton.jsx'
+import DialogHost from './DialogHost.jsx'
+import { askConfirm } from '../lib/dialog.js'
+
+// Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
+const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
 
 const NAV = {
   tutor: [
@@ -49,6 +54,17 @@ export default function Layout() {
   const pageKey = pathname.match(/^\/(tutor|student)\/library/)?.[0] ?? pathname
 
   const isTutor = profile.role === 'tutor'
+
+  async function confirmSignOut() {
+    const ok = await askConfirm({
+      title: 'Đăng xuất?',
+      say: BYE[Math.floor(Math.random() * BYE.length)],
+      scene: 'logout',
+      confirmText: 'Đăng xuất',
+      cancelText: 'Ở lại',
+    })
+    if (ok) signOut()
+  }
   const badges = {
     reports: useLiveCount(isTutor, pathname, countOpenReports, REPORTS_CHANGED),
     feedback: useLiveCount(isTutor, pathname, countUnseenFeedback, FEEDBACK_CHANGED),
@@ -110,7 +126,7 @@ export default function Layout() {
             <button type="button" className="btn btn-ghost theme-toggle" onClick={() => setSettingsOpen(true)} aria-label="Cài đặt" title="Cài đặt">
               <Icon name="settings" />
             </button>
-            <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={signOut} aria-label="Đăng xuất" title="Đăng xuất">
+            <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={confirmSignOut} aria-label="Đăng xuất" title="Đăng xuất">
               <Icon name="logout" />
               <span className="btn-text">Đăng xuất</span>
             </button>
@@ -142,6 +158,7 @@ export default function Layout() {
         </div>
       </main>
       <Mascot />
+      <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (
         <Suspense fallback={null}>

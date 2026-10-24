@@ -55,12 +55,19 @@ function Glasses({ y = 53, r = 10 }) {
 // Mắt xoáy (chóng mặt sau khi lăn)
 const swirl = (cx, cy) => `M${cx} ${cy} m-1 0 a1 1 0 1 1 2 0 a2.2 2.2 0 1 1 -4.4 0 a3.4 3.4 0 1 1 6.8 0`
 
-function Face({ dizzy = false }) {
+// face: 'normal' | 'sad' (mắt rưng, miệng mếu, giọt nước mắt) | 'serious' (nhíu mày, miệng thẳng, giọt mồ hôi)
+//       | 'happy' (mắt cười híp, miệng cười to)
+function Face({ dizzy = false, face = 'normal' }) {
   return (
     <>
       <ellipse cx="48" cy="54" rx="8.5" ry="10" transform="rotate(25 48 54)" fill={INK} />
       <ellipse cx="72" cy="54" rx="8.5" ry="10" transform="rotate(-25 72 54)" fill={INK} />
-      {dizzy ? (
+      {face === 'happy' ? (
+        <g fill="none" stroke={FUR} strokeWidth="2.4" strokeLinecap="round">
+          <path d="M44.5 55 q4.5 -6 9 0" />
+          <path d="M66.5 55 q4.5 -6 9 0" />
+        </g>
+      ) : dizzy ? (
         <g className="pd-swirl" fill="none" stroke={FUR} strokeWidth="1.5" strokeLinecap="round">
           <path d={swirl(49, 53)} />
           <path d={swirl(71, 53)} />
@@ -69,20 +76,50 @@ function Face({ dizzy = false }) {
         <g className="pd-eyes">
           <circle cx="49" cy="53" r="4.4" fill={FUR} />
           <circle cx="71" cy="53" r="4.4" fill={FUR} />
-          <circle className="pd-pupil" cx="49.6" cy="53.8" r="2.7" fill={INK} />
-          <circle className="pd-pupil" cx="71.6" cy="53.8" r="2.7" fill={INK} />
-          <circle cx="48.5" cy="52.3" r="1.1" fill={FUR} />
-          <circle cx="70.5" cy="52.3" r="1.1" fill={FUR} />
+          {/* Buồn: con ngươi nhìn xuống; nghiêm: nhìn thẳng chăm chú */}
+          <circle className="pd-pupil" cx="49.6" cy={face === 'sad' ? 55 : 53.8} r="2.7" fill={INK} />
+          <circle className="pd-pupil" cx="71.6" cy={face === 'sad' ? 55 : 53.8} r="2.7" fill={INK} />
+          <circle cx="48.5" cy="52.3" r={face === 'sad' ? 1.5 : 1.1} fill={FUR} />
+          <circle cx="70.5" cy="52.3" r={face === 'sad' ? 1.5 : 1.1} fill={FUR} />
         </g>
       )}
       <Glasses />
-      <ellipse cx="38.5" cy="65" rx="4.5" ry="3" fill={PINK} opacity="0.85" />
-      <ellipse cx="81.5" cy="65" rx="4.5" ry="3" fill={PINK} opacity="0.85" />
+      <ellipse cx="38.5" cy="65" rx="4.5" ry="3" fill={PINK} opacity={face === 'serious' ? 0.35 : 0.85} />
+      <ellipse cx="81.5" cy="65" rx="4.5" ry="3" fill={PINK} opacity={face === 'serious' ? 0.35 : 0.85} />
       <ellipse cx="60" cy="64" rx="4" ry="2.8" fill={INK} />
-      <path d="M55.5 68 q4.5 4.5 9 0" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" />
-      <path className="pd-mouth-open" d="M55 67.5 q5 9 10 0 z" fill="#be185d" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />
+      {face === 'sad' ? (
+        <path d="M55 71.5 q5 -5 10 0" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" />
+      ) : face === 'serious' ? (
+        <path d="M55.5 70 h9" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+      ) : face === 'happy' ? (
+        <path d="M53.5 67 q6.5 10 13 0 z" fill="#be185d" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />
+      ) : (
+        <path d="M55.5 68 q4.5 4.5 9 0" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" />
+      )}
+      {face === 'normal' && (
+        <path className="pd-mouth-open" d="M55 67.5 q5 9 10 0 z" fill="#be185d" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />
+      )}
     </>
   )
+}
+
+// Lông mày + giọt nước (vẽ sau mũ để không bị vành mũ che)
+function Brows({ face }) {
+  if (face === 'sad')
+    return (
+      <>
+        <path d="M39 44 L52 40 M68 40 L81 44" stroke={INK} strokeWidth="2.6" strokeLinecap="round" />
+        <path className="pd-tear" d="M41 61 q-3 4.5 0 6.5 q3 -2 0 -6.5 z" fill="#7dd3fc" stroke="#0284c7" strokeWidth="0.8" />
+      </>
+    )
+  if (face === 'serious')
+    return (
+      <>
+        <path d="M39 40 L53 44 M67 44 L81 40" stroke={INK} strokeWidth="2.8" strokeLinecap="round" />
+        <path className="pd-sweat" d="M88 42 q-3.5 5 0 7.5 q3.5 -2.5 0 -7.5 z" fill="#bae6fd" stroke="#0284c7" strokeWidth="0.8" />
+      </>
+    )
+  return null
 }
 
 function Book({ x, y, angle }) {
@@ -97,7 +134,8 @@ function Book({ x, y, angle }) {
 
 // Gấu ngồi nhìn thẳng. pose: 'sit' | 'teach' (giơ đũa chỉ bảng) | 'cheer' (giơ cả sách lẫn đũa) | 'dizzy' (chóng mặt)
 //   | 'wait' (ngồi đọc sách đợi học sinh làm bài)
-export function FrontPanda({ pose = 'sit' }) {
+// face: biểu cảm (xem Face) – dùng ở hộp thoại (components/DialogScene.jsx)
+export function FrontPanda({ pose = 'sit', face = 'normal' }) {
   const wandUp = pose === 'teach' || pose === 'cheer'
   return (
     <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -114,8 +152,9 @@ export function FrontPanda({ pose = 'sit' }) {
       <ellipse cx="60" cy="92" rx="29" ry="23" fill={FUR} stroke={INK} strokeWidth="2.5" />
       <ellipse cx="60" cy="97" rx="16" ry="13" fill={BELLY} />
       <circle cx="60" cy="52" r="27" fill={FUR} stroke={INK} strokeWidth="2.5" />
-      <Face dizzy={pose === 'dizzy'} />
+      <Face dizzy={pose === 'dizzy'} face={face} />
       <Cap />
+      <Brows face={face} />
       {pose === 'dizzy' && (
         <g className="pd-dizzy-stars">
           <path d={starPath(38, 14, 4.5)} fill={GOLD} />
