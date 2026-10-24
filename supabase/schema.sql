@@ -1047,6 +1047,144 @@ $$;
 revoke all on function public.set_study_chapter(uuid) from public;
 grant execute on function public.set_study_chapter(uuid) to authenticated;
 
+-- ---------- Câu khó (học sinh tự đánh dấu) ----------
+-- Học sinh bấm "Câu khó" khi làm / xem lại bài; câu nằm ở mục "Câu khó" của trang Ôn tập
+-- cho tới khi học sinh bấm "Bỏ đánh dấu". Làm lại ở đó bao nhiêu lần cũng được, không tính điểm.
+create table if not exists public.question_marks (
+  exercise_id  uuid not null references public.exercises (id) on delete cascade,
+  student_id   uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (exercise_id, student_id)
+);
+create index if not exists question_marks_student_idx on public.question_marks (student_id, created_at desc);
+
+alter table public.question_marks enable row level security;
+
+drop policy if exists question_marks_tutor_all  on public.question_marks;
+drop policy if exists question_marks_own_select on public.question_marks;
+drop policy if exists question_marks_own_insert on public.question_marks;
+drop policy if exists question_marks_own_delete on public.question_marks;
+
+create policy question_marks_tutor_all on public.question_marks
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy question_marks_own_select on public.question_marks
+  for select to authenticated
+  using (student_id = auth.uid());
+
+-- Chỉ đánh dấu câu thuộc bài được giao cho mình
+create policy question_marks_own_insert on public.question_marks
+  for insert to authenticated
+  with check (
+    student_id = auth.uid()
+    and exists (
+      select 1 from public.exercises e
+      join public.assignment_recipients ar on ar.assignment_id = e.assignment_id
+      where e.id = question_marks.exercise_id and ar.student_id = auth.uid()
+    )
+  );
+
+create policy question_marks_own_delete on public.question_marks
+  for delete to authenticated
+  using (student_id = auth.uid());
+
+-- ---------- Làm lại bài đã nộp (luyện thêm, tối đa 3 lần) ----------
+-- Điểm chính thức vẫn là lần nộp đầu (assignment_recipients + submission_answers); lần làm lại chỉ lưu ở đây.
+-- Gia sư bấm "Cho nộp lại" thì lần nộp kế tiếp (qua submit_assignment) mới thay bài chính thức.
+-- answers: {"<exercise_id>": {"answer": {...}, "is_correct": true|false|null, "points": 0.25|null}}
+create table if not exists public.assignment_retries (
+  id             uuid primary key default gen_random_uuid(),
+  assignment_id  uuid not null,
+  student_id     uuid not null,
+  attempt_no     int not null check (attempt_no between 1 and 3),
+  answers        jsonb not null default '{}'::jsonb,
+  correct        int not null default 0,              -- số câu máy chấm đúng
+  auto_total     int not null default 0,              -- số câu máy chấm được trong bài
+  points         numeric(5, 2) not null default 0,    -- tổng điểm thang THPT (đề thi)
+  max_points     numeric(5, 2) not null default 0,    -- điểm tối đa thang THPT của bài
+  submitted_at   timestamptz not null default now(),
+  unique (assignment_id, student_id, attempt_no),
+  foreign key (assignment_id, student_id)
+    references public.assignment_recipients (assignment_id, student_id) on delete cascade
+);
+
+alter table public.assignment_retries enable row level security;
+
+drop policy if exists assignment_retries_tutor_all  on public.assignment_retries;
+drop policy if exists assignment_retries_own_select on public.assignment_retries;
+
+create policy assignment_retries_tutor_all on public.assignment_retries
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Học sinh chỉ đọc lần làm lại của mình; ghi thì qua submit_retry()
+create policy assignment_retries_own_select on public.assignment_retries
+  for select to authenticated
+  using (student_id = auth.uid());
+
+create or replace function public.submit_retry(p_assignment_id uuid, p_answers jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_status text;
+  v_no int;
+  v_answers jsonb;
+  v_row assignment_retries;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập để nộp bài';
+  end if;
+  -- Khóa dòng giao bài để hai lần bấm nộp cùng lúc không vượt quá 3 lần
+  select status into v_status
+    from assignment_recipients
+   where assignment_id = p_assignment_id and student_id = v_uid
+   for update;
+  if not found then
+    raise exception 'Bài này không được giao cho bạn';
+  end if;
+  if v_status = 'todo' then
+    raise exception 'Hãy nộp bài lần đầu trước khi làm lại';
+  end if;
+  select count(*) + 1 into v_no
+    from assignment_retries
+   where assignment_id = p_assignment_id and student_id = v_uid;
+  if v_no > 3 then
+    raise exception 'Bạn đã làm lại đủ 3 lần cho bài này';
+  end if;
+
+  select coalesce(jsonb_object_agg(e.id::text, jsonb_build_object(
+           'answer', a.value,
+           'is_correct', public.grade_answer(e.kind, k.correct, a.value),
+           'points', public.answer_points(e.kind, k.correct, a.value))), '{}'::jsonb)
+    into v_answers
+    from exercises e
+    join jsonb_each(coalesce(p_answers, '{}'::jsonb)) as a on a.key = e.id::text
+    left join answer_keys k on k.exercise_id = e.id
+   where e.assignment_id = p_assignment_id
+     and jsonb_typeof(a.value) = 'object';
+
+  insert into assignment_retries (assignment_id, student_id, attempt_no, answers, correct, auto_total, points, max_points)
+  select p_assignment_id, v_uid, v_no, v_answers,
+         (select count(*) from jsonb_each(v_answers) x where x.value ->> 'is_correct' = 'true'),
+         (select count(*) from exercises e
+           where e.assignment_id = p_assignment_id and e.kind in ('mcq', 'fill_blank', 'true_false', 'short')),
+         (select coalesce(sum((x.value ->> 'points')::numeric), 0) from jsonb_each(v_answers) x
+           where jsonb_typeof(x.value -> 'points') = 'number'),
+         (select coalesce(sum(case when e.kind in ('mcq', 'short') then 0.25 when e.kind = 'true_false' then 1 else 0 end), 0)
+            from exercises e where e.assignment_id = p_assignment_id)
+  returning * into v_row;
+  return to_jsonb(v_row);
+end;
+$$;
+
+revoke all on function public.submit_retry(uuid, jsonb) from public;
+grant execute on function public.submit_retry(uuid, jsonb) to authenticated;
+
 
 -- =====================================================================
 -- 7. STORAGE (bucket riêng tư + policy)

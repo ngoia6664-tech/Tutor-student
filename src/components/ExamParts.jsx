@@ -19,7 +19,8 @@ export function PartHeading({ part, count }) {
 
 // Phiếu trả lời: lưới số câu theo từng phần; câu đã làm được tô màu, bấm để nhảy tới câu
 export function ExamNav({ groups, answers }) {
-  const jump = (id) => document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  // block 'start' + scroll-margin-top (attempts.css): đầu câu nằm ngay dưới header và thanh tiến độ
+  const jump = (id) => document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const done = groups.reduce((n, g) => n + g.items.filter(({ ex }) => isAnswered(ex, answers[ex.id])).length, 0)
   const total = groups.reduce((n, g) => n + g.items.length, 0)
   return (

@@ -1,4 +1,5 @@
 import { supabase, unwrap, SUBMISSION_BUCKET } from './supabase.js'
+import { loadRetries } from './retries.js'
 
 // Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_id>
 export async function removeSubmissionFiles(folder) {
@@ -44,7 +45,7 @@ function firstKey(k) {
 export async function fetchAssignmentFull(id) {
   const assignment = unwrap(await supabase.from('assignments').select('*').eq('id', id).maybeSingle())
   if (!assignment) throw new Error('Không tìm thấy bài tập (có thể đã bị xóa).')
-  const [exercises, recipients, answers] = await Promise.all([
+  const [exercises, recipients, answers, retries] = await Promise.all([
     supabase
       .from('exercises')
       .select('id, sort_order, kind, question_md, options, answer_keys(answer_md, method_md, correct)')
@@ -53,7 +54,11 @@ export async function fetchAssignmentFull(id) {
       .then(unwrap),
     supabase.from('assignment_recipients').select('*, student:profiles(id, full_name, group_name, grade)').eq('assignment_id', id).then(unwrap),
     supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct, points').eq('assignment_id', id).then(unwrap),
+    loadRetries({ assignment_id: id }),
   ])
+  // Các lần học sinh tự làm lại (không phải điểm chính thức): { student_id: [lần 1, lần 2, ...] }
+  const retriesByStudent = {}
+  for (const r of retries) (retriesByStudent[r.student_id] ??= []).push(r)
   // Gom câu trả lời theo học sinh: { student_id: { exercise_id: {answer, is_correct} } }
   const answersByStudent = {}
   for (const a of answers) {
@@ -76,6 +81,7 @@ export async function fetchAssignmentFull(id) {
     }),
     recipients,
     answersByStudent,
+    retriesByStudent,
   }
 }
 

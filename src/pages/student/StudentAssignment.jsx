@@ -6,7 +6,9 @@ import { useAsync } from '../../lib/useAsync.js'
 import { formatDate, formatDateTime, formatScore } from '../../lib/format.js'
 import { loadSubmissionImages } from '../../lib/submissions.js'
 import { autoSummary } from '../../lib/assignments.js'
-import { clockText, groupExercises, minutesUsed, questionLabels } from '../../lib/exam.js'
+import { clockText, examSummary, groupExercises, minutesUsed, questionLabels, viNum } from '../../lib/exam.js'
+import { loadMarks } from '../../lib/marks.js'
+import { loadRetries, MAX_RETRIES, retryScore, submitRetry } from '../../lib/retries.js'
 import { errMsg } from '../../lib/errors.js'
 import Icon from '../../components/Icon.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
@@ -22,9 +24,11 @@ import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
 import ReportQuestion from '../../components/ReportQuestion.jsx'
+import MarkHard from '../../components/MarkHard.jsx'
+import AnswerProgress from '../../components/AnswerProgress.jsx'
 
 // Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài)
-const draftKey = (assignmentId, studentId) => `draft-answers:${studentId}:${assignmentId}`
+const draftKey = (assignmentId, studentId, retry = false) => `${retry ? 'draft-retry' : 'draft-answers'}:${studentId}:${assignmentId}`
 function readDraft(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || 'null')
@@ -44,6 +48,10 @@ function writeDraft(key, value) {
 export default function StudentAssignment() {
   const { id } = useParams()
   const { profile } = useAuth()
+  // Đang làm lại bài đã nộp (không đổi điểm chính thức)
+  const [retrying, setRetrying] = useState(false)
+  // Lần đang xem ở phần kết quả: 0 = lần nộp chính thức, n = lần làm lại thứ n
+  const [view, setView] = useState(0)
 
   const { data, loading, error, reload } = useAsync(async () => {
     const rec = unwrap(
@@ -81,8 +89,13 @@ export default function StudentAssignment() {
       images = await loadSubmissionImages(rec.submission_path)
     }
     const answers = Object.fromEntries(myAnswers.map((a) => [a.exercise_id, a]))
-    const reports = await loadMyReports(exercises.map((e) => e.id), profile.id)
-    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports }
+    const ids = exercises.map((e) => e.id)
+    const [reports, marks, retries] = await Promise.all([
+      loadMyReports(ids, profile.id),
+      loadMarks(ids, profile.id),
+      rec.status !== 'todo' ? loadRetries({ assignment_id: id, student_id: profile.id }) : [],
+    ])
+    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports, marks, retries }
   }, [id, profile.id])
 
   if (loading && !data) return <Loading />
@@ -96,6 +109,7 @@ export default function StudentAssignment() {
 
   const { rec, assignment: a } = data
   const submitted = rec.status !== 'todo'
+  const retryNo = data.retries.length + 1
 
   return (
     <div>
@@ -108,6 +122,7 @@ export default function StudentAssignment() {
           {a.is_exam && <span className="badge badge-new">Đề thi</span>}
           <TypeBadge type={a.type} />
           <StatusBadge status={rec.status} />
+          {submitted && retrying && <span className="badge badge-warn">Đang làm lại lần {retryNo}</span>}
           {!submitted && <DueBadge date={a.due_date} />}
           <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
         </div>
@@ -118,7 +133,40 @@ export default function StudentAssignment() {
         )}
       </div>
 
-      {submitted ? <ReviewView data={data} /> : <AnswerView data={data} studentId={profile.id} onSubmitted={reload} />}
+      {submitted && retrying ? (
+        <>
+          <div className="alert alert-info">
+            Bạn đang <strong>làm lại lần {retryNo}/{MAX_RETRIES}</strong>. Kết quả lần này chỉ để luyện, không thay điểm chính thức (lần nộp đầu).{' '}
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => setRetrying(false)}>
+              Thôi, không làm lại
+            </button>
+          </div>
+          <AnswerView
+            key="retry"
+            data={data}
+            studentId={profile.id}
+            retry
+            onSubmitted={(row) => {
+              setRetrying(false)
+              setView(row?.attempt_no || 0)
+              reload()
+            }}
+          />
+        </>
+      ) : submitted ? (
+        <ReviewView
+          data={data}
+          studentId={profile.id}
+          view={view}
+          setView={setView}
+          onRetry={() => {
+            setRetrying(true)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+        />
+      ) : (
+        <AnswerView data={data} studentId={profile.id} onSubmitted={reload} />
+      )}
     </div>
   )
 }
@@ -134,6 +182,12 @@ async function loadMyReports(exerciseIds, studentId) {
     .order('created_at', { ascending: true })
   if (error) return {}
   return Object.fromEntries(data.map((r) => [r.exercise_id, r]))
+}
+
+// Giữ tập câu khó đã tải khớp với nút vừa bấm, để chuyển giữa làm lại / xem kết quả không hiện trạng thái cũ
+function syncMark(marks, exerciseId, on) {
+  if (on) marks.add(exerciseId)
+  else marks.delete(exerciseId)
 }
 
 // Đang làm bài: chọn / gõ câu trả lời rồi nộp.
@@ -182,7 +236,8 @@ function useExamClock(assignmentId, initialStarted, limitMinutes) {
   return { timed: !!limitMinutes, startedAt, remaining, timeUp: remaining !== null && remaining <= 0, start, starting, error }
 }
 
-function AnswerView({ data, studentId, onSubmitted }) {
+// retry: làm lại bài đã nộp (không tính giờ, không ảnh, bắt đầu từ bài trống, nộp qua submit_retry)
+function AnswerView({ data, studentId, onSubmitted, retry = false }) {
   // Đang làm bài: khóa chế độ ngắm vũ trụ, gấu ngồi đợi. Nộp xong (sang ReviewView) tự mở khóa
   useStudyLock()
   const { rec, assignment: a, exercises } = data
@@ -193,16 +248,17 @@ function AnswerView({ data, studentId, onSubmitted }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [a.chapter_id, studentId])
   const isExam = !!a.is_exam
-  const key = draftKey(a.id, studentId)
-  // Ưu tiên bản nháp trên máy; nếu gia sư mở lại bài thì lấy câu trả lời lần trước
+  const key = draftKey(a.id, studentId, retry)
+  // Ưu tiên bản nháp trên máy; nếu gia sư mở lại bài thì lấy câu trả lời lần trước. Làm lại thì bắt đầu từ bài trống
   const [answers, setAnswers] = useState(
-    () => readDraft(key) || Object.fromEntries(Object.entries(data.answers).map(([exId, row]) => [exId, row.answer]))
+    () => readDraft(key) || (retry ? {} : Object.fromEntries(Object.entries(data.answers).map(([exId, row]) => [exId, row.answer])))
   )
-  const clock = useExamClock(a.id, rec.started_at, isExam ? a.time_limit_minutes : null)
+  const clock = useExamClock(a.id, rec.started_at, isExam && !retry ? a.time_limit_minutes : null)
 
   useEffect(() => writeDraft(key, answers), [key, answers])
 
   const groups = groupExercises(exercises, isExam)
+  const labels = questionLabels(exercises, isExam)
 
   if (clock.timed && !clock.startedAt) {
     return <StartGate minutes={a.time_limit_minutes} count={exercises.length} clock={clock} />
@@ -210,6 +266,7 @@ function AnswerView({ data, studentId, onSubmitted }) {
 
   return (
     <>
+      <AnswerProgress exercises={exercises} answers={answers} labels={labels} />
       {clock.timed && <TimerBar remaining={clock.remaining} total={a.time_limit_minutes * 60} />}
       {clock.timeUp && (
         <div className="alert alert-warn">
@@ -233,12 +290,14 @@ function AnswerView({ data, studentId, onSubmitted }) {
               <div key={ex.id} className="question" id={`q-${ex.id}`}>
                 <div className="question-label">
                   Câu {no} {!isExam && <span className="badge">{KIND_LABEL[ex.kind]}</span>}
+                  <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
                   <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                 </div>
                 <ExerciseBody
                   ex={ex}
                   mode="answer"
                   name={`q-${ex.id}`}
+                  photoHint={!retry}
                   value={answers[ex.id]}
                   onChange={(v) => setAnswers((prev) => ({ ...prev, [ex.id]: v }))}
                 />
@@ -252,13 +311,14 @@ function AnswerView({ data, studentId, onSubmitted }) {
         studentId={studentId}
         exercises={exercises}
         answers={answers}
-        labels={questionLabels(exercises, isExam)}
+        labels={labels}
         autoSubmit={clock.timeUp}
-        onSubmitted={() => {
+        retry={retry ? (payload) => submitRetry(a.id, payload) : null}
+        onSubmitted={(row) => {
           writeDraft(key, null)
           window.scrollTo({ top: 0, behavior: 'smooth' })
-          celebrate(UNLOCK_PRAISE)
-          onSubmitted()
+          celebrate(retry ? 'Nộp lần làm lại xong! So với lần đầu xem tiến bộ chưa nào 🚀' : UNLOCK_PRAISE)
+          onSubmitted(row)
         }}
       />
     </>
@@ -319,9 +379,12 @@ function TimerBar({ remaining, total }) {
 }
 
 // Đã nộp: kết quả tự chấm, đáp án, phương pháp giải, điểm của gia sư
-function ReviewView({ data }) {
-  const { rec, assignment: a, exercises, keys, images, answers } = data
+// view: 0 = lần nộp chính thức, n = lần làm lại thứ n (chỉ đổi câu trả lời / điểm máy chấm đang hiện)
+function ReviewView({ data, studentId, view, setView, onRetry }) {
+  const { rec, assignment: a, exercises, keys, images, retries } = data
   const isExam = !!a.is_exam
+  const attempt = view ? retries.find((r) => r.attempt_no === view) : null
+  const answers = attempt ? attempt.answers || {} : data.answers
   const sum = autoSummary(exercises, answers)
   const groups = groupExercises(exercises, isExam)
 
@@ -352,9 +415,15 @@ function ReviewView({ data }) {
           <Icon name="clock" /> Thời gian làm bài: {Math.min(minutesUsed(rec.started_at, rec.submitted_at), a.time_limit_minutes)}/{a.time_limit_minutes} phút
         </p>
       )}
+      <RetryCard data={data} view={attempt ? view : 0} setView={setView} onRetry={onRetry} />
+      {attempt && (
+        <div className="alert alert-info">
+          Đang xem <strong>lần làm lại {attempt.attempt_no}</strong> (nộp lúc {formatDateTime(attempt.submitted_at)}). Điểm chính thức vẫn là lần nộp đầu.
+        </div>
+      )}
       {isExam ? (
-        <ExamScoreCard exercises={exercises} answers={answers}>
-          {rec.status === 'done' && (
+        <ExamScoreCard exercises={exercises} answers={answers} title={attempt ? `Lần làm lại ${attempt.attempt_no} – máy chấm (thang THPT)` : undefined}>
+          {!attempt && rec.status === 'done' && (
             <p className="muted small" style={{ margin: '0.5rem 0 0' }}>
               Đây là điểm máy chấm. Điểm chính thức do gia sư xác nhận.
             </p>
@@ -394,6 +463,7 @@ function ReviewView({ data }) {
                         {mine?.is_correct === false && <span className="badge badge-danger">Sai</span>}
                       </>
                     )}
+                    <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
                     <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                   </div>
                   <ExerciseBody ex={ex} mode="review" name={`r-${ex.id}`} value={mine?.answer} correct={k?.correct ?? null} />
@@ -417,12 +487,59 @@ function ReviewView({ data }) {
         ))}
       </div>
 
-      {images.length > 0 && (
+      {!attempt && images.length > 0 && (
         <div className="card">
           <h2>Ảnh bạn đã nộp</h2>
           <ImageGallery images={images} />
         </div>
       )}
     </>
+  )
+}
+
+// Lần nộp chính thức (nổi bật) + các lần làm lại (nhỏ, nhạt); bấm để xem lại từng lần. Nút làm lại tối đa 3 lần.
+function RetryCard({ data, view, setView, onRetry }) {
+  const { rec, assignment: a, exercises, retries } = data
+  const isExam = !!a.is_exam
+  const left = MAX_RETRIES - retries.length
+  const exam = isExam ? examSummary(exercises, data.answers) : null
+  const auto = autoSummary(exercises, data.answers)
+  let official
+  if (rec.status === 'checked' && rec.score !== null) official = `${formatScore(rec.score)} điểm`
+  else if (exam?.parts.length) official = `${viNum(exam.max === 10 ? exam.got : exam.score10)}/10`
+  else official = auto.autoTotal ? `${auto.correct}/${auto.autoTotal} câu đúng` : 'chờ gia sư chấm'
+  return (
+    <div className="card">
+      <div className="row row-between">
+        <h2 style={{ margin: 0 }}>Các lần làm</h2>
+        <span className="muted small">Điểm chính thức: lần nộp đầu</span>
+      </div>
+      <div className="retry-tabs">
+        <button type="button" className={view === 0 ? 'chip active retry-official' : 'chip retry-official'} onClick={() => setView(0)}>
+          Chính thức<span className="score-inline">{official}</span>
+        </button>
+        {retries.map((r) => (
+          <button
+            key={r.attempt_no}
+            type="button"
+            className={view === r.attempt_no ? 'chip retry-try active' : 'chip retry-try'}
+            onClick={() => setView(r.attempt_no)}
+            title={`Nộp lúc ${formatDateTime(r.submitted_at)}`}
+          >
+            Lần {r.attempt_no}: {retryScore(r, isExam)}
+          </button>
+        ))}
+      </div>
+      {left > 0 ? (
+        <button type="button" className="btn btn-small" onClick={onRetry}>
+          <Icon name="refresh" />
+          Làm lại bài (còn {left}/{MAX_RETRIES} lần)
+        </button>
+      ) : (
+        <p className="muted small" style={{ margin: 0 }}>
+          Bạn đã làm lại đủ {MAX_RETRIES} lần. Muốn luyện thêm, ôn câu sai / câu khó ở trang Ôn tập.
+        </p>
+      )}
+    </div>
   )
 }

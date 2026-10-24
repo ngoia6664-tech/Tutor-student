@@ -8,7 +8,10 @@ Claude Code là agent **xây dựng** của project "Study with Duy Anh": viết
 - Implement feature, fix bug.
 - Tự kiểm tra cơ bản phần mình đổi: tối thiểu `npm run build` phải qua (project không có test tự động / linter).
 - Không tự mở rộng scope: chỉ làm đúng việc được giao; ý tưởng thêm thì đề xuất, không tự làm.
-- Sau mỗi task lớn: ghi đè `AI/CLAUDE/HANDOFF.md` (báo cáo ca gần nhất).
+- **Bắt buộc, sau MỖI phiên làm việc** (kể cả task nhỏ, kể cả chỉ sửa một dòng hoặc trả lời mà có đụng file): ghi đè `AI/CLAUDE/HANDOFF.md` để phiên sau hiểu ngay mình vừa làm gì. Không bỏ qua vì "việc nhỏ".
+  - Nội dung tối thiểu: task đã làm (và vì sao), file đã đổi, kết quả kiểm tra (build, đã/chưa thử trên máy), việc còn dở, mục "Needs QA" cho Codex nếu có.
+  - Báo cáo mới **ghi đè** báo cáo cũ; không giữ lịch sử dài hạn (lịch sử xem `git log`).
+  - Không đổi gì trong code thì vẫn ghi ngắn: "phiên này chỉ đọc/trả lời, không đổi file".
 - Khi trạng thái thật của app thay đổi đáng kể (thêm/bỏ chức năng, đổi kiến trúc, phát sinh/giải quyết vấn đề lớn): cập nhật `CURRENT_STATE.md`.
 
 ## Quan hệ với Codex

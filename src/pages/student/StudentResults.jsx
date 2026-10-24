@@ -3,6 +3,7 @@ import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { formatDateTime, formatScore } from '../../lib/format.js'
 import { fetchStudentChapters } from '../../lib/chapters.js'
+import { loadRetries, retryScore } from '../../lib/retries.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
@@ -10,23 +11,30 @@ import { StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import Icon from '../../components/Icon.jsx'
 
-// Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chương
+// Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chương.
+// Điểm TB chỉ tính điểm chính thức (lần nộp đầu); điểm các lần tự làm lại hiện nhỏ, nhạt bên dưới.
 export default function StudentResults() {
   const { profile } = useAuth()
   const sel = useTreeSelection()
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [rows, chapters] = await Promise.all([
+    const [rows, chapters, retries] = await Promise.all([
       supabase
         .from('assignment_recipients')
-        .select('status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, chapter_id, chapter:chapters(title))')
+        .select('status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title))')
         .eq('student_id', profile.id)
         .in('status', ['done', 'checked'])
         .order('submitted_at', { ascending: false })
         .then(unwrap),
       fetchStudentChapters(profile.grade ?? null),
+      loadRetries({ student_id: profile.id }),
     ])
-    return { list: rows.filter((r) => r.assignment).map((r) => ({ ...r, chapter_id: r.assignment.chapter_id })), chapters }
+    const retriesOf = {}
+    for (const r of retries) (retriesOf[r.assignment_id] ??= []).push(r)
+    return {
+      list: rows.filter((r) => r.assignment).map((r) => ({ ...r, chapter_id: r.assignment.chapter_id, retries: retriesOf[r.assignment.id] || [] })),
+      chapters,
+    }
   }, [profile.id, profile.grade])
 
   const chapters = data?.chapters || []
@@ -79,6 +87,9 @@ export default function StudentResults() {
                   <p className="small" style={{ margin: '0.5rem 0 0', whiteSpace: 'pre-wrap' }}>
                     💬 {r.feedback.length > 160 ? r.feedback.slice(0, 160) + '…' : r.feedback}
                   </p>
+                )}
+                {r.retries.length > 0 && (
+                  <p className="retry-line">↻ Làm lại: {r.retries.map((t) => `lần ${t.attempt_no} ${retryScore(t, r.assignment.is_exam)}`).join(' · ')}</p>
                 )}
               </Link>
             ))}

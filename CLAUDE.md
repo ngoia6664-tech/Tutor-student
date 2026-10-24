@@ -25,9 +25,14 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   (Thư viện › chương, StudentLesson, đầu trang Bài cần làm / Bài giảng khi cây đang chọn một chương); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
   `FilterTree` prop `nowId`) ở Thư viện + Bài giảng, dòng `components/StudyNow.jsx` ở Bài cần làm / Bài giảng / Thư viện.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
-  `StudentMistakes` (Ôn câu sai: câu `is_correct=false`, làm lại chấm trên máy qua `lib/practice.js`),
+  `StudentMistakes` (menu "Ôn tập": mục Câu sai = câu `is_correct=false`, mục ⭐ Câu khó = bảng `question_marks`; làm lại chấm trên máy qua `lib/practice.js`),
   `StudentLibrary`, `StudentLessons` (/student/lessons: cây lọc FilterTree + gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
   (vào từ Bài giảng → state `from: 'lessons'` để nút quay lại về Bài giảng). Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
+- Làm bài (StudentAssignment): `components/AnswerProgress.jsx` thanh đã làm/chưa làm dính dưới header (thu gọn được, bấm câu chưa làm để nhảy);
+  `components/MarkHard.jsx` + `lib/marks.js` nút "Câu khó" (bảng `question_marks`, chỉ mất khi học sinh bỏ đánh dấu).
+  Làm lại bài đã nộp tối đa 3 lần: `lib/retries.js`, RPC `submit_retry` → bảng `assignment_retries` (không đụng điểm chính thức =
+  lần nộp đầu; gia sư "Cho nộp lại" thì lần nộp sau mới thay); `RetryCard` trong ReviewView, điểm làm lại hiện nhạt ở StudentResults + AssignmentTracking.
+  CSS `styles/attempts.css`. Gia sư xem bài làm có đáp án + phương pháp giải (nút Ẩn/Hiện đáp án trong `AnswerSheet`).
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
 - Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout),
@@ -91,7 +96,7 @@ Tìm bằng `grep -n "<tên bảng hoặc hàm>"`. Các phần (số dòng xấp
 6. Hàm ~424–980: `save_lesson`, `save_assignment`, `ensure_chapter`, chấm điểm (`normalize_answer`, `short_match`,
    `tf_count`, `grade_answer`, `answer_points`), `submit_assignment`, `start_assignment`, `mark_notifications_seen`,
    bảng `feedback` (góp ý), `set_study_chapter` (chương đang học),
-   bảng `question_reports` + `report_exercise`
+   bảng `question_reports` + `report_exercise`, bảng `question_marks` (câu khó), `assignment_retries` + `submit_retry` (làm lại)
 7. Storage ~984–cuối: bucket riêng tư + policy
 Đổi schema: thêm khối idempotent (`if not exists`, `create or replace`) để người dùng chạy lại cả file trong SQL Editor.
 

@@ -13,7 +13,7 @@ const PAGES = [
   [/^\/student\/lessons\/./, 'Xem bài giảng'],
   [/^\/student\/lessons/, 'Bài giảng'],
   [/^\/student\/results/, 'Kết quả'],
-  [/^\/student\/mistakes/, 'Ôn câu sai'],
+  [/^\/student\/mistakes/, 'Ôn tập'],
   [/^\/student\/library/, 'Thư viện'],
   [/^\/student\/?$/, 'Bài cần làm'],
 ]

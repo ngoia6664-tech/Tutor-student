@@ -19,9 +19,10 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Main functional areas
 - **Gia sư:** danh sách / chi tiết học sinh, thư viện dạng cây (Lớp › Môn › Chuyên đề › Chương), soạn bài tập,
-  bài giảng, nhập JSON (`tutor-lesson/v1`), theo dõi & chấm bài, báo lỗi đề từ học sinh.
+  bài giảng, nhập JSON (`tutor-lesson/v1`), theo dõi & chấm bài (xem bài làm kèm đáp án + phương pháp giải), báo lỗi đề từ học sinh.
 - **Học sinh:** trang chủ + thông báo bài mới, làm & nộp bài (5 loại câu: tự luận, trắc nghiệm, điền khuyết,
-  đúng/sai 4 ý, trả lời ngắn; có đề THPT tính giờ), kết quả, ôn câu sai, thư viện, xem bài giảng.
+  đúng/sai 4 ý, trả lời ngắn; có đề THPT tính giờ; thanh tiến độ đã làm / chưa làm dính dưới header), làm lại bài đã nộp
+  tối đa 3 lần (điểm chính thức = lần nộp đầu), kết quả, Ôn tập (câu sai + câu khó tự đánh dấu), thư viện, xem bài giảng.
 - **Giao diện:** theme sáng/tối, nền vũ trụ động (hệ Mặt Trời 3D), linh vật "Giáo sư Gấu Trúc".
 - **Cài đặt** (nút bánh răng ở header, bảng nổi): chế độ hiệu năng Đầy đủ / Tối ưu, bật/tắt nền động, linh vật, animation gấu,
   hiệu ứng ăn mừng, hiệu ứng âm thanh, nhạc nền + âm lượng nhạc; lưu trên máy (localStorage `app-settings`), có khôi phục mặc định.
@@ -45,12 +46,18 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - Tắt "Linh vật Panda" thì lời gấu từ trang khác (vd. lời khen sau khi nộp bài) không hiện; nộp / chấm không ảnh hưởng.
 
 ## Current priorities
+- Owner chạy lại `supabase/schema.sql` (bảng `question_marks`, `assignment_retries`, hàm `submit_retry`), rồi QA 4 tính năng làm bài / chấm bài — xem `AI/CLAUDE/HANDOFF.md`.
 - QA phân trang bài giảng (nhập JSON mới, bài cũ hiển thị như trước).
 - QA hiệu năng (Đầy đủ / Tối ưu) + nút nhạc ▶ / ‖ (desktop, mobile, PWA) — xem `AI/CLAUDE/HANDOFF.md`.
 - QA chức năng Cài đặt (desktop, Android, iPhone, persistence, chế độ Tối ưu).
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
+**Làm bài / chấm bài** (24/10/2026, đã push, đã sửa 3 lỗi QA vòng 1, chờ chạy schema + QA lại): gia sư xem bài làm kèm đáp án + phương pháp giải (ẩn/hiện được);
+học sinh đánh dấu "Câu khó" (mục ⭐ Câu khó trong menu "Ôn tập", trước là "Ôn câu sai"; làm lại vô hạn, chỉ mất khi bỏ đánh dấu);
+làm lại bài đã nộp tối đa 3 lần (bảng `assignment_retries`, RPC `submit_retry`; điểm chính thức vẫn là lần nộp đầu, điểm làm lại hiện nhạt);
+thanh tiến độ đã làm / chưa làm / tổng dính dưới header khi làm bài, bấm câu chưa làm để nhảy tới.
+
 **Trang Bài giảng cho học sinh** (22/10/2026, chờ QA): menu học sinh thêm "Bài giảng" (`/student/lessons`, trước đây chuyển về Thư viện):
 mọi bài giảng được giao, gom theo chương, mục "Mới giao" ở đầu, ô tìm khi có > 4 bài; bấm là vào học ngay, nút quay lại về Bài giảng.
 Icon 📘 cho bài giảng ở cả trang Bài giảng của gia sư.

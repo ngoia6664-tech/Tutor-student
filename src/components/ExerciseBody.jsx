@@ -7,7 +7,8 @@ import Markdown from './Markdown.jsx'
 //   'preview' – gia sư xem trước: hiện đáp án đúng
 // value: câu trả lời { choice } | { blanks: {a: ...} } | { tf: {a: true, ...} } | { text }
 // correct: đáp án máy chấm (chỉ có sau khi nộp, hoặc với gia sư)
-export default function ExerciseBody({ ex, mode, value, onChange, correct, name }) {
+// photoHint: câu tự luận gợi ý "có thể chụp ảnh bài làm" (tắt ở luồng không đính ảnh: làm lại, Ôn tập)
+export default function ExerciseBody({ ex, mode, value, onChange, correct, name, photoHint = true }) {
   const readOnly = mode !== 'answer'
 
   return (
@@ -21,7 +22,8 @@ export default function ExerciseBody({ ex, mode, value, onChange, correct, name 
             const isRight = correct != null && correct === o.label
             let state = ''
             if (mode !== 'answer' && isRight) state = 'is-right'
-            else if (mode === 'review' && picked && !isRight) state = 'is-wrong'
+            // Chưa có đáp án để so (hoặc gia sư đang ẩn đáp án): giữ lựa chọn trung tính, không tô sai
+            else if (mode === 'review' && picked && correct != null && !isRight) state = 'is-wrong'
             return (
               <label key={o.label} className={`choice ${picked ? 'is-picked' : ''} ${state}`}>
                 <input
@@ -90,7 +92,7 @@ export default function ExerciseBody({ ex, mode, value, onChange, correct, name 
           className="essay-input"
           rows={3}
           value={value?.text ?? ''}
-          placeholder="Gõ bài làm (không bắt buộc – có thể chụp ảnh bài làm ở cuối trang)"
+          placeholder={photoHint ? 'Gõ bài làm (không bắt buộc – có thể chụp ảnh bài làm ở cuối trang)' : 'Gõ bài làm'}
           onChange={(e) => onChange?.({ text: e.target.value })}
         />
       )}

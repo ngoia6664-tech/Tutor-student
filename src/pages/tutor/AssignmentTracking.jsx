@@ -17,6 +17,7 @@ import Icon from '../../components/Icon.jsx'
 import AnswerKey from '../../components/AnswerKey.jsx'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
+import { retryScore } from '../../lib/retries.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
 
@@ -106,17 +107,34 @@ export default function AssignmentTracking() {
         </div>
       )}
       {sorted.map((r) => (
-        <GradeCard key={r.student_id} rec={r} exercises={exercises} isExam={!!a.is_exam} limit={a.is_exam ? a.time_limit_minutes : null} answers={data.answersByStudent[r.student_id] || {}} onChanged={reload} />
+        <GradeCard
+          key={r.student_id}
+          rec={r}
+          exercises={exercises}
+          isExam={!!a.is_exam}
+          limit={a.is_exam ? a.time_limit_minutes : null}
+          answers={data.answersByStudent[r.student_id] || {}}
+          retries={data.retriesByStudent[r.student_id] || []}
+          onChanged={reload}
+        />
       ))}
     </div>
   )
 }
 
 // Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu.
-// Đề thi: chia phần, hiện điểm từng câu. Câu tự luận: đặt đáp án ngay dưới bài làm để so.
+// Đề thi: chia phần, hiện điểm từng câu. Đáp án + phương pháp giải đặt ngay dưới bài làm để so (như học sinh thấy sau khi nộp),
+// ẩn / hiện được bằng nút ở đầu.
 function AnswerSheet({ exercises, answers, studentId, isExam }) {
+  const [showKey, setShowKey] = useState(true)
   return (
     <div className="answer-sheet">
+      <div className="row" style={{ marginBottom: '0.5rem' }}>
+        <button type="button" className="btn btn-small btn-ghost" onClick={() => setShowKey((v) => !v)} aria-pressed={showKey}>
+          <Icon name="eye" />
+          {showKey ? 'Ẩn đáp án' : 'Hiện đáp án'}
+        </button>
+      </div>
       {groupExercises(exercises, isExam).map((g) => (
         <Fragment key={g.part?.kind || 'all'}>
           {isExam && <PartHeading part={g.part} count={g.items.length} />}
@@ -132,13 +150,21 @@ function AnswerSheet({ exercises, answers, studentId, isExam }) {
                   {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
                   {!a && <span className="badge badge-muted">Không trả lời</span>}
                 </div>
-                <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={ex.correct} />
-                {ex.kind === 'essay' && (ex.answer_md || ex.method_md) && (
-                  <details className="method-box">
-                    <summary className="box-label">Đáp án để so</summary>
-                    {ex.answer_md && <Markdown>{ex.answer_md}</Markdown>}
-                    {ex.method_md && <Markdown>{ex.method_md}</Markdown>}
-                  </details>
+                <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={showKey ? ex.correct : null} />
+                {showKey && ex.answer_md && (
+                  <div className="answer-box">
+                    <div className="box-label">Đáp án</div>
+                    <Markdown>{ex.answer_md}</Markdown>
+                  </div>
+                )}
+                {showKey && ex.method_md && (
+                  <div className="method-box">
+                    <div className="box-label">Phương pháp giải</div>
+                    <Markdown>{ex.method_md}</Markdown>
+                  </div>
+                )}
+                {showKey && ex.correct == null && !ex.answer_md && !ex.method_md && (
+                  <p className="muted small">Câu này chưa nhập đáp án.</p>
                 )}
               </div>
             )
@@ -161,7 +187,7 @@ function ExamStructureNote({ exercises }) {
   )
 }
 
-function GradeCard({ rec, exercises, isExam, limit, answers, onChanged }) {
+function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged }) {
   const used = minutesUsed(rec.started_at, rec.submitted_at)
   const sum = autoSummary(exercises, answers)
   const exam = isExam ? examSummary(exercises, answers) : null
@@ -217,7 +243,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, onChanged }) {
 
   // Cho học sinh nộp lại: xóa ảnh cũ, đưa về trạng thái chưa nộp
   async function reopen() {
-    if (!window.confirm('Mở lại để học sinh nộp lại? Ảnh nộp kèm sẽ bị xóa; câu trả lời đã gõ/chọn được giữ để học sinh sửa. (Học sinh đã xem đáp án.)')) return
+    if (!window.confirm('Mở lại để học sinh nộp lại? Ảnh nộp kèm sẽ bị xóa; câu trả lời đã gõ/chọn được giữ để học sinh sửa. Lần nộp tới sẽ thành bài chính thức. (Học sinh đã xem đáp án.)')) return
     setBusy(true)
     setError(null)
     try {
@@ -277,12 +303,17 @@ function GradeCard({ rec, exercises, isExam, limit, answers, onChanged }) {
           Máy chấm: <strong>{sum.correct}/{sum.autoTotal}</strong> câu trắc nghiệm / điền khuyết đúng
         </p>
       )}
+      {retries.length > 0 && (
+        <p className="retry-line" style={{ margin: '0 0 0.5rem' }} title="Học sinh tự làm lại để luyện, không tính vào điểm chính thức">
+          ↻ Tự làm lại: {retries.map((r) => `lần ${r.attempt_no} ${retryScore(r, isExam)}`).join(' · ')}
+        </p>
+      )}
 
       <div className="row" style={{ marginBottom: '0.75rem' }}>
-        {answeredCount > 0 && (
+        {(answeredCount > 0 || rec.status !== 'todo') && (
           <button type="button" className="btn btn-small" onClick={() => setShowSheet((s) => !s)}>
             <Icon name="eye" />
-            {showSheet ? 'Ẩn bài làm' : `Xem bài làm (${answeredCount}/${exercises.length} câu)`}
+            {showSheet ? 'Ẩn bài làm' : `Xem bài làm & đáp án (${answeredCount}/${exercises.length} câu)`}
           </button>
         )}
         {rec.submission_path && (

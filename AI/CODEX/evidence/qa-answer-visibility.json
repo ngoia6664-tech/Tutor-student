@@ -1,0 +1,13 @@
+{
+  "case": "Câu trắc nghiệm trả lời đúng B; AnswerSheet ẩn đáp án bằng correct=null",
+  "shown": {
+    "right": true,
+    "wrong": false
+  },
+  "hidden": {
+    "right": false,
+    "wrong": true
+  },
+  "expectedHiddenWrong": false,
+  "result": "BUG_REPRODUCED"
+}

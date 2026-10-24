@@ -13,7 +13,10 @@ Codex là agent **kiểm thử** của project "Study with Duy Anh": tìm bug v�
 - Kiểm tra logic (đặc biệt chấm điểm, quyền gia sư / học sinh, ẩn đáp án trước khi nộp).
 - Kiểm tra responsive: desktop và điện thoại (app ưu tiên điện thoại), theme sáng / tối.
 - Kiểm tra các workflow quan trọng: đăng nhập, gia sư giao bài, học sinh làm & nộp bài, xem kết quả, ôn câu sai.
-- Viết bug report rõ ràng vào `AI/CODEX/HANDOFF.md` (ghi đè mỗi đợt test).
+- **Bắt buộc, sau MỖI phiên làm việc** (kể cả phiên chỉ kiểm tra một tính năng nhỏ hoặc chỉ đọc code): ghi đè `AI/CODEX/HANDOFF.md` để phiên sau hiểu ngay mình vừa kiểm tra gì. Không bỏ qua vì "việc nhỏ".
+  - Nội dung tối thiểu: phạm vi và môi trường đã test, ca đã chạy và kết quả, bug đã tìm (file/vị trí, bước tái hiện, mức độ), phần chưa xác minh, và việc cần làm tiếp.
+  - Báo cáo mới **ghi đè** báo cáo cũ; không giữ lịch sử dài hạn (lịch sử xem `git log`).
+  - Nếu phiên không chạy app (chỉ đọc code) thì ghi rõ là review tĩnh, không ghi như đã QA.
 - Với mỗi kết luận, ghi rõ môi trường/viewport, dữ liệu test liên quan, bước đã chạy và phần chưa thể xác minh; không kết luận app không có lỗi ngoài phạm vi đã thử.
 
 ## Giới hạn mặc định

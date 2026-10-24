@@ -18,7 +18,8 @@ function extFor(type) {
 // Ảnh bài làm (không bắt buộc) + nút Nộp bài
 // labels: nhãn câu để nhắc câu chưa làm (đề thi: "I.3", "II.1"...)
 // autoSubmit: đề tính giờ đã hết giờ → nộp ngay, không hỏi lại (lỗi mạng thì vẫn bấm nộp lại được)
-export default function SubmitPanel({ assignmentId, studentId, exercises, answers, labels, onSubmitted, autoSubmit = false }) {
+// retry(payload): đang làm lại bài đã nộp → không đính kèm ảnh, nộp qua hàm này; onSubmitted nhận kết quả trả về
+export default function SubmitPanel({ assignmentId, studentId, exercises, answers, labels, onSubmitted, autoSubmit = false, retry = null }) {
   const [items, setItems] = useState([]) // [{ file, url }]
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState('')
@@ -64,12 +65,20 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
     const missing = unanswered.filter((ex) => !(ex.kind === 'essay' && items.length))
     const ask = missing.length
       ? `Còn ${missing.length} câu chưa trả lời (câu ${missing.map((ex) => labels?.[ex.id] || exercises.indexOf(ex) + 1).join(', ')}). Vẫn nộp bài?`
-      : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
+      : retry
+        ? 'Nộp lần làm lại này? Điểm chính thức vẫn giữ theo lần nộp đầu.'
+        : 'Nộp bài? Sau khi nộp sẽ không sửa được, và đáp án sẽ hiện ra.'
     if (!force && !window.confirm(ask)) return
 
     setBusy(true)
     setError(null)
     try {
+      const payload = Object.fromEntries(exercises.filter((ex) => answers[ex.id]).map((ex) => [ex.id, answers[ex.id]]))
+      if (retry) {
+        setProgress('Đang nộp bài...')
+        onSubmitted(await retry(payload))
+        return
+      }
       // 1) Tải ảnh (nếu có) lên Storage, đã thu nhỏ
       const folder = `${studentId}/${assignmentId}`
       const stamp = Date.now()
@@ -82,7 +91,6 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       }
       // 2) Gửi câu trả lời; máy chủ lưu, chấm trắc nghiệm và đánh dấu đã nộp
       setProgress('Đang nộp bài...')
-      const payload = Object.fromEntries(exercises.filter((ex) => answers[ex.id]).map((ex) => [ex.id, answers[ex.id]]))
       unwrap(await supabase.rpc('submit_assignment', { p_assignment_id: assignmentId, p_answers: payload }))
       onSubmitted()
     } catch (e) {
@@ -97,12 +105,12 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
 
   return (
     <div className="card submit-card">
-      <h2>Nộp bài</h2>
+      <h2>{retry ? 'Nộp lần làm lại' : 'Nộp bài'}</h2>
       <p className="muted small" style={{ marginTop: 0 }}>
         {unanswered.length
           ? `Đã trả lời ${exercises.length - unanswered.length}/${exercises.length} câu.`
           : `Đã trả lời đủ ${exercises.length} câu.`}{' '}
-        {hasEssay ? 'Câu tự luận có thể gõ trực tiếp hoặc chụp ảnh bài làm.' : 'Có thể đính kèm ảnh nháp nếu muốn.'}
+        {retry ? 'Lần làm lại không đính kèm ảnh; câu tự luận hãy gõ trực tiếp rồi tự so với đáp án.' : hasEssay ? 'Câu tự luận có thể gõ trực tiếp hoặc chụp ảnh bài làm.' : 'Có thể đính kèm ảnh nháp nếu muốn.'}
       </p>
 
       {/* capture="environment": mở thẳng camera sau trên điện thoại */}
@@ -129,17 +137,19 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
         }}
       />
 
-      <div className="row" style={{ marginBottom: '0.75rem' }}>
-        <button type="button" className="btn btn-small" disabled={busy} onClick={() => cameraRef.current?.click()}>
-          <Icon name="camera" />
-          Chụp ảnh
-        </button>
-        <button type="button" className="btn btn-small" disabled={busy} onClick={() => galleryRef.current?.click()}>
-          <Icon name="image" />
-          Chọn ảnh
-        </button>
-        <span className="muted small">Không bắt buộc</span>
-      </div>
+      {!retry && (
+        <div className="row" style={{ marginBottom: '0.75rem' }}>
+          <button type="button" className="btn btn-small" disabled={busy} onClick={() => cameraRef.current?.click()}>
+            <Icon name="camera" />
+            Chụp ảnh
+          </button>
+          <button type="button" className="btn btn-small" disabled={busy} onClick={() => galleryRef.current?.click()}>
+            <Icon name="image" />
+            Chọn ảnh
+          </button>
+          <span className="muted small">Không bắt buộc</span>
+        </div>
+      )}
 
       {items.length > 0 && (
         <div className="thumbs" style={{ marginBottom: '0.75rem' }}>
