@@ -1,77 +1,233 @@
-/* ===== Chấm bài (pages/tutor/AssignmentTracking.jsx): thanh chọn học sinh dính dưới header ===== */
-.grade-switch {
-  position: sticky;
-  z-index: 9;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-solid);
-  box-shadow: var(--shadow, 0 6px 20px rgba(0, 0, 0, 0.18));
+/* ===== Chấm bài (pages/tutor/AssignmentTracking.jsx) =====
+   Sổ chấm bài: bảng đen nhỏ gọn nổi ở góc phải, ngay trên gấu — cùng chất liệu với bảng đen gấu giảng bài (mascot.css):
+   nền xanh bảng, khung tím, tiêu đề phấn vàng Patrick Hand. Bảng là đồ vật nên giữ màu tối ở cả theme sáng. */
+.grade-dock {
+  --chalk: #f1f7f2;
+  --chalk-dim: rgba(241, 247, 242, 0.55);
+  --chalk-yellow: #fde68a;
+  --chalk-green: #86efac;
+  position: fixed;
+  right: 0.75rem;
+  /* Mặc định (không có gấu): sát góc; có gấu thì đứng trên đầu gấu (xem bên dưới) */
+  bottom: 0.75rem;
+  z-index: 7; /* dưới gấu (8): bong bóng lời gấu hiện đè lên sổ một lúc rồi tắt */
+  width: 200px;
+  border: 4px solid #6d28d9;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.06), transparent 45%),
+    #24352f;
+  color: var(--chalk);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.25),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+  transform-origin: 85% 100%;
+  animation: gd-open 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
 }
-.gs-label {
-  flex: none;
-  white-space: nowrap;
+/* Đứng trên đầu gấu: đáy gấu + chiều cao gấu + khe (chừa chỗ chóp mũ / ngôi sao) */
+body:has(.mascot) .grade-dock {
+  bottom: calc(0.6rem + 104px + 1rem);
 }
-/* Một dòng, vuốt ngang khi nhiều học sinh */
-.gs-list {
-  position: relative;
-  display: flex;
-  gap: 0.35rem;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
+/* Có gấu: bấm gấu để ẩn / hiện, nên ẩn là ẩn hẳn. Không có gấu (đã cất / tắt Linh vật): còn đầu sổ với nút "Hiện" */
+body:has(.mascot) .grade-dock:not(.is-open) {
+  display: none;
 }
-.gs-chip {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  max-width: 11rem;
-  padding: 0.25rem 0.7rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text);
+/* Gấu đã cất (chỉ còn nút tròn 46px) */
+body:has(.mascot-restore) .grade-dock {
+  bottom: calc(0.75rem + 46px + 0.5rem);
+}
+/* Chừa chỗ cuối trang để sổ không che nút Lưu điểm của bài cuối */
+body:has(.grade-dock.is-open) .page {
+  padding-bottom: 20rem;
+}
+body:not(:has(.mascot)):has(.grade-dock:not(.is-open)) .page {
+  padding-bottom: 10rem;
+}
+
+.grade-dock button {
   font: inherit;
-  font-size: 0.88rem;
+  color: inherit;
   cursor: pointer;
 }
-.gs-chip:hover {
-  border-color: var(--primary);
+.grade-dock button:focus-visible {
+  outline: 2px solid var(--chalk-yellow);
+  outline-offset: 1px;
 }
-.gs-chip.active {
-  border-color: var(--primary);
-  background: var(--primary-soft);
+.grade-dock .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Đầu sổ --- */
+.gd-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.25rem 0.25rem 0.2rem 0.6rem;
+  border-bottom: 2px dashed rgba(241, 247, 242, 0.25);
+}
+.grade-dock:not(.is-open) .gd-head {
+  border-bottom: 0;
+}
+.gd-title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  color: var(--chalk-yellow);
+  white-space: nowrap;
+}
+.gd-count {
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+}
+.grade-dock .gd-toggle {
+  align-self: center;
+  flex: none;
+  min-height: 26px;
+  margin-left: auto;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid rgba(241, 247, 242, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.75rem;
+}
+.gd-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Danh sách học sinh --- */
+.gd-list {
+  position: relative; /* để offsetTop của dòng tính theo danh sách */
+  max-height: min(200px, 30vh);
+  margin: 0;
+  padding: 0.2rem;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(241, 247, 242, 0.3) transparent;
+}
+.gd-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 32px;
+  padding: 0.15rem 0.45rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+.gd-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+/* Bạn đang chấm: vệt phấn vàng bên trái */
+.gd-row.active {
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 3px 0 0 var(--chalk-yellow);
+}
+.gd-row.active .gd-name {
   font-weight: 600;
 }
-.gs-name {
+.gd-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.85rem;
 }
-/* Chấm trạng thái: vàng chưa nộp, tím chờ chấm, xanh đã chấm */
-.gs-dot {
+/* Chấm trạng thái: vòng phấn rỗng = chưa nộp · vàng đặc = chờ chấm · xanh đặc = đã chấm */
+.gd-dot {
   flex: none;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--chalk-dim);
   border-radius: 50%;
-  background: var(--warn);
 }
-.gs-dot.is-done {
-  background: var(--primary);
+.gd-dot.is-done {
+  border-color: var(--chalk-yellow);
+  background: var(--chalk-yellow);
+  box-shadow: 0 0 6px rgba(253, 230, 138, 0.6);
 }
-.gs-dot.is-checked {
-  background: var(--ok);
+.gd-dot.is-checked {
+  border-color: var(--chalk-green);
+  background: var(--chalk-green);
 }
-.gs-score {
-  color: var(--ok);
+.gd-score {
+  flex: none;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--chalk-green);
   font-variant-numeric: tabular-nums;
 }
-/* Đổi học sinh thì cuộn về đầu thẻ chấm, không bị header + thanh chọn che */
+
+/* Đổi học sinh thì cuộn về đầu thẻ chấm, không bị header che */
 .grade-card {
   scroll-margin-top: calc(var(--answer-offset, 64px) + 0.75rem);
+}
+
+/* Điện thoại: gấu nhỏ hơn (76px) */
+@media (max-width: 640px) {
+  .grade-dock {
+    right: 0.5rem;
+    width: 180px;
+  }
+  body:has(.mascot) .grade-dock {
+    bottom: calc(0.5rem + 76px + 0.8rem);
+  }
+}
+
+/* Gấu ẩn / hiện sổ (Mascot thêm class dock-show / dock-hide ~0,8 s sau khi bấm).
+   Tắt "Animation của Panda" / giảm chuyển động: settings.css tắt hết animation trong .mascot */
+.mascot.dock-show .mascot-body {
+  animation: pd-jump 0.6s cubic-bezier(0.3, 0, 0.4, 1) 1;
+}
+.mascot.dock-show .pd-wand-up {
+  animation: gd-wand 0.6s ease-out 1;
+}
+.mascot.dock-show .pd-star {
+  animation: pd-twinkle 0.6s ease-in-out 1;
+}
+.mascot.dock-hide .mascot-body {
+  animation: gd-tuck 0.5s ease-out 1;
+}
+/* Vung đũa từ dưới lên rồi dừng ở tư thế chỉ lên sổ */
+@keyframes gd-wand {
+  0% {
+    transform: rotate(35deg);
+  }
+  60% {
+    transform: rotate(-12deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+/* Nhún người xuống như vừa cất sổ, bật nhẹ lại */
+@keyframes gd-tuck {
+  40% {
+    transform: translateY(4px) scale(1.06, 0.9);
+  }
+  75% {
+    transform: translateY(-3px) scale(0.98, 1.03);
+  }
+}
+
+@keyframes gd-open {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.85);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grade-dock {
+    animation: none;
+  }
 }

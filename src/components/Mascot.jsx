@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js'
 import { countOpenReports } from '../lib/reports.js'
 import { MASCOT_EVENT } from '../lib/celebrate.js'
 import { LOCK_MESSAGE, useStudying } from '../lib/studyLock.js'
+import { toggleGradeDock, useGradeDockOpen, useGrading } from '../lib/gradeDock.js'
 import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 import { mascotSound } from '../lib/spaceSound.js'
 import FormulaText, { plainText } from './FormulaText.jsx'
@@ -114,6 +115,12 @@ function MascotBody() {
   const studying = useStudying()
   const studyingRef = useRef(studying)
   studyingRef.current = studying
+  // Gia sư đang chấm bài: bấm gấu = ẩn / hiện Sổ chấm bài; gấu ngồi im, không nói, không đi dạo
+  const grading = useGrading()
+  const dockOpen = useGradeDockOpen()
+  const gradingRef = useRef(grading)
+  gradingRef.current = grading
+  const [dockAnim, setDockAnim] = useState(null) // 'show' | 'hide': nhịp động tác ngắn ngay sau khi bấm ẩn / hiện sổ
   const settings = useSettings()
   const reduceMotion = prefersReducedMotion()
   // Tắt "Animation của Panda" (Cài đặt): không đi dạo / leo / lăn, chuyển động nhẹ tắt bằng CSS (styles/settings.css)
@@ -150,7 +157,8 @@ function MascotBody() {
 
   // Lời từ trang khác (nộp bài, ôn đúng...)
   useEffect(() => {
-    const on = (e) => say(e.detail.text, e.detail.mood)
+    // Đang chấm bài: gấu im lặng, bong bóng sẽ che Sổ chấm bài
+    const on = (e) => !gradingRef.current && say(e.detail.text, e.detail.mood)
     window.addEventListener(MASCOT_EVENT, on)
     return () => window.removeEventListener(MASCOT_EVENT, on)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,7 +197,7 @@ function MascotBody() {
   useEffect(() => {
     if (stillMascot || hidden) return
     const id = setInterval(() => {
-      if (moodRef.current !== 'idle' || studyingRef.current) return
+      if (moodRef.current !== 'idle' || studyingRef.current || gradingRef.current) return
       if (document.hidden || document.documentElement.classList.contains('space-exploring')) return
       const a = pickActivity()
       setMood(a.mood)
@@ -235,7 +243,28 @@ function MascotBody() {
     return false
   }
 
+  // Vào trang chấm bài: tắt lời đang nói / trò đang dở để không che Sổ chấm bài
+  useEffect(() => {
+    if (!grading) return
+    clearTimeout(timers.current.bubble)
+    clearTimeout(timers.current.activity)
+    clearTimeout(timers.current.sulk)
+    setBubble(null)
+    rest()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grading])
+
   async function onPoke() {
+    if (grading) {
+      if (moodRef.current === 'sleep') setMood('idle')
+      // Hiện sổ: nhảy lên vung đũa; ẩn sổ: nhún người cất sổ (CSS ở styles/grading.css)
+      const kind = dockOpen ? 'hide' : 'show'
+      sound(kind === 'show' ? 'cheer' : 'hide')
+      setDockAnim(kind)
+      clearTimeout(timers.current.dock)
+      timers.current.dock = setTimeout(() => setDockAnim(null), 800)
+      return toggleGradeDock()
+    }
     if (reactToSpam()) return
     if (studying) return say(LOCK_MESSAGE)
     if (mood === 'sleep') {
@@ -265,7 +294,7 @@ function MascotBody() {
   function show() {
     writeHidden(false)
     setHidden(false)
-    say(`Chào ${profile.full_name?.split(' ').at(-1) || 'bạn'}! Bấm vào thầy để nghe giảng nhé.`)
+    if (!grading) say(`Chào ${profile.full_name?.split(' ').at(-1) || 'bạn'}! Bấm vào thầy để nghe giảng nhé.`)
   }
 
   function closeBubble() {
@@ -289,10 +318,12 @@ function MascotBody() {
   if (shown === 'climb') art = <BackPanda />
   else if (shown === 'roll') art = <BallPanda />
   else if (shown === 'sleep' || shown === 'sulk') art = <SleepingPanda /> // giận: nằm cuộn giả ngủ
+  // Đang chấm + sổ đang mở: gấu giơ đũa chỉ lên sổ, mặt cười
+  else if (grading && dockOpen && shown === 'idle') art = <FrontPanda pose="teach" face="happy" />
   else art = <FrontPanda pose={['teach', 'cheer', 'dizzy', 'wait'].includes(shown) ? shown : 'sit'} />
 
   return (
-    <div className={`mascot is-${shown}`}>
+    <div className={`mascot is-${shown}${grading && dockAnim ? ` dock-${dockAnim}` : ''}`}>
       {bubble?.kind === 'board' && (
         <div key={bubble.id} className="mascot-board" role="status">
           <div className="mascot-board-title">Gấu Trúc giảng bài</div>
@@ -310,7 +341,14 @@ function MascotBody() {
       )}
       <div className="mascot-stage">
         {shown === 'climb' && <Bamboo />}
-        <button type="button" className="mascot-body" onClick={onPoke} aria-label="Giáo sư Gấu Trúc: bấm để nghe giảng">
+        <button
+          type="button"
+          className="mascot-body"
+          onClick={onPoke}
+          aria-label={grading ? `Giáo sư Gấu Trúc: bấm để ${dockOpen ? 'ẩn' : 'hiện'} Sổ chấm bài` : 'Giáo sư Gấu Trúc: bấm để nghe giảng'}
+          aria-expanded={grading ? dockOpen : undefined}
+          title={grading ? `Bấm để ${dockOpen ? 'ẩn' : 'hiện'} Sổ chấm bài` : undefined}
+        >
           {art}
           {shown === 'wait' && (
             <span className="mascot-dots" aria-hidden="true">

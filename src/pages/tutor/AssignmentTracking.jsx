@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -19,18 +20,9 @@ import AnswerKey from '../../components/AnswerKey.jsx'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
 import { retryScore } from '../../lib/retries.js'
-import { useStickyTop } from '../../components/AnswerProgress.jsx'
-import { mascotSay } from '../../lib/celebrate.js'
+import { toggleGradeDock, useGradeDockOpen, useGradingMode } from '../../lib/gradeDock.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
-
-// Lời gấu khi đổi học sinh đang chấm
-function pickLine(r) {
-  const name = r.student?.full_name || 'bạn này'
-  if (r.status === 'todo') return `${name} chưa nộp bài đâu nha 🕒`
-  if (r.status === 'checked') return `Bài của ${name} chấm rồi: ${formatScore(r.score)} điểm ✅`
-  return `Chấm bài của ${name} nào ✏️`
-}
 
 // Bảng theo dõi một bài tập: trạng thái từng học sinh, ảnh bài nộp, chấm điểm
 export default function AssignmentTracking() {
@@ -41,17 +33,10 @@ export default function AssignmentTracking() {
 
   const [picked, setPicked] = useState(null) // student_id đang chấm; null = học sinh đầu danh sách
   const cardRef = useRef(null)
-  const greeted = useRef(false)
 
   const { data, loading, error, reload } = useAsync(() => fetchAssignmentFull(id), [id])
-
-  // Mở trang: gấu báo số bài đang chờ chấm (một lần)
-  useEffect(() => {
-    if (!data || greeted.current) return
-    greeted.current = true
-    const waiting = data.recipients.filter((r) => r.status === 'done').length
-    if (waiting) mascotSay(`Có ${waiting} bài đang chờ chấm. Bấm tên học sinh ở thanh trên để chuyển nhé!`)
-  }, [data])
+  // Có học sinh để chấm: bấm gấu = ẩn / hiện Sổ chấm bài, gấu im lặng (lib/gradeDock.js)
+  useGradingMode(!!data?.recipients.length)
 
   // Khi tải lại sau lúc chấm, giữ dữ liệu cũ trên màn hình thay vì hiện loading
   if (loading && !data) return <Loading />
@@ -75,7 +60,6 @@ export default function AssignmentTracking() {
   function pick(r) {
     if (r.student_id === current?.student_id) return
     setPicked(r.student_id)
-    mascotSay(pickLine(r))
     // Đang ở giữa bài làm dài của bạn trước: đưa về đầu thẻ chấm của bạn mới
     requestAnimationFrame(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
@@ -136,7 +120,7 @@ export default function AssignmentTracking() {
         </div>
       ) : (
         <>
-          <GradeSwitcher list={sorted} currentId={current.student_id} onPick={pick} />
+          <GradeDock list={sorted} currentId={current.student_id} onPick={pick} />
           <div ref={cardRef} className="grade-card">
             <GradeCard
               key={current.student_id}
@@ -162,43 +146,59 @@ export default function AssignmentTracking() {
   )
 }
 
-// Thanh chọn học sinh: một dòng tên (vuốt ngang), dính dưới header để đổi bạn đang chấm ở bất kỳ đâu trên trang
-function GradeSwitcher({ list, currentId, onPick }) {
-  const selfRef = useRef(null)
-  const listRef = useRef(null)
-  const top = useStickyTop(selfRef)
+// ----- Sổ chấm bài: bảng đen nhỏ nổi ở góc phải, ngay trên gấu (cùng kiểu bảng đen gấu giảng bài) -----
+const STATUS_TEXT = { todo: 'chưa nộp', done: 'chờ chấm', checked: 'đã chấm' }
 
-  // Bạn đang chọn luôn nằm trong tầm nhìn của dòng (chỉ cuộn ngang, không kéo cả trang)
+// Sổ gọn: mỗi dòng = chấm màu trạng thái + tên + điểm (nếu đã chấm); bấm tên là chuyển sang bài bạn đó.
+// Ẩn / hiện bằng cách bấm gấu (Mascot) hoặc nút ở đầu sổ; trạng thái mở dùng chung qua lib/gradeDock.js
+function GradeDock({ list, currentId, onPick }) {
+  const open = useGradeDockOpen()
+  const listRef = useRef(null)
+  const waiting = list.filter((r) => r.status === 'done').length
+
+  // Bạn đang chấm luôn nằm giữa danh sách (chỉ cuộn trong sổ, không kéo cả trang)
   useEffect(() => {
     const box = listRef.current
-    const chip = box?.querySelector('.gs-chip.active')
-    if (chip) box.scrollTo({ left: chip.offsetLeft - box.clientWidth / 2 + chip.offsetWidth / 2, behavior: 'smooth' })
-  }, [currentId])
+    const row = box?.querySelector('.gd-row.active')
+    if (row) box.scrollTop = row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2
+  }, [open, currentId])
 
-  return (
-    <div ref={selfRef} className="grade-switch" style={{ top }}>
-      <span className="gs-label muted small">Học sinh ({list.length})</span>
-      <div ref={listRef} className="gs-list" role="tablist">
-        {list.map((r) => {
-          const active = r.student_id === currentId
-          return (
-            <button
-              key={r.student_id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              className={active ? 'gs-chip active' : 'gs-chip'}
-              title={studentLabel(r.student)}
-              onClick={() => onPick(r)}
-            >
-              <span className={`gs-dot is-${r.status}`} />
-              <span className="gs-name">{r.student?.full_name || '(đã xóa)'}</span>
-              {r.status === 'checked' && r.score != null && <span className="gs-score">{formatScore(r.score)}</span>}
-            </button>
-          )
-        })}
+  // Portal ra <body>: khung trang có animation transform làm position: fixed neo theo khung thay vì màn hình
+  return createPortal(
+    <aside className={open ? 'grade-dock is-open' : 'grade-dock'} aria-label="Sổ chấm bài: chọn học sinh">
+      <div className="gd-head">
+        <span className="gd-title">Sổ chấm bài</span>
+        <span className="gd-count">{waiting ? `${waiting} chờ chấm` : 'hết bài chờ'}</span>
+        <button type="button" className="gd-toggle" onClick={toggleGradeDock} aria-expanded={open} title="Bấm gấu cũng ẩn / hiện sổ được">
+          {open ? 'Ẩn' : 'Hiện'}
+        </button>
       </div>
-    </div>
+
+      {open && (
+        <ul ref={listRef} className="gd-list">
+          {list.map((r) => {
+            const active = r.student_id === currentId
+            return (
+              <li key={r.student_id}>
+                <button
+                  type="button"
+                  className={active ? 'gd-row active' : 'gd-row'}
+                  aria-current={active || undefined}
+                  title={`${studentLabel(r.student)} · ${STATUS_TEXT[r.status]}`}
+                  onClick={() => onPick(r)}
+                >
+                  <span className={`gd-dot is-${r.status}`} aria-hidden="true" />
+                  <span className="gd-name">{r.student?.full_name || '(đã xóa)'}</span>
+                  <span className="sr-only">, {STATUS_TEXT[r.status]}</span>
+                  {r.status === 'checked' && r.score != null && <span className="gd-score">{formatScore(r.score)}</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </aside>,
+    document.body
   )
 }
 

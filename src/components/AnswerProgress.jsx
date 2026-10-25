@@ -14,8 +14,8 @@ function readOpen() {
 
 // Chiều cao header (thay đổi khi xoay máy / menu xuống dòng) để thanh dính ngay bên dưới.
 // Đồng thời ghi --answer-offset = header + thanh tiến độ lên <html>: .question dùng làm scroll-margin-top,
-// nên nhảy tới câu thì đầu câu không bị hai thanh che. Dùng chung cho thanh chọn học sinh khi chấm bài.
-export function useStickyTop(selfRef) {
+// nên nhảy tới câu thì đầu câu không bị hai thanh che.
+function useStickyTop(selfRef) {
   const [h, setH] = useState(0)
   useEffect(() => {
     const topbar = document.querySelector('.topbar')

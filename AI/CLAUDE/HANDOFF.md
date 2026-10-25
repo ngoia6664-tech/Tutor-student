@@ -30,6 +30,27 @@ DONE trong code, `npm run build` qua, đã commit + push. Chưa thử trên trì
 ### 3. Chip câu chưa làm (`src/components/AnswerProgress.jsx`, `styles/attempts.css`)
 - Chip chỉ ghi số / nhãn đề ("3", "I.3"), `min-width: 2.2rem` để dễ bấm.
 
+### 4. Sổ chấm bài nổi trên đầu gấu (Owner yêu cầu thêm, **CHƯA commit / push** — Owner xem bản local trước)
+- Thay thanh dính dưới header bằng `GradeDock` (AssignmentTracking.jsx): bảng đen nhỏ `position: fixed` góc phải, đứng ngay trên gấu
+  (cùng chất liệu bảng đen gấu giảng bài: nền xanh bảng, khung tím, tiêu đề phấn vàng Patrick Hand; giữ tối ở cả theme sáng).
+- Nhỏ gọn (Owner chốt): rộng 200px (điện thoại 180px). Đầu sổ: "Sổ chấm bài" + "n chờ chấm" + nút thu gọn / mở
+  (nhớ localStorage `grade-dock-open`; mặc định máy tính mở, điện thoại thu gọn).
+- Danh sách dọc (cuộn trong sổ, tối đa 200px / 30vh), dòng thấp 32px: chấm màu (vòng rỗng = chưa nộp, vàng đặc = chờ chấm,
+  xanh đặc = đã chấm) + tên + điểm nếu đã chấm; bạn đang chấm có vệt phấn vàng. Bấm tên là chuyển bài, **không** có nút ‹ › / số trang (Owner bỏ).
+- Vị trí: có gấu → trên đầu gấu (desktop 104px, điện thoại 76px); gấu cất → trên nút tròn; tắt Linh vật → sát góc.
+  z-index 7 (dưới gấu 8: bong bóng lời gấu đè lên sổ vài giây). `.page` chừa đáy 20rem (mở) / 10rem (thu gọn).
+- Sổ render qua `createPortal` vào `<body>`: trong khung trang (có animation transform) `position: fixed` bị neo theo khung,
+  phải cuộn xuống mới thấy (Owner báo). Nút "Ẩn" / "Hiện" dạng chữ ở đầu sổ.
+- **Bấm gấu = ẩn / hiện sổ** (Owner chọn): store `lib/gradeDock.js` (`useGradingMode` gọi trong AssignmentTracking khi có học sinh,
+  `useGrading`, `useGradeDockOpen`, `toggleGradeDock`; nhớ localStorage `grade-dock-open`, mặc định mở). Khi đang chấm, Mascot:
+  bấm → toggle sổ (bỏ qua giảng / nhắc / chống bấm dồn dập), không đi dạo, bỏ lời từ trang khác (`mascotSay`), vào trang thì tắt bong bóng đang nói.
+  Trang chấm bài không còn gọi `mascotSay` (đầu sổ đã ghi số bài chờ chấm). Có gấu + sổ ẩn → ẩn hẳn; gấu cất / tắt Linh vật → còn đầu sổ với nút "Hiện".
+  Sổ nâng cao hơn đầu gấu (khe 1rem, điện thoại 0.8rem).
+- Animation gấu khi ẩn / hiện sổ: hiện → class `dock-show` (nhảy 1 nhịp, vung đũa `gd-wand`, sao lấp lánh) + tiếng `cheer`,
+  sổ mở thì gấu giữ tư thế giơ đũa chỉ lên sổ, mặt cười (`FrontPanda pose="teach" face="happy"`, không animation liên tục);
+  ẩn → `dock-hide` (nhún người `gd-tuck`) + tiếng `hide`. CSS ở `grading.css`; tắt Animation của Panda thì đứng yên.
+- `useStickyTop` trong AnswerProgress trở lại nội bộ.
+
 ## Files changed
 Mới: `src/styles/grading.css`. Sửa: `src/lib/svg.js`, `src/components/AnswerProgress.jsx`, `src/pages/tutor/AssignmentTracking.jsx`,
 `src/styles/attempts.css`, `src/index.css`, `CLAUDE.md`.
