@@ -76,9 +76,25 @@ export function NotificationsProvider({ children }) {
   const knownKeys = useRef(null) // bài đã biết ở lần tải trước (để phát hiện bài vừa giao)
   // Mốc cho nhãn "Mới" trong các trang: lúc mở app, không đổi khi bấm chuông trong phiên này
   const baseline = useRef(toDate(profile?.notif_seen_at))
+  const lastRefresh = useRef(0)
+
+  // Hồ sơ lấy từ bộ nhớ máy có thể cũ: hồ sơ mới từ máy chủ về thì dời mốc "đã xem" lên
+  const serverSeen = profile?.notif_seen_at
+  useEffect(() => {
+    const t = toDate(serverSeen)
+    if (!t) return
+    if (!baseline.current || t > baseline.current) baseline.current = t
+    if (!seenRef.current || t > seenRef.current) {
+      seenRef.current = t
+      setSeenAt(t)
+    }
+  }, [serverSeen])
 
   const refresh = useCallback(async () => {
     if (!enabled) return
+    // Quay lại tab bắn cả focus lẫn visibilitychange: chỉ tải một lần
+    if (Date.now() - lastRefresh.current < 3000) return
+    lastRefresh.current = Date.now()
     let list
     try {
       list = await fetchItems(profile.id)

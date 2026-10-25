@@ -54,13 +54,10 @@ export default function StudentAssignment() {
   const [view, setView] = useState(0)
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const rec = unwrap(
-      await supabase.from('assignment_recipients').select('*').eq('assignment_id', id).eq('student_id', profile.id).maybeSingle()
-    )
-    if (!rec) throw new Error('Không tìm thấy bài tập, hoặc bài này không được giao cho bạn.')
-
-    const [assignment, exercises, myAnswers] = await Promise.all([
-      supabase.from('assignments').select('id, title, type, due_date, lesson_id, chapter_id, is_exam, time_limit_minutes').eq('id', id).single().then(unwrap),
+    // Lượt 1: mọi thứ chỉ cần id bài (chạy song song)
+    const [rec, assignment, exercises, myAnswers] = await Promise.all([
+      supabase.from('assignment_recipients').select('*').eq('assignment_id', id).eq('student_id', profile.id).maybeSingle().then(unwrap),
+      supabase.from('assignments').select('id, title, type, due_date, lesson_id, chapter_id, is_exam, time_limit_minutes').eq('id', id).maybeSingle().then(unwrap),
       supabase.from('exercises').select('id, sort_order, kind, question_md, options').eq('assignment_id', id).order('sort_order').then(unwrap),
       supabase
         .from('submission_answers')
@@ -69,32 +66,23 @@ export default function StudentAssignment() {
         .eq('student_id', profile.id)
         .then(unwrap),
     ])
+    if (!rec || !assignment) throw new Error('Không tìm thấy bài tập, hoặc bài này không được giao cho bạn.')
 
+    // Lượt 2: phần cần danh sách câu / trạng thái nộp.
     // Chỉ hỏi đáp án khi đã nộp. (Dù có hỏi trước, RLS cũng trả về rỗng.)
-    let keys = {}
-    let images = []
-    if (rec.status !== 'todo') {
-      if (exercises.length) {
-        const rows = unwrap(
-          await supabase
-            .from('answer_keys')
-            .select('exercise_id, answer_md, method_md, correct')
-            .in(
-              'exercise_id',
-              exercises.map((e) => e.id)
-            )
-        )
-        keys = Object.fromEntries(rows.map((k) => [k.exercise_id, k]))
-      }
-      images = await loadSubmissionImages(rec.submission_path)
-    }
-    const answers = Object.fromEntries(myAnswers.map((a) => [a.exercise_id, a]))
+    const submitted = rec.status !== 'todo'
     const ids = exercises.map((e) => e.id)
-    const [reports, marks, retries] = await Promise.all([
+    const [keyRows, images, reports, marks, retries] = await Promise.all([
+      submitted && ids.length
+        ? supabase.from('answer_keys').select('exercise_id, answer_md, method_md, correct').in('exercise_id', ids).then(unwrap)
+        : [],
+      submitted ? loadSubmissionImages(rec.submission_path) : [],
       loadMyReports(ids, profile.id),
       loadMarks(ids, profile.id),
-      rec.status !== 'todo' ? loadRetries({ assignment_id: id, student_id: profile.id }) : [],
+      submitted ? loadRetries({ assignment_id: id, student_id: profile.id }) : [],
     ])
+    const keys = Object.fromEntries(keyRows.map((k) => [k.exercise_id, k]))
+    const answers = Object.fromEntries(myAnswers.map((a) => [a.exercise_id, a]))
     return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports, marks, retries }
   }, [id, profile.id])
 

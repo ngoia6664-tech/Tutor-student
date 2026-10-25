@@ -12,9 +12,11 @@ export default function StudentLesson() {
 
   const { data, loading, error, reload } = useAsync(async () => {
     // RLS chỉ trả về bài giảng được giao cho học sinh này
-    const lesson = unwrap(await supabase.from('lessons').select('*').eq('id', id).maybeSingle())
+    const [lesson, assignments] = await Promise.all([
+      supabase.from('lessons').select('*').eq('id', id).maybeSingle().then(unwrap),
+      supabase.from('assignments').select('id, title').eq('lesson_id', id).then(unwrap),
+    ])
     if (!lesson) throw new Error('Không tìm thấy bài giảng, hoặc bài này không được giao cho bạn.')
-    const assignments = unwrap(await supabase.from('assignments').select('id, title').eq('lesson_id', id))
     return { lesson, assignments }
   }, [id])
 

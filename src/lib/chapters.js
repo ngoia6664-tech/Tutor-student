@@ -42,18 +42,6 @@ export function chapterGroupLabel(c) {
   return [c.grade ? `Lớp ${c.grade}` : '', c.subject || '', c.section || ''].filter(Boolean).join(' · ') || 'Khác'
 }
 
-// Gom chương theo (lớp, môn, chuyên đề) cho ô chọn: [{ key, label, chapters }]
-export function groupBySection(chapters) {
-  const groups = []
-  for (const c of sortChapters(chapters)) {
-    const label = chapterGroupLabel(c)
-    let g = groups.find((x) => x.label === label)
-    if (!g) groups.push((g = { key: label, label, chapters: [] }))
-    g.chapters.push(c)
-  }
-  return groups
-}
-
 // ----- Cây Lớp › Môn › Chuyên đề › Chương -----
 // Mỗi cấp có "key" để đưa lên URL; giá trị trống dùng key '-'
 export const keyOf = (v) => (v === null || v === undefined || v === '' ? '-' : String(v))

@@ -8,8 +8,8 @@ import ThemeToggle from './ThemeToggle.jsx'
 import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
-import Mascot from './Mascot.jsx'
 import { mascotSay } from '../lib/celebrate.js'
+import { useSettings } from '../lib/settings.js'
 import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
 import { openExplorerSound } from '../lib/spaceSound.js'
 
@@ -17,6 +17,8 @@ import { openExplorerSound } from '../lib/spaceSound.js'
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
 // Bảng Cài đặt (nút bánh răng): bảng nổi, không đổi trang
 const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
+// Gấu trúc (hình vẽ nặng): tải sau khi trang đã hiện; tắt linh vật trong Cài đặt thì không tải
+const Mascot = lazy(() => import('./Mascot.jsx'))
 import { NotificationsProvider } from '../contexts/NotificationsContext.jsx'
 import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 import { countUnseenFeedback, FEEDBACK_CHANGED } from '../lib/feedback.js'
@@ -78,6 +80,7 @@ export default function Layout() {
   const [exploring, setExploring] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const studying = useStudying()
+  const showMascot = useSettings().mascot
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
     onScroll()
@@ -157,7 +160,11 @@ export default function Layout() {
           </ErrorBoundary>
         </div>
       </main>
-      <Mascot />
+      {showMascot && (
+        <Suspense fallback={null}>
+          <Mascot />
+        </Suspense>
+      )}
       <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (

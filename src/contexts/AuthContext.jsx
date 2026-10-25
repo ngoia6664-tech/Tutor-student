@@ -5,15 +5,38 @@ import { setMusicChoice } from '../lib/spaceSound.js'
 
 const AuthContext = createContext(null)
 
+// Lưu hồ sơ lần trước trên máy: mở app hiện giao diện ngay, không đợi tải profiles
+// (vẫn tải lại ở nền để cập nhật; quyền thật do RLS trên máy chủ quyết định)
+const PROFILE_KEY = 'profile-cache'
+function readCachedProfile() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PROFILE_KEY))
+    return p?.id ? { userId: p.id, profile: p, error: null } : null
+  } catch {
+    return null
+  }
+}
+function writeCachedProfile(profile) {
+  try {
+    if (profile) localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+    else localStorage.removeItem(PROFILE_KEY)
+  } catch {
+    // bỏ qua
+  }
+}
+
 export function AuthProvider({ children }) {
   // undefined = chưa biết (đang khởi động), null = chưa đăng nhập
   const [session, setSession] = useState(undefined)
   // Gắn profile với userId để tránh hiển thị nhầm profile của phiên cũ
-  const [profileState, setProfileState] = useState({ userId: null, profile: null, error: null })
+  const [profileState, setProfileState] = useState(() => readCachedProfile() || { userId: null, profile: null, error: null })
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s ?? null))
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!s) writeCachedProfile(null)
+      setSession(s ?? null)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -36,6 +59,9 @@ export function AuthProvider({ children }) {
           message =
             'Tài khoản này chưa có hồ sơ trong bảng profiles. Hãy chạy lại supabase/schema.sql (phần tạo hồ sơ cho tài khoản có sẵn) – xem README.'
         else if (!['tutor', 'student'].includes(data.role)) message = `Vai trò không hợp lệ: ${data.role}`
+        // Lỗi mạng mà đang có hồ sơ đã lưu của đúng người này: giữ hồ sơ cũ, không chặn app
+        if (error) return setProfileState((s) => (s.userId === userId && s.profile ? s : { userId, profile: null, error: message }))
+        writeCachedProfile(message ? null : data)
         setProfileState({ userId, profile: message ? null : data, error: message })
       })
     return () => {

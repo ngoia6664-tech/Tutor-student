@@ -11,7 +11,6 @@ const musicOn = () => getSettings().music
 const musicLevel = () => 1.2 * (getSettings().musicVolume / 100) ** 2
 const FX_LEVEL = 1.2 * 0.6 ** 2 // hiệu ứng giữ mức cũ (âm lượng 60%)
 
-export const getVolume = () => getSettings().musicVolume
 export const setVolume = (value) => updateSettings({ musicVolume: value })
 
 let ctx = null
@@ -20,8 +19,7 @@ let musicBus = null // nhạc nền (file mp3 + tiếng vũ trụ tổng hợp),
 let echo = null // bus vang (delay có phản hồi) cho cảm giác không gian rộng
 let ambient = null
 
-// Nút loa trong chế độ ngắm vũ trụ: "có tiếng" khi bật ít nhất một loại; bấm thì tắt / bật cả hai
-export const isSoundOn = () => fx() || musicOn()
+// Nút loa trong chế độ ngắm vũ trụ: bấm thì tắt / bật cả hai loại
 export const setSoundOn = (value) => updateSettings({ soundEffects: value, music: value })
 
 // Cài đặt đổi: tắt nhạc thì dừng ngay (cả YouTube), đổi âm lượng thì chỉnh bus nhạc

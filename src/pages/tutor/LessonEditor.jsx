@@ -25,7 +25,10 @@ export default function LessonEditor() {
   const presetChapter = location.state?.chapterId || draft?.chapter_id || ''
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const chapters = await fetchChapters()
+    const [chapters, lesson] = await Promise.all([
+      fetchChapters(),
+      id ? supabase.from('lessons').select('*, lesson_recipients(student_id)').eq('id', id).maybeSingle().then(unwrap) : null,
+    ])
     if (!id) {
       return {
         chapters,
@@ -38,7 +41,6 @@ export default function LessonEditor() {
         student_ids: [],
       }
     }
-    const lesson = unwrap(await supabase.from('lessons').select('*, lesson_recipients(student_id)').eq('id', id).maybeSingle())
     if (!lesson) throw new Error('Không tìm thấy bài giảng (có thể đã bị xóa).')
     return {
       chapters,

@@ -14,10 +14,13 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang + prefetch theo vai trò.
-- `src/contexts/` — `AuthContext` (phiên + profile/role), `NotificationsContext` (bài mới cho học sinh).
+- `src/contexts/` — `AuthContext` (phiên + profile/role; profile lưu localStorage `profile-cache` để mở app không đợi mạng, tải lại ở nền), `NotificationsContext` (bài mới cho học sinh).
+- Tốc độ tải: `vite.config.js` tách chunk `react` / `supabase` (cache lâu, không đổi khi sửa code app); `vercel.json` cache `/assets` 1 năm;
+  font Google tải không chặn hiển thị; Mascot (Layout) + DialogScene (DialogHost) là `lazy`, không nằm trong gói khởi động.
+  Truy vấn trong một trang: gom vào `Promise.all`, tránh `await` nối tiếp (mỗi lượt = 1 lần chờ mạng).
 - `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương),
-  `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: thanh chọn học sinh `GradeSwitcher`
-  dính dưới header, chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
+  `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: "Sổ chấm bài" `GradeDock` nổi
+  góc phải ngay trên gấu, kiểu bảng đen nhỏ gọn, bấm tên là chuyển bài; bấm gấu = ẩn/hiện sổ, gấu im lặng khi chấm — `lib/gradeDock.js`; chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
   `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề),
   `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
 - Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.
@@ -42,7 +45,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   + CSS `styles/dialog.css`. Đang dùng: đăng xuất, xóa chương / chuyên đề (Library) / bài giảng / bài tập, nộp bài, bỏ đánh dấu câu khó có ghi chú.
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
-- Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout),
+- Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout, lazy; tắt linh vật thì không tải),
   hình vẽ `components/PandaArt.jsx` (FrontPanda pose sit/teach/cheer, BackPanda leo, BallPanda lăn, SleepingPanda, Bamboo),
   CSS `styles/mascot.css` (bảng đen font Patrick Hand). mood: idle / climb / walk / roll → dizzy / teach / talk / cheer / sleep / sulk (bị chọc ≥7 lần/4s: giả ngủ giận);
   mỗi ~10s chọn trò theo `ACTIVITIES` (leo 50%, đi 30%, lăn 20%), ngủ sau 30s; tự ẩn khi có `.exam-timer-float`.

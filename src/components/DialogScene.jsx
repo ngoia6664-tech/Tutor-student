@@ -103,17 +103,18 @@ const SCENES = {
   deleted: { pose: 'cheer', face: 'happy', prop: <Trash open={false} /> },
 }
 
-export const hasScene = (scene) => !!SCENES[scene]
-
-// Không có scene: gấu theo pose truyền vào (kèm emoji ở DialogHost)
-export default function DialogScene({ scene, pose = 'sit' }) {
+// Không có scene: gấu theo pose truyền vào, kèm emoji (nếu có)
+export default function DialogScene({ scene, pose = 'sit', emoji }) {
   const s = SCENES[scene]
   return (
-    <div className={`dlg-scene ${s ? `is-${scene}` : ''}`} aria-hidden="true">
-      <div className="dlg-scene-panda">
-        <FrontPanda pose={s?.pose || pose} face={s?.face} />
+    <>
+      <div className={`dlg-scene ${s ? `is-${scene}` : ''}`} aria-hidden="true">
+        <div className="dlg-scene-panda">
+          <FrontPanda pose={s?.pose || pose} face={s?.face} />
+        </div>
+        {s && <div className="dlg-scene-prop">{s.prop}</div>}
       </div>
-      {s && <div className="dlg-scene-prop">{s.prop}</div>}
-    </div>
+      {emoji && !s && <span className="dlg-emoji">{emoji}</span>}
+    </>
   )
 }

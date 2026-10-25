@@ -11,8 +11,6 @@ export const EXAM_PARTS = [
 ]
 const OTHER_PART = { kind: 'other', roman: '', title: 'Câu khác (gia sư tự chấm)', note: 'Tự luận, điền khuyết: không tính vào điểm máy chấm' }
 
-export const TF_POINTS = [0, 0.1, 0.25, 0.5, 1]
-
 // Thời gian làm đề THPT môn Vật lý (phút), gia sư đổi được cho từng đề
 export const EXAM_MINUTES = 50
 

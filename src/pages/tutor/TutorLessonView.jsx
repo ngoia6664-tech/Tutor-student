@@ -11,15 +11,16 @@ export default function TutorLessonView() {
   const { id } = useParams()
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const lesson = unwrap(
-      await supabase
+    const [lesson, assignments] = await Promise.all([
+      supabase
         .from('lessons')
         .select('*, lesson_recipients(student:profiles(id, full_name, group_name, grade))')
         .eq('id', id)
         .maybeSingle()
-    )
+        .then(unwrap),
+      supabase.from('assignments').select('id, title').eq('lesson_id', id).then(unwrap),
+    ])
     if (!lesson) throw new Error('Không tìm thấy bài giảng (có thể đã bị xóa).')
-    const assignments = unwrap(await supabase.from('assignments').select('id, title').eq('lesson_id', id))
     return { lesson, assignments }
   }, [id])
 

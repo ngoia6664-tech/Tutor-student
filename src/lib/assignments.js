@@ -12,13 +12,9 @@ export async function removeSubmissionFiles(folder) {
 // Xóa bài tập + ảnh bài nộp của mọi học sinh (câu hỏi, đáp án xóa theo cascade)
 export async function deleteAssignment(id) {
   const recs = unwrap(await supabase.from('assignment_recipients').select('submission_path').eq('assignment_id', id))
-  for (const r of recs) {
-    try {
-      await removeSubmissionFiles(r.submission_path)
-    } catch (e) {
-      console.warn('Không xóa được ảnh bài nộp', r.submission_path, e)
-    }
-  }
+  await Promise.all(
+    recs.map((r) => removeSubmissionFiles(r.submission_path).catch((e) => console.warn('Không xóa được ảnh bài nộp', r.submission_path, e)))
+  )
   unwrap(await supabase.from('assignments').delete().eq('id', id))
 }
 
@@ -43,9 +39,8 @@ function firstKey(k) {
 
 // Tải bài tập đầy đủ (kể cả đáp án và câu trả lời) cho trang sửa / theo dõi của gia sư
 export async function fetchAssignmentFull(id) {
-  const assignment = unwrap(await supabase.from('assignments').select('*').eq('id', id).maybeSingle())
-  if (!assignment) throw new Error('Không tìm thấy bài tập (có thể đã bị xóa).')
-  const [exercises, recipients, answers, retries] = await Promise.all([
+  const [assignment, exercises, recipients, answers, retries] = await Promise.all([
+    supabase.from('assignments').select('*').eq('id', id).maybeSingle().then(unwrap),
     supabase
       .from('exercises')
       .select('id, sort_order, kind, question_md, options, answer_keys(answer_md, method_md, correct)')
@@ -56,6 +51,7 @@ export async function fetchAssignmentFull(id) {
     supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct, points').eq('assignment_id', id).then(unwrap),
     loadRetries({ assignment_id: id }),
   ])
+  if (!assignment) throw new Error('Không tìm thấy bài tập (có thể đã bị xóa).')
   // Các lần học sinh tự làm lại (không phải điểm chính thức): { student_id: [lần 1, lần 2, ...] }
   const retriesByStudent = {}
   for (const r of retries) (retriesByStudent[r.student_id] ??= []).push(r)

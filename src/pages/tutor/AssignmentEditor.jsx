@@ -132,12 +132,12 @@ export default function AssignmentEditor() {
   const presetChapter = location.state?.chapterId || ''
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [lessons, chapters] = await Promise.all([
+    const [lessons, chapters, full] = await Promise.all([
       supabase.from('lessons').select('id, title, chapter_id').order('created_at', { ascending: false }).then(unwrap),
       fetchChapters(),
+      id ? fetchAssignmentFull(id) : null,
     ])
-    if (id) {
-      const full = await fetchAssignmentFull(id)
+    if (full) {
       return {
         lessons,
         chapters,

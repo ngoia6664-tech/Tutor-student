@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { registerDialogHost } from '../lib/dialog.js'
 import { burstConfetti } from '../lib/celebrate.js'
 import { mascotSound } from '../lib/spaceSound.js'
 import { useSettings } from '../lib/settings.js'
-import DialogScene, { hasScene } from './DialogScene.jsx'
 import Icon from './Icon.jsx'
+
+// Cảnh gấu trong hộp thoại: không nằm trong gói khởi động, tải sẵn lúc rảnh (trước khi ai bấm gì)
+const loadScene = () => import('./DialogScene.jsx')
+const DialogScene = lazy(loadScene)
 
 /**
  * Hộp thoại có Gấu Trúc ngồi ở góc (mở qua lib/dialog.js: askConfirm / notifyDone).
@@ -19,6 +22,12 @@ export default function DialogHost() {
   const queue = useRef([])
   const current = useRef(null)
   const showPanda = useSettings().mascot
+
+  useEffect(() => {
+    if (!showPanda) return
+    const t = setTimeout(() => loadScene().catch(() => {}), 2500)
+    return () => clearTimeout(t)
+  }, [showPanda])
 
   useEffect(() => {
     function open(d) {
@@ -111,8 +120,9 @@ function DialogCard({ dlg, showPanda, onClose }) {
       >
         {showPanda && (
           <div className="dlg-panda">
-            <DialogScene scene={dlg.scene} pose={dlg.pose} />
-            {dlg.emoji && !hasScene(dlg.scene) && <span className="dlg-emoji">{dlg.emoji}</span>}
+            <Suspense fallback={null}>
+              <DialogScene scene={dlg.scene} pose={dlg.pose} emoji={dlg.emoji} />
+            </Suspense>
           </div>
         )}
         {!isConfirm && (

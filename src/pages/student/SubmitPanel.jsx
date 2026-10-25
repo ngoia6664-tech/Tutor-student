@@ -89,16 +89,19 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
         onSubmitted(await retry(payload))
         return
       }
-      // 1) Tải ảnh (nếu có) lên Storage, đã thu nhỏ
+      // 1) Tải ảnh (nếu có) lên Storage, đã thu nhỏ. Nén lần lượt (đỡ tốn RAM điện thoại),
+      //    ảnh nén xong là tải lên luôn trong lúc nén ảnh sau
       const folder = `${studentId}/${assignmentId}`
       const stamp = Date.now()
+      const uploads = []
       for (let i = 0; i < items.length; i++) {
         setProgress(`Đang tải ảnh ${i + 1}/${items.length}...`)
         const file = await compressImage(items[i].file)
         const type = file.type || 'image/jpeg'
         const path = `${folder}/${stamp}-${String(i + 1).padStart(2, '0')}.${extFor(type)}`
-        unwrap(await supabase.storage.from(SUBMISSION_BUCKET).upload(path, file, { contentType: type, upsert: false }))
+        uploads.push(supabase.storage.from(SUBMISSION_BUCKET).upload(path, file, { contentType: type, upsert: false }).then(unwrap))
       }
+      await Promise.all(uploads)
       // 2) Gửi câu trả lời; máy chủ lưu, chấm trắc nghiệm và đánh dấu đã nộp
       setProgress('Đang nộp bài...')
       unwrap(await supabase.rpc('submit_assignment', { p_assignment_id: assignmentId, p_answers: payload }))

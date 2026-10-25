@@ -15,9 +15,8 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
   const { data, loading, error, reload } = useAsync(async () => {
-    const chapter = unwrap(await supabase.from('chapters').select('*').eq('id', id).maybeSingle())
-    if (!chapter) throw new Error('Không tìm thấy chương (có thể đã bị xóa).')
-    const [lessons, assignments] = await Promise.all([
+    const [chapter, lessons, assignments] = await Promise.all([
+      supabase.from('chapters').select('*').eq('id', id).maybeSingle().then(unwrap),
       supabase.from('lessons').select('id, title, created_at, lesson_recipients(student_id)').eq('chapter_id', id).order('created_at').then(unwrap),
       supabase
         .from('assignments')
@@ -26,6 +25,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
         .order('created_at')
         .then(unwrap),
     ])
+    if (!chapter) throw new Error('Không tìm thấy chương (có thể đã bị xóa).')
     return { chapter, lessons, assignments }
   }, [id, reloadKey])
 
