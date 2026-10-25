@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -19,8 +19,18 @@ import AnswerKey from '../../components/AnswerKey.jsx'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
 import { retryScore } from '../../lib/retries.js'
+import { useStickyTop } from '../../components/AnswerProgress.jsx'
+import { mascotSay } from '../../lib/celebrate.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
+
+// Lời gấu khi đổi học sinh đang chấm
+function pickLine(r) {
+  const name = r.student?.full_name || 'bạn này'
+  if (r.status === 'todo') return `${name} chưa nộp bài đâu nha 🕒`
+  if (r.status === 'checked') return `Bài của ${name} chấm rồi: ${formatScore(r.score)} điểm ✅`
+  return `Chấm bài của ${name} nào ✏️`
+}
 
 // Bảng theo dõi một bài tập: trạng thái từng học sinh, ảnh bài nộp, chấm điểm
 export default function AssignmentTracking() {
@@ -29,7 +39,19 @@ export default function AssignmentTracking() {
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
+  const [picked, setPicked] = useState(null) // student_id đang chấm; null = học sinh đầu danh sách
+  const cardRef = useRef(null)
+  const greeted = useRef(false)
+
   const { data, loading, error, reload } = useAsync(() => fetchAssignmentFull(id), [id])
+
+  // Mở trang: gấu báo số bài đang chờ chấm (một lần)
+  useEffect(() => {
+    if (!data || greeted.current) return
+    greeted.current = true
+    const waiting = data.recipients.filter((r) => r.status === 'done').length
+    if (waiting) mascotSay(`Có ${waiting} bài đang chờ chấm. Bấm tên học sinh ở thanh trên để chuyển nhé!`)
+  }, [data])
 
   // Khi tải lại sau lúc chấm, giữ dữ liệu cũ trên màn hình thay vì hiện loading
   if (loading && !data) return <Loading />
@@ -48,6 +70,15 @@ export default function AssignmentTracking() {
   )
   const counts = { todo: 0, done: 0, checked: 0 }
   recipients.forEach((r) => (counts[r.status] += 1))
+  const current = sorted.find((r) => r.student_id === picked) || sorted[0]
+
+  function pick(r) {
+    if (r.student_id === current?.student_id) return
+    setPicked(r.student_id)
+    mascotSay(pickLine(r))
+    // Đang ở giữa bài làm dài của bạn trước: đưa về đầu thẻ chấm của bạn mới
+    requestAnimationFrame(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
 
   async function handleDelete() {
     if (!(await confirmDelete('bài tập', a.title, 'Toàn bộ câu hỏi, đáp án, bài nộp và điểm sẽ mất.'))) return
@@ -99,27 +130,74 @@ export default function AssignmentTracking() {
         <ErrorBox message={actionError} />
       </div>
 
-      {a.is_exam && <ExamStructureNote exercises={exercises} />}
-      <AnswerKey exercises={exercises} isExam={!!a.is_exam} />
-
-      <h2>Học sinh ({recipients.length})</h2>
-      {recipients.length === 0 && (
+      {recipients.length === 0 ? (
         <div className="empty">
           Bài này chưa giao cho ai. <Link to={`/tutor/assignments/${a.id}/edit`}>Chọn học sinh</Link>
         </div>
+      ) : (
+        <>
+          <GradeSwitcher list={sorted} currentId={current.student_id} onPick={pick} />
+          <div ref={cardRef} className="grade-card">
+            <GradeCard
+              key={current.student_id}
+              rec={current}
+              exercises={exercises}
+              isExam={!!a.is_exam}
+              limit={a.is_exam ? a.time_limit_minutes : null}
+              answers={data.answersByStudent[current.student_id] || {}}
+              retries={data.retriesByStudent[current.student_id] || []}
+              onChanged={() => {
+                // Chấm xong danh sách sắp xếp lại: giữ nguyên học sinh đang xem
+                setPicked(current.student_id)
+                reload()
+              }}
+            />
+          </div>
+        </>
       )}
-      {sorted.map((r) => (
-        <GradeCard
-          key={r.student_id}
-          rec={r}
-          exercises={exercises}
-          isExam={!!a.is_exam}
-          limit={a.is_exam ? a.time_limit_minutes : null}
-          answers={data.answersByStudent[r.student_id] || {}}
-          retries={data.retriesByStudent[r.student_id] || []}
-          onChanged={reload}
-        />
-      ))}
+
+      {a.is_exam && <ExamStructureNote exercises={exercises} />}
+      <AnswerKey exercises={exercises} isExam={!!a.is_exam} />
+    </div>
+  )
+}
+
+// Thanh chọn học sinh: một dòng tên (vuốt ngang), dính dưới header để đổi bạn đang chấm ở bất kỳ đâu trên trang
+function GradeSwitcher({ list, currentId, onPick }) {
+  const selfRef = useRef(null)
+  const listRef = useRef(null)
+  const top = useStickyTop(selfRef)
+
+  // Bạn đang chọn luôn nằm trong tầm nhìn của dòng (chỉ cuộn ngang, không kéo cả trang)
+  useEffect(() => {
+    const box = listRef.current
+    const chip = box?.querySelector('.gs-chip.active')
+    if (chip) box.scrollTo({ left: chip.offsetLeft - box.clientWidth / 2 + chip.offsetWidth / 2, behavior: 'smooth' })
+  }, [currentId])
+
+  return (
+    <div ref={selfRef} className="grade-switch" style={{ top }}>
+      <span className="gs-label muted small">Học sinh ({list.length})</span>
+      <div ref={listRef} className="gs-list" role="tablist">
+        {list.map((r) => {
+          const active = r.student_id === currentId
+          return (
+            <button
+              key={r.student_id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={active ? 'gs-chip active' : 'gs-chip'}
+              title={studentLabel(r.student)}
+              onClick={() => onPick(r)}
+            >
+              <span className={`gs-dot is-${r.status}`} />
+              <span className="gs-name">{r.student?.full_name || '(đã xóa)'}</span>
+              {r.status === 'checked' && r.score != null && <span className="gs-score">{formatScore(r.score)}</span>}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -196,7 +274,8 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
   // Điểm gợi ý: đề thi = tổng điểm THPT (quy về thang 10 nếu đề không chuẩn); bài thường = tỉ lệ câu đúng × 10, làm tròn 0,25
   const suggested = exam ? (exam.max === 10 ? exam.got : exam.score10) : sum.autoTotal ? Math.round((sum.correct / sum.autoTotal) * 40) / 4 : null
   const answeredCount = Object.keys(answers).length
-  const [showSheet, setShowSheet] = useState(false)
+  // Mở thẳng bài làm khi đã nộp: chọn tên là xem được ngay
+  const [showSheet, setShowSheet] = useState(rec.status !== 'todo')
   const [score, setScore] = useState(rec.score ?? '')
   const [feedback, setFeedback] = useState(rec.feedback ?? '')
   const [images, setImages] = useState(null) // null = chưa tải

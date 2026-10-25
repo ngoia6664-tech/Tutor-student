@@ -16,7 +16,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang + prefetch theo vai trò.
 - `src/contexts/` — `AuthContext` (phiên + profile/role), `NotificationsContext` (bài mới cho học sinh).
 - `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương),
-  `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm),
+  `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: thanh chọn học sinh `GradeSwitcher`
+  dính dưới header, chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
   `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề),
   `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
 - Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.

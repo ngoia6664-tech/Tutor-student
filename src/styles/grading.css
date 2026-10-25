@@ -1,0 +1,77 @@
+/* ===== Chấm bài (pages/tutor/AssignmentTracking.jsx): thanh chọn học sinh dính dưới header ===== */
+.grade-switch {
+  position: sticky;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow, 0 6px 20px rgba(0, 0, 0, 0.18));
+}
+.gs-label {
+  flex: none;
+  white-space: nowrap;
+}
+/* Một dòng, vuốt ngang khi nhiều học sinh */
+.gs-list {
+  position: relative;
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.gs-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 11rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.gs-chip:hover {
+  border-color: var(--primary);
+}
+.gs-chip.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+.gs-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Chấm trạng thái: vàng chưa nộp, tím chờ chấm, xanh đã chấm */
+.gs-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+.gs-dot.is-done {
+  background: var(--primary);
+}
+.gs-dot.is-checked {
+  background: var(--ok);
+}
+.gs-score {
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+/* Đổi học sinh thì cuộn về đầu thẻ chấm, không bị header + thanh chọn che */
+.grade-card {
+  scroll-margin-top: calc(var(--answer-offset, 64px) + 0.75rem);
+}
