@@ -49,13 +49,42 @@ function toRgb(c) {
   return null
 }
 
-// Màu trung tính (ít sắc): tối → sáng, rất sáng → tối; còn lại (màu có sắc, xám vừa) giữ nguyên
+// Màu có sắc: giữ sắc, chỉ đổi độ sáng HSL. Chữ / nét tối (xanh đậm, đỏ đậm...) → sáng lên MIN_L;
+// nền ô nhạt (xanh nhạt, vàng nhạt...) → tối xuống MAX_L, để chữ đã làm sáng vẫn nổi trên ô
+const MIN_L = 0.72
+const MAX_L = 0.2
+
+function withLightness([r, g, b], pick) {
+  r /= 255
+  g /= 255
+  b /= 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const d = max - min
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+  let h = 0
+  if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+  const L = pick(l)
+  const c = (1 - Math.abs(2 * L - 1)) * s
+  const x = c * (1 - Math.abs((h % 2) - 1))
+  const m = L - c / 2
+  const hi = Math.floor((h + 6) % 6)
+  const [r1, g1, b1] = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][hi]
+  return '#' + [r1, g1, b1].map((v) => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('')
+}
+
+// Màu trung tính (ít sắc): tối → sáng, rất sáng → tối; màu có sắc: tối → sáng, rất nhạt → tối (giữ sắc); còn lại giữ nguyên
 function flipNeutral(color) {
   const rgb = toRgb(color)
   if (!rgb) return null
   const [r, g, b] = rgb
-  if (Math.max(r, g, b) - Math.min(r, g, b) >= 40) return null
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  if (Math.max(r, g, b) - Math.min(r, g, b) >= 40) {
+    if (lum < 0.5) return withLightness(rgb, (l) => Math.max(l, MIN_L))
+    if (lum > 0.85) return withLightness(rgb, (l) => Math.min(l, MAX_L))
+    return null
+  }
   if (lum < 0.55) return INK_LIGHT
   if (lum > 0.85) return PAPER_DARK
   return null
