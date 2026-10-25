@@ -15,7 +15,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Production / deployment
 - Deploy Vercel (SPA rewrite mọi đường dẫn về `index.html`), từ branch `main`.
-- Làm việc trực tiếp trên `main`; commit tính năng gần nhất `461a1f3` (đã push).
+- Làm việc trực tiếp trên `main`; commit tính năng gần nhất `e228df6` (đã push).
 
 ## Main functional areas
 - **Gia sư:** danh sách / chi tiết học sinh, thư viện dạng cây (Lớp › Môn › Chuyên đề › Chương), soạn bài tập,
@@ -46,6 +46,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - Tắt "Linh vật Panda" thì lời gấu từ trang khác (vd. lời khen sau khi nộp bài) không hiện; nộp / chấm không ảnh hưởng.
 
 ## Current priorities
+- QA trang chấm bài mới (thanh chọn học sinh), ảnh SVG trên nền tối, chip câu chưa làm — xem `AI/CLAUDE/HANDOFF.md`.
 - Owner chạy lại `supabase/schema.sql` (bảng `question_marks` + cột `note`, `assignment_retries`, hàm `submit_retry`), rồi QA: gấu bị chọc,
   hộp thoại có gấu, xóa chuyên đề, ghi chú câu khó; QA lại 4 tính năng làm bài / chấm bài (lỗi QA4-01..03 đã sửa) — xem `AI/CLAUDE/HANDOFF.md`.
 - QA phân trang bài giảng (nhập JSON mới, bài cũ hiển thị như trước).
@@ -54,6 +55,10 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 - QA chế độ ngắm vũ trụ trên điện thoại thật (Android, iPhone): hộp hỏi bật nhạc, nhạc file, tiếng "vút" — xem `AI/CLAUDE/HANDOFF.md`.
 
 ## Last meaningful change
+**Chấm bài + ảnh SVG + thanh tiến độ** (25/10/2026, commit `e228df6`, đã push, chờ QA): trang chấm bài có thanh chọn học sinh một dòng dính dưới header,
+chỉ hiện bài của bạn đang chọn (mở sẵn bài làm), bảng đáp án xuống cuối, gấu báo số bài chờ chấm / bạn đang chấm;
+ảnh SVG không có bộ màu tối: màu có sắc đậm được làm sáng, nền ô màu nhạt làm tối khi app tối; chip câu chưa làm chỉ ghi số.
+
 **Gấu + hộp thoại + ghi chú** (24/10/2026, đã push, chờ chạy schema + QA): gấu bị bấm dồn dập thì trêu / nhắc bài / giận giả ngủ; hộp thoại có gấu thay confirm cho đăng xuất,
 xóa chương / chuyên đề (nút mới) / bài giảng / bài tập, nộp bài; xóa / nộp xong hiện hộp thành công tự tắt 2 s; ghi chú riêng cho câu khó (chỉ học sinh xem).
 

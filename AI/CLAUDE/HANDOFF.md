@@ -3,69 +3,50 @@
 > Ghi đè mỗi ca, không giữ lịch sử dài hạn (lịch sử xem `git log`).
 
 ## Last task
-Ca 24/10/2026 (sau commit `b0470a2`). Owner yêu cầu:
-1. **Gấu chống bấm dồn dập**: bấm liên tục thì gấu trêu → nhắc làm bài → giận, nằm giả ngủ vài giây.
-2. **Ghi chú cho câu khó**: mỗi học sinh ghi kiến thức riêng cho từng câu đã đánh dấu (Owner chọn: chỉ học sinh xem).
-3. **Hộp thoại có gấu** thay `window.confirm` cho: đăng xuất, xóa chương / chuyên đề / bài giảng / bài tập, học sinh nộp bài;
-   gấu ngồi ở góc hộp nói câu hợp hành động; xóa / nộp xong hiện hộp "thành công" tự tắt sau 2 s (có ×, bấm ngoài cũng tắt).
-   Owner chọn **thêm nút "Xóa chuyên đề"** (trước đây chưa có).
+Ca 25/10/2026 (commit `e228df6`, sau `c9c43af`). Owner yêu cầu:
+1. **Ảnh SVG nhúng mờ trên nền tối**: chữ / viền màu xanh đậm, teal đậm chìm vào nền tối.
+2. **Trang chấm bài khó dùng**: phải cuộn qua bảng đáp án rồi qua thẻ của từng học sinh; muốn một dòng tên học sinh để bấm chuyển,
+   luôn hiện khi đang chấm bạn khác; gấu có lời thông báo.
+3. **Thanh tiến độ khi làm bài**: chip câu chưa làm ghi "Câu X" → chỉ ghi "X".
 
 ## Status
-DONE trong code, `npm run build` qua, đã commit + push. Chưa thử trên trình duyệt / điện thoại.
-**Owner phải chạy lại `supabase/schema.sql`** (thêm cột `question_marks.note`, policy update, bỏ policy gia sư của `question_marks`).
+DONE trong code, `npm run build` qua, đã commit + push. Chưa thử trên trình duyệt / điện thoại. Không đổi schema.
 
 ## Đã làm
-### 1. Gấu bị chọc (`components/Mascot.jsx`, `styles/mascot.css`)
-- `reactToSpam()` đếm lần bấm trong 4 s: 1–2 phản hồi bình thường; 3–4 "Bạn thích bấm tôi lắm à? 👀" (ngẫu nhiên 3 câu);
-  5–6 "Bài tập vẫn còn kia kìa…"; ≥ 7 → mood mới `sulk`: vẽ `SleepingPanda` + 😤 + zz, bong bóng "Hừm, giận rồi!" 2,5 s,
-  bấm trong 6 s bị lờ đi, hết giờ gấu nói "hết giận rồi". Chạy cả khi đang làm bài (trước câu khóa).
-### 2. Ghi chú câu khó
-- Schema: `question_marks.note text default ''` (≤ 4000 ký tự), policy `question_marks_own_update`; **bỏ** `question_marks_tutor_all`
-  (gia sư không đọc được câu khó / ghi chú — đúng lựa chọn của Owner).
-- `lib/marks.js`: `loadMarks` trả `Map id → note`, thêm `saveMarkNote`, `NOTE_MAX`.
-- `components/HardNote.jsx`: "Thêm ghi chú" → ô Markdown (có KaTeX) → Lưu / Hủy; hiện ghi chú khung vàng đứt nét, nút Sửa.
-  Chỉ hiện ở Ôn tập › ⭐ Câu khó, ngay dưới nhãn câu.
-- `MarkHard`: prop `hasNote` → bỏ đánh dấu câu có ghi chú thì hỏi lại (vì xóa dòng = mất ghi chú).
-### 3. Hộp thoại (`lib/dialog.js`, `components/DialogHost.jsx`, `styles/dialog.css`)
-- `askConfirm(opts)` → Promise<boolean>; `notifyDone(opts)` (mặc định gấu cheer, tự tắt 2000 ms, vạch đếm ngược, `confetti` theo Cài đặt);
-  helper `confirmDelete(kind, name, message)` / `notifyDeleted(kind)`. Chưa có host (trang đăng nhập) → rơi về `window.confirm`.
-- `DialogHost` đặt trong `Layout`, portal vào body, z-index 300: nền tối, Esc / bấm ngoài = Hủy, Tab vòng trong hộp, khóa cuộn trang,
-  trả focus về nút cũ; xóa → focus sẵn nút Hủy. Hộp hỏi đang mở thì hộp mới xếp hàng. Tắt "Linh vật Panda" thì hộp vẫn có, không vẽ gấu.
-  Có tiếng gấu (`mascotSound`) theo "Hiệu ứng âm thanh".
-- Áp dụng: đăng xuất (`Layout`, 3 câu "tôi sẽ nhớ bạn lắm"), xóa chương + **xóa chuyên đề mới** (`Library`, nút đỏ ở trang chuyên đề:
-  xóa mọi chương trong chuyên đề, bài giảng / bài tập chuyển "Chưa xếp chương"), xóa bài giảng (`TutorLessons`),
-  xóa bài tập (`TutorAssignments`, `AssignmentTracking`), nộp bài + nộp lần làm lại (`SubmitPanel`; liệt kê câu chưa làm trong lời gấu).
-  Nộp xong: `notifyDone` + pháo giấy thay cho `celebrate` (gấu góc trang không nói trùng nữa).
-- **Cảnh minh họa theo hành động** (Owner yêu cầu thêm trong ca): `components/DialogScene.jsx`, option `scene` của askConfirm / notifyDone:
-  `logout` gấu buồn (lông mày chùng, nước mắt rơi) nghiêng về **cánh cửa EXIT** hé mở có ánh sáng; `submit` tờ bài làm bay vào **khay "NỘP BÀI"**;
-  `submitted` gấu cười híp nhảy + tờ bài có **dấu tích tự vẽ** + sao lấp lánh; `delete` gấu **nghiêm mặt** (nhíu mày, miệng thẳng, mồ hôi),
-  **thùng rác mở nắp + biển cảnh báo đỏ** nhấp nháy, hộp viền đỏ dày + tiêu đề đỏ; `deleted` gấu vui + thùng rác sạch lấp lánh.
-  `PandaArt` `FrontPanda` thêm prop `face` ('normal' | 'sad' | 'serious' | 'happy'), gấu góc trang không đổi.
-  Giảm chuyển động / tắt "Animation của Panda" thì cảnh đứng yên. Đã tự chụp ảnh 5 cảnh (SSR + Edge headless) theme sáng/tối: hiển thị đúng.
-- Các `window.confirm` khác (chấm khi chưa nộp, cho nộp lại, bỏ chọn học sinh, lưu khi chưa chọn học sinh, xóa góp ý) **giữ nguyên** — ngoài phạm vi Owner nêu.
+### 1. Ảnh SVG trên nền tối (`src/lib/svg.js`, `flipNeutral`)
+- Trước: app tối chỉ đảo màu trung tính (đen / xám), màu có sắc giữ nguyên → xanh đậm mờ.
+- Giờ (chỉ khi app tối, chỉ hình **không** có khối `@media (prefers-color-scheme: dark)` riêng):
+  màu có sắc tối (độ sáng cảm nhận < 0,5) → giữ sắc, nâng HSL lightness lên ≥ 0,72;
+  màu có sắc rất nhạt (> 0,85, vd. nền ô xanh nhạt) → hạ lightness ≤ 0,2 để chữ đã làm sáng vẫn nổi. Theme sáng không đổi.
+### 2. Chấm bài (`src/pages/tutor/AssignmentTracking.jsx`, CSS mới `src/styles/grading.css`)
+- `GradeSwitcher`: thanh dính dưới header (dùng `useStickyTop` export từ `AnswerProgress.jsx`), một dòng chip tên học sinh vuốt ngang:
+  chấm màu trạng thái (vàng chưa nộp / tím chờ chấm / xanh đã chấm) + điểm nếu đã chấm; chip đang chọn tự cuộn vào giữa dòng.
+- Chỉ hiện `GradeCard` của học sinh đang chọn (mặc định: đầu danh sách, bài chờ chấm lên trước). Đổi học sinh → cuộn về đầu thẻ chấm.
+  Chấm xong danh sách sắp xếp lại nhưng giữ nguyên bạn đang xem.
+- `GradeCard` mở sẵn bài làm + đáp án khi học sinh đã nộp (trước phải bấm "Xem bài làm").
+- Bảng đáp án (`AnswerKey`) + ghi chú cấu trúc đề chuyển xuống **cuối** trang.
+- Gấu (`mascotSay`): mở trang nói số bài chờ chấm (một lần); đổi học sinh nói theo trạng thái ("Chấm bài của X nào ✏️" /
+  "X chưa nộp bài đâu nha" / "Bài của X chấm rồi: n điểm").
+### 3. Chip câu chưa làm (`src/components/AnswerProgress.jsx`, `styles/attempts.css`)
+- Chip chỉ ghi số / nhãn đề ("3", "I.3"), `min-width: 2.2rem` để dễ bấm.
 
 ## Files changed
-Mới: `src/lib/dialog.js`, `src/components/DialogHost.jsx`, `src/components/DialogScene.jsx`, (sửa thêm `src/components/PandaArt.jsx`), `src/components/HardNote.jsx`, `src/styles/dialog.css`.
-Sửa: `supabase/schema.sql`, `src/components/{Layout,Mascot,MarkHard}.jsx`, `src/lib/{celebrate,marks}.js` (`burstConfetti` mới),
-`src/pages/student/{StudentAssignment,StudentMistakes,SubmitPanel}.jsx`, `src/pages/tutor/{Library,TutorLessons,TutorAssignments,AssignmentTracking}.jsx`,
-`src/styles/{attempts,mascot}.css`, `src/index.css`, `CLAUDE.md`, `CURRENT_STATE.md`.
+Mới: `src/styles/grading.css`. Sửa: `src/lib/svg.js`, `src/components/AnswerProgress.jsx`, `src/pages/tutor/AssignmentTracking.jsx`,
+`src/styles/attempts.css`, `src/index.css`, `CLAUDE.md`.
 
 ## Kiểm tra đã làm
-- `npm run build` qua. Chưa chạy SQL, chưa thử trên trình duyệt / điện thoại.
+- `npm run build` qua. Chưa chạy thử trên trình duyệt / điện thoại.
 
 ## Needs QA (Codex)
-1. Gấu: bấm 1–2 lần bình thường; 3–4 lần nhanh trêu; 5–6 nhắc bài; ≥ 7 nằm giả ngủ 😤 ~6 s, bấm lúc đó không phản ứng, rồi tự hết giận.
-   Đang làm bài vẫn đúng; tắt "Animation của Panda" vẫn ổn.
-2. Hộp thoại: đăng xuất (Ở lại / Đăng xuất), xóa chương, xóa chuyên đề, xóa bài giảng, xóa bài tập (danh sách + trang theo dõi), nộp bài
-   (đủ câu / thiếu câu / làm lại), hết giờ tự nộp không hỏi. Esc, bấm ngoài, Tab, focus trả về; hộp thành công tự tắt 2 s, ×, bấm ngoài.
-   Điện thoại 360–390 px: gấu không tràn khỏi màn hình, nút đủ to; theme sáng/tối; tắt Linh vật thì hộp không có gấu.
-3. Xóa chuyên đề: mọi chương mất, bài giảng / bài tập còn ở "Chưa xếp chương", trang chuyển về môn.
-4. Ghi chú: thêm / sửa / lưu, công thức `$...$` hiển thị; tải lại vẫn còn; tài khoản học sinh khác và gia sư **không** đọc được
-   (`question_marks` qua REST); bỏ đánh dấu câu có ghi chú → hỏi lại → mất ghi chú; ở trang làm bài cũng hỏi lại.
-5. Chạy lại `schema.sql` 2 lần không lỗi.
-6. Còn tồn từ ca trước (commit `b0470a2`): QA lại QA4-01 (nhảy câu không bị thanh tiến độ che), QA4-02 (gia sư ẩn đáp án không tô đỏ
-   lựa chọn đúng), QA4-03 (không gợi ý chụp ảnh ở lần làm lại / Ôn tập) + các mục chưa xác minh trong `AI/CODEX/HANDOFF.md`.
+1. Ảnh SVG trong bài giảng (file JSON mẫu "Từ khối lượng đến số mol"): theme tối chữ / viền đọc rõ; ô nền nhạt thành tối, chữ vẫn nổi;
+   theme sáng như cũ; hình có khối dark riêng không đổi.
+2. Chấm bài: thanh chọn học sinh dính dưới header khi cuộn; nhiều học sinh vuốt ngang được, không tràn ngang trang (360–390 px);
+   bấm tên → đổi bài + cuộn về đầu thẻ; chấm / "Cho nộp lại" xong vẫn ở bạn đó; trạng thái + điểm trên chip cập nhật;
+   bài chưa giao ai → hiện "Chọn học sinh"; gấu nói đúng câu; tắt Linh vật thì không lỗi.
+3. Làm bài: chip câu chưa làm hiện "3" / "I.3", bấm vẫn nhảy đúng câu.
+4. Còn tồn từ ca trước (`c9c43af`, `b0470a2`): chạy lại `supabase/schema.sql` rồi QA gấu bị chọc, hộp thoại có gấu, xóa chuyên đề,
+   ghi chú câu khó, QA4-01..03 — chi tiết xem `git show c9c43af:AI/CLAUDE/HANDOFF.md`.
 
 ## Known limits
-- Ghi chú chỉ sửa ở Ôn tập › Câu khó (trang làm bài chỉ có nút đánh dấu).
-- Bỏ policy gia sư của `question_marks`: gia sư không còn xem được thống kê câu khó (trước đó UI cũng chưa dùng).
+- Đảo màu SVG theo ngưỡng độ sáng: màu tươi độ sáng vừa (vd. đỏ tươi) giữ nguyên; `opacity` thấp trong hình không được xử lý.
+- Thanh chọn học sinh không có nút "bài tiếp theo"; chuyển bằng cách bấm tên.
