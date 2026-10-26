@@ -16,6 +16,17 @@ export const STATE_TONE = { todo: 'warn', overdue: 'danger', done: 'primary', ch
 
 const round1 = (n) => Math.round(n * 10) / 10
 
+// Điểm máy chấm một bài đã nộp: đề thi → thang 10 THPT; bài thường → số câu đúng phần chấm máy.
+// allAuto: cả bài đều chấm máy (không có tự luận) → điểm máy dùng được như điểm bài khi gia sư chưa chấm
+export function machineSummary(assignment, exs, ansByExercise) {
+  const auto = autoSummary(exs, ansByExercise)
+  if (assignment.is_exam) {
+    const sum = examSummary(exs, ansByExercise)
+    return sum.max ? { kind: 'exam', score10: sum.score10, got: sum.got, max: sum.max, allAuto: auto.allAuto } : null
+  }
+  return auto.autoTotal ? { kind: 'auto', correct: auto.correct, total: auto.autoTotal, allAuto: auto.allAuto } : null
+}
+
 // Đếm nhanh cho bảng học sinh: { [student_id]: { lessons, total, todo, overdue, done, checked, avg } }
 export async function fetchStudentStats() {
   const [recs, lessonRecs] = await Promise.all([
@@ -67,17 +78,7 @@ export async function fetchStudentReport(studentId) {
       const a = r.assignment
       const exs = exByAssignment[a.id] || []
       const state = recState(r, a.due_date)
-      // Điểm máy chấm: đề thi → thang 10 THPT; bài thường → số câu đúng phần chấm máy
-      let machine = null
-      if (r.status !== 'todo') {
-        if (a.is_exam) {
-          const sum = examSummary(exs, ansByExercise)
-          if (sum.max) machine = { kind: 'exam', score10: sum.score10, got: sum.got, max: sum.max }
-        } else {
-          const sum = autoSummary(exs, ansByExercise)
-          if (sum.autoTotal) machine = { kind: 'auto', correct: sum.correct, total: sum.autoTotal }
-        }
-      }
+      const machine = r.status === 'todo' ? null : machineSummary(a, exs, ansByExercise)
       return { ...r, assignment: a, state, count: exs.length, machine, score: r.score === null ? null : Number(r.score) }
     })
     .sort((x, y) => String(y.assigned_at || y.assignment.created_at).localeCompare(String(x.assigned_at || x.assignment.created_at)))

@@ -1,0 +1,42 @@
+[
+  {
+    "case": "Bài thường: nhãn số",
+    "actual": [
+      "1",
+      "2",
+      "3"
+    ],
+    "expected": [
+      "1",
+      "2",
+      "3"
+    ],
+    "pass": true
+  },
+  {
+    "case": "Đề thi: nhãn phần",
+    "actual": [
+      "I.1",
+      "I.2",
+      "I.3"
+    ],
+    "expected": [
+      "I.1",
+      "I.2",
+      "I.3"
+    ],
+    "pass": true
+  },
+  {
+    "case": "Câu 2 đã trả lời: chỉ còn 1 và 3",
+    "actual": [
+      "1",
+      "3"
+    ],
+    "expected": [
+      "1",
+      "3"
+    ],
+    "pass": true
+  }
+]

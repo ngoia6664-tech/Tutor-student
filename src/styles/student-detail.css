@@ -68,45 +68,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.score-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.45rem;
-  height: 150px;
-  margin-top: 0.8rem;
-  padding-top: 1.2rem;
-}
-.score-bar {
-  flex: 1;
-  max-width: 3rem;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.2rem;
-  text-decoration: none;
-  color: var(--text);
-}
-.score-bar-num {
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-.score-bar-fill {
-  width: 100%;
-  border-radius: 6px 6px 2px 2px;
-  background: var(--grad);
-  transition: filter 0.15s;
-}
-.score-bar.mid .score-bar-fill {
-  background: var(--warn);
-}
-.score-bar.low .score-bar-fill {
-  background: var(--danger);
-}
-.score-bar:hover .score-bar-fill {
-  filter: brightness(1.15);
-}
 @media (max-width: 560px) {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);

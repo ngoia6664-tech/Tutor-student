@@ -9,6 +9,8 @@ import { minutesUsed, viNum } from '../../lib/exam.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
+import ScoreChart from '../../components/ScoreChart.jsx'
+import { toPoints } from '../../lib/scoreChart.js'
 import { EditStudent } from './TutorStudents.jsx'
 
 const FILTERS = [
@@ -112,7 +114,7 @@ export default function StudentDetail() {
         <Stat label="Bài giảng" value={sum.lessons} note="đã giao" />
       </div>
 
-      <ScoreTrend rows={assignments} />
+      <ScoreChart points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })} voice="tutor" chapterLink={(cid) => `/tutor/library/${cid}`} />
 
       <div className="tabs" style={{ margin: '0.5rem 0 1rem' }}>
         <button type="button" className={tab === 'assignments' ? 'tab active' : 'tab'} onClick={() => setTab('assignments')}>
@@ -237,36 +239,5 @@ function AssignmentRow({ r, chapter }) {
         {r.feedback && <div className="small muted feedback-clip" title={r.feedback}>“{r.feedback}”</div>}
       </td>
     </tr>
-  )
-}
-
-// Điểm các bài đã chấm theo thời gian (cũ → mới), tối đa 12 bài gần nhất
-function ScoreTrend({ rows }) {
-  const pts = rows
-    .filter((r) => r.state === 'checked' && r.score !== null)
-    .sort((x, y) => String(x.submitted_at || '').localeCompare(String(y.submitted_at || '')))
-    .slice(-12)
-  if (pts.length < 2) return null
-  const top = Math.max(10, ...pts.map((r) => r.score))
-  return (
-    <div className="card">
-      <div className="row row-between">
-        <h2 style={{ margin: 0 }}>Điểm các bài gần đây</h2>
-        <span className="muted small">{pts.length} bài đã chấm, cũ → mới</span>
-      </div>
-      <div className="score-bars">
-        {pts.map((r) => (
-          <Link
-            key={r.assignment.id}
-            to={`/tutor/assignments/${r.assignment.id}`}
-            className={`score-bar ${r.score >= 8 ? 'good' : r.score >= 5 ? 'mid' : 'low'}`}
-            title={`${r.assignment.title}: ${viNum(r.score)} điểm`}
-          >
-            <span className="score-bar-num">{viNum(r.score)}</span>
-            <span className="score-bar-fill" style={{ height: `${Math.max(4, (r.score / top) * 100)}%` }} />
-          </Link>
-        ))}
-      </div>
-    </div>
   )
 }

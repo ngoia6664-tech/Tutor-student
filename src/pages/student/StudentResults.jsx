@@ -10,6 +10,9 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import Icon from '../../components/Icon.jsx'
+import ScoreChart from '../../components/ScoreChart.jsx'
+import { machineSummary } from '../../lib/studentReport.js'
+import { toPoints } from '../../lib/scoreChart.js'
 
 // Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chương.
 // Điểm TB chỉ tính điểm chính thức (lần nộp đầu); điểm các lần tự làm lại hiện nhỏ, nhạt bên dưới.
@@ -18,21 +21,33 @@ export default function StudentResults() {
   const sel = useTreeSelection()
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [rows, chapters, retries] = await Promise.all([
+    const [rows, chapters, retries, answers] = await Promise.all([
       supabase
         .from('assignment_recipients')
-        .select('status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title))')
+        .select(
+          'status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title), exercises(id, kind))',
+        )
         .eq('student_id', profile.id)
         .in('status', ['done', 'checked'])
         .order('submitted_at', { ascending: false })
         .then(unwrap),
       fetchStudentChapters(profile.grade ?? null),
       loadRetries({ student_id: profile.id }),
+      // Điểm máy chấm từng câu: để biểu đồ có điểm cho bài chấm máy hoàn toàn khi gia sư chưa chấm
+      supabase.from('submission_answers').select('exercise_id, is_correct, points').eq('student_id', profile.id).then(unwrap),
     ])
     const retriesOf = {}
     for (const r of retries) (retriesOf[r.assignment_id] ??= []).push(r)
+    const ansByExercise = Object.fromEntries(answers.map((a) => [a.exercise_id, a]))
     return {
-      list: rows.filter((r) => r.assignment).map((r) => ({ ...r, chapter_id: r.assignment.chapter_id, retries: retriesOf[r.assignment.id] || [] })),
+      list: rows
+        .filter((r) => r.assignment)
+        .map((r) => ({
+          ...r,
+          chapter_id: r.assignment.chapter_id,
+          retries: retriesOf[r.assignment.id] || [],
+          machine: machineSummary(r.assignment, r.assignment.exercises || [], ansByExercise),
+        })),
       chapters,
     }
   }, [profile.id, profile.grade])
@@ -68,6 +83,10 @@ export default function StudentResults() {
         <ErrorBox message={error} onRetry={reload} />
 
         {!loading && !error && rows.length === 0 && <div className="empty">{where ? 'Mục này chưa có bài đã nộp.' : 'Bạn chưa nộp bài nào.'}</div>}
+
+        {!loading && !error && (
+          <ScoreChart points={toPoints(rows, { linkOf: (aid) => `/student/assignments/${aid}`, chapterOf: (r) => r.assignment.chapter?.title })} quiet={!!where} />
+        )}
 
         {!loading && !error && rows.length > 0 && (
           <div className="list">

@@ -23,6 +23,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   góc phải ngay trên gấu, kiểu bảng đen nhỏ gọn, bấm tên là chuyển bài; bấm gấu = ẩn/hiện sổ, gấu im lặng khi chấm — `lib/gradeDock.js`; chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
   `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON), `TutorReports` (báo lỗi đề),
   `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
+- Biểu đồ học tập: `components/ScoreChart.jsx` (SVG tự vẽ, đường điểm + TB 3 bài + mốc 5, lọc Đề thi/Bài tập + 1 tháng/3 tháng/Tất cả, chạm điểm → thẻ "Xem bài") + `lib/scoreChart.js` (điểm gia sư → điểm máy khi cả bài chấm máy `machine.allAuto` → bỏ qua; không tính làm lại) + CSS `styles/chart.css`. Gia sư (prop `chapterLink`) có thêm khối "Điểm theo chương" (TB < 6 = "cần ôn"). Gấu nhận xét khi mở (`chartComment`, voice student/tutor, kỷ lục mới → `celebrate`; mỗi phiên 1 lần/điểm mới qua sessionStorage; Kết quả đang lọc chương thì `quiet`), học sinh chạm bài cao nhất / dưới 5 → `pointComment`. Ở StudentResults (theo cây chương đang chọn) và StudentDetail. `machineSummary` trong `lib/studentReport.js`.
 - Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.
 - Chương đang học: lưu `profiles.study_chapter_id` qua RPC `set_study_chapter`; `lib/studyNow.js` (`useStudyChapterId`, `setStudyChapter`).
   Gia sư xem ở đầu trang StudentDetail.   Tự đổi khi mở bài tập chưa nộp (AnswerView trong StudentAssignment), hoặc học sinh bấm `components/StudyNowButton.jsx`
@@ -94,7 +95,7 @@ Hiệu năng: KHÔNG dùng `backdrop-filter` (nền chuyển động → làm nh
   thông báo, loading, đăng nhập · `content` bài giảng, markdown, câu hỏi/đáp án, ảnh nộp, bảng, soạn thảo, video, điểm
 - `mobile` media query điện thoại chung · `library` thư viện dạng cây · `notifications` chuông + toast · `icons`
 - `exam` đề THPT + tính giờ · `student-detail` trang một học sinh · `tree-picker` nhập mục lục + ô chọn cây ·
-  `reports` báo lỗi đề · `assign` giao bài nhanh
+  `reports` báo lỗi đề · `assign` giao bài nhanh · `chart` biểu đồ điểm
 Thêm style mới: đặt vào file đúng chủ đề (hoặc tạo file mới + thêm `@import`), không dồn vào `index.css`.
 
 ## Supabase (`supabase/schema.sql`, ~1050 dòng, chạy lại được nhiều lần)

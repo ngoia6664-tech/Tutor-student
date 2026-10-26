@@ -1,0 +1,249 @@
+/* Biểu đồ học tập (components/ScoreChart.jsx): Kết quả của học sinh + trang một học sinh của gia sư */
+.score-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.score-chart-range {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.score-chart-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.score-chart-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  background: var(--surface-2);
+  min-width: 0;
+}
+.score-chart-stat b {
+  font-size: 1.25rem;
+  white-space: nowrap;
+}
+.score-chart-stat.up {
+  background: var(--ok-soft);
+}
+.score-chart-stat.up b {
+  color: var(--ok);
+}
+.score-chart-stat.down {
+  background: var(--danger-soft);
+}
+.score-chart-stat.down b {
+  color: var(--danger);
+}
+
+.score-chart-svg {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+.sc-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.sc-label {
+  fill: var(--muted);
+  font-size: 11px;
+}
+.sc-pass {
+  stroke: var(--warn);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 4;
+  opacity: 0.85;
+}
+.sc-area {
+  fill: var(--primary);
+  opacity: 0.1;
+}
+.sc-cursor {
+  stroke: var(--primary);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+.sc-avg {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sc-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sc-pt {
+  cursor: pointer;
+  outline: none;
+}
+.sc-hit {
+  fill: transparent;
+}
+.sc-dot {
+  fill: var(--primary);
+  stroke: var(--surface-solid);
+  stroke-width: 2;
+}
+.sc-dot.exam {
+  fill: var(--accent);
+}
+.sc-ring {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  opacity: 0.6;
+}
+.sc-pt.on .sc-dot {
+  fill: var(--text);
+  stroke: var(--primary);
+}
+.sc-pt:focus-visible .sc-hit {
+  stroke: var(--primary);
+  stroke-width: 1.5;
+}
+
+.score-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.score-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.score-chart-legend i {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+}
+.lg-line {
+  border-top: 2.5px solid var(--primary);
+}
+.lg-avg {
+  border-top: 2px dotted var(--muted);
+}
+.lg-pass {
+  border-top: 1.5px dashed var(--warn);
+}
+.score-chart-legend .lg-exam {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
+
+.score-chart-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+}
+.score-chart-pick-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.score-chart-pick-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.score-chart-hint {
+  margin: -0.3rem 0 0;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .score-chart-stat {
+    padding: 0.5rem 0.45rem;
+  }
+  .score-chart-stat b {
+    font-size: 1.05rem;
+  }
+}
+
+/* Điểm theo chương (trang gia sư) */
+.chapter-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.chapter-scores h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.chapter-score {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.chapter-score-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.chapter-score-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.chapter-score-num {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.chapter-score-num b {
+  color: var(--text);
+}
+.chapter-score-tag {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.chapter-score-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.chapter-score-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+.chapter-score.weak .chapter-score-fill {
+  background: var(--warn);
+}
