@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
@@ -25,22 +26,23 @@ function Figure({ node: _node, src, alt, title }) {
   )
 }
 
-// Hiển thị Markdown có công thức: $...$ (cùng dòng) và $$...$$ (riêng dòng)
-export default function Markdown({ children, className = '' }) {
+// Cấu hình cố định (tạo một lần): tránh mỗi lần vẽ lại tạo mảng / object mới
+const REMARK = [remarkMath]
+const REHYPE = [[rehypeKatex, { throwOnError: false, strict: false }]]
+const COMPONENTS = {
+  // Link mở tab mới để học sinh không bị thoát khỏi ứng dụng
+  a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+  img: Figure,
+}
+
+// Hiển thị Markdown có công thức: $...$ (cùng dòng) và $$...$$ (riêng dòng).
+// memo: dựng Markdown + KaTeX rất nặng, chỉ vẽ lại khi nội dung đổi (gõ ở ô nhập khác trên trang không làm lag)
+export default memo(function Markdown({ children, className = '' }) {
   return (
     <div className={`md ${className}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: false }]]}
-        urlTransform={urlTransform}
-        components={{
-          // Link mở tab mới để học sinh không bị thoát khỏi ứng dụng
-          a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
-          img: Figure,
-        }}
-      >
+      <ReactMarkdown remarkPlugins={REMARK} rehypePlugins={REHYPE} urlTransform={urlTransform} components={COMPONENTS}>
         {children || ''}
       </ReactMarkdown>
     </div>
   )
-}
+})

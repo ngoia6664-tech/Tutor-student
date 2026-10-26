@@ -6,6 +6,7 @@ import { deleteFeedback, FEEDBACK_CHANGED, fetchFeedback, KIND_BY_ID, KINDS, mar
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
+import { confirmDelete } from '../../lib/dialog.js'
 
 // Trang nào học sinh đang mở khi gửi góp ý
 const PAGES = [
@@ -156,7 +157,7 @@ export default function TutorFeedback() {
                   type="button"
                   className="btn btn-small btn-ghost"
                   disabled={busy === f.id}
-                  onClick={() => window.confirm('Xóa góp ý này?') && act(f.id, () => deleteFeedback(f.id))}
+                  onClick={async () => (await confirmDelete('góp ý', (f.message || '').slice(0, 40))) && act(f.id, () => deleteFeedback(f.id))}
                   aria-label="Xóa góp ý"
                   title="Xóa"
                 >

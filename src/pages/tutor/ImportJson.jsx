@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -683,8 +683,9 @@ export default function ImportJson() {
 }
 
 
-// Xem trước đúng như học sinh sẽ thấy: dòng thông tin, tiêu đề, mỗi mục một thẻ
-function LessonPreview({ draft }) {
+// Xem trước đúng như học sinh sẽ thấy: dòng thông tin, tiêu đề, mỗi mục một thẻ.
+// memo: đổi giờ thi / hạn nộp / chọn học sinh không vẽ lại bản xem trước (Markdown + công thức rất nặng)
+const LessonPreview = memo(function LessonPreview({ draft }) {
   return (
     <div className="lesson">
       <LessonHead title={draft.title} content={draft.content_md} />
@@ -696,9 +697,9 @@ function LessonPreview({ draft }) {
       )}
     </div>
   )
-}
+})
 
-function AssignmentPreview({ draft, dueDate }) {
+const AssignmentPreview = memo(function AssignmentPreview({ draft, dueDate }) {
   return (
     <div>
       <p className="muted small" style={{ marginTop: 0 }}>
@@ -726,4 +727,4 @@ function AssignmentPreview({ draft, dueDate }) {
       ))}
     </div>
   )
-}
+})

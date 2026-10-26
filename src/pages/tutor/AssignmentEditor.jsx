@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -14,6 +14,7 @@ import ChapterSelect from '../../components/ChapterSelect.jsx'
 import LessonSelect from '../../components/LessonSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
+import { confirmDropSubmitted, confirmNoStudents } from '../../lib/dialog.js'
 import Markdown from '../../components/Markdown.jsx'
 import { packImages, unpackImages } from '../../lib/svg.js'
 import { EXAM_MINUTES, EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
@@ -211,21 +212,31 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
     if (focusId) document.getElementById(`ex-${focusId}`)?.scrollIntoView({ block: 'center' })
   }, [focusId])
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
-  const updateEx = (index, patch) =>
-    setForm((f) => ({ ...f, exercises: f.exercises.map((e, i) => (i === index ? { ...e, ...patch } : e)) }))
-  const moveEx = (index, delta) =>
-    setForm((f) => {
-      const list = [...f.exercises]
-      const j = index + delta
-      if (j < 0 || j >= list.length) return f
-      ;[list[index], list[j]] = [list[j], list[index]]
-      return { ...f, exercises: list }
-    })
-  const removeEx = (index) => setForm((f) => ({ ...f, exercises: f.exercises.filter((_, i) => i !== index) }))
-  const labels = questionLabels(
-    form.exercises.map((e) => ({ ...e, id: e.key })),
-    form.is_exam
+  const set = useCallback((k, v) => setForm((f) => ({ ...f, [k]: v })), [])
+  // Hàm sửa câu ổn định (không tạo lại mỗi lần vẽ) để ExerciseEditCard memo bỏ qua câu không đổi
+  const updateEx = useCallback(
+    (index, patch) => setForm((f) => ({ ...f, exercises: f.exercises.map((e, i) => (i === index ? { ...e, ...patch } : e)) })),
+    []
+  )
+  const moveEx = useCallback(
+    (index, delta) =>
+      setForm((f) => {
+        const list = [...f.exercises]
+        const j = index + delta
+        if (j < 0 || j >= list.length) return f
+        ;[list[index], list[j]] = [list[j], list[index]]
+        return { ...f, exercises: list }
+      }),
+    []
+  )
+  const removeEx = useCallback((index) => setForm((f) => ({ ...f, exercises: f.exercises.filter((_, i) => i !== index) })), [])
+  const labels = useMemo(
+    () =>
+      questionLabels(
+        form.exercises.map((e) => ({ ...e, id: e.key })),
+        form.is_exam
+      ),
+    [form.exercises, form.is_exam]
   )
 
   async function save(e) {
@@ -240,14 +251,10 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
     }
     const minutes = parseInt(form.time_limit, 10)
     if (form.is_exam && form.timed && !(minutes >= 1 && minutes <= 600)) return setError('Thời gian làm bài phải từ 1 đến 600 phút.')
-    if (!form.student_ids.length && !window.confirm('Chưa chọn học sinh nào. Vẫn lưu?')) return
+    if (!form.student_ids.length && !(await confirmNoStudents('bài tập'))) return
 
     const removedSubmitted = submittedIds.filter((sid) => !form.student_ids.includes(sid))
-    if (
-      removedSubmitted.length &&
-      !window.confirm(`Bạn bỏ chọn ${removedSubmitted.length} học sinh đã nộp bài. Bài nộp và điểm của các em sẽ bị xóa. Tiếp tục?`)
-    )
-      return
+    if (removedSubmitted.length && !(await confirmDropSubmitted(removedSubmitted.length))) return
 
     setSaving(true)
     try {
@@ -323,70 +330,18 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
         Đáp án và phương pháp chỉ hiện cho học sinh sau khi nộp.
       </p>
       {form.exercises.map((ex, i) => (
-        <div key={ex.key} id={ex.id ? `ex-${ex.id}` : undefined} className={ex.id && ex.id === focusId ? 'exercise-edit exercise-focus' : 'exercise-edit'}>
-          <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
-            <div className="row">
-              <strong>Câu {i + 1}</strong>
-              {form.is_exam && labels[ex.key]?.includes('.') && <span className="badge badge-primary">Phần {labels[ex.key]}</span>}
-              <select
-                aria-label={`Loại câu ${i + 1}`}
-                value={ex.kind}
-                onChange={(e) => updateEx(i, { kind: e.target.value })}
-                style={{ width: 'auto' }}
-              >
-                {Object.entries(KIND_LABEL).map(([k, label]) => (
-                  <option key={k} value={k}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="row">
-              <button type="button" className="btn btn-small" onClick={() => moveEx(i, -1)} disabled={i === 0} aria-label="Lên">
-                <Icon name="up" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-small"
-                onClick={() => moveEx(i, 1)}
-                disabled={i === form.exercises.length - 1}
-                aria-label="Xuống"
-              >
-                <Icon name="down" />
-              </button>
-              <button type="button" className="btn btn-small btn-danger" onClick={() => removeEx(i)} disabled={form.exercises.length === 1}>
-                <Icon name="trash" />
-                Xóa câu
-              </button>
-            </div>
-          </div>
-
-          <MarkdownField
-            label="Đề bài"
-            required
-            value={ex.question_md}
-            onChange={(v) => updateEx(i, { question_md: v })}
-            renderPreview={(v) => <Markdown>{unpackImages(v, ex.qImages || [])}</Markdown>}
-            hint={ex.qImages?.length ? `Có ${ex.qImages.length} hình, hiện gọn là (hinh-1), (hinh-2)... Giữ nguyên các mã này để không mất hình.` : undefined}
-          />
-
-          {ex.kind === 'mcq' && <McqEditor ex={ex} index={i} onChange={(patch) => updateEx(i, patch)} />}
-          {ex.kind === 'fill_blank' && <BlankEditor ex={ex} onChange={(patch) => updateEx(i, patch)} />}
-          {ex.kind === 'true_false' && <TrueFalseEditor ex={ex} onChange={(patch) => updateEx(i, patch)} />}
-          {ex.kind === 'short' && (
-            <label className="field">
-              <span>Đáp án *</span>
-              <input type="text" value={ex.shortAnswer} onChange={(e) => updateEx(i, { shortAnswer: e.target.value })} placeholder="vd. 1,89" />
-              <span className="muted small">
-                Máy chấm coi "1,89" và "1.89" là một. Nhiều cách viết đều đúng thì ngăn bằng dấu chấm phẩy, vd. <code>0,5; 1/2</code>.
-              </span>
-            </label>
-          )}
-          {ex.kind === 'essay' && (
-            <MarkdownField label="Đáp án" rows={2} value={ex.answer_md} onChange={(v) => updateEx(i, { answer_md: v })} />
-          )}
-          <MarkdownField label="Phương pháp giải" rows={3} value={ex.method_md} onChange={(v) => updateEx(i, { method_md: v })} />
-        </div>
+        <ExerciseEditCard
+          key={ex.key}
+          ex={ex}
+          i={i}
+          last={i === form.exercises.length - 1}
+          only={form.exercises.length === 1}
+          part={form.is_exam && labels[ex.key]?.includes('.') ? labels[ex.key] : null}
+          focused={!!ex.id && ex.id === focusId}
+          onUpdate={updateEx}
+          onMove={moveEx}
+          onRemove={removeEx}
+        />
       ))}
       {form.is_exam ? (
         <div className="row">
@@ -419,6 +374,64 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
     </form>
   )
 }
+
+// Thẻ soạn một câu. memo: gõ tiêu đề / đổi giờ thi / sửa câu khác không vẽ lại câu này
+const ExerciseEditCard = memo(function ExerciseEditCard({ ex, i, last, only, part, focused, onUpdate, onMove, onRemove }) {
+  const update = (patch) => onUpdate(i, patch)
+  return (
+    <div id={ex.id ? `ex-${ex.id}` : undefined} className={focused ? 'exercise-edit exercise-focus' : 'exercise-edit'}>
+      <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
+        <div className="row">
+          <strong>Câu {i + 1}</strong>
+          {part && <span className="badge badge-primary">Phần {part}</span>}
+          <select aria-label={`Loại câu ${i + 1}`} value={ex.kind} onChange={(e) => update({ kind: e.target.value })} style={{ width: 'auto' }}>
+            {Object.entries(KIND_LABEL).map(([k, label]) => (
+              <option key={k} value={k}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="row">
+          <button type="button" className="btn btn-small" onClick={() => onMove(i, -1)} disabled={i === 0} aria-label="Lên">
+            <Icon name="up" />
+          </button>
+          <button type="button" className="btn btn-small" onClick={() => onMove(i, 1)} disabled={last} aria-label="Xuống">
+            <Icon name="down" />
+          </button>
+          <button type="button" className="btn btn-small btn-danger" onClick={() => onRemove(i)} disabled={only}>
+            <Icon name="trash" />
+            Xóa câu
+          </button>
+        </div>
+      </div>
+
+      <MarkdownField
+        label="Đề bài"
+        required
+        value={ex.question_md}
+        onChange={(v) => update({ question_md: v })}
+        renderPreview={(v) => <Markdown>{unpackImages(v, ex.qImages || [])}</Markdown>}
+        hint={ex.qImages?.length ? `Có ${ex.qImages.length} hình, hiện gọn là (hinh-1), (hinh-2)... Giữ nguyên các mã này để không mất hình.` : undefined}
+      />
+
+      {ex.kind === 'mcq' && <McqEditor ex={ex} index={i} onChange={update} />}
+      {ex.kind === 'fill_blank' && <BlankEditor ex={ex} onChange={update} />}
+      {ex.kind === 'true_false' && <TrueFalseEditor ex={ex} onChange={update} />}
+      {ex.kind === 'short' && (
+        <label className="field">
+          <span>Đáp án *</span>
+          <input type="text" value={ex.shortAnswer} onChange={(e) => update({ shortAnswer: e.target.value })} placeholder="vd. 1,89" />
+          <span className="muted small">
+            Máy chấm coi "1,89" và "1.89" là một. Nhiều cách viết đều đúng thì ngăn bằng dấu chấm phẩy, vd. <code>0,5; 1/2</code>.
+          </span>
+        </label>
+      )}
+      {ex.kind === 'essay' && <MarkdownField label="Đáp án" rows={2} value={ex.answer_md} onChange={(v) => update({ answer_md: v })} />}
+      <MarkdownField label="Phương pháp giải" rows={3} value={ex.method_md} onChange={(v) => update({ method_md: v })} />
+    </div>
+  )
+})
 
 // Soạn phương án trắc nghiệm; chấm tròn bên trái là phương án đúng
 function McqEditor({ ex, index, onChange }) {

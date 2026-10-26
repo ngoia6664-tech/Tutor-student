@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
+import { confirmDropSubmitted } from '../lib/dialog.js'
 import StudentPicker from './StudentPicker.jsx'
 import Loading from './Loading.jsx'
 import ErrorBox from './ErrorBox.jsx'
@@ -48,11 +49,7 @@ export function AssignDialog({ items, onClose, onSaved }) {
     if (single) {
       const want = new Set(ids)
       const lostSubmitted = current.filter((r) => !want.has(r.student_id) && r.status && r.status !== 'todo')
-      if (
-        lostSubmitted.length &&
-        !window.confirm(`Bạn bỏ chọn ${lostSubmitted.length} học sinh đã nộp bài. Bài nộp và điểm của các em sẽ bị xóa. Tiếp tục?`)
-      )
-        return
+      if (lostSubmitted.length && !(await confirmDropSubmitted(lostSubmitted.length))) return
     } else if (!ids.length) {
       setError('Chọn ít nhất một học sinh.')
       return

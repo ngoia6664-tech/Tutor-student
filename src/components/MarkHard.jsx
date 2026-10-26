@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { setMark } from '../lib/marks.js'
 import { errMsg } from '../lib/errors.js'
 import Icon from './Icon.jsx'
-import { askConfirm } from '../lib/dialog.js'
+import { askConfirm, notifyError } from '../lib/dialog.js'
 
 /**
  * Nút "Câu khó" cho một câu (đặt trong .question-label, trước nút Báo lỗi đề).
@@ -33,7 +33,7 @@ export default function MarkHard({ exerciseId, studentId, marked: initial = fals
       setMarked(next)
       onChange?.(next)
     } catch (e) {
-      window.alert(errMsg(e))
+      notifyError('Không lưu được câu khó', errMsg(e))
     } finally {
       setBusy(false)
     }

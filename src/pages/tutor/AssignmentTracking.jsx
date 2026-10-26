@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -208,65 +208,82 @@ function GradeDock({ list, currentId, onPick }) {
 // Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu.
 // Đề thi: chia phần, hiện điểm từng câu. Đáp án + phương pháp giải đặt ngay dưới bài làm để so (như học sinh thấy sau khi nộp),
 // ẩn / hiện được bằng nút ở đầu. Đã nộp: thanh câu sai dính đầu trang (bấm để nhảy), mỗi câu có ô lời phê "Giáo viên chấm:".
-function AnswerSheet({ exercises, answers, studentId, isExam, submitted, notes, onNote }) {
+// memo + onNote ổn định: gõ điểm / nhận xét không vẽ lại cả bài làm.
+const AnswerSheet = memo(function AnswerSheet({ exercises, answers, studentId, isExam, submitted, notes, onNote }) {
   const [showKey, setShowKey] = useState(true)
+  const labels = useMemo(() => questionLabels(exercises, isExam), [exercises, isExam])
+  const groups = useMemo(() => groupExercises(exercises, isExam), [exercises, isExam])
   return (
     <div className="answer-sheet">
-      {submitted && <ResultProgress exercises={exercises} answers={answers} labels={questionLabels(exercises, isExam)} notes={notes} idPrefix="g-" />}
+      {submitted && <ResultProgress exercises={exercises} answers={answers} labels={labels} notes={notes} idPrefix="g-" />}
       <div className="row" style={{ marginBottom: '0.5rem' }}>
         <button type="button" className="btn btn-small btn-ghost" onClick={() => setShowKey((v) => !v)} aria-pressed={showKey}>
           <Icon name="eye" />
           {showKey ? 'Ẩn đáp án' : 'Hiện đáp án'}
         </button>
       </div>
-      {groupExercises(exercises, isExam).map((g) => (
+      {groups.map((g) => (
         <Fragment key={g.part?.kind || 'all'}>
           {isExam && <PartHeading part={g.part} count={g.items.length} />}
-          {g.items.map(({ ex, no }) => {
-            const a = answers[ex.id]
-            return (
-              <div key={ex.id} className="question" id={`g-${ex.id}`}>
-                <div className="question-label">
-                  Câu {no} <span className="badge">{KIND_LABEL[ex.kind]}</span>
-                  {isExam && a && <PointsBadge ex={ex} answer={a} />}
-                  {!isExam && a?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
-                  {!isExam && a?.is_correct === false && <span className="badge badge-danger">Sai</span>}
-                  {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
-                  {!a && <span className="badge badge-muted">Không trả lời</span>}
-                </div>
-                <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={showKey ? ex.correct : null} />
-                {showKey && ex.answer_md && (
-                  <div className="answer-box">
-                    <div className="box-label">Đáp án</div>
-                    <Markdown>{ex.answer_md}</Markdown>
-                  </div>
-                )}
-                {showKey && ex.method_md && (
-                  <div className="method-box">
-                    <div className="box-label">Phương pháp giải</div>
-                    <Markdown>{ex.method_md}</Markdown>
-                  </div>
-                )}
-                {showKey && ex.correct == null && !ex.answer_md && !ex.method_md && (
-                  <p className="muted small">Câu này chưa nhập đáp án.</p>
-                )}
-                <label className="field teacher-note-field">
-                  <span>{NOTE_LABEL}</span>
-                  <textarea
-                    rows={notes[ex.id] ? 2 : 1}
-                    value={notes[ex.id] || ''}
-                    onChange={(e) => onNote(ex.id, e.target.value)}
-                    placeholder="Lời phê cho câu này (học sinh sẽ thấy)"
-                  />
-                </label>
-              </div>
-            )
-          })}
+          {g.items.map(({ ex, no }) => (
+            <SheetQuestion
+              key={ex.id}
+              ex={ex}
+              no={no}
+              a={answers[ex.id]}
+              studentId={studentId}
+              isExam={isExam}
+              showKey={showKey}
+              note={notes[ex.id] || ''}
+              onNote={onNote}
+            />
+          ))}
         </Fragment>
       ))}
     </div>
   )
-}
+})
+
+// Một câu trong bài làm. memo: gõ lời phê ở câu này không vẽ lại các câu khác (đề + đáp án có KaTeX rất nặng)
+const SheetQuestion = memo(function SheetQuestion({ ex, no, a, studentId, isExam, showKey, note, onNote }) {
+  return (
+    <div className="question" id={`g-${ex.id}`}>
+      <div className="question-label">
+        Câu {no} <span className="badge">{KIND_LABEL[ex.kind]}</span>
+        {isExam && a && <PointsBadge ex={ex} answer={a} />}
+        {!isExam && a?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
+        {!isExam && a?.is_correct === false && <span className="badge badge-danger">Sai</span>}
+        {ex.kind === 'fill_blank' && a && a.is_correct == null && <span className="badge badge-warn">Cần xem</span>}
+        {!a && <span className="badge badge-muted">Không trả lời</span>}
+      </div>
+      <ExerciseBody ex={ex} mode="review" name={`s-${studentId}-${ex.id}`} value={a?.answer} correct={showKey ? ex.correct : null} />
+      {showKey && ex.answer_md && (
+        <div className="answer-box">
+          <div className="box-label">Đáp án</div>
+          <Markdown>{ex.answer_md}</Markdown>
+        </div>
+      )}
+      {showKey && ex.method_md && (
+        <div className="method-box">
+          <div className="box-label">Phương pháp giải</div>
+          <Markdown>{ex.method_md}</Markdown>
+        </div>
+      )}
+      {showKey && ex.correct == null && !ex.answer_md && !ex.method_md && (
+        <p className="muted small">Câu này chưa nhập đáp án.</p>
+      )}
+      <label className="field teacher-note-field">
+        <span>{NOTE_LABEL}</span>
+        <textarea
+          rows={note ? 2 : 1}
+          value={note}
+          onChange={(e) => onNote(ex.id, e.target.value)}
+          placeholder="Lời phê cho câu này (học sinh sẽ thấy)"
+        />
+      </label>
+    </div>
+  )
+})
 
 // Cấu trúc đề thi so với chuẩn 18 – 4 – 6
 function ExamStructureNote({ exercises }) {
@@ -293,6 +310,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, notes: sav
   const [feedback, setFeedback] = useState(rec.feedback ?? '')
   // Lời phê từng câu đang gõ; ghi cùng lúc "Lưu chấm" / "Cho nộp lại"
   const [notes, setNotes] = useState(savedNotes)
+  const setNote = useCallback((id, v) => setNotes((prev) => ({ ...prev, [id]: v })), [])
   const [images, setImages] = useState(null) // null = chưa tải
   const [imgLoading, setImgLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -447,7 +465,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, notes: sav
           isExam={isExam}
           submitted={rec.status !== 'todo'}
           notes={notes}
-          onNote={(id, v) => setNotes((prev) => ({ ...prev, [id]: v }))}
+          onNote={setNote}
         />
       )}
       {images && (

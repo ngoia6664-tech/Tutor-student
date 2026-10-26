@@ -37,6 +37,14 @@ export function notifyDone(opts) {
   host({ type: 'done', scene: 'submitted', autoClose: 2000, ...opts })
 }
 
+/**
+ * Báo lỗi / thông tin cần đọc (thay window.alert): không tự tắt, bấm × hoặc ra ngoài để đóng.
+ */
+export function notifyError(title, message) {
+  if (!host) return window.alert([title, message].filter(Boolean).join('\n\n'))
+  host({ type: 'done', title, message, say: 'Ối, có trục trặc rồi. Bạn thử lại nhé!' })
+}
+
 // Lời gấu cho từng hành động hay dùng
 export function confirmDelete(kind, name, message) {
   return askConfirm({
@@ -45,6 +53,28 @@ export function confirmDelete(kind, name, message) {
     say: `Xóa ${kind} này thì không thể hoàn tác đâu nha. Bạn chắc chắn muốn xóa chứ?`,
     scene: 'delete',
     confirmText: 'Xóa',
+    danger: true,
+  })
+}
+
+// Chưa chọn học sinh nào mà vẫn lưu bài giảng / bài tập
+export function confirmNoStudents(kind) {
+  return askConfirm({
+    title: 'Chưa chọn học sinh nào',
+    message: `Lưu ${kind} mà chưa giao cho ai? Bạn có thể giao sau.`,
+    say: 'Chưa có bạn nào nhận bài này đâu nha. Vẫn lưu chứ?',
+    confirmText: 'Vẫn lưu',
+  })
+}
+
+// Bỏ chọn học sinh đã nộp bài: bài nộp + điểm sẽ mất
+export function confirmDropSubmitted(count) {
+  return askConfirm({
+    title: `Bỏ ${count} học sinh đã nộp bài?`,
+    message: 'Bài nộp và điểm của các em sẽ bị xóa, không hoàn tác được.',
+    say: 'Các bạn này đã nộp bài rồi đó. Bỏ chọn là mất cả bài nộp lẫn điểm luôn!',
+    scene: 'delete',
+    confirmText: 'Vẫn bỏ',
     danger: true,
   })
 }

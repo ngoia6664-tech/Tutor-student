@@ -47,7 +47,10 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `confirmDelete(kind, name, msg)`, `notifyDeleted(kind)`) + `components/DialogHost.jsx` (trong Layout, portal, Esc / bấm ngoài = hủy, giữ Tab)
   + cảnh minh họa `components/DialogScene.jsx` (option `scene`: logout cửa EXIT · submit khay nộp bài · submitted bài có dấu tích ·
   delete thùng rác mở + cảnh báo, hộp viền đỏ · deleted thùng rác sạch; gấu `FrontPanda` prop `face` normal/sad/serious/happy)
-  + CSS `styles/dialog.css`. Đang dùng: đăng xuất, xóa chương / chuyên đề (Library) / bài giảng / bài tập, nộp bài, bỏ đánh dấu câu khó có ghi chú.
+  + CSS `styles/dialog.css`. Thêm `notifyError` (thay `window.alert`), `confirmNoStudents`, `confirmDropSubmitted`.
+  KHÔNG dùng `window.confirm`/`alert` (bị chặn trong app cài trên điện thoại) — mọi hỏi/báo đều qua `lib/dialog.js`.
+- Hiệu năng ô nhập: `Markdown` là `memo` (KaTeX chỉ vẽ lại khi chữ đổi). Danh sách câu nặng tách thành component `memo` + callback `useCallback`
+  (`SheetQuestion` ở AssignmentTracking, `ExerciseEditCard` ở AssignmentEditor, `LessonPreview`/`AssignmentPreview` ở ImportJson) để gõ một ô không vẽ lại cả trang.
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),
   đăng ký trong `main.jsx` (chỉ bản build), `components/InstallBanner.jsx` gợi ý cài app.
 - Linh vật "Giáo sư Gấu Trúc" SVG nét mượt (mũ tốt nghiệp, kính, nơ, sách, đũa sao): logic `components/Mascot.jsx` (trong Layout, lazy; tắt linh vật thì không tải),

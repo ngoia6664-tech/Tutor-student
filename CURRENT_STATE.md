@@ -15,7 +15,7 @@ Phạm vi chỉ bài giảng + bài tập (không lịch học, điểm danh, h�
 
 ## Production / deployment
 - Deploy Vercel (SPA rewrite mọi đường dẫn về `index.html`), từ branch `main`.
-- Làm việc trực tiếp trên `main`; commit tính năng gần nhất `e228df6` (đã push).
+- Làm việc trực tiếp trên `main`; ca gần nhất 26/10/2026 (đã push, xem `AI/CLAUDE/HANDOFF.md`). Cần chạy lại `supabase/schema.sql` (bảng `answer_comments`).
 
 ## Main functional areas
 - **Gia sư:** danh sách / chi tiết học sinh, thư viện dạng cây (Lớp › Môn › Chuyên đề › Chương), soạn bài tập,

@@ -14,6 +14,7 @@ import { fetchChapters } from '../../lib/chapters.js'
 import { packImages, unpackImages } from '../../lib/svg.js'
 import StudentPicker from '../../components/StudentPicker.jsx'
 import Icon from '../../components/Icon.jsx'
+import { confirmNoStudents } from '../../lib/dialog.js'
 
 const MAX_FILE_MB = 50
 
@@ -95,7 +96,7 @@ function LessonForm({ initial, fromImport }) {
     setError(null)
     if (!form.title.trim()) return setError('Hãy nhập tiêu đề bài giảng.')
     if (form.video_url.trim() && !/^https?:\/\//i.test(form.video_url.trim())) return setError('Link video phải bắt đầu bằng http:// hoặc https://')
-    if (!form.student_ids.length && !window.confirm('Chưa chọn học sinh nào. Vẫn lưu?')) return
+    if (!form.student_ids.length && !(await confirmNoStudents('bài giảng'))) return
 
     setSaving(true)
     let uploaded = null
