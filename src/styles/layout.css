@@ -192,3 +192,62 @@
     transform: none;
   }
 }
+
+/* Mũi tên lên đầu / xuống cuối trang (components/ScrollJump.jsx), cạnh phải giữa màn hình */
+.scroll-jump {
+  position: fixed;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 8; /* ngang gấu, dưới thanh menu */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scroll-jump button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-solid);
+  color: var(--text);
+  opacity: 0.72;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), border-color 0.18s var(--ease);
+  animation: scroll-jump-in 0.2s var(--ease);
+}
+.scroll-jump button:hover,
+.scroll-jump button:focus-visible {
+  opacity: 1;
+  border-color: var(--primary);
+}
+.scroll-jump button:active {
+  transform: scale(0.92);
+}
+.scroll-jump svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes scroll-jump-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+@media (max-width: 560px) {
+  .scroll-jump {
+    right: 6px;
+  }
+  .scroll-jump button {
+    width: 40px;
+    height: 40px;
+  }
+}

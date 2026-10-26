@@ -503,3 +503,10 @@ details > summary {
     scroll-behavior: auto !important;
   }
 }
+
+/* Dán JSON: nhập nhiều file — mỗi file một thẻ, các phần trong file ngăn bằng vạch */
+.import-file-head { margin-bottom: 0.4rem; }
+.import-failed { color: var(--danger); font-weight: 600; }
+.import-file-settings { margin-bottom: 0.6rem; }
+.import-file-settings > summary { cursor: pointer; font-size: 0.9rem; color: var(--muted); }
+.import-part + .import-part { border-top: 1px solid var(--border); margin-top: 0.9rem; padding-top: 0.9rem; }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
@@ -46,6 +46,9 @@ export default function Library() {
   const { id } = useParams()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  // Mở từ trang khác (vd. điểm theo chương ở trang học sinh): state { backTo, backLabel } → nút quay về
+  const locState = useLocation().state
+  const back = locState?.backTo ? locState : null
   const lop = id ? undefined : params.get('lop') ?? undefined
   const mon = lop !== undefined ? params.get('mon') ?? undefined : undefined
   const cd = mon !== undefined ? params.get('cd') ?? undefined : undefined
@@ -340,6 +343,11 @@ export default function Library() {
           />
         )}
 
+        {back && (
+          <Link to={back.backTo} className="btn btn-small back-to">
+            ← Về {back.backLabel || 'trang trước'}
+          </Link>
+        )}
         {id && <ChapterDetail id={id} reloadKey={detailKey} onEdit={openChapterForm} onDelete={handleDelete} />}
 
         {!id && level === 0 && !loading && <Overview tree={fullTree} onImport={openImport} />}

@@ -1,5 +1,6 @@
 // Dữ liệu cho biểu đồ điểm (components/ScoreChart.jsx): quy về thang 10, lọc, thống kê.
 // Chỉ dùng điểm chính thức (lần nộp đầu), không tính các lần tự làm lại.
+import { gradeLabel, keyOf, sectionLabel, sortChapters, subjectLabel } from './chapters.js'
 
 const round2 = (n) => Math.round(n * 100) / 100
 const avgOf = (list) => list.reduce((n, p) => n + p.score, 0) / list.length
@@ -77,10 +78,66 @@ export function chapterStats(points) {
   }
   return [...groups.values()]
     .map((g) => {
-      const avg = round2(avgOf(g.list))
-      return { id: g.id, title: g.title, avg, count: g.list.length, weak: avg < WEAK }
+      const sum = g.list.reduce((n, p) => n + p.score, 0)
+      const avg = round2(sum / g.list.length)
+      return { id: g.id, title: g.title, avg, sum, count: g.list.length, weak: avg < WEAK }
     })
     .sort((a, b) => b.avg - a.avg)
+}
+
+// Lọc theo chương đang xem: 'none' = bài chưa gắn chương
+export const NO_CHAPTER = 'none'
+export const inChapter = (chapterId, filter) => !filter || (filter === NO_CHAPTER ? !chapterId : chapterId === filter)
+
+const LEVELS = [
+  { field: 'grade', label: gradeLabel },
+  { field: 'subject', label: subjectLabel },
+  { field: 'section', label: sectionLabel },
+]
+
+// Cây Lớp › Môn › Chuyên đề › Chương cho điểm theo chương. Cấp chỉ có một nhánh thì bỏ qua cho gọn.
+// Trả về [{ type: 'group', key, label, avg, count, weak, children } | { type: 'chapter', id, title, avg, count, weak }]
+// "Bài khác" (chưa gắn chương) đứng cuối, ở cấp ngoài cùng.
+export function chapterTree(points, chapterById) {
+  const stats = chapterStats(points)
+  const order = new Map(sortChapters([...chapterById.values()]).map((c, i) => [c.id, i]))
+  const leaves = stats
+    .filter((s) => s.id)
+    .map((s) => ({ type: 'chapter', ...s, meta: chapterById.get(s.id) || {}, rank: order.get(s.id) ?? 1e9 }))
+    .sort((a, b) => a.rank - b.rank)
+
+  const build = (list, level, path) => {
+    if (level >= LEVELS.length) return list
+    const { field, label } = LEVELS[level]
+    const groups = new Map()
+    for (const leaf of list) {
+      const k = keyOf(leaf.meta[field])
+      if (!groups.has(k)) groups.set(k, [])
+      groups.get(k).push(leaf)
+    }
+    if (groups.size === 1) return build(list, level + 1, path)
+    return [...groups.entries()].map(([k, items]) => {
+      const key = `${path}/${k}`
+      const count = items.reduce((n, c) => n + c.count, 0)
+      const avg = round2(items.reduce((n, c) => n + c.sum, 0) / count)
+      const children = build(items, level + 1, key)
+      return { type: 'group', key, label: label(items[0].meta[field] ?? null), avg, count, weak: items.some((c) => c.weak), children }
+    })
+  }
+
+  const tree = build(leaves, 0, '')
+  const none = stats.find((s) => !s.id)
+  if (none) tree.push({ type: 'chapter', ...none, id: null, title: 'Bài khác' })
+  return tree
+}
+
+// Các nhóm có chương "cần ôn" (để mở sẵn)
+export function weakGroupKeys(tree, out = []) {
+  for (const n of tree) if (n.type === 'group') {
+    if (n.weak) out.push(n.key)
+    weakGroupKeys(n.children, out)
+  }
+  return out
 }
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)]

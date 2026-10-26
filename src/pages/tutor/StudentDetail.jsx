@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAsync } from '../../lib/useAsync.js'
 import { supabase } from '../../lib/supabase.js'
 import { fetchStudentReport, STATE_LABEL, STATE_TONE } from '../../lib/studentReport.js'
@@ -10,7 +10,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
 import ScoreChart from '../../components/ScoreChart.jsx'
-import { toPoints } from '../../lib/scoreChart.js'
+import { inChapter, NO_CHAPTER, toPoints } from '../../lib/scoreChart.js'
 import { EditStudent } from './TutorStudents.jsx'
 
 const FILTERS = [
@@ -27,6 +27,10 @@ export default function StudentDetail() {
   const [tab, setTab] = useState('assignments')
   const [filter, setFilter] = useState('all')
   const [editing, setEditing] = useState(false)
+  // Chương đang lọc (bấm ở "Điểm theo chương"): giữ trên URL ?chuong= để quay về từ Thư viện vẫn còn
+  const [params, setParams] = useSearchParams()
+  const chapter = params.get('chuong')
+  const setChapter = (cid) => setParams(cid ? { chuong: cid } : {}, { replace: true })
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [report, chapters, study] = await Promise.all([
@@ -50,8 +54,10 @@ export default function StudentDetail() {
   const { student: s, assignments, lessons, summary: sum, chapterById, study } = data
   const studyChapter = study?.study_chapter_id ? chapterById.get(study.study_chapter_id) : null
   const chapterName = (cid) => chapterById.get(cid)?.title || ''
-  const rows = assignments.filter((r) => matchFilter(r, filter))
-  const countOf = (f) => assignments.filter((r) => matchFilter(r, f)).length
+  const inCh = assignments.filter((r) => inChapter(r.assignment.chapter_id, chapter))
+  const rows = inCh.filter((r) => matchFilter(r, filter))
+  const countOf = (f) => inCh.filter((r) => matchFilter(r, f)).length
+  const chapterLabel = chapter === NO_CHAPTER ? 'Bài khác' : chapterName(chapter) || 'Chương'
 
   return (
     <div>
@@ -114,7 +120,15 @@ export default function StudentDetail() {
         <Stat label="Bài giảng" value={sum.lessons} note="đã giao" />
       </div>
 
-      <ScoreChart points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })} voice="tutor" chapterLink={(cid) => `/tutor/library/${cid}`} />
+      <ScoreChart
+        points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })}
+        voice="tutor"
+        chapterById={chapterById}
+        chapter={chapter}
+        onChapter={setChapter}
+        chapterLink={(cid) => `/tutor/library/${cid}`}
+        backState={{ backTo: `/tutor/students/${id}${chapter ? `?chuong=${chapter}` : ''}`, backLabel: s.full_name || 'học sinh' }}
+      />
 
       <div className="tabs" style={{ margin: '0.5rem 0 1rem' }}>
         <button type="button" className={tab === 'assignments' ? 'tab active' : 'tab'} onClick={() => setTab('assignments')}>
@@ -127,6 +141,16 @@ export default function StudentDetail() {
 
       {tab === 'assignments' && (
         <>
+          {chapter && (
+            <div className="score-chart-filter" style={{ marginBottom: '0.6rem' }}>
+              <span className="score-chart-filter-chip">
+                Chương: <b>{chapterLabel}</b>
+                <button type="button" onClick={() => setChapter(null)} aria-label="Bỏ lọc chương" title="Xem tất cả">
+                  ✕
+                </button>
+              </span>
+            </div>
+          )}
           <div className="chips" style={{ marginBottom: '0.8rem' }}>
             {FILTERS.map((f) => (
               <button key={f.key} type="button" className={filter === f.key ? 'chip active' : 'chip'} onClick={() => setFilter(f.key)}>

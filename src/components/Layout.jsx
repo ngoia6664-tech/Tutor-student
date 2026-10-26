@@ -24,6 +24,7 @@ import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
 import { countUnseenFeedback, FEEDBACK_CHANGED } from '../lib/feedback.js'
 import FeedbackButton from './FeedbackButton.jsx'
 import DialogHost from './DialogHost.jsx'
+import ScrollJump from './ScrollJump.jsx'
 import { askConfirm } from '../lib/dialog.js'
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
@@ -165,6 +166,7 @@ export default function Layout() {
           <Mascot />
         </Suspense>
       )}
+      <ScrollJump />
       <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (

@@ -247,3 +247,108 @@
 .chapter-score.weak .chapter-score-fill {
   background: var(--warn);
 }
+
+/* Cây điểm theo chương: nhóm gập/mở, chương là nút lọc */
+.cs-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.cs-tree .cs-tree {
+  padding-left: 0.9rem;
+  margin: 0.35rem 0 0.2rem 0.45rem;
+  border-left: 1px solid var(--border);
+}
+.cs-group-head {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.cs-group-head:hover {
+  background: var(--surface-2);
+}
+.cs-caret {
+  width: 1rem;
+  color: var(--muted);
+}
+.cs-group-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+button.chapter-score {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.chapter-score:hover {
+  background: var(--surface-2);
+}
+button.chapter-score.on {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.chapter-score-track,
+.chapter-score-fill {
+  display: block;
+}
+
+/* Nhãn "Đang xem: chương ✕" */
+.score-chart-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+}
+.score-chart-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.3rem 0.2rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--primary);
+  background: var(--primary-soft);
+  font-size: 0.88rem;
+}
+.score-chart-filter-chip button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.score-chart-filter-chip button:hover {
+  background: var(--surface-2);
+}
+
+/* Thư viện: nút quay về trang đã mở chương này */
+.back-to {
+  margin-bottom: 0.8rem;
+}

@@ -2,7 +2,20 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { viNum } from '../lib/exam.js'
 import { celebrate, mascotSay } from '../lib/celebrate.js'
-import { chapterStats, chartComment, chartStats, filterPoints, KINDS, movingAvg, pointComment, RANGES, WEAK } from '../lib/scoreChart.js'
+import {
+  chapterTree,
+  chartComment,
+  chartStats,
+  filterPoints,
+  inChapter,
+  KINDS,
+  movingAvg,
+  NO_CHAPTER,
+  pointComment,
+  RANGES,
+  WEAK,
+  weakGroupKeys,
+} from '../lib/scoreChart.js'
 
 // Khung SVG (viewBox), co giãn theo bề rộng thẻ
 const W = 340
@@ -19,8 +32,10 @@ const ddmm = (d) => {
 // points: từ lib/scoreChart.js toPoints (cũ → mới). Không có điểm nào thì không hiện.
 // voice: 'student' | 'tutor' — gấu nhận xét khi mở (mỗi phiên chỉ một lần cho mỗi lần có điểm mới).
 // quiet: không nhận xét khi mở (vd. Kết quả đang lọc một chương trên cây).
-// chapterLink(id): có thì hiện khối "Điểm theo chương" (trang gia sư), theo bộ lọc đang chọn.
-export default function ScoreChart({ points, voice = 'student', quiet = false, chapterLink }) {
+// Trang gia sư truyền thêm chapterById + chapter/onChapter (chương đang lọc, giữ ở trang cha để lọc cả danh sách bài)
+// + chapterLink(id) + backState ({ backTo, backLabel } cho nút quay về trong Thư viện)
+// → hiện cây "Điểm theo chương" theo bộ lọc loại bài / thời gian; bấm chương = lọc tại chỗ.
+export default function ScoreChart({ points, voice = 'student', quiet = false, chapterById, chapter = null, onChapter, chapterLink, backState }) {
   const [kind, setKind] = useState('all')
   const [range, setRange] = useState('90')
   const [picked, setPicked] = useState(null)
@@ -60,8 +75,11 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
     const text = pointComment(p, points)
     if (text) mascotSay(text)
   }
-  const pts = filterPoints(points, kind, range)
+  const base = filterPoints(points, kind, range)
+  const pts = base.filter((p) => inChapter(p.chapterId, chapter))
   const st = chartStats(pts)
+  const withTree = !!(chapterById && onChapter)
+  const chapterTitle = chapter === NO_CHAPTER ? 'Bài khác' : chapterById?.get(chapter)?.title || points.find((p) => p.chapterId === chapter)?.chapter
   const sel = pts.find((p) => p.id === picked) || pts[pts.length - 1]
 
   const top = Math.max(10, ...pts.map((p) => p.score))
@@ -96,6 +114,22 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
           </button>
         ))}
       </div>
+
+      {withTree && chapter && (
+        <div className="score-chart-filter">
+          <span className="score-chart-filter-chip">
+            Đang xem: <b>{chapterTitle || 'Chương'}</b>
+            <button type="button" onClick={() => onChapter(null)} aria-label="Bỏ lọc chương" title="Xem tất cả">
+              ✕
+            </button>
+          </span>
+          {chapter !== NO_CHAPTER && chapterLink && (
+            <Link to={chapterLink(chapter)} state={backState} className="small">
+              Mở chương trong Thư viện ›
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="score-chart-stats">
         <ChartStat label="Trung bình" value={st.avg === null ? '—' : viNum(st.avg)} />
@@ -192,36 +226,114 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
           )}
           <p className="muted small score-chart-hint">Chạm vào một điểm để xem bài đó</p>
 
-          {chapterLink && <ChapterScores points={pts} chapterLink={chapterLink} />}
         </>
       )}
+
+      {withTree && base.length > 0 && <ChapterScores points={base} chapterById={chapterById} chapter={chapter} onChapter={onChapter} />}
     </section>
   )
 }
 
-// Điểm TB theo chương (cao → thấp), chương dưới WEAK tô vàng + "cần ôn"
-function ChapterScores({ points, chapterLink }) {
-  const rows = chapterStats(points)
+// Điểm TB theo cây Lớp › Môn › Chuyên đề › Chương; chương dưới WEAK tô vàng + "cần ôn".
+// Nhóm có chương cần ôn mở sẵn; bấm chương = lọc biểu đồ + danh sách bài (bấm lại = bỏ lọc)
+function ChapterScores({ points, chapterById, chapter, onChapter }) {
+  const tree = chapterTree(points, chapterById)
+  const [open, setOpen] = useState(() => new Set(weakGroupKeys(tree)))
+  const allKeys = groupKeys(tree)
+  const allOpen = allKeys.length > 0 && allKeys.every((k) => open.has(k))
+  const toggle = (k) =>
+    setOpen((s) => {
+      const n = new Set(s)
+      n.has(k) ? n.delete(k) : n.add(k)
+      return n
+    })
+
   return (
     <div className="chapter-scores">
-      <h3>Điểm theo chương</h3>
-      {rows.map((c) => (
-        <div key={c.id || 'none'} className={c.weak ? 'chapter-score weak' : 'chapter-score'}>
-          <div className="chapter-score-head">
-            <span className="chapter-score-name">
-              {c.id ? <Link to={chapterLink(c.id)}>{c.title}</Link> : c.title}
-              {c.weak && <span className="chapter-score-tag">cần ôn</span>}
-            </span>
-            <span className="chapter-score-num">
-              <b>{viNum(c.avg)}</b> · {c.count} bài
-            </span>
-          </div>
-          <div className="chapter-score-track" title={`TB ${viNum(c.avg)}/10${c.weak ? `, dưới ${WEAK}` : ''}`}>
-            <div className="chapter-score-fill" style={{ width: `${Math.min(100, c.avg * 10)}%` }} />
-          </div>
-        </div>
-      ))}
+      <div className="row row-between">
+        <h3>Điểm theo chương</h3>
+        {allKeys.length > 0 && (
+          <button type="button" className="btn btn-small" onClick={() => setOpen(new Set(allOpen ? [] : allKeys))}>
+            {allOpen ? 'Gập hết' : 'Mở hết'}
+          </button>
+        )}
+      </div>
+      <ul className="cs-tree">
+        {tree.map((n) => (
+          <ChapterNode key={n.key || n.id || NO_CHAPTER} node={n} open={open} toggle={toggle} chapter={chapter} onChapter={onChapter} />
+        ))}
+      </ul>
+      <p className="muted small" style={{ margin: 0 }}>
+        Bấm vào một chương để lọc biểu đồ và danh sách bài tập.
+      </p>
     </div>
+  )
+}
+
+function groupKeys(tree, out = []) {
+  for (const n of tree) {
+    if (n.type !== 'group') continue
+    out.push(n.key)
+    groupKeys(n.children, out)
+  }
+  return out
+}
+
+function ChapterNode({ node: n, open, toggle, chapter, onChapter }) {
+  if (n.type === 'group') {
+    const isOpen = open.has(n.key)
+    return (
+      <li className="cs-group">
+        <button type="button" className="cs-group-head" onClick={() => toggle(n.key)} aria-expanded={isOpen}>
+          <span className="cs-caret" aria-hidden="true">
+            {isOpen ? '▾' : '▸'}
+          </span>
+          <span className="cs-group-name">
+            {n.label}
+            {n.weak && !isOpen && (
+              <span className="chapter-score-tag" title="Có chương cần ôn">
+                ⚠ cần ôn
+              </span>
+            )}
+          </span>
+          <span className="chapter-score-num">
+            <b>{viNum(n.avg)}</b> · {n.count} bài
+          </span>
+        </button>
+        {isOpen && (
+          <ul className="cs-tree">
+            {n.children.map((c) => (
+              <ChapterNode key={c.key || c.id} node={c} open={open} toggle={toggle} chapter={chapter} onChapter={onChapter} />
+            ))}
+          </ul>
+        )}
+      </li>
+    )
+  }
+  const key = n.id || NO_CHAPTER
+  const on = chapter === key
+  return (
+    <li>
+      <button
+        type="button"
+        className={`chapter-score${n.weak ? ' weak' : ''}${on ? ' on' : ''}`}
+        onClick={() => onChapter(on ? null : key)}
+        aria-pressed={on}
+      >
+        <span className="chapter-score-head">
+          <span className="chapter-score-name">
+            {n.title}
+            {n.weak && <span className="chapter-score-tag">cần ôn</span>}
+          </span>
+          <span className="chapter-score-num">
+            <b>{viNum(n.avg)}</b> · {n.count} bài
+          </span>
+        </span>
+        <span className="chapter-score-track" title={`TB ${viNum(n.avg)}/10${n.weak ? `, dưới ${WEAK}` : ''}`}>
+          <span className="chapter-score-fill" style={{ width: `${Math.min(100, n.avg * 10)}%` }} />
+        </span>
+      </button>
+    </li>
   )
 }
 
