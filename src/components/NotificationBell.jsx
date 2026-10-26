@@ -15,9 +15,9 @@ function timeAgo(at) {
   return formatDate(at)
 }
 
-// Chuông thông báo trên thanh trên cùng (học sinh): số bài mới + danh sách bài giao gần đây
+// Chuông thông báo trên thanh trên cùng: học sinh = bài giao gần đây, gia sư = học sinh nộp bài gần đây
 export default function NotificationBell() {
-  const { enabled, items, unread, isUnread, markSeen } = useNotifications()
+  const { enabled, isTutor, items, unread, isUnread, markSeen } = useNotifications()
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(() => new Set()) // bài còn tô "mới" trong lần mở này
   const box = useRef(null)
@@ -100,19 +100,27 @@ export default function NotificationBell() {
             <span className="muted small">14 ngày gần đây</span>
           </div>
           {items.length === 0 ? (
-            <p className="muted small bell-empty">Chưa có bài mới nào được giao.</p>
+            <p className="muted small bell-empty">{isTutor ? 'Chưa có học sinh nào nộp bài.' : 'Chưa có bài mới nào được giao.'}</p>
           ) : (
             <ul className="bell-list">
               {items.map((it) => (
                 <li key={it.key}>
                   <Link to={it.to} className={highlight.has(it.key) ? 'bell-item new' : 'bell-item'}>
                     <span className="bell-icon" aria-hidden="true">
-                      {it.kind === 'lesson' ? '📘' : '✏️'}
+                      {it.kind === 'lesson' ? '📘' : it.kind === 'submission' ? '📥' : '✏️'}
                     </span>
                     <span className="bell-body">
                       <span className="bell-kind">
-                        {it.kind === 'lesson' ? 'Bài giảng mới' : 'Bài tập mới'}
-                        {it.kind === 'assignment' && it.status !== 'todo' && ' · đã nộp'}
+                        {it.kind === 'submission' ? (
+                          <>
+                            {it.student} nộp bài · {it.status === 'checked' ? 'đã chấm' : 'chờ chấm'}
+                          </>
+                        ) : (
+                          <>
+                            {it.kind === 'lesson' ? 'Bài giảng mới' : 'Bài tập mới'}
+                            {it.kind === 'assignment' && it.status !== 'todo' && ' · đã nộp'}
+                          </>
+                        )}
                       </span>
                       <span className="bell-title">{it.title}</span>
                       <span className="bell-meta">

@@ -1,6 +1,6 @@
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
@@ -33,7 +33,11 @@ export default function AssignmentTracking() {
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  const [picked, setPicked] = useState(null) // student_id đang chấm; null = học sinh đầu danh sách
+  // Vào từ trang một học sinh / thông báo (?hs=<id>): mở thẳng bài làm của bạn đó thay vì bạn đầu danh sách
+  const [params] = useSearchParams()
+  const fromStudent = params.get('hs')
+  const [picked, setPicked] = useState(fromStudent) // student_id đang chấm; null = học sinh đầu danh sách
+  useEffect(() => setPicked(fromStudent), [id, fromStudent])
   const cardRef = useRef(null)
 
   const { data, loading, error, reload } = useAsync(() => fetchAssignmentFull(id), [id])
@@ -58,6 +62,7 @@ export default function AssignmentTracking() {
   const counts = { todo: 0, done: 0, checked: 0 }
   recipients.forEach((r) => (counts[r.status] += 1))
   const current = sorted.find((r) => r.student_id === picked) || sorted[0]
+  const backStudent = fromStudent && recipients.find((r) => r.student_id === fromStudent)
 
   function pick(r) {
     if (r.student_id === current?.student_id) return
@@ -82,9 +87,15 @@ export default function AssignmentTracking() {
 
   return (
     <div>
-      <Link to="/tutor/assignments" className="small">
-        ← Danh sách bài tập
-      </Link>
+      {backStudent ? (
+        <Link to={`/tutor/students/${fromStudent}`} className="small">
+          ← Về {backStudent.student?.full_name || 'học sinh'}
+        </Link>
+      ) : (
+        <Link to="/tutor/assignments" className="small">
+          ← Danh sách bài tập
+        </Link>
+      )}
       <div className="card" style={{ marginTop: '0.5rem' }}>
         <h1>{a.title}</h1>
         <div className="row" style={{ marginBottom: '0.5rem' }}>

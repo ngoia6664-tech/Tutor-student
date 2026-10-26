@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../lib/supabase.js'
 import { useAuth } from './AuthContext.jsx'
 import Icon from '../components/Icon.jsx'
+import { mascotSay } from '../lib/celebrate.js'
 
-// Thông báo bài giảng / bài tập mới cho học sinh.
+// Thông báo bài giảng / bài tập mới cho học sinh; gia sư: học sinh vừa nộp bài.
 // - "Mới" = được giao sau lần cuối học sinh mở chuông (profiles.notif_seen_at, lưu trên máy chủ
 //   nên điện thoại và máy tính dùng chung).
 // - Kiểm tra lại mỗi phút và mỗi khi quay lại tab; có bài mới thì hiện thông báo nổi.
@@ -64,11 +65,42 @@ async function fetchItems(studentId) {
   ].sort((a, b) => (a.at < b.at ? 1 : -1))
 }
 
-const kindText = (it) => (it.kind === 'lesson' ? 'Bài giảng mới' : 'Bài tập mới')
+// Gia sư: học sinh nộp bài (lần nộp chính thức; "Cho nộp lại" rồi nộp lần nữa = thông báo mới).
+// Mở thẳng bài làm của bạn đó ở trang chấm (?hs=)
+async function fetchSubmissions() {
+  const rows = await supabase
+    .from('assignment_recipients')
+    .select('student_id, submitted_at, status, score, student:profiles(full_name), assignment:assignments(id, title, chapter:chapters(title))')
+    .gte('submitted_at', windowStart().toISOString())
+    .order('submitted_at', { ascending: false })
+    .limit(50)
+    .then(unwrap)
+  return rows
+    .filter((r) => r.assignment && r.submitted_at && r.status !== 'todo')
+    .map((r) => ({
+      key: `s:${r.assignment.id}:${r.student_id}:${r.submitted_at}`,
+      kind: 'submission',
+      title: r.assignment.title,
+      student: r.student?.full_name || 'Học sinh',
+      chapter: r.assignment.chapter?.title || null,
+      at: r.submitted_at,
+      status: r.status,
+      to: `/tutor/assignments/${r.assignment.id}?hs=${r.student_id}`,
+    }))
+}
+
+const kindText = (it) => (it.kind === 'lesson' ? 'Bài giảng mới' : it.kind === 'submission' ? `${it.student} vừa nộp bài` : 'Bài tập mới')
+
+// Chuông báo luôn kèm gấu nói (Mascot nghe sự kiện từ lib/celebrate.js)
+function announce(setToast, toast) {
+  setToast(toast)
+  mascotSay(toast.text)
+}
 
 export function NotificationsProvider({ children }) {
   const { profile } = useAuth()
-  const enabled = profile?.role === 'student'
+  const isTutor = profile?.role === 'tutor'
+  const enabled = profile?.role === 'student' || isTutor
   const [items, setItems] = useState([])
   const [seenAt, setSeenAt] = useState(() => toDate(profile?.notif_seen_at))
   const [toast, setToast] = useState(null) // { text, to }
@@ -97,7 +129,7 @@ export function NotificationsProvider({ children }) {
     lastRefresh.current = Date.now()
     let list
     try {
-      list = await fetchItems(profile.id)
+      list = isTutor ? await fetchSubmissions() : await fetchItems(profile.id)
     } catch {
       return // lỗi mạng / CSDL chưa nâng cấp: không làm phiền, lần sau thử lại
     }
@@ -111,12 +143,14 @@ export function NotificationsProvider({ children }) {
       } catch {
         // bỏ qua
       }
-      if (unread.length && !shown) setToast({ text: `Bạn có ${unread.length} bài mới được giao`, to: null })
+      if (unread.length && !shown)
+        announce(setToast, { text: isTutor ? `Có ${unread.length} bài học sinh mới nộp` : `Bạn có ${unread.length} bài mới được giao`, to: null })
     } else {
       const fresh = unread.filter((it) => !knownKeys.current.has(it.key))
       if (fresh.length) {
-        const text = fresh.length === 1 ? `${kindText(fresh[0])}: ${fresh[0].title}` : `Có ${fresh.length} bài mới được giao`
-        setToast({ text, to: fresh.length === 1 ? fresh[0].to : null })
+        const text =
+          fresh.length === 1 ? `${kindText(fresh[0])}: ${fresh[0].title}` : isTutor ? `Có ${fresh.length} bài học sinh vừa nộp` : `Có ${fresh.length} bài mới được giao`
+        announce(setToast, { text, to: fresh.length === 1 ? fresh[0].to : null })
         // Đang ở tab khác và đã cho phép: báo bằng thông báo của trình duyệt
         try {
           if (document.hidden && 'Notification' in window && Notification.permission === 'granted') new Notification('Study with Duy Anh', { body: text })
@@ -127,7 +161,7 @@ export function NotificationsProvider({ children }) {
     }
     knownKeys.current = new Set(list.map((it) => it.key))
     setItems(list)
-  }, [enabled, profile?.id])
+  }, [enabled, isTutor, profile?.id])
 
   useEffect(() => {
     if (!enabled) return
@@ -169,6 +203,7 @@ export function NotificationsProvider({ children }) {
     const base = seenAt || windowStart()
     return {
       enabled,
+      isTutor,
       items,
       unread: items.filter((it) => new Date(it.at) > base).length,
       isUnread: (it) => new Date(it.at) > base,
@@ -177,7 +212,7 @@ export function NotificationsProvider({ children }) {
       markSeen,
       refresh,
     }
-  }, [enabled, items, seenAt, markSeen, refresh])
+  }, [enabled, isTutor, items, seenAt, markSeen, refresh])
 
   return (
     <NotificationsContext.Provider value={value}>

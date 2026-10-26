@@ -181,8 +181,8 @@ export default function Layout() {
       )}
     </div>
   )
-  // Học sinh: thông báo bài mới (chuông + thông báo nổi)
-  return profile.role === 'student' ? <NotificationsProvider>{content}</NotificationsProvider> : content
+  // Chuông + thông báo nổi + gấu nói: học sinh = bài mới được giao, gia sư = học sinh vừa nộp bài
+  return <NotificationsProvider>{content}</NotificationsProvider>
 }
 
 // Gia sư: số đếm trên menu (câu bị báo lỗi đang chờ, góp ý chưa xem).

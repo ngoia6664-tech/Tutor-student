@@ -121,7 +121,7 @@ export default function StudentDetail() {
       </div>
 
       <ScoreChart
-        points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })}
+        points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}?hs=${id}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })}
         voice="tutor"
         chapterById={chapterById}
         chapter={chapter}
@@ -175,7 +175,7 @@ export default function StudentDetail() {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <AssignmentRow key={r.assignment.id} r={r} chapter={chapterName(r.assignment.chapter_id)} />
+                    <AssignmentRow key={r.assignment.id} r={r} studentId={id} chapter={chapterName(r.assignment.chapter_id)} />
                   ))}
                 </tbody>
               </table>
@@ -214,13 +214,13 @@ function Stat({ label, value, note, tone = '' }) {
   )
 }
 
-function AssignmentRow({ r, chapter }) {
+function AssignmentRow({ r, studentId, chapter }) {
   const a = r.assignment
   const used = a.time_limit_minutes ? minutesUsed(r.started_at, r.submitted_at) : null
   return (
     <tr>
       <td>
-        <Link to={`/tutor/assignments/${a.id}`} className="student-link">
+        <Link to={`/tutor/assignments/${a.id}?hs=${studentId}`} className="student-link">
           <strong>{a.title}</strong>
         </Link>
         <div className="small muted" style={{ marginTop: '0.25rem' }}>
