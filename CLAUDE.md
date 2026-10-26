@@ -39,6 +39,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   Làm lại bài đã nộp tối đa 3 lần: `lib/retries.js`, RPC `submit_retry` → bảng `assignment_retries` (không đụng điểm chính thức =
   lần nộp đầu; gia sư "Cho nộp lại" thì lần nộp sau mới thay); `RetryCard` trong ReviewView, điểm làm lại hiện nhạt ở StudentResults + AssignmentTracking.
   CSS `styles/attempts.css`. Gia sư xem bài làm có đáp án + phương pháp giải (nút Ẩn/Hiện đáp án trong `AnswerSheet`).
+  Lời phê từng câu "Giáo viên chấm:": bảng `answer_comments` + `lib/answerNotes.js`; gia sư gõ dưới từng câu trong `AnswerSheet`, ghi khi "Lưu chấm"/"Cho nộp lại";
+  học sinh thấy ở ReviewView và khi được mở lại (AnswerView: có câu trả lời cũ mà status `todo` = `reopened`). "Cho nộp lại" dùng `askConfirm`, giữ nhận xét.
+  Bài đã nộp: `components/ResultProgress.jsx` thanh dính đầu trang (đúng/sai/bỏ trống, chip câu sai / bỏ trống / có lời phê để nhảy) ở ReviewView + AnswerSheet gia sư (id `g-`).
 - Mũi tên lên đầu / xuống cuối trang: `components/ScrollJump.jsx` (trong Layout, cạnh phải giữa màn hình, chỉ hiện khi đã cuộn > 300px), CSS cuối `styles/layout.css`.
 - Hộp thoại có gấu thay `window.confirm`: `lib/dialog.js` (`askConfirm` → Promise<boolean>, `notifyDone` tự tắt 2s,
   `confirmDelete(kind, name, msg)`, `notifyDeleted(kind)`) + `components/DialogHost.jsx` (trong Layout, portal, Esc / bấm ngoài = hủy, giữ Tab)
@@ -108,7 +111,7 @@ Tìm bằng `grep -n "<tên bảng hoặc hàm>"`. Các phần (số dòng xấp
 6. Hàm ~424–980: `save_lesson`, `save_assignment`, `ensure_chapter`, chấm điểm (`normalize_answer`, `short_match`,
    `tf_count`, `grade_answer`, `answer_points`), `submit_assignment`, `start_assignment`, `mark_notifications_seen`,
    bảng `feedback` (góp ý), `set_study_chapter` (chương đang học),
-   bảng `question_reports` + `report_exercise`, bảng `question_marks` (câu khó), `assignment_retries` + `submit_retry` (làm lại)
+   bảng `question_reports` + `report_exercise`, bảng `question_marks` (câu khó), `assignment_retries` + `submit_retry` (làm lại), bảng `answer_comments` (lời phê từng câu)
 7. Storage ~984–cuối: bucket riêng tư + policy
 Đổi schema: thêm khối idempotent (`if not exists`, `create or replace`) để người dùng chạy lại cả file trong SQL Editor.
 

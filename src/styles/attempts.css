@@ -76,6 +76,40 @@
 .ap-chip:hover {
   border-color: var(--primary);
 }
+/* Thanh kết quả (ResultProgress): câu sai đỏ, câu có lời phê tím, vạch tiến độ = tỉ lệ câu đúng */
+.ap-wrong {
+  color: var(--danger);
+}
+.ap-chip.is-wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.ap-chip.is-noted {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.ap-fill.is-ok {
+  background: var(--ok);
+}
+
+/* Lời phê từng câu "Giáo viên chấm:" */
+.teacher-note {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+}
+.teacher-note p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.teacher-note-field {
+  margin: 0.6rem 0 0;
+}
+.teacher-note-field textarea {
+  font-family: inherit;
+}
 
 /* Nút "Câu khó": đứng bên phải nhãn câu, trước nút Báo lỗi đề */
 .mh-btn {

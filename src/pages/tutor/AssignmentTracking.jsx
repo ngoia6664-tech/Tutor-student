@@ -15,10 +15,12 @@ import Markdown from '../../components/Markdown.jsx'
 import ImageGallery from '../../components/ImageGallery.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import Icon from '../../components/Icon.jsx'
-import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
+import { askConfirm, confirmDelete, notifyDeleted, notifyDone } from '../../lib/dialog.js'
 import AnswerKey from '../../components/AnswerKey.jsx'
+import ResultProgress from '../../components/ResultProgress.jsx'
+import { NOTE_LABEL, saveAnswerNotes } from '../../lib/answerNotes.js'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
-import { examStructure, examSummary, groupExercises, minutesUsed, viNum } from '../../lib/exam.js'
+import { examStructure, examSummary, groupExercises, minutesUsed, questionLabels, viNum } from '../../lib/exam.js'
 import { retryScore } from '../../lib/retries.js'
 import { toggleGradeDock, useGradeDockOpen, useGradingMode } from '../../lib/gradeDock.js'
 
@@ -130,6 +132,7 @@ export default function AssignmentTracking() {
               limit={a.is_exam ? a.time_limit_minutes : null}
               answers={data.answersByStudent[current.student_id] || {}}
               retries={data.retriesByStudent[current.student_id] || []}
+              notes={data.notesByStudent[current.student_id] || {}}
               onChanged={() => {
                 // Chấm xong danh sách sắp xếp lại: giữ nguyên học sinh đang xem
                 setPicked(current.student_id)
@@ -204,11 +207,12 @@ function GradeDock({ list, currentId, onPick }) {
 
 // Bài làm học sinh gõ / chọn trong app, kèm kết quả máy chấm từng câu.
 // Đề thi: chia phần, hiện điểm từng câu. Đáp án + phương pháp giải đặt ngay dưới bài làm để so (như học sinh thấy sau khi nộp),
-// ẩn / hiện được bằng nút ở đầu.
-function AnswerSheet({ exercises, answers, studentId, isExam }) {
+// ẩn / hiện được bằng nút ở đầu. Đã nộp: thanh câu sai dính đầu trang (bấm để nhảy), mỗi câu có ô lời phê "Giáo viên chấm:".
+function AnswerSheet({ exercises, answers, studentId, isExam, submitted, notes, onNote }) {
   const [showKey, setShowKey] = useState(true)
   return (
     <div className="answer-sheet">
+      {submitted && <ResultProgress exercises={exercises} answers={answers} labels={questionLabels(exercises, isExam)} notes={notes} idPrefix="g-" />}
       <div className="row" style={{ marginBottom: '0.5rem' }}>
         <button type="button" className="btn btn-small btn-ghost" onClick={() => setShowKey((v) => !v)} aria-pressed={showKey}>
           <Icon name="eye" />
@@ -221,7 +225,7 @@ function AnswerSheet({ exercises, answers, studentId, isExam }) {
           {g.items.map(({ ex, no }) => {
             const a = answers[ex.id]
             return (
-              <div key={ex.id} className="question">
+              <div key={ex.id} className="question" id={`g-${ex.id}`}>
                 <div className="question-label">
                   Câu {no} <span className="badge">{KIND_LABEL[ex.kind]}</span>
                   {isExam && a && <PointsBadge ex={ex} answer={a} />}
@@ -246,6 +250,15 @@ function AnswerSheet({ exercises, answers, studentId, isExam }) {
                 {showKey && ex.correct == null && !ex.answer_md && !ex.method_md && (
                   <p className="muted small">Câu này chưa nhập đáp án.</p>
                 )}
+                <label className="field teacher-note-field">
+                  <span>{NOTE_LABEL}</span>
+                  <textarea
+                    rows={notes[ex.id] ? 2 : 1}
+                    value={notes[ex.id] || ''}
+                    onChange={(e) => onNote(ex.id, e.target.value)}
+                    placeholder="Lời phê cho câu này (học sinh sẽ thấy)"
+                  />
+                </label>
               </div>
             )
           })}
@@ -267,7 +280,7 @@ function ExamStructureNote({ exercises }) {
   )
 }
 
-function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged }) {
+function GradeCard({ rec, exercises, isExam, limit, answers, retries, notes: savedNotes, onChanged }) {
   const used = minutesUsed(rec.started_at, rec.submitted_at)
   const sum = autoSummary(exercises, answers)
   const exam = isExam ? examSummary(exercises, answers) : null
@@ -278,6 +291,8 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
   const [showSheet, setShowSheet] = useState(rec.status !== 'todo')
   const [score, setScore] = useState(rec.score ?? '')
   const [feedback, setFeedback] = useState(rec.feedback ?? '')
+  // Lời phê từng câu đang gõ; ghi cùng lúc "Lưu chấm" / "Cho nộp lại"
+  const [notes, setNotes] = useState(savedNotes)
   const [images, setImages] = useState(null) // null = chưa tải
   const [imgLoading, setImgLoading] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -299,13 +314,23 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
 
   async function saveGrade(e) {
     e.preventDefault()
-    if (rec.status === 'todo' && !window.confirm('Học sinh chưa nộp bài. Vẫn chấm và đánh dấu "Đã chấm"?')) return
     const num = score === '' ? null : Number(score)
     if (num !== null && (Number.isNaN(num) || num < 0)) return setError('Điểm không hợp lệ.')
+    if (
+      rec.status === 'todo' &&
+      !(await askConfirm({
+        title: 'Học sinh chưa nộp bài',
+        message: 'Vẫn chấm và đánh dấu "Đã chấm"?',
+        say: 'Bạn này chưa nộp bài đâu nha. Vẫn chấm luôn chứ?',
+        confirmText: 'Vẫn chấm',
+      }))
+    )
+      return
     setBusy(true)
     setError(null)
     setSaved(false)
     try {
+      await saveAnswerNotes(rec.assignment_id, rec.student_id, notes, savedNotes)
       unwrap(
         await supabase
           .from('assignment_recipients')
@@ -322,20 +347,30 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
     }
   }
 
-  // Cho học sinh nộp lại: xóa ảnh cũ, đưa về trạng thái chưa nộp
+  // Cho học sinh nộp lại: lưu nhận xét + lời phê từng câu (học sinh vẫn thấy khi sửa bài), xóa ảnh cũ, đưa về trạng thái chưa nộp.
+  // Dùng hộp thoại của app: window.confirm bị chặn trong app cài trên điện thoại nên trước đây bấm không có tác dụng.
   async function reopen() {
-    if (!window.confirm('Mở lại để học sinh nộp lại? Ảnh nộp kèm sẽ bị xóa; câu trả lời đã gõ/chọn được giữ để học sinh sửa. Lần nộp tới sẽ thành bài chính thức. (Học sinh đã xem đáp án.)')) return
+    const ok = await askConfirm({
+      title: `Cho ${rec.student?.full_name || 'học sinh'} nộp lại?`,
+      message:
+        'Câu trả lời đã gõ/chọn được giữ để học sinh sửa; ảnh nộp kèm sẽ bị xóa. Nhận xét và lời phê từng câu được lưu lại để học sinh xem khi sửa. Lần nộp tới sẽ thành bài chính thức. (Học sinh đã xem đáp án.)',
+      say: 'Cho bạn ấy thêm một cơ hội sửa bài nhé!',
+      confirmText: 'Cho nộp lại',
+    })
+    if (!ok) return
     setBusy(true)
     setError(null)
     try {
+      await saveAnswerNotes(rec.assignment_id, rec.student_id, notes, savedNotes)
       await removeSubmissionFiles(rec.submission_path)
       unwrap(
         await supabase
           .from('assignment_recipients')
-          .update({ status: 'todo', submission_path: null, submitted_at: null, started_at: null })
+          .update({ status: 'todo', feedback: feedback.trim() || null, submission_path: null, submitted_at: null, started_at: null })
           .eq('assignment_id', rec.assignment_id)
           .eq('student_id', rec.student_id)
       )
+      notifyDone({ title: 'Đã mở lại bài', say: 'Học sinh đã có thể sửa và nộp lại bài rồi ✍️' })
       onChanged()
     } catch (err) {
       setError(errMsg(err))
@@ -404,7 +439,17 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
           </button>
         )}
       </div>
-      {showSheet && <AnswerSheet exercises={exercises} answers={answers} studentId={rec.student_id} isExam={isExam} />}
+      {showSheet && (
+        <AnswerSheet
+          exercises={exercises}
+          answers={answers}
+          studentId={rec.student_id}
+          isExam={isExam}
+          submitted={rec.status !== 'todo'}
+          notes={notes}
+          onNote={(id, v) => setNotes((prev) => ({ ...prev, [id]: v }))}
+        />
+      )}
       {images && (
         <div style={{ marginBottom: '0.75rem' }}>
           <ImageGallery images={images} />
@@ -436,7 +481,10 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, onChanged 
       </label>
 
       <ErrorBox message={error} />
-      {saved && <div className="alert alert-ok">Đã lưu điểm và nhận xét.</div>}
+      {saved && <div className="alert alert-ok">Đã lưu điểm, nhận xét và lời phê từng câu.</div>}
+      {rec.status === 'todo' && Object.keys(answers).length > 0 && (
+        <p className="muted small">↻ Đã mở lại cho học sinh nộp lại, đang chờ học sinh sửa bài.</p>
+      )}
 
       <div className="row">
         <button type="submit" className="btn btn-primary" disabled={busy}>

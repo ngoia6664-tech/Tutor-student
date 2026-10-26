@@ -26,6 +26,8 @@ import SubmitPanel from './SubmitPanel.jsx'
 import ReportQuestion from '../../components/ReportQuestion.jsx'
 import MarkHard from '../../components/MarkHard.jsx'
 import AnswerProgress from '../../components/AnswerProgress.jsx'
+import ResultProgress from '../../components/ResultProgress.jsx'
+import { loadAnswerNotes, NOTE_LABEL } from '../../lib/answerNotes.js'
 
 // Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài)
 const draftKey = (assignmentId, studentId, retry = false) => `${retry ? 'draft-retry' : 'draft-answers'}:${studentId}:${assignmentId}`
@@ -55,7 +57,7 @@ export default function StudentAssignment() {
 
   const { data, loading, error, reload } = useAsync(async () => {
     // Lượt 1: mọi thứ chỉ cần id bài (chạy song song)
-    const [rec, assignment, exercises, myAnswers] = await Promise.all([
+    const [rec, assignment, exercises, myAnswers, notes] = await Promise.all([
       supabase.from('assignment_recipients').select('*').eq('assignment_id', id).eq('student_id', profile.id).maybeSingle().then(unwrap),
       supabase.from('assignments').select('id, title, type, due_date, lesson_id, chapter_id, is_exam, time_limit_minutes').eq('id', id).maybeSingle().then(unwrap),
       supabase.from('exercises').select('id, sort_order, kind, question_md, options').eq('assignment_id', id).order('sort_order').then(unwrap),
@@ -65,6 +67,7 @@ export default function StudentAssignment() {
         .eq('assignment_id', id)
         .eq('student_id', profile.id)
         .then(unwrap),
+      loadAnswerNotes(id, profile.id),
     ])
     if (!rec || !assignment) throw new Error('Không tìm thấy bài tập, hoặc bài này không được giao cho bạn.')
 
@@ -83,7 +86,7 @@ export default function StudentAssignment() {
     ])
     const keys = Object.fromEntries(keyRows.map((k) => [k.exercise_id, k]))
     const answers = Object.fromEntries(myAnswers.map((a) => [a.exercise_id, a]))
-    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports, marks, retries }
+    return { rec, assignment, exercises: exercises.map((e) => ({ ...e, kind: e.kind || 'essay' })), keys, images, answers, reports, marks, retries, notes: notes[profile.id] || {} }
   }, [id, profile.id])
 
   if (loading && !data) return <Loading />
@@ -247,6 +250,10 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
 
   const groups = groupExercises(exercises, isExam)
   const labels = questionLabels(exercises, isExam)
+  // Gia sư "Cho nộp lại": đã có câu trả lời lần trước mà bài về trạng thái chưa nộp → hiện nhận xét + lời phê để sửa
+  const reopened = !retry && Object.keys(data.answers).length > 0
+  const notes = reopened ? data.notes : {}
+  const notedCount = Object.keys(notes).length
 
   if (clock.timed && !clock.startedAt) {
     return <StartGate minutes={a.time_limit_minutes} count={exercises.length} clock={clock} />
@@ -255,6 +262,18 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
   return (
     <>
       <AnswerProgress exercises={exercises} answers={answers} labels={labels} />
+      {reopened && (
+        <div className="alert alert-info">
+          ↻ <strong>Gia sư đã cho bạn nộp lại bài này.</strong> Câu trả lời lần trước vẫn giữ nguyên, hãy sửa rồi bấm "Nộp bài".
+          {notedCount > 0 && ` Có ${notedCount} câu có lời phê "${NOTE_LABEL}" ngay dưới câu.`}
+          {rec.feedback && (
+            <div style={{ marginTop: '0.4rem' }}>
+              <div className="box-label">Nhận xét của gia sư</div>
+              <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{rec.feedback}</p>
+            </div>
+          )}
+        </div>
+      )}
       {clock.timed && <TimerBar remaining={clock.remaining} total={a.time_limit_minutes * 60} />}
       {clock.timeUp && (
         <div className="alert alert-warn">
@@ -289,6 +308,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
                   value={answers[ex.id]}
                   onChange={(v) => setAnswers((prev) => ({ ...prev, [ex.id]: v }))}
                 />
+                <TeacherNote note={notes[ex.id]} />
               </div>
             ))}
           </Fragment>
@@ -379,9 +399,12 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
   const answers = attempt ? attempt.answers || {} : data.answers
   const sum = autoSummary(exercises, answers)
   const groups = groupExercises(exercises, isExam)
+  // Lời phê gắn với bài chính thức: xem lần làm lại thì ẩn
+  const notes = attempt ? {} : data.notes
 
   return (
     <>
+      <ResultProgress exercises={exercises} answers={answers} labels={questionLabels(exercises, isExam)} notes={notes} />
       {rec.status === 'checked' && (
         <div className="card">
           <h2>Kết quả</h2>
@@ -472,6 +495,7 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
                     </div>
                   )}
                   {!k && <p className="muted small">Gia sư chưa nhập đáp án cho câu này.</p>}
+                  <TeacherNote note={notes[ex.id]} />
                 </div>
               )
             })}
@@ -486,6 +510,17 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
         </div>
       )}
     </>
+  )
+}
+
+// Lời phê của gia sư cho một câu ("Giáo viên chấm:")
+function TeacherNote({ note }) {
+  if (!note) return null
+  return (
+    <div className="teacher-note">
+      <div className="box-label">{NOTE_LABEL}</div>
+      <p>{note}</p>
+    </div>
   )
 }
 

@@ -1,5 +1,6 @@
 import { supabase, unwrap, SUBMISSION_BUCKET } from './supabase.js'
 import { loadRetries } from './retries.js'
+import { loadAnswerNotes } from './answerNotes.js'
 
 // Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_id>
 export async function removeSubmissionFiles(folder) {
@@ -39,7 +40,7 @@ function firstKey(k) {
 
 // Tải bài tập đầy đủ (kể cả đáp án và câu trả lời) cho trang sửa / theo dõi của gia sư
 export async function fetchAssignmentFull(id) {
-  const [assignment, exercises, recipients, answers, retries] = await Promise.all([
+  const [assignment, exercises, recipients, answers, retries, notesByStudent] = await Promise.all([
     supabase.from('assignments').select('*').eq('id', id).maybeSingle().then(unwrap),
     supabase
       .from('exercises')
@@ -50,6 +51,7 @@ export async function fetchAssignmentFull(id) {
     supabase.from('assignment_recipients').select('*, student:profiles(id, full_name, group_name, grade)').eq('assignment_id', id).then(unwrap),
     supabase.from('submission_answers').select('student_id, exercise_id, answer, is_correct, points').eq('assignment_id', id).then(unwrap),
     loadRetries({ assignment_id: id }),
+    loadAnswerNotes(id),
   ])
   if (!assignment) throw new Error('Không tìm thấy bài tập (có thể đã bị xóa).')
   // Các lần học sinh tự làm lại (không phải điểm chính thức): { student_id: [lần 1, lần 2, ...] }
@@ -78,6 +80,7 @@ export async function fetchAssignmentFull(id) {
     recipients,
     answersByStudent,
     retriesByStudent,
+    notesByStudent,
   }
 }
 

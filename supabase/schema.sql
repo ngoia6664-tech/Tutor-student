@@ -1192,6 +1192,35 @@ $$;
 revoke all on function public.submit_retry(uuid, jsonb) from public;
 grant execute on function public.submit_retry(uuid, jsonb) to authenticated;
 
+-- ---------- Lời phê từng câu ("Giáo viên chấm:") ----------
+-- Gia sư ghi khi chấm; học sinh chỉ đọc (cả lúc gia sư "Cho nộp lại" để biết sửa chỗ nào).
+-- Tách khỏi submission_answers vì nộp lại sẽ xóa/ghi lại câu trả lời, và câu bỏ trống vẫn phê được.
+create table if not exists public.answer_comments (
+  assignment_id  uuid not null,
+  student_id     uuid not null,
+  exercise_id    uuid not null references public.exercises (id) on delete cascade,
+  note           text not null,
+  updated_at     timestamptz not null default now(),
+  primary key (exercise_id, student_id),
+  foreign key (assignment_id, student_id)
+    references public.assignment_recipients (assignment_id, student_id) on delete cascade
+);
+
+create index if not exists answer_comments_rec_idx on public.answer_comments (assignment_id, student_id);
+
+alter table public.answer_comments enable row level security;
+
+drop policy if exists answer_comments_tutor_all  on public.answer_comments;
+drop policy if exists answer_comments_own_select on public.answer_comments;
+
+create policy answer_comments_tutor_all on public.answer_comments
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+create policy answer_comments_own_select on public.answer_comments
+  for select to authenticated
+  using (student_id = auth.uid());
+
 
 -- =====================================================================
 -- 7. STORAGE (bucket riêng tư + policy)
