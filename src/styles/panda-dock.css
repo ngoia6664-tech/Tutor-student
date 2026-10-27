@@ -1,0 +1,70 @@
+/* ===== Icon shop nổi góc trái dưới (components/PandaDock.jsx) =====
+   Học sinh: nằm trên nút Góp ý (feedback.css); gia sư không có nút Góp ý nên hạ xuống sát đáy.
+   Chỉ một hình ngôi cửa hàng nhỏ + viên Xu / Sao bên dưới. Không dùng backdrop-filter. */
+.panda-dock {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: calc(4.6rem + env(safe-area-inset-bottom));
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  max-width: calc(100vw - 2rem);
+}
+.panda-dock.is-tutor { bottom: calc(1rem + env(safe-area-inset-bottom)); }
+
+.panda-shop-icon {
+  display: block;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(124, 58, 237, 0.55));
+  transition: transform 0.25s var(--ease), filter 0.25s var(--ease);
+}
+.panda-shop-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.panda-shop-icon:hover {
+  transform: translateY(-3px) scale(1.08);
+  filter: drop-shadow(0 6px 12px rgba(217, 70, 239, 0.8));
+}
+.panda-shop-icon:active { transform: scale(0.94); }
+.panda-shop-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 12px; }
+.shop-sparkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: shop-twinkle 3.2s ease-in-out infinite;
+}
+@keyframes shop-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.7); }
+}
+
+/* Viên Xu / Sao: cùng kiểu thẻ nổi với các phần khác của app */
+.panda-dock-stats {
+  display: inline-flex;
+  margin-left: 0.25rem;
+  padding: 0.22rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+}
+.coin-star-compact {
+  font-size: 0.8rem;
+}
+.coin-star-compact .coin-star-unit { display: none; }
+.coin-star-compact .is-coin b { color: var(--shop-gold); }
+:root[data-theme='light'] .coin-star-compact .is-coin b { color: #a16207; }
+
+@media (prefers-reduced-motion: reduce) {
+  .panda-shop-icon { transition: none; }
+  .shop-sparkle { animation: none; }
+}

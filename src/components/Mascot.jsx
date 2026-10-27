@@ -9,6 +9,9 @@ import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 import { mascotSound } from '../lib/spaceSound.js'
 import FormulaText, { plainText } from './FormulaText.jsx'
 import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './PandaArt.jsx'
+import { useEquippedOutfit } from '../contexts/PandaShopContext.jsx'
+import { LOOKS } from './panda/outfitLooks.jsx'
+import { INTERACTIONS, PandaActLayer, actClass, stageOverflow, useHold, usePandaAct } from './panda/PandaAct.jsx'
 
 // Giáo sư Gấu Trúc: linh vật góc dưới phải.
 // mood: idle ngồi · climb leo tre (quay lưng, ôm cây) · walk đi bộ ục ịch · roll lăn tròn → dizzy chóng mặt
@@ -17,6 +20,9 @@ import { BackPanda, BallPanda, Bamboo, FrontPanda, SleepingPanda } from './Panda
 // - Bấm vào: giảng một mẹo trên bảng đen; lần đầu ưu tiên nhắc bài (học sinh: quá hạn / sắp hết hạn; gia sư: câu bị báo lỗi).
 //   Bấm dồn dập (≥ 3 lần / 4 giây) thì trêu lại, nhắc làm bài, quá 7 lần thì giận: mood 'sulk' nằm cuộn giả ngủ vài giây.
 // - Nghe sự kiện 'mascot' (lib/celebrate.js) để nói / nhảy lên ăn mừng.
+// - Mặc bộ đang chọn ở Panda Fashion Shop ở MỌI tư thế (ngồi, leo, lăn, ngủ...) + viền sáng theo bộ (styles/panda-skin.css).
+// - Bộ từ Hiếm ⭐⭐ có hoạt cảnh riêng (components/panda/PandaAct.jsx): GIỮ chuột / ngón tay trên gấu khi gấu đang rảnh → mood 'act',
+//   gấu diễn rồi về idle. Bấm thường vẫn là nhắc bài / giảng mẹo. Không bao giờ tự phát.
 // - Rảnh thì cứ ~10 giây làm một trò (leo tre hay gặp nhất); 30 giây không thao tác thì ngủ.
 // - Tự ẩn khi đang làm đề có tính giờ (styles/mascot.css). "Cất gấu" thu gấu lại thành nút nhỏ, nhớ trên máy này.
 const HIDE_KEY = 'mascot-hidden'
@@ -112,6 +118,9 @@ function MascotBody() {
   const timers = useRef({})
   const reminded = useRef(false)
   const pokes = useRef([]) // thời điểm các lần bấm gần đây (chống bấm dồn dập)
+  const outfit = useEquippedOutfit()
+  const look = LOOKS[outfit.id]
+  const act = usePandaAct(outfit)
   const studying = useStudying()
   const studyingRef = useRef(studying)
   studyingRef.current = studying
@@ -254,7 +263,32 @@ function MascotBody() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grading])
 
+  // Hoạt cảnh của trang phục: chặn mọi trò khác (mood 'act'), diễn xong về idle. Máy bật giảm chuyển động: chỉ nói câu của hoạt cảnh
+  function playAct() {
+    if (reduceMotion) {
+      say(INTERACTIONS[outfit.interaction].line)
+      return true
+    }
+    clearTimeout(timers.current.bubble)
+    clearTimeout(timers.current.activity)
+    if (!act.play(rest)) return false
+    sleepy.current = false
+    setBubble(null)
+    setMood('act')
+    sound('cheer')
+    return true
+  }
+
+  // Giữ trên gấu: chỉ diễn khi đang rảnh (không đang làm bài / đang diễn / đang giận)
+  function onHold() {
+    if (studyingRef.current || !['idle', 'sleep', 'talk', 'teach'].includes(moodRef.current)) return
+    playAct()
+  }
+  const hold = useHold(onHold, act.has)
+
   async function onPoke() {
+    if (hold.consumeClick()) return // thả tay sau khi giữ: không tính là bấm
+    if (moodRef.current === 'act') return // đang diễn: không chạy lại / chồng hoạt cảnh
     if (grading) {
       if (moodRef.current === 'sleep') setMood('idle')
       // Hiện sổ: nhảy lên vung đũa; ẩn sổ: nhún người cất sổ (CSS ở styles/grading.css)
@@ -303,10 +337,28 @@ function MascotBody() {
     rest()
   }
 
+  // Hoạt cảnh bị dừng giữa chừng (đổi bộ) mà mood vẫn 'act': về idle
+  useEffect(() => {
+    if (!act.playing && moodRef.current === 'act') rest()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [act.playing])
+
+  // Đang diễn: gấu bước ra khỏi góc để cả sân diễn nằm trong màn hình (panda-act.css .mascot-body.is-acting)
+  const ov = act.run ? stageOverflow(outfit.stage) : null
+  const actShift = ov ? { '--act-r': ov.right, '--act-b': ov.bottom } : undefined
+  const glowVars = outfit.glow ? { '--glow-a': outfit.glow[0], '--glow-b': outfit.glow[1] } : undefined
+
   if (hidden) {
     return (
-      <button type="button" className="mascot-restore" onClick={show} aria-label="Gọi Giáo sư Gấu Trúc" title="Gọi Giáo sư Gấu Trúc">
-        <FrontPanda />
+      <button
+        type="button"
+        className={`mascot-restore${outfit.glow ? ` has-glow glow-${outfit.tier}` : ''}`}
+        style={glowVars}
+        onClick={show}
+        aria-label="Gọi Giáo sư Gấu Trúc"
+        title="Gọi Giáo sư Gấu Trúc"
+      >
+        <FrontPanda look={look} />
       </button>
     )
   }
@@ -314,16 +366,22 @@ function MascotBody() {
   // Đang làm bài: mọi trạng thái rảnh (kể cả đang dở trò) hiện thành ngồi đọc sách đợi
   const shown = studying && ['idle', 'sleep', 'walk', 'climb', 'roll', 'dizzy'].includes(mood) ? 'wait' : mood
 
+  // Mọi tư thế đều mặc bộ đang chọn (look = undefined: Giáo sư Gấu Trúc gốc)
   let art
-  if (shown === 'climb') art = <BackPanda />
-  else if (shown === 'roll') art = <BallPanda />
-  else if (shown === 'sleep' || shown === 'sulk') art = <SleepingPanda /> // giận: nằm cuộn giả ngủ
+  if (shown === 'climb') art = <BackPanda look={look} />
+  else if (shown === 'roll') art = <BallPanda look={look} />
+  else if (shown === 'sleep' || shown === 'sulk') art = <SleepingPanda look={look} /> // giận: nằm cuộn giả ngủ
   // Đang chấm + sổ đang mở: gấu giơ đũa chỉ lên sổ, mặt cười
-  else if (grading && dockOpen && shown === 'idle') art = <FrontPanda pose="teach" face="happy" />
-  else art = <FrontPanda pose={['teach', 'cheer', 'dizzy', 'wait'].includes(shown) ? shown : 'sit'} />
+  else if (grading && dockOpen && shown === 'idle') art = <FrontPanda pose="teach" face="happy" look={look} />
+  // Đang diễn: tư thế riêng của bộ (vd. Kiếm Sĩ / Pháp Sư cầm kiếm, trượng giơ lên)
+  else if (shown === 'act') art = <FrontPanda pose={outfit.pose} face={outfit.face} look={look} actFaces={!!act.run} />
+  else art = <FrontPanda pose={['teach', 'cheer', 'dizzy', 'wait'].includes(shown) ? shown : 'sit'} face={outfit.face} look={look} />
 
   return (
-    <div className={`mascot is-${shown}${grading && dockAnim ? ` dock-${dockAnim}` : ''}`}>
+    <div
+      className={`mascot is-${shown}${grading && dockAnim ? ` dock-${dockAnim}` : ''}${outfit.glow ? ` has-glow glow-${outfit.tier}` : ''}`}
+      style={glowVars}
+    >
       {bubble?.kind === 'board' && (
         <div key={bubble.id} className="mascot-board" role="status">
           <div className="mascot-board-title">Gấu Trúc giảng bài</div>
@@ -343,13 +401,17 @@ function MascotBody() {
         {shown === 'climb' && <Bamboo />}
         <button
           type="button"
-          className="mascot-body"
+          className={`mascot-body${actClass(act.run, stillMascot)}${hold.holding ? ' is-holding' : ''}`}
           onClick={onPoke}
-          aria-label={grading ? `Giáo sư Gấu Trúc: bấm để ${dockOpen ? 'ẩn' : 'hiện'} Sổ chấm bài` : 'Giáo sư Gấu Trúc: bấm để nghe giảng'}
+          {...hold.handlers}
+          style={actShift}
+          aria-label={grading ? `Giáo sư Gấu Trúc: bấm để ${dockOpen ? 'ẩn' : 'hiện'} Sổ chấm bài` : `Giáo sư Gấu Trúc: bấm để nghe giảng${act.has ? ', giữ để xem hoạt cảnh' : ''}`}
           aria-expanded={grading ? dockOpen : undefined}
           title={grading ? `Bấm để ${dockOpen ? 'ẩn' : 'hiện'} Sổ chấm bài` : undefined}
         >
+          <PandaActLayer run={act.run} lite={stillMascot} part="back" stage={outfit.stage} />
           {art}
+          <PandaActLayer run={act.run} lite={stillMascot} stage={outfit.stage} />
           {shown === 'wait' && (
             <span className="mascot-dots" aria-hidden="true">
               <i />

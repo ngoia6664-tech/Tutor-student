@@ -4,6 +4,7 @@ import { lazy } from 'react'
 const loaders = {
   student: {
     StudentHome: () => import('./student/StudentHome.jsx'),
+    StudentShop: () => import('./student/StudentShop.jsx'),
     StudentAssignment: () => import('./student/StudentAssignment.jsx'),
     StudentResults: () => import('./student/StudentResults.jsx'),
     StudentMistakes: () => import('./student/StudentMistakes.jsx'),

@@ -1,4 +1,6 @@
 import { FrontPanda } from './PandaArt.jsx'
+import { useEquippedOutfit } from '../contexts/PandaShopContext.jsx'
+import { LOOKS } from './panda/outfitLooks.jsx'
 
 // Cảnh minh họa trong hộp thoại (components/DialogHost.jsx): gấu với biểu cảm hợp hành động + đồ vật bên cạnh.
 // Chuyển động nhẹ do styles/dialog.css điều khiển qua các class dlg-*.
@@ -106,11 +108,12 @@ const SCENES = {
 // Không có scene: gấu theo pose truyền vào, kèm emoji (nếu có)
 export default function DialogScene({ scene, pose = 'sit', emoji }) {
   const s = SCENES[scene]
+  const outfit = useEquippedOutfit() // gấu hộp thoại mặc bộ đang chọn ở Panda Fashion Shop
   return (
     <>
       <div className={`dlg-scene ${s ? `is-${scene}` : ''}`} aria-hidden="true">
         <div className="dlg-scene-panda">
-          <FrontPanda pose={s?.pose || pose} face={s?.face} />
+          <FrontPanda pose={s?.pose || pose} face={s?.face} look={LOOKS[outfit.id]} />
         </div>
         {s && <div className="dlg-scene-prop">{s.prop}</div>}
       </div>

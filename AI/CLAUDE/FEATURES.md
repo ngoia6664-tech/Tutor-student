@@ -127,3 +127,45 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 - Học sinh không UPDATE `assignment_recipients` / không ghi `submission_answers` trực tiếp, chỉ qua hàm RPC.
 - Lưu nhiều bảng dùng RPC `save_assignment` / `save_lesson` (1 transaction).
 - Trang mới: thêm vào `pages/registry.js` + route trong `App.jsx`.
+
+## Panda Fashion Shop (Xu / Sao)
+- Gấu GIỮ SVG gốc (`PandaArt.jsx`). `FrontPanda` nhận prop `look` (hàm trả về các khe: defs, back, body (cắt theo thân), hat, neck, glasses,
+  overFace, propR, propL, front) + `motion`. Không truyền `look` = Giáo sư Gấu Trúc như cũ (Mascot / DialogScene / SpaceExplorer không đổi).
+- `lib/outfits.js`: 11 bộ, field `tier` (common/rare1/rare2/rare3/premium), `price`, `pose`, `face`, `effect`. Thêm bộ = 1 dòng + 1 hàm trong `components/panda/outfitLooks.jsx`.
+- `components/panda/SkinEffect.jsx`: `EFFECTS[effect]` = { Back, Front, float? }, SVG viewBox -30..150 (toạ độ trùng khung gấu 120). SMIL chỉ transform/opacity;
+  vật bay quỹ đạo dùng `ellipsePath` + `Depth` (mờ khi ở sau lưng). Hiếm ⭐ soft-sparkle; ⭐⭐ DJ dj-wave, Kiếm Sĩ star-blade; ⭐⭐⭐ star-orbit; Cực phẩm space-drift / galaxy-orbit.
+- `OutfitPanda`: chỉ `showcase` (phòng thử đồ) mới gắn hiệu ứng; lưới thẻ tĩnh. Chuyển động theo Cài đặt "Animation gấu" + reduced-motion; khuất màn hình → pauseAnimations.
+- Shop: `StudentShop` (header + `.shop-hud-anchor` Xu/Sao dính dưới topbar qua `useStickyTop`), `shop/PandaShowcase`, `shop/OutfitGrid` (tab Cửa hàng / Tủ đồ + lọc độ hiếm),
+  `shop/OutfitCard`. CSS `styles/panda-shop.css` (biến độ hiếm `--t1/--t2/--tglow` trên `.tier-*`), sân khấu tối cả 2 theme (`--shop-stage` trong base.css).
+- `PandaDock` (Layout): hình ngôi cửa hàng nhỏ nhiều màu `ShopIcon` (không nền tròn) (bấm vào `/shop`) + viên Xu/Sao bên dưới, góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. CSS `styles/panda-dock.css`.
+- Dữ liệu: `contexts/PandaShopContext` → `lib/pandaShop.js` (TODO backend: ledger Xu/Sao, mua nguyên tử, mặc đồ). Hiện: học sinh 0 Xu / 0 Sao, chỉ có bộ mặc định,
+  nút Mua khoá; gia sư sở hữu hết, mặc thử được (chỉ trong bộ nhớ). Không lưu Xu / sở hữu vào localStorage.
+- Đồng bộ mọi tư thế: `BackPanda` / `BallPanda` / `SleepingPanda` cũng nhận `look`; mỗi bộ có `palette` { cloth, trim, cape?, helmet?, pack? }
+  → áo cắt theo thân tư thế đó, áo choàng thành áo khoác sau lưng / chăn đắp khi ngủ, mũ của bộ dùng lại (ngủ: thu nhỏ + nghiêng).
+- Bộ đang mặc: `useEquippedOutfit()` (PandaShopContext) → Mascot (mọi tư thế + nút gọi gấu), DialogScene, SpaceExplorer. Gia sư nhớ bộ đang mặc ở
+  localStorage `panda-tutor-outfit` (tuỳ chọn hiển thị); học sinh luôn bộ mặc định cho tới khi có backend.
+- Viền sáng (catalog `glow` [sát thân, quầng], từ Hiếm ⭐⭐): class `has-glow glow-<tier>` + biến `--glow-a/--glow-b`; `styles/panda-skin.css`
+  (drop-shadow nhiều lớp trên cả hình gấu; linh vật đổi `--pd-rim/--pd-aura/--pd-spark` sẵn có).
+- Hoạt cảnh tương tác (catalog `interaction`, từ Hiếm ⭐⭐): `components/panda/PandaAct.jsx` = registry `INTERACTIONS` { ms, line, sound (để sau), Layer({ lite, part }) }
+  + hook `usePandaAct(outfit)` (idle → playing → cooldown 0,9s → idle; đổi bộ = dừng) + `<PandaActLayer part="back|front">` (kẹp gấu ở giữa) + `actClass()`.
+  Động tác gấu = keyframes `styles/panda-act.css` trên bộ phận FrontPanda: `.pd-front` cả người, `.pd-head`, `.pd-arm-l` (vai 40,80), `.pd-arm-r` (vai 80,80),
+  `.pd-prop-l/-r` (đạo cụ), `.pd-blade-glow` (kiếm). Thời lượng keyframes = `ms`; vệt kiếm / đầu trượng tính từ góc xoay tay (sửa góc thì sửa cả 2 file).
+  DJ `dj-set` 3s · Kiếm Sĩ `star-duel` 4,6s (combo 8 nhát → im lặng → tra kiếm → hành tinh nổ) · Pháp Sư `star-summon` 5s (niệm → triệu hồi → dẫn → ra lệnh → phá huỷ)
+  · Phi Hành Gia `space-trip` 4,8s · Ngân Hà `galaxy-descent` 7,4s (tan thành bụi sao → vũ trụ + chòm sao gấu → giáng xuống quyền năng
+    → ngân hà co thành một điểm → GALAXY BURST phủ gần cả sân → ngân hà mini trên tay).
+  Sân diễn = catalog `stage` [rộng, cao] px desktop cho MỌI bộ (Học Sinh 220×240 … DJ 350×330 · Kiếm Sĩ 460×380 · Pháp Sư 430×420
+    · Phi Hành Gia 480×430 · Ngân Hà 540×470). Gấu luôn `PANDA_PX` 180px ở cùng chỗ; `stageRect` (PandaAct) đổi sang đơn vị gấu,
+    sân căn giữa theo gấu, đáy thấp hơn chân 30px; Layer nhận `box` để vụ nổ / chớp sáng lan tới mép sân.
+    Phòng thử đồ: khung cố định 560×480 (`.showcase-canvas`, co đều `--k` theo bề rộng → điện thoại không tràn, đổi bộ không nhảy),
+    `.showcase-arena` vẽ viền sân từng bộ (nở / thu mượt). Linh vật: `stageOverflow` → `--act-r/--act-b`, gấu bước ra khỏi góc
+    (thuộc tính `translate`) để cả sân nằm trong màn hình. Thẻ lưới không có sân, không diễn.
+  Mục tiêu / vụ nổ đặt bên trái hoặc phía trên (linh vật ở góc phải dưới). Chớp sáng = quầng tròn `StageFlash` (không dùng rect: thành ô vuông đè trang).
+  Biểu cảm: `FrontPanda actFaces` gắn mặt phụ `.pd-xf-focus|calm|smirk|chant|gaze|fierce|power` (PandaArt ActFaces) chỉ khi đang diễn; CSS bật/tắt cùng `.pd-face`;
+  `.pd-look` dịch ngang = quay mặt 3/4; tai nằm trong `.pd-head`. Toạ độ khi tay/thân xoay: `rotAround` / `bodyAt` (khớp số với keyframes).
+  Kích hoạt = GIỮ chuột / ngón tay `HOLD_MS` 0,55s (hook `useHold`: gấu nhún "nạp" `.is-holding`, cú click lúc thả tay bị bỏ qua); bấm thường = hành vi cũ.
+  Linh vật: giữ khi rảnh → mood 'act' (chặn trò khác, giữ / bấm lúc diễn bị bỏ qua).
+  Phòng thử đồ: giữ vào gấu (bàn phím Enter) hoặc nút "✨ Xem hoạt cảnh"; lưới thẻ không diễn.
+  Lớp cảnh ở linh vật phải `position: absolute` (mascot.css đặt mọi `.mascot-body svg` relative → lớp chiếm chỗ, đẩy gấu mất). Cài đặt "Tối ưu" (mascotAnimation tắt) = bản `lite` (giữ động tác, bớt hạt);
+  máy bật giảm chuyển động = chỉ nói câu. Selector `:root .is-acting.act-<id>` để thắng luật tắt chuyển động của settings.css.
+  Kiểm tra từng khung: trang tạm (vite) đóng băng ở mốc t — `getAnimations({subtree:true})` pause + currentTime cho CSS, `svg.pauseAnimations()` + `setCurrentTime(t)` cho SMIL
+  SAU sự kiện load (gọi sớm hơn bị bỏ qua); chụp bằng Chrome headless `--screenshot --virtual-time-budget`.

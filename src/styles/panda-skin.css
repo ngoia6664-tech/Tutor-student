@@ -1,0 +1,74 @@
+/* ===== Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tương tác: styles/panda-act.css) =====
+   Dùng chung cho linh vật góc màn hình (.mascot) và cửa hàng (.opanda). Màu viền lấy từ catalog `glow`
+   qua biến --glow-a (sát thân) / --glow-b (quầng). Viền = drop-shadow trên cả hình gấu (một lớp lọc, không lọc bên trong SVG). */
+
+/* ----- Viền sáng mờ: càng hiếm càng nhiều lớp ----- */
+.glow-rare2 {
+  --glow-filter: drop-shadow(0 0 1.5px var(--glow-a)) drop-shadow(0 0 5px color-mix(in srgb, var(--glow-b) 60%, transparent));
+}
+.glow-rare3 {
+  --glow-filter: drop-shadow(0 0 1.5px var(--glow-a)) drop-shadow(0 0 4px color-mix(in srgb, var(--glow-b) 75%, transparent))
+    drop-shadow(0 0 11px color-mix(in srgb, var(--glow-b) 38%, transparent));
+}
+.glow-premium {
+  --glow-filter: drop-shadow(0 0 1.5px var(--glow-a)) drop-shadow(0 0 4px color-mix(in srgb, var(--glow-a) 65%, transparent))
+    drop-shadow(0 0 9px color-mix(in srgb, var(--glow-b) 65%, transparent)) drop-shadow(0 0 18px color-mix(in srgb, var(--glow-b) 30%, transparent));
+}
+.opanda.has-glow .opanda-figure > svg {
+  filter: var(--glow-filter);
+}
+/* Quầng sáng phập phồng sau gấu ở phòng thử đồ (chỉ opacity, rẻ) */
+.opanda.has-glow.is-showcase::before {
+  content: '';
+  position: absolute;
+  inset: 20% 22% 12%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--glow-b) 45%, transparent), transparent);
+  animation: skin-glow-pulse 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.opanda.has-glow.is-showcase.glow-premium::before { animation-duration: 2.4s; }
+@keyframes skin-glow-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Linh vật: đổi màu viền / quầng / đốm sáng sẵn có (mascot.css) theo bộ đang mặc + thêm lớp viền theo độ hiếm */
+.mascot.has-glow {
+  --pd-rim: var(--glow-a);
+  --pd-aura: color-mix(in srgb, var(--glow-b) 42%, transparent);
+  --pd-spark: var(--glow-a);
+}
+.mascot.has-glow .mascot-body > svg:not(.act-layer),
+.mascot-restore.has-glow svg {
+  filter: var(--glow-filter);
+}
+
+/* Nút xem hoạt cảnh ở phòng thử đồ */
+.showcase-special {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.38rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--t1) 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--t1) 14%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.showcase-special:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--t1) 24%, transparent);
+  box-shadow: 0 0 14px -2px var(--t1);
+}
+.showcase-special:disabled { opacity: 0.6; cursor: default; }
+.showcase-special-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}

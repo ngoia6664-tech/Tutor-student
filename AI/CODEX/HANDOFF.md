@@ -1,131 +1,61 @@
-﻿# Codex QA Handoff — chức năng 2 và 3 của Claude
+﻿# Handoff Panda UI — 26/10/2026
 
-**Ngày:** 25/10/2026 (Asia/Saigon).
-**Mã kiểm tra:** HEAD `df80868`, gồm `08c5c09` (Sổ chấm bài) và `e228df6` (chip câu). Workspace sạch trước QA.
-**Vai trò:** đọc CURRENT_STATE.md, CLAUDE.md, AI/CLAUDE/HANDOFF.md, AI/CODEX/ROLE.md; review theo kỹ năng engineering:code-review. Không sửa source app, không chạy migration, không sửa database trực tiếp.
+Phiên này Codex làm **Engineer theo yêu cầu của Owner**, chỉ cho hai task: cửa hàng trang phục Panda và hiển thị Xu + Sao.
 
-## Kết luận
+## Đã làm
 
-- **Chức năng 2 — chấm bài:** luồng mở bài, chuyển học sinh, sổ nổi cố định, ẩn/hiện bằng gấu, tắt Linh vật, lưu trạng thái thu gọn và lưu lại điểm hiện có của tester hoạt động trong các ca đã chạy. Có **2 lỗi UI đã tái hiện** bên dưới (Medium + Low). Chưa đủ điều kiện kết luận toàn bộ luồng chấm đạt.
-- **Chức năng 3 — chip câu chưa làm:** PASS trên bài THPT thật trong chế độ làm lại: nhãn ngắn, nhảy đúng câu, đầu câu không bị thanh tiến độ che sau khi cuộn hoàn tất; cập nhật khi nhập/xóa trả lời. Bài thường nhãn “1 / 2 / 3” PASS bằng render component thật với dữ liệu tổng hợp, chưa chạy bài thường trên UI vì tester hiện không có bài đó.
-- **Review tĩnh:** thêm 1 rủi ro Medium ở “Cho nộp lại”, chưa tái hiện trên UI.
-- `npm.cmd run build`: PASS. `node AI/CODEX/qa-answer-progress.mjs`: PASS 3/3.
+- Thẻ “Tủ đồ Panda” trong StudentHome, route học sinh `/student/shop` lazy-load qua registry và App; không thêm tab điều hướng.
+- Hai tab Cửa hàng / Tủ đồ, hỗ trợ bàn phím trái/phải/Home/End; danh mục tập trung đủ 11 bộ với giá và tier theo yêu cầu.
+- 10 component lớp SVG trang phục trên FrontPanda nguyên bản; không sửa PandaArt/Mascot hoặc animation. Không có overlay hoặc tên chưa đăng ký thì chỉ vẽ Panda gốc.
+- Viền/glow tĩnh tăng theo độ hiếm; dùng biến màu base.css, theme qua data-theme. Mobile một cột, gutter cửa hàng 16px.
+- CoinStarBadge dùng lại ở StudentHome và cửa hàng. Cửa hàng truyền cùng snapshot tài khoản để số dư cập nhật cùng danh sách sau thao tác khi nối backend.
+- Không lưu Xu, Sao, sở hữu hay bộ đang mặc vào localStorage. Tắt linh vật thì không render hoặc khởi tạo import hình xem trước; registry chỉ tải mã trang, không tải SVG trang phục.
 
-## Môi trường và dữ liệu
+## File đã đổi
 
-- Localhost http://localhost:5173; Vite dev; Microsoft Edge Windows, backend Supabase đang cấu hình của project (không phải database QA riêng).
-- Desktop mặc định: khoảng 1528 × 686 (lượt học sinh 1528 × 684); viewport giả lập 390 × 844 và 360 × 800, theme sáng/tối. Không phải điện thoại thật / Safari.
-- Gia sư: Ngô Duy Anh, phiên Owner đăng nhập sẵn.
-- Bài chấm 2 học sinh: `ce3c5bae-386a-4c21-b19d-523848f87887` — “Chủ đề 5 – Dạng 2 (Bài toán sử dụng đồ thị)”, 7 câu, haanh và tuantu đều đã chấm 10.
-- Bài THPT: `be7825d2-e0ca-4896-830c-f76eae17682b` — “Chủ đề 1: Cấu trúc của chất – Sự chuyển thể – Mục II: Bài tập luyện tập (cấu trúc đề THPT)”, 28 câu (18 + 4 + 6); hoang 7,25, testuser 2,5.
-- Owner chuyển sang tài khoản học sinh testuser theo yêu cầu. Hiện tài khoản này có 0 bài cần làm, 2 kết quả, Điểm TB 2,5.
+- `src/App.jsx`
+- `src/pages/registry.js`
+- `src/pages/student/StudentHome.jsx`
+- `src/pages/student/StudentShop.jsx` (mới)
+- `src/components/CoinStarBadge.jsx` (mới)
+- `src/components/PandaOutfitPreview.jsx` (mới)
+- `src/lib/outfits.js` (mới)
+- `src/lib/pandaShop.js` (mới)
+- `src/styles/base.css`
+- `src/styles/panda-shop.css` (mới)
+- `src/index.css`
+- `AI/CODEX/HANDOFF.md` (ghi đè)
 
-**Lưu ý đối chiếu Claude:** handoff còn ghi sổ chưa commit và checklist dùng thanh sticky / gấu nói. Bản thực tế đã commit ở 08c5c09: sổ nổi góc phải, danh sách dọc, gấu im lặng và bấm để ẩn/hiện. QA theo hành vi mới này. Không coi việc gấu im lặng là lỗi. Store hiện mặc định mở ở cả mobile và desktop.
+## Adapter / placeholder cần Claude nối
 
-## Các ca chạy trên trình duyệt
+`src/lib/pandaShop.js` có TODO tiếng Việt và ba interface:
 
-| Ca | Kết quả / phạm vi |
-| --- | --- |
-| Mở bài đã chấm có 2 học sinh | PASS: mặc định haanh, chỉ 1 thẻ chấm; bài làm và đáp án mở sẵn; bảng đáp án tổng ở dưới phần chấm. |
-| Chọn tuantu / haanh trong sổ | PASS đổi đúng tên, bài làm riêng, điểm 10 và dòng active; có cuộn về đầu thẻ. Vị trí đầu thẻ có lỗi QA23-01. |
-| Sổ khi cuộn bài dài trên desktop | PASS: vị trí fixed; desktop rộng 200px, dock top 442,8 / bottom 556 ở viewport 1528 × 686, gấu top 572, có khe 16px. Sổ thấy ngay khi mở trang. |
-| Sổ mobile 390 / 360px | Rộng 180px; không tăng scrollWidth toàn trang trong ca thử. Header sổ tràn nút, xem QA23-02. Chưa kiểm tra danh sách đông hơn 2 học sinh. |
-| Bấm gấu ẩn / hiện | PASS: sổ ẩn hẳn khi có gấu, mở lại được; aria-label của gấu đổi đúng. Không phát sinh lời giảng phủ sổ trong ca này. Chưa xác minh âm thanh bằng tai. |
-| Tắt Linh vật trong Cài đặt | PASS: gấu biến mất, sổ vẫn hoạt động; bấm Ẩn còn đầu sổ và nút Hiện. Sau reload vẫn thu gọn. Đã bật lại Linh vật. |
-| Lưu điểm tester | PASS: chọn testuser bài THPT, giữ điểm 2.5 và nhận xét trống, bấm Cập nhật chấm; thấy Đã lưu, vẫn active testuser và 2.5 sau tải lại dữ liệu. Không thay điểm học sinh thật. |
-| Làm lại THPT | Mở lần 1, đủ 28 chip I.1… I.18 / II.1… II.4 / III.1… III.6, không tiền tố “Câu” trên chip thanh tiến độ. |
-| Nhảy I.3 desktop tối | PASS: thanh tiến độ bottom 242,10; đầu câu 254,14 — dưới thanh khoảng 12px. |
-| Nhảy II.4, 390px sáng | PASS sau cuộn hoàn tất: thanh bottom 305,15; đầu câu 317,23; hit-test thuộc câu đích. Câu cao 740,40px. |
-| Nhảy II.4, 360px tối | PASS sau cuộn hoàn tất: đầu câu 317,30; thanh bottom 305,15; câu cao 802,41px (hơn viewport), hit-test thuộc câu đích. |
-| Nhảy III.6, 360px tối | PASS sau cuộn hoàn tất: đầu câu 316,66; thanh bottom 305,15; hit-test thuộc câu đích. |
-| Kích thước chip / tràn trang | 390px: chip nhỏ nhất 35,2px (2,2rem). 390px clientWidth = scrollWidth = 375; 360px clientWidth = scrollWidth = 345. Thanh có vùng cuộn chip riêng. |
-| Thu / mở thanh tiến độ | PASS: Ẩn bỏ danh sách chip, Hiện khôi phục chip. |
-| Nhập / xóa câu trả lời ngắn III.6 | Nhập tạm 12345: Đã làm 1 / Chưa làm 27, chip III.6 biến mất. Xóa về trống: Đã làm 0 / Chưa làm 28, chip trở lại. Không nộp. |
-| Thoát làm lại | PASS: bấm Thôi, không làm lại, vẫn còn 3/3 lượt; Kết quả / Điểm TB vẫn 2.5. |
+- `fetchPandaAccount(studentId)` trả `{ coins, stars, ownedOutfitIds, equippedOutfitId, purchasesEnabled, equipmentEnabled }`. Hiện cố định 0 Xu, 0 Sao, chỉ `student` sở hữu sẵn và đang mặc; hai cờ đều false. Không có dữ liệu giả về tiền hoặc quyền sở hữu.
+- `purchaseOutfit(studentId, outfitId)` hiện từ chối bằng lỗi “Mua trang phục sắp mở.” Claude cần nối giao dịch mua nguyên tử, kiểm giá và quyền sở hữu ở máy chủ, trừ Xu qua ledger Xu. Chỉ bật purchasesEnabled sau khi backend thực sự sẵn sàng.
+- `equipOutfit(studentId, outfitId)` hiện từ chối bằng lỗi “Mặc trang phục sắp mở.” Claude cần nối lưu bộ đang mặc, kiểm quyền sở hữu ở máy chủ. Không xóa quyền sở hữu bộ mặc định. Chỉ bật equipmentEnabled khi backend sẵn sàng.
+- Ledger Sao phải trả tiến trình tích lũy thật, không tiêu Sao khi mua. Mở vùng kính viễn vọng bằng Sao vẫn là việc backend tương lai; phiên này chỉ giải thích ý nghĩa Sao, không đổi SpaceExplorer hay khóa kính.
+- Thao tác thành công đã gọi reload tài khoản. Chưa áp bộ đang mặc lên linh vật hoạt động ở Layout/Mascot: cần nối trạng thái từ backend vào renderer tương ứng sau này, giữ nguyên animation và xử lý đúng từng pose; phiên này chỉ hiển thị lớp đồ trong cửa hàng.
+- Thêm trang phục: thêm component lớp SVG tọa độ 120×120 trong PandaOutfitPreview, đăng ký OVERLAYS và tên overlay trong catalog. SVG V1 là hình vẽ giản lược, không phải ảnh concept.
 
-Các phép đo nhảy câu được lấy sau khi cuộn mượt kết thúc; không dùng vị trí trung gian để kết luận lỗi.
+## Đã kiểm và môi trường
 
-## Lỗi đã tái hiện trên UI
+- Windows, PowerShell, Node/npm hiện có của dự án; Vite 8.3.4, Edge qua kết nối trình duyệt; máy ngày 26/10/2026 (Asia/Saigon).
+- `npm.cmd run build` qua. `npm run build` trực tiếp bị ExecutionPolicy chặn npm.ps1; dùng npm.cmd chạy cùng script build.
+- `git diff --check` và xem git diff các file sửa; rà file mới. Không commit, không push.
+- Route thật `/student/shop` khi chưa đăng nhập chuyển về `/login`.
+- Kiểm trực quan bằng bản xem thử cục bộ tạm thời dùng chính StudentShop/catalog/adapter/SVG/CSS; chỉ thay nguồn profile trong bản sao để không cần đăng nhập. Không gọi backend mua/mặc. Bản thử được xóa sau kiểm và không thuộc đầu ra.
+- Desktop: override 1280×900, trình duyệt thực báo bề ngang CSS khoảng 1164px do mức zoom đang có; đã xem cả sáng và tối.
+- Mobile: override 390×844, bề ngang CSS thực khoảng 355px; đã xem cả sáng và tối, gutter đo 16px, scrollWidth 341px không vượt viewport; một cột.
+- Đã kiểm 11 thẻ ở Cửa hàng, chỉ một bộ mặc định trong Tủ đồ, mọi nút mua vô hiệu hóa, số dư 0/0, nhãn thiếu Xu và Sắp mở, chuyển tab bằng click và phím trái, tắt linh vật gỡ toàn bộ preview (0 phần tử). Bật lại linh vật sau khi thử.
+- StudentHome chỉ kiểm tĩnh phần tích hợp; chưa có phiên học sinh đăng nhập để kiểm toàn luồng. Chưa kiểm thiết bị Android/iPhone/PWA thật.
 
-### QA23-01 — Chuyển học sinh khiến header che tên ở đầu thẻ
+## Needs QA
 
-**Mức độ: Medium.**
-**Vị trí:** `src/pages/tutor/AssignmentTracking.jsx:64`; `src/styles/grading.css:172`.
+- Đăng nhập học sinh thật: StudentHome → thẻ Tủ đồ Panda → hai tab → quay lại; kiểm không ảnh hưởng bài cần làm, bộ lọc, StudyNow hoặc topbar.
+- Kiểm desktop/mobile cả hai theme trong Layout đầy đủ, đặc biệt topbar, linh vật nổi, nút góp ý và vùng cuối trang; mức zoom 100%, màn 320px, tablet, Android/iPhone/PWA thật.
+- Lần tải mới với linh vật tắt: kiểm Network không tải PandaOutfitPreview/PandaArt do cửa hàng; bật lại để kiểm fallback tải hình. Đã kiểm tĩnh lazy boundary và kiểm DOM khi tắt, chưa kiểm Network tải mới.
+- Rà hình của mọi bộ ở các tier, độ rõ và glow trên màn hình thật; overlay chưa biết phải trở về Panda gốc. Rà focus, phím Home/End và trình đọc màn hình.
+- Khi Claude nối backend: đủ Xu → Mua, thiếu Xu → Thiếu N Xu, đã sở hữu → Mặc, đang mặc → Đang mặc; lỗi/retry, tải lại, đổi tài khoản, mua liên tiếp, cập nhật số dư, quyền sở hữu và bộ đang mặc qua phiên mới. Không dùng dữ liệu thử trong production.
+- Kiểm backend đảm bảo bộ mặc định luôn sở hữu, không tiêu Sao, không mua hai lần/trừ hai lần; đây là QA sau khi có backend, ngoài phạm vi phiên này.
 
-Bước tái hiện:
-1. Gia sư mở bài ce3c5bae có haanh và tuantu trên desktop, theme tối.
-2. Từ vùng dưới bài, bấm tuantu trong sổ.
-3. Chờ cuộn mượt hoàn tất, quan sát đầu thẻ.
-
-Thực tế: thẻ top **76,01px**, nhưng header bottom **108,86px**. Link tên tuantu top **96,01px**, bottom **116,01px**. Hit-test tại điểm x = link.left + 10, y = link.top + 5 trả về **nav của header**, chứng minh tên bị che. Ở 390px cũng thấy thẻ top 75,61 trong khi header bottom 102,06.
-
-Nguyên nhân đối chiếu code: scroll-margin dùng `--answer-offset` fallback 64px + 0,75rem; sau bỏ GradeSwitcher, trang chấm không còn hook đo header để đặt biến này. Header thực tế cao hơn 64px.
-
-Mong đợi: tên / đầu thẻ được đặt dưới chiều cao header thực tế khi đổi học sinh.
-
-Bằng chứng: [Ảnh desktop](evidence/2026-10-25/grade-name-under-header-desktop.png).
-
-### QA23-02 — Nút Ẩn tràn khung sổ và bị cắt trên mobile
-
-**Mức độ: Low** (còn cách dùng gấu để ẩn/hiện).
-**Vị trí:** `src/styles/grading.css:66`, `:83`, `:88`, `:180`; nội dung đầu sổ ở `src/pages/tutor/AssignmentTracking.jsx:169`.
-
-Bước tái hiện:
-1. Mở bài ce3c5bae, hai học sinh đã chấm, sổ đang mở, hiển thị “hết bài chờ”.
-2. Đặt viewport 390 × 844 (tối), rồi 360 × 800 (sáng).
-3. Quan sát hàng tiêu đề và nút Ẩn.
-
-Thực tế 390px: dock right **367,20**, nút right **382,86**, trong khi clientWidth **375**. Nút vượt mép dock **15,66px** và vượt vùng nội dung **7,86px**, bị cắt ở mép phải.
-360px: dock right **336,80**, nút right **352,46**, clientWidth **345**, vẫn vượt/cắt tương tự.
-Trang không tăng scrollWidth, nên không có cách cuộn ngang để xem phần nút ngoài mép.
-
-Nguyên nhân đối chiếu code: đầu sổ là flex không wrap; title và count đều nowrap, nút flex:none, tổng kích thước vượt chiều rộng 180px.
-
-Mong đợi: đầu sổ và nút nằm trọn trong khung ở 360–390px.
-
-Bằng chứng: [390 tối](evidence/2026-10-25/grade-dock-390-dark.png), [360 sáng](evidence/2026-10-25/grade-dock-360-light.png).
-
-## Review tĩnh — chưa xác minh trên UI
-
-### QA23-S01 — Cho nộp lại thành công có thể giữ busy=true
-
-**Rủi ro: Medium.** `src/pages/tutor/AssignmentTracking.jsx:326` (reopen), `:133` (onChanged), `src/lib/useAsync.js`.
-
-- reopen đặt busy=true, khi thành công chỉ gọi onChanged; setBusy(false) chỉ ở catch.
-- onChanged giữ current.student_id; GradeCard key vẫn là student_id.
-- useAsync.reload giữ data cũ khi tải lại, không unmount GradeCard.
-- Suy ra sau mở lại thành công, component vẫn giữ busy=true: nút lưu disabled, nhãn “Đang lưu...” có thể không hết; cần đổi học sinh hoặc reload trang để thoát.
-
-Cần Builder thêm reset busy trong nhánh thành công / finally, rồi QA trên bài thử có thể mở lại.
-**Đây là suy luận từ mã, không phải lỗi đã tái hiện UI trong ca này.**
-
-Không phát hiện thay đổi schema/RPC liên quan riêng chip và sổ trong diff đã rà; chưa kiểm chứng RLS/API bằng lời gọi có đăng nhập hoặc kiểm thử đồng thời.
-
-## Kiểm chứng component với dữ liệu tổng hợp
-
-Chạy `node AI/CODEX/qa-answer-progress.mjs`, dùng Vite SSR + ReactDOMServer render component AnswerProgress thật và questionLabels thật:
-- Bài thường: chip 1 / 2 / 3 — PASS.
-- Đề thi: I.1 / I.2 / I.3 — PASS.
-- Câu 2 có lựa chọn A: chip chỉ còn 1 / 3 — PASS.
-
-Không thay thế test tương tác bài thường trên trình duyệt. Bằng chứng: [JSON component](evidence/2026-10-25/answer-progress-component.json).
-Phép đo UI: [JSON browser](evidence/2026-10-25/answer-progress-browser.json).
-Ảnh chip: [390 sáng II.4](evidence/2026-10-25/answer-progress-390-light-II4.png), [360 tối III.6](evidence/2026-10-25/answer-progress-360-dark-III6.png).
-
-## Ảnh hưởng dữ liệu và trạng thái trả lại
-
-- Chỉ bấm Cập nhật chấm cho testuser với đúng điểm cũ 2.5 và nhận xét trống. Không sửa điểm haanh, tuantu, hoang.
-- Không bấm Cho nộp lại; không xóa dữ liệu / ảnh / bài, không tạo bài mới, không nộp bài hoặc lần làm lại.
-- Đã xóa giá trị nháp tạm III.6 về trống (0/28 câu đã làm). App có thể giữ bản nháp làm lại trống trên localStorage và tự cập nhật Chương đang học theo bài vừa mở.
-- Đã trả theme tối, bật Linh vật như ban đầu, thanh tiến độ mở, sổ chấm mở; đã reset viewport.
-- Cuối ca: testuser ở /student/results, Điểm TB 2.5. [Ảnh trạng thái cuối](evidence/2026-10-25/tester-results-final.png).
-- Console có các lỗi “Cannot find menu item with id save-page / translate-page” đã xuất hiện trước tương tác; chưa xác định nguồn, không gán thành bug app.
-
-## Chưa xác minh / việc cần làm tiếp
-
-1. Builder sửa QA23-01, QA23-02; xác nhận và xử lý QA23-S01; test lại cả desktop / 360 / 390.
-2. Chưa chạy thay đổi trạng thái done → checked hoặc Cho nộp lại, sắp xếp lại danh sách sau đổi trạng thái, số “n chờ chấm”, bài chưa giao ai, danh sách đông cần cuộn, gấu cất bằng nút tròn, tắt riêng animation.
-3. Chưa test luồng làm bài chính thức chưa nộp / đề tính giờ hoặc bài thường trên UI do testuser không có bài cần làm; chế độ làm lại dùng chung AnswerProgress đã kiểm tra.
-4. Chưa test iPhone/Android thật, âm thanh/animation thực tế, API/RLS, schema, SVG (chức năng 1), các ưu tiên khác ngoài 2 và 3.
-5. Không sửa source app, commit, push hay deploy trong phiên QA này.
-
+Không sửa database/schema/migration/RLS/RPC/ledger, Daily Review/streak/thưởng, navigation, CURRENT_STATE.md hoặc AI/CLAUDE/HANDOFF.md. Skill System Design đã đọc để đối chiếu nhưng không tạo tài liệu ngoài hai task UI mà Owner giới hạn.

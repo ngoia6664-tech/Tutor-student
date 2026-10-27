@@ -21,6 +21,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - `src/lib/` — truy vấn (`assignments`, `lessons`, `students`, `submissions`, `recipients`), `supabase`, `useAsync`, `errors`,
   `format`, `chapters`, `exam`, `importJson`, `importTutorLesson`, `dialog`, `celebrate` (`mascotSay`/`celebrate`), `settings`, `theme`, `svg`...
 - `src/components/` — `Layout`, `Mascot`/`PandaArt`, `DialogHost`, `ExerciseBody`, `ExamParts`, `AnswerKey`, `Markdown`, `FilterTree`, `TreePicker`, `ScoreChart`, `NotificationBell`, `QuickAssign`...
+- Panda Fashion Shop (`/student/shop`, `/tutor/shop`): `StudentShop` + `components/shop/*`; danh mục `lib/outfits.js`; trang phục SVG
+  `components/panda/outfitLooks.jsx` (FrontPanda prop `look`), hiệu ứng `panda/SkinEffect.jsx`, hoạt cảnh khi giữ vào gấu `panda/PandaAct.jsx` + `styles/panda-act.css`, gấu mặc đồ `panda/OutfitPanda.jsx`;
+  Xu/Sao `CoinStarBadge`, nút góc `PandaDock`; dữ liệu qua adapter `lib/pandaShop.js` (CHƯA có backend). Chi tiết: FEATURES.md.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
 ## Quy ước

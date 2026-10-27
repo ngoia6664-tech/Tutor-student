@@ -3,70 +3,51 @@
 > Ghi đè mỗi ca, không giữ lịch sử dài hạn (lịch sử xem `git log`).
 
 ## Last task
-Ca 26/10/2026, 2 commit: `de1313e` (tính năng chấm bài) + commit hiệu năng / hộp thoại ngay sau. Owner yêu cầu:
-1. **Cho nộp lại sau khi chấm**: Owner báo đã lưu chấm thì không cho học sinh nộp lại được.
-2. **Lời phê từng câu** khi chấm, nhãn "Giáo viên chấm:".
-3. **Câu sai hiện ở đầu bài chấm**, bấm để nhảy (giống thanh câu chưa làm).
-4. **Trang chấm lag khi gõ** → rồi mở rộng: mọi ô nhập làm cả trang vẽ lại (vd. Nhập JSON chọn đề THPT rồi chỉnh giờ thi rất lag).
-5. **Mọi hộp hỏi / báo của app** đổi thành hộp thoại có gấu (như đăng xuất, xóa chương).
+Ca 27/10/2026 (tiếp ca polish Panda Fashion Shop). Owner yêu cầu: hoạt ảnh HÀNH VI riêng khi bấm vào gấu cho 5 bộ từ Hiếm ⭐⭐
+(DJ biểu diễn, Kiếm Sĩ múa kiếm + sao nổ loé, Pháp Sư triệu hồi hành tinh, Phi Hành Gia lên tàu bay đi rồi quay lại,
+Ngân Hà "Ngân Hà Giáng Lâm"), không chồng / spam, luôn về idle, data-driven, chế độ Tối ưu vẫn giữ động tác chính.
+Thay cho "chiêu đặc biệt nhấn giữ" của ca trước (đã gỡ `SkinSpecial.jsx`, keyframes `sp-*`).
 
 ## Status
-DONE trong code, `npm run build` qua, đã commit + push. Chưa thử trên trình duyệt / điện thoại.
-**Có đổi schema**: phải chạy lại `supabase/schema.sql` (bảng mới `answer_comments`) trước khi QA mục 2.
+DONE trong code, `npm run build` qua. **Chưa commit** (gồm toàn bộ Panda Shop từ ca 26/10). Không đổi SQL.
+Đã kiểm bằng bảng phim tạm (đã xóa): mỗi hoạt cảnh 6 khung đóng băng (CSS animation-delay âm + `svg.setCurrentTime`),
+bản đầy đủ + bản `lite`. CHƯA xem chạy liền mạch trên trình duyệt thật, CHƯA thử điện thoại, CHƯA thử trong app có đăng nhập.
 
 ## Đã làm
-### 1. Cho nộp lại (`AssignmentTracking.jsx` › `GradeCard.reopen`)
-- Nút "Cho nộp lại" đã có từ trước nhưng dùng `window.confirm` → bị chặn trong app cài trên điện thoại (PWA), bấm không có tác dụng
-  (nguyên nhân suy ra, chưa tái hiện trên máy Owner). Đổi sang `askConfirm`.
-- Khi mở lại: lưu lời phê từng câu + nhận xét chung trước, rồi xóa ảnh nộp kèm, đưa về `todo` (giữ `score`, `feedback`; câu trả lời cũ vẫn giữ).
-  Xong hiện `notifyDone`. Thẻ chấm ghi "↻ Đã mở lại cho học sinh nộp lại" khi `todo` mà đã có câu trả lời.
-- Học sinh (`StudentAssignment` › `AnswerView`): `reopened` = không phải làm lại luyện tập + có `submission_answers` + status `todo`
-  → khung "Gia sư đã cho bạn nộp lại bài này" kèm nhận xét chung + số câu có lời phê; lời phê hiện dưới từng câu khi sửa.
-### 2. Lời phê "Giáo viên chấm:" (bảng `answer_comments`, `src/lib/answerNotes.js`)
-- Bảng mới: khóa `(exercise_id, student_id)`, FK tới `assignment_recipients` (cascade). RLS: gia sư toàn quyền, học sinh chỉ đọc của mình.
-  Tách khỏi `submission_answers` vì `submit_assignment` xóa / ghi lại câu trả lời khi nộp lại, và câu bỏ trống vẫn phê được.
-- `loadAnswerNotes(assignmentId, studentId?)` → `{ student_id: { exercise_id: note } }`; bảng chưa có thì trả `{}` (không làm hỏng trang).
-  `saveAnswerNotes(..., notes, prev)` chỉ gửi câu thay đổi: có chữ → upsert, xóa trắng → xóa dòng.
-- Gia sư: ô textarea dưới từng câu trong `AnswerSheet`; ghi khi "Lưu chấm" hoặc "Cho nộp lại". `fetchAssignmentFull` trả thêm `notesByStudent`.
-- Học sinh: `TeacherNote` (khung viền đỏ `.teacher-note`) dưới câu ở ReviewView (ẩn khi đang xem một lần làm lại) và ở AnswerView khi được mở lại.
-### 3. Thanh câu sai (`src/components/ResultProgress.jsx`, CSS cuối phần thanh tiến độ trong `styles/attempts.css`)
-- Dùng lại khung `.answer-progress` + `useStickyTop` (export lại từ `AnswerProgress.jsx`). Đầu thanh: Đúng / Sai / Bỏ trống / tổng; vạch xanh = tỉ lệ đúng.
-  Mở ra: chip "Câu sai" (đỏ), "Bỏ trống", "Có lời phê" (tím) → bấm nhảy tới `${idPrefix}${exercise_id}`. Nhớ mở / thu gọn ở localStorage `result-progress-open`.
-- Học sinh: đầu ReviewView (theo lần đang xem). Gia sư: đầu `AnswerSheet` khi đã nộp, câu có id `g-<exercise_id>`.
-- Câu đúng/sai 4 ý chỉ đúng một phần (`is_correct=false`) được tính là "Sai".
-### 4. Hiệu năng ô nhập
-- Nguyên nhân chính: mỗi phím gõ vẽ lại cả trang → mọi `Markdown` dựng lại + KaTeX + `themedSvg`.
-- `components/Markdown.jsx`: bọc `memo`, plugin / `components` thành hằng số module → chỉ vẽ lại khi chữ đổi (có lợi cho cả app).
-- `AssignmentTracking`: `AnswerSheet` memo, mỗi câu là `SheetQuestion` memo, `onNote` qua `useCallback`; `questionLabels` / `groupExercises` qua `useMemo`.
-- `AssignmentEditor`: mỗi câu là `ExerciseEditCard` memo; `set` / `updateEx` / `moveEx` / `removeEx` qua `useCallback`, `labels` qua `useMemo`.
-- `ImportJson`: `LessonPreview` / `AssignmentPreview` bọc memo.
-### 5. Hộp thoại có gấu thay toàn bộ `window.confirm` / `window.alert` (`src/lib/dialog.js`)
-- Hàm mới: `notifyError(title, message)` (hộp không tự tắt), `confirmNoStudents(kind)`, `confirmDropSubmitted(count)` (cảnh xóa, nút đỏ).
-- Đã thay: lưu bài tập / bài giảng khi chưa chọn học sinh, bỏ chọn học sinh đã nộp (AssignmentEditor, QuickAssign), xóa góp ý (TutorFeedback, `confirmDelete`),
-  lỗi đánh dấu câu khó (MarkHard), chấm bài chưa nộp + Cho nộp lại (AssignmentTracking). `grep window.confirm|window.alert` trong `src/` chỉ còn fallback trong `dialog.js`.
+- Mới `components/panda/PandaAct.jsx`: `INTERACTIONS` (5 hoạt cảnh, mỗi cái 2 lớp sau/trước gấu), `usePandaAct`, `PandaActLayer`, `actClass`.
+- Mới `styles/panda-act.css`: động tác gấu (thân, đầu, 2 tay, đạo cụ, kiếm sáng) theo từng hoạt cảnh.
+- `PandaArt.jsx` FrontPanda: svg class `pd-front`; nhóm `pd-head` (đầu + mặt + mũ); nhóm `pd-prop pd-prop-l/-r` quanh đạo cụ.
+- `outfitLooks.jsx`: lưỡi kiếm có class `pd-blade-glow`.
+- `lib/outfits.js`: `special` → `interaction` (dj-set, star-duel, star-summon, space-trip, galaxy-descent).
+- `Mascot.jsx`: bỏ nhấn giữ; bấm khi rảnh → mood `act` → diễn → về idle; bấm lúc diễn bị bỏ qua; bấm trong 12s sau khi diễn = nhắc bài / giảng như cũ;
+  máy bật giảm chuyển động → chỉ nói câu của hoạt cảnh.
+- `OutfitPanda.jsx` (prop `act`, `lite`; đang diễn thì ẩn hiệu ứng thường trực), `PandaShowcase.jsx` (bấm vào gấu / nút "✨ Xem hoạt cảnh").
+- `PandaShopContext`: mặc bộ có hoạt cảnh → gấu nhắc "Bấm vào thầy để xem thầy diễn".
 
-## Files changed
-Mới: `src/lib/answerNotes.js`, `src/components/ResultProgress.jsx`.
-Sửa: `supabase/schema.sql`, `src/lib/assignments.js`, `src/lib/dialog.js`, `src/components/{AnswerProgress,Markdown,MarkHard,QuickAssign}.jsx`,
-`src/pages/tutor/{AssignmentTracking,AssignmentEditor,ImportJson,LessonEditor,TutorFeedback}.jsx`, `src/pages/student/StudentAssignment.jsx`,
-`src/styles/attempts.css`, `CLAUDE.md`.
+## Sửa sau phản hồi owner (cùng ca)
+- Linh vật góc màn hình mất gấu khi diễn: `.mascot-body svg { position: relative }` đè `.act-layer` → thêm `position: absolute` ở panda-act.css.
+- Đổi kích hoạt từ bấm sang GIỮ 0,55s (`useHold` trong PandaAct.jsx) ở linh vật + phòng thử đồ; bỏ `ACT_REST`, bấm thường luôn là nhắc bài / giảng.
 
-## Kiểm tra đã làm
-- `npm run build` qua. Chưa chạy thử trên trình duyệt / điện thoại, chưa đo hiệu năng thật.
+## Polish hoạt cảnh (cùng ca, lần 2)
+- Sân diễn theo bậc (`stage` trong INTERACTIONS), biểu cảm phụ khi diễn (ActFaces), quay mặt 3/4.
+- Viết lại Kiếm Sĩ (4,6s), Pháp Sư (5s), Ngân Hà (6,4s); DJ và Phi Hành Gia giữ nguyên (Phi Hành Gia chỉ đổi sân 1,8 + chớp sáng tròn).
+- Kiếm Sĩ thêm áo choàng lệch vai, chòm sao trên ngực, dấu tinh thể dưới mắt, hộ thủ cong + chuôi sao. Ngọc trượng Pháp Sư có class `pd-staff-orb`.
+- Đã chụp từng khung bằng Chrome headless (cả bản lite); chưa xem chạy liên tục trên máy thật / điện thoại.
 
-## Needs QA (Codex)
-0. Chạy lại `supabase/schema.sql` trong SQL Editor.
-1. Cho nộp lại: chấm (Lưu chấm) → "Cho nộp lại" → hộp gấu hiện (cả trên app cài điện thoại) → học sinh thấy khung "Gia sư đã cho bạn nộp lại",
-   câu trả lời cũ còn, nhận xét + lời phê hiện; nộp lại → gia sư thấy "Chờ chấm", chấm lại được. Ảnh nộp cũ đã bị xóa.
-2. Lời phê: gõ dưới vài câu (kể cả câu bỏ trống) → Lưu chấm → tải lại vẫn còn; xóa trắng một câu → Lưu → mất ở phía học sinh.
-   Học sinh thấy khung "Giáo viên chấm:" dưới đúng câu; xem một lần làm lại thì không hiện. Học sinh khác không đọc được (RLS).
-3. Thanh câu sai: học sinh xem bài đã nộp + gia sư trang chấm → số Đúng / Sai / Bỏ trống đúng; bấm chip nhảy đúng câu, đầu câu không bị thanh che;
-   đề thi nhãn "I.3"; thu gọn được; điện thoại 360–390 px không tràn ngang.
-4. Hiệu năng: đề dài nhiều công thức — gõ điểm / nhận xét / lời phê ở trang chấm; đổi giờ thi, hạn nộp ở Nhập JSON và Soạn bài tập → không còn khựng.
-   Soạn bài tập: sửa nội dung, đổi loại câu, lên / xuống / xóa câu vẫn đúng; nút "Xem trước" vẫn hiện công thức.
-5. Hộp thoại: lưu bài tập / bài giảng không chọn học sinh; bỏ chọn học sinh đã nộp (soạn bài + nút Giao nhanh); xóa góp ý; Esc / bấm ngoài = Hủy.
+## Chuẩn hoá sân diễn (cùng ca, lần 3)
+- Catalog `stage` [rộng, cao] cho cả 11 bộ theo bảng của owner; gấu cố định 180px; phòng thử đồ khung 560×480 co đều; bỏ "lùi máy quay".
+- Ngân Hà 7,4s: thêm Galaxy Burst cuối (ngân hà co thành điểm → im lặng → nổ phủ gần cả sân) + ngân hà mini trên tay.
+- Đã chụp: thang sân 11 bộ, hoạt cảnh từng bộ trong sân mới, linh vật góc màn hình (mô phỏng mép viewport). Chưa xem chạy liên tục trên máy thật.
 
-## Known limits
-- Ô dán JSON lớn ở Nhập JSON vẫn vẽ lại trang mỗi ký tự (nhẹ hơn nhiều vì phần xem trước đã memo); nếu còn chậm với file rất dài thì tách riêng ô này.
-- Lời phê không tự xóa khi học sinh nộp lại: gia sư tự sửa / xóa khi chấm lần sau.
-- Mở lại bài vẫn giữ `score` cũ trong `assignment_recipients` (trạng thái `todo`) cho tới khi chấm lại.
+## Lưu ý thiết kế
+- Lớp cảnh không đi theo chuyển động thân gấu (chỉ thân / tay gấu chuyển động), nên các bước lao / nghiêng người giữ biên độ nhỏ.
+- Học sinh vẫn luôn mặc bộ mặc định (chưa có backend) → muốn xem trên linh vật phải dùng tài khoản gia sư mặc bộ.
+
+## Needs QA
+- Gia sư mặc từng bộ ⭐⭐+ → GIỮ linh vật: gấu nhún nạp rồi diễn, gấu vẫn hiện suốt hoạt cảnh, xong về ngồi; bấm thường = giảng bài; điện thoại nhấn giữ không bật menu / bôi chọn chữ.
+- Đang diễn: gấu không tự đi / leo / ngủ chen vào; đổi bộ ở shop giữa lúc diễn → dừng, gấu về bình thường.
+- Phòng thử đồ: bấm gấu / nút → diễn; đổi bộ khác giữa chừng → dừng; hiệu ứng thường trực hiện lại sau khi diễn.
+- Cài đặt "Tối ưu": vẫn diễn đủ động tác (ít hạt hơn). Máy bật giảm chuyển động: không diễn, gấu chỉ nói.
+- Phi Hành Gia ở linh vật góc phải: tàu bay lên / đáp bên trái có bị khuất mép màn hình không; Ngân Hà / tàu có che menu không.
+- Điện thoại yếu: hoạt cảnh Ngân Hà (dài nhất, nhiều lớp nhất) có giật không.
+- Phần Needs QA các ca trước (shop, Xu/Sao, viền sáng, đồng bộ tư thế) vẫn còn hiệu lực.

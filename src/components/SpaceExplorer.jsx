@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import FormulaText from './FormulaText.jsx'
 import Icon from './Icon.jsx'
 import { FrontPanda } from './PandaArt.jsx'
+import { useEquippedOutfit } from '../contexts/PandaShopContext.jsx'
+import { LOOKS } from './panda/outfitLooks.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
 import {
@@ -188,6 +190,7 @@ const fmt = (n) => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 
 export default function SpaceExplorer({ onClose }) {
   const [picked, setPicked] = useState(null)
+  const outfit = useEquippedOutfit() // gấu kể chuyện mặc bộ đang chọn ở Panda Fashion Shop
   const view = useRef({ tilt: 55, turn: 0, zoom: 1.4 })
   // Giữ onClose mới nhất mà không phải gắn lại sự kiện mỗi lần Layout render
   const closeRef = useRef(onClose)
@@ -588,7 +591,7 @@ export default function SpaceExplorer({ onClose }) {
           </div>
         )}
         <button type="button" className="explorer-panda-btn" onClick={() => showFact(factIdx + 1)} aria-label="Gấu kể chuyện vũ trụ">
-          <FrontPanda pose={pandaPose} />
+          <FrontPanda pose={pandaPose} look={LOOKS[outfit.id]} />
         </button>
       </div>
 

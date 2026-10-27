@@ -26,6 +26,8 @@ import FeedbackButton from './FeedbackButton.jsx'
 import DialogHost from './DialogHost.jsx'
 import ScrollJump from './ScrollJump.jsx'
 import { askConfirm } from '../lib/dialog.js'
+import { PandaShopProvider } from '../contexts/PandaShopContext.jsx'
+import PandaDock from './PandaDock.jsx'
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -167,6 +169,7 @@ export default function Layout() {
         </Suspense>
       )}
       <ScrollJump />
+      <PandaDock />
       <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (
@@ -182,7 +185,7 @@ export default function Layout() {
     </div>
   )
   // Chuông + thông báo nổi + gấu nói: học sinh = bài mới được giao, gia sư = học sinh vừa nộp bài
-  return <NotificationsProvider>{content}</NotificationsProvider>
+  return <NotificationsProvider><PandaShopProvider>{content}</PandaShopProvider></NotificationsProvider>
 }
 
 // Gia sư: số đếm trên menu (câu bị báo lỗi đang chờ, góp ý chưa xem).

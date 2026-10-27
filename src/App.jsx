@@ -8,6 +8,7 @@ import { Pages } from './pages/registry.js'
 
 const {
   StudentHome,
+  StudentShop,
   StudentAssignment,
   StudentResults,
   StudentMistakes,
@@ -51,6 +52,7 @@ export default function App() {
         }
       >
         <Route index element={<TutorStudents />} />
+        <Route path="shop" element={<StudentShop />} />
         <Route path="students/:id" element={<StudentDetail />} />
         <Route path="library/:id?" element={<Library />} />
         {/* Link cũ của mục Chương */}
@@ -80,6 +82,7 @@ export default function App() {
         }
       >
         <Route index element={<StudentHome />} />
+        <Route path="shop" element={<StudentShop />} />
         <Route path="assignments/:id" element={<StudentAssignment />} />
         <Route path="results" element={<StudentResults />} />
         <Route path="mistakes" element={<StudentMistakes />} />
