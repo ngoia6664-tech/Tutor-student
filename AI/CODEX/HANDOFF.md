@@ -1,61 +1,102 @@
-﻿# Handoff Panda UI — 26/10/2026
+# Codex — Handoff QA Panda Shop — 27/10/2026
 
-Phiên này Codex làm **Engineer theo yêu cầu của Owner**, chỉ cho hai task: cửa hàng trang phục Panda và hiển thị Xu + Sao.
+Kiểm thử trực tiếp Edge trên `http://localhost:5173/tutor/shop`, phiên gia sư đã đăng nhập của Owner. Không sửa mã ứng dụng, không sửa dữ liệu học sinh hoặc cấp Xu. Đã khôi phục bộ Phi Hành Gia, theme tối, chế độ Đầy đủ và bỏ viewport override sau kiểm thử.
 
-## Đã làm
+## Kết luận
 
-- Thẻ “Tủ đồ Panda” trong StudentHome, route học sinh `/student/shop` lazy-load qua registry và App; không thêm tab điều hướng.
-- Hai tab Cửa hàng / Tủ đồ, hỗ trợ bàn phím trái/phải/Home/End; danh mục tập trung đủ 11 bộ với giá và tier theo yêu cầu.
-- 10 component lớp SVG trang phục trên FrontPanda nguyên bản; không sửa PandaArt/Mascot hoặc animation. Không có overlay hoặc tên chưa đăng ký thì chỉ vẽ Panda gốc.
-- Viền/glow tĩnh tăng theo độ hiếm; dùng biến màu base.css, theme qua data-theme. Mobile một cột, gutter cửa hàng 16px.
-- CoinStarBadge dùng lại ở StudentHome và cửa hàng. Cửa hàng truyền cùng snapshot tài khoản để số dư cập nhật cùng danh sách sau thao tác khi nối backend.
-- Không lưu Xu, Sao, sở hữu hay bộ đang mặc vào localStorage. Tắt linh vật thì không render hoặc khởi tạo import hình xem trước; registry chỉ tải mã trang, không tải SVG trang phục.
+Chưa nên coi tính năng đã qua QA hoàn toàn. Luồng mặc đồ gia sư hoạt động; hình SVG co đều trong các mẫu đã đo. Có lỗi responsive rõ ràng ở tablet hẹp và một vấn đề trải nghiệm xem hoạt cảnh trên màn hình thấp. Mua đồ học sinh hiện chưa được triển khai backend, không chỉ là thiếu Xu.
 
-## File đã đổi
+## F01 — P2: Cột thông tin quá hẹp, tràn ngang ngay trên breakpoint 720px
 
-- `src/App.jsx`
-- `src/pages/registry.js`
-- `src/pages/student/StudentHome.jsx`
-- `src/pages/student/StudentShop.jsx` (mới)
-- `src/components/CoinStarBadge.jsx` (mới)
-- `src/components/PandaOutfitPreview.jsx` (mới)
-- `src/lib/outfits.js` (mới)
-- `src/lib/pandaShop.js` (mới)
-- `src/styles/base.css`
-- `src/styles/panda-shop.css` (mới)
-- `src/index.css`
-- `AI/CODEX/HANDOFF.md` (ghi đè)
+- Tái hiện: mở shop, chọn Ngân Hà, đặt viewport 722×900 (điểm yêu cầu 721 cũng được trình duyệt làm tròn thành 722 trong lần đo).
+- Kết quả: sân khấu vẫn rộng 560px; phần thông tin chỉ khoảng 95px. Tên và mô tả xuống dòng quá nhiều; nút Mặc rộng 152px vượt cột; xuất hiện thanh cuộn ngang. `clientWidth=706`, `scrollWidth=748`.
+- 768×1024 không tràn ngang toàn trang trong mẫu đo, nhưng cột thông tin vẫn chỉ khoảng 141px, khó đọc.
+- Mong đợi: thông tin và nút đủ rộng; không tràn ngang; hình giữ tỉ lệ.
+- Nguyên nhân đối chiếu: `src/styles/panda-shop.css:142` ưu tiên cột đầu 560px; chỉ đổi một cột ở `:478` (max-width 720px).
+- Đề xuất: chuyển một cột sớm hơn theo bề rộng tối thiểu cần cho hai cột, hoặc cho sân khấu co và bảo đảm cột thông tin đủ rộng. Kiểm lại các mốc 720/721/722/768/820/900 sau sửa.
+- Bằng chứng: [tablet-overflow.jpg](qa-panda-2026-10-27/tablet-overflow.jpg).
 
-## Adapter / placeholder cần Claude nối
+## F02 — P3: Bấm nút xem hoạt cảnh có thể làm mất sân khấu khỏi tầm nhìn
 
-`src/lib/pandaShop.js` có TODO tiếng Việt và ba interface:
+- Tái hiện trên 390×844: chọn một bộ có hoạt cảnh từ lưới, rồi bấm nút Xem hoạt cảnh nằm dưới mô tả/giá/nút Mặc.
+- Kết quả quan sát: khi trình duyệt đưa nút vào vùng nhìn thấy, phần lớn sân khấu có thể đã khuất phía trên. Hoạt cảnh chạy nhưng người dùng khó theo dõi; rõ hơn khi chiều cao thấp.
+- Giữ trực tiếp lên gấu hoặc dùng bàn phím kích hoạt ở vùng gấu cho trải nghiệm xem dễ hơn.
+- Đối chiếu: `PandaShowcase.jsx` gọi `perform` từ nút nhưng không đưa sân khấu vào vùng nhìn thấy. `StudentShop.jsx:36` có cuộn khi chọn đồ, chưa giải quyết bố cục sân khấu/nút tách xa nhau trên màn hình thấp.
+- Đề xuất: đặt điều khiển xem trong/gần sân khấu hoặc đưa sân khấu vào tầm nhìn trước khi bắt đầu.
 
-- `fetchPandaAccount(studentId)` trả `{ coins, stars, ownedOutfitIds, equippedOutfitId, purchasesEnabled, equipmentEnabled }`. Hiện cố định 0 Xu, 0 Sao, chỉ `student` sở hữu sẵn và đang mặc; hai cờ đều false. Không có dữ liệu giả về tiền hoặc quyền sở hữu.
-- `purchaseOutfit(studentId, outfitId)` hiện từ chối bằng lỗi “Mua trang phục sắp mở.” Claude cần nối giao dịch mua nguyên tử, kiểm giá và quyền sở hữu ở máy chủ, trừ Xu qua ledger Xu. Chỉ bật purchasesEnabled sau khi backend thực sự sẵn sàng.
-- `equipOutfit(studentId, outfitId)` hiện từ chối bằng lỗi “Mặc trang phục sắp mở.” Claude cần nối lưu bộ đang mặc, kiểm quyền sở hữu ở máy chủ. Không xóa quyền sở hữu bộ mặc định. Chỉ bật equipmentEnabled khi backend sẵn sàng.
-- Ledger Sao phải trả tiến trình tích lũy thật, không tiêu Sao khi mua. Mở vùng kính viễn vọng bằng Sao vẫn là việc backend tương lai; phiên này chỉ giải thích ý nghĩa Sao, không đổi SpaceExplorer hay khóa kính.
-- Thao tác thành công đã gọi reload tài khoản. Chưa áp bộ đang mặc lên linh vật hoạt động ở Layout/Mascot: cần nối trạng thái từ backend vào renderer tương ứng sau này, giữ nguyên animation và xử lý đúng từng pose; phiên này chỉ hiển thị lớp đồ trong cửa hàng.
-- Thêm trang phục: thêm component lớp SVG tọa độ 120×120 trong PandaOutfitPreview, đăng ký OVERLAYS và tên overlay trong catalog. SVG V1 là hình vẽ giản lược, không phải ảnh concept.
+## Giới hạn chức năng đã xác minh từ mã nguồn
 
-## Đã kiểm và môi trường
+`src/lib/pandaShop.js:23–28` trả 0 Xu, 0 Sao, `purchasesEnabled: false`, học sinh chỉ sở hữu mặc định và không được thay đồ. `purchaseOutfit` tại dòng 33 luôn ném lỗi “Mua trang phục sắp mở.” Chưa có giao dịch mua/trừ Xu, ledger hay lưu sở hữu học sinh để kiểm thử end-to-end. Gia sư lưu bộ đang mặc trên máy qua localStorage.
 
-- Windows, PowerShell, Node/npm hiện có của dự án; Vite 8.3.4, Edge qua kết nối trình duyệt; máy ngày 26/10/2026 (Asia/Saigon).
-- `npm.cmd run build` qua. `npm run build` trực tiếp bị ExecutionPolicy chặn npm.ps1; dùng npm.cmd chạy cùng script build.
-- `git diff --check` và xem git diff các file sửa; rà file mới. Không commit, không push.
-- Route thật `/student/shop` khi chưa đăng nhập chuyển về `/login`.
-- Kiểm trực quan bằng bản xem thử cục bộ tạm thời dùng chính StudentShop/catalog/adapter/SVG/CSS; chỉ thay nguồn profile trong bản sao để không cần đăng nhập. Không gọi backend mua/mặc. Bản thử được xóa sau kiểm và không thuộc đầu ra.
-- Desktop: override 1280×900, trình duyệt thực báo bề ngang CSS khoảng 1164px do mức zoom đang có; đã xem cả sáng và tối.
-- Mobile: override 390×844, bề ngang CSS thực khoảng 355px; đã xem cả sáng và tối, gutter đo 16px, scrollWidth 341px không vượt viewport; một cột.
-- Đã kiểm 11 thẻ ở Cửa hàng, chỉ một bộ mặc định trong Tủ đồ, mọi nút mua vô hiệu hóa, số dư 0/0, nhãn thiếu Xu và Sắp mở, chuyển tab bằng click và phím trái, tắt linh vật gỡ toàn bộ preview (0 phần tử). Bật lại linh vật sau khi thử.
-- StudentHome chỉ kiểm tĩnh phần tích hợp; chưa có phiên học sinh đăng nhập để kiểm toàn luồng. Chưa kiểm thiết bị Android/iPhone/PWA thật.
+Đây là phạm vi chưa triển khai, không kết luận là lỗi giao dịch. Không thể dùng kết quả gia sư để chứng minh quyền sở hữu hoặc bảo mật giao dịch học sinh.
 
-## Needs QA
+## Các trường hợp đã kiểm trực tiếp
 
-- Đăng nhập học sinh thật: StudentHome → thẻ Tủ đồ Panda → hai tab → quay lại; kiểm không ảnh hưởng bài cần làm, bộ lọc, StudyNow hoặc topbar.
-- Kiểm desktop/mobile cả hai theme trong Layout đầy đủ, đặc biệt topbar, linh vật nổi, nút góp ý và vùng cuối trang; mức zoom 100%, màn 320px, tablet, Android/iPhone/PWA thật.
-- Lần tải mới với linh vật tắt: kiểm Network không tải PandaOutfitPreview/PandaArt do cửa hàng; bật lại để kiểm fallback tải hình. Đã kiểm tĩnh lazy boundary và kiểm DOM khi tắt, chưa kiểm Network tải mới.
-- Rà hình của mọi bộ ở các tier, độ rõ và glow trên màn hình thật; overlay chưa biết phải trở về Panda gốc. Rà focus, phím Home/End và trình đọc màn hình.
-- Khi Claude nối backend: đủ Xu → Mua, thiếu Xu → Thiếu N Xu, đã sở hữu → Mặc, đang mặc → Đang mặc; lỗi/retry, tải lại, đổi tài khoản, mua liên tiếp, cập nhật số dư, quyền sở hữu và bộ đang mặc qua phiên mới. Không dùng dữ liệu thử trong production.
-- Kiểm backend đảm bảo bộ mặc định luôn sở hữu, không tiêu Sao, không mua hai lần/trừ hai lần; đây là QA sau khi có backend, ngoài phạm vi phiên này.
+| Trường hợp | Kết quả và giới hạn |
+| --- | --- |
+| Gia sư 0 Xu, đủ 11 bộ | Đạt; không cần Xu để mặc |
+| Chọn rồi mặc lần lượt đủ 11 bộ | Đạt; mỗi bộ hiện đúng tiêu đề, nút Đang mặc sau thao tác |
+| Tải lại trang sau mặc Ngân Hà | Đạt; vẫn đang mặc Ngân Hà |
+| Xem thử bộ khác với bộ đang mặc | Đạt; xem thử không tự thay bộ đang mặc |
+| Bộ lọc | Thường 4 (gồm mặc định), Hiếm 1 sao 2, Hiếm 2 sao 1, Hiếm 3 sao 2, Cực phẩm 2, Tất cả 11 |
+| Cửa hàng/Tủ đồ gia sư | Đạt; cả hai đủ 11 bộ |
+| Bàn phím đổi tab | Mũi tên chuyển focus; Enter chọn tab |
+| Kích hoạt hoạt cảnh | Đã chạy DJ, Kiếm Sĩ, Pháp Sư, Phi Hành Gia, Ngân Hà qua nút/giữ/phím; chưa kiểm mọi tổ hợp từng bộ × từng tư thế × mọi viewport |
+| Nhấn ngắn/giữ trong phòng thử | Kiếm Sĩ: 250ms không diễn; 700ms diễn |
+| Giữ lặp khi Kiếm Sĩ đang diễn | Vẫn 1 actor, 2 lớp SVG; không nhân thêm lớp |
+| Linh vật góc màn hình | Đã kích hoạt bằng giữ chuột DJ, Ngân Hà, Phi Hành Gia; quan sát được hoạt cảnh |
+| Sân Ngân Hà ở góc, viewport 320×568 | Hai lớp cảnh đo được x≈69–297, y≈355–556, nằm trong viewport tại mẫu đo |
+| Kết thúc hoạt cảnh | Mẫu kiểm sau Kiếm Sĩ: 0 actor, 2 lớp hiệu ứng thường trực, nút trở lại Xem hoạt cảnh |
+| Đổi bộ có hoạt cảnh | Đã quan sát bộ mới không còn actor cũ, hiệu ứng thường trực hiện lại; chưa khẳng định mọi thời điểm giữa từng hoạt cảnh |
+| Chế độ Tối ưu | Ngân Hà vẫn chạy, có class act-lite; sau test đã trả Đầy đủ |
+| Theme sáng/tối | Đã xem shop cả hai; sân khấu tối và thông tin đọc được ở desktop; sau test trả tối |
+| Console | Các lỗi thấy được liên quan menu `translate-page`/`save-page`; chưa có bằng chứng quy về tính năng Panda. Không dùng chúng để kết luận app lỗi |
+| Build | `npm.cmd run build` thành công, 380 modules; có thông báo thời gian plugin, không lỗi build |
 
-Không sửa database/schema/migration/RLS/RPC/ledger, Daily Review/streak/thưởng, navigation, CURRENT_STATE.md hoặc AI/CLAUDE/HANDOFF.md. Skill System Design đã đọc để đối chiếu nhưng không tạo tài liệu ngoài hai task UI mà Owner giới hạn.
+## Width/height thực tế
+
+Đây là thay viewport trình duyệt desktop, không phải kiểm thiết bị cảm ứng thật. Tỉ lệ khung sân khấu cố định 560:480; hình chính đo được vuông trong các mẫu co. Không thấy ảnh raster bị vỡ; đây chủ yếu là SVG. Không khẳng định toàn bộ hiệu ứng ở mọi thời điểm đều không cắt mép.
+
+| Viewport CSS | Kết quả |
+| --- | --- |
+| 320×568 | Một cột; không tràn ngang, stage ≈281×241, figure ≈135×135 |
+| 390×844 | Một cột; không tràn ngang, stage ≈351×301, figure ≈169×169 |
+| 568×320 | Không tràn ngang; stage ≈529×453 cao hơn viewport nên phải cuộn, không co theo chiều cao |
+| 720×900 | Một cột; stage 560×480, gấu chính 180×180 |
+| 722×900 | Lỗi F01; stage 560×480, thông tin ≈95px, trang tràn ngang |
+| 768×1024 | Hai cột; stage 560×480, thông tin ≈141px, trải nghiệm chật |
+| 1024×600 | Không tràn ngang; gấu chính 180×180; cần cuộn để xem toàn trang |
+| 1024×768 | Đã xem theme sáng và chế độ Tối ưu |
+| 1440×900 và viewport ban đầu ≈1528×732 | Không tràn ngang trong mẫu đo; gấu chính 180×180 |
+
+## Chưa kiểm và cần vòng tiếp theo
+
+- Phiên học sinh thật: đã kiểm bổ sung sau khi Owner đăng nhập tester, xem phần bên dưới. Chưa kiểm đổi qua lại nhiều học sinh hoặc đồng thời nhiều hồ sơ trình duyệt.
+- Sau khi có backend mua: thiếu/đủ Xu, mua trùng và bấm nhanh, mạng lỗi, số dư/ledger, không trừ Sao, reload/phiên khác, kiểm quyền phía server.
+- Touch thật trên Android/iPhone: nhấn giữ không context menu, vuốt hủy giữ, đổi hướng, trình duyệt/PWA.
+- Reduced motion của hệ điều hành: chỉ đọc nhánh xử lý, chưa bật/chạy thử.
+- FPS/CPU/memory trên điện thoại yếu, giảm tốc CPU, chạy liên tục lâu, âm thanh và chuyển tab nền, các trạng thái làm bài/chấm bài/ngủ/đi dạo chen hoạt cảnh.
+- Hủy giữ khi con trỏ rời vùng, giữ rồi đổi đồ trước ngưỡng, resize đúng giữa hoạt cảnh; cần kiểm riêng.
+
+Không thay source hoặc tạo bản sửa trong lượt QA này. Các ảnh trong thư mục là bằng chứng thử nghiệm; `desktop-restored.jpg` ghi trạng thái sau khôi phục.
+
+## Bổ sung: phiên học sinh testuser — cùng ngày 27/10/2026
+
+Owner đã đăng nhập học sinh trong tab localhost. Đã kiểm trực tiếp phiên thật, sau đó mở thêm một tab kiểm thử dùng cùng phiên do kết nối điều khiển tab gốc bị lỗi. Tab kiểm thử tạm đã đóng; phiên học sinh của Owner vẫn giữ nguyên. Không cấp Xu, không sửa sở hữu hay dữ liệu học tập. Viewport đã reset.
+
+| Trường hợp | Kết quả |
+| --- | --- |
+| StudentHome → nút shop nổi | Vào đúng `/student/shop` |
+| Đổi từ phiên gia sư trước đó sang học sinh | 0 Xu, 0 Sao, 1 bộ sở hữu; bộ mặc định, không kế thừa Phi Hành Gia đang mặc của gia sư |
+| Cửa hàng/Tủ đồ | Cửa hàng 11; Tủ đồ 1, chỉ Panda Học Sinh |
+| Chọn 10 bộ chưa sở hữu | Nút Thiếu Xu vô hiệu hóa; số thiếu theo giá: 150/200/250/400/450/650/800/1.000/1.500/2.000. Chỉ xem trước, không có nút Mặc khả dụng |
+| Xem hoạt cảnh đồ chưa mua | Ngân Hà chạy trong phòng thử (1 actor), nút Thiếu 2.000 Xu vẫn disabled; linh vật thật không có class hoạt cảnh và vẫn là bộ mặc định |
+| Reload sau xem thử | Về Panda Học Sinh, vẫn Tủ đồ 1, số dư 0/0 |
+| 390×844 | Tủ đồ một thẻ; `clientWidth=scrollWidth=375`, không tràn ngang |
+| 722×900 | Tái hiện F01 trên học sinh: cột thông tin ≈95px, `clientWidth=707`, `scrollWidth=748`; không chỉ ảnh hưởng gia sư |
+| Truy cập trực tiếp `/tutor/shop` | Chuyển về `/student`; không nhận giao diện/quyền thử đồ gia sư. Đây là kiểm route/UI, chưa phải kiểm bảo mật server của backend mua chưa tồn tại |
+| Nút Quay lại học tập | Về `/student`, trang bài cần làm hiển thị bình thường |
+
+Ảnh bổ sung: [Tủ đồ mobile](qa-panda-2026-10-27/student-wardrobe-mobile.jpg), [Tủ đồ desktop](qa-panda-2026-10-27/student-wardrobe-desktop.jpg), [lỗi tablet học sinh](qa-panda-2026-10-27/student-tablet-overflow.jpg).
+
+Quan sát trải nghiệm: học sinh có thể ngắm và xem hoạt cảnh trước khi mua, phù hợp luồng xem thử; nên làm rõ nút “Thiếu Xu” đồng thời cửa hàng còn “sắp mở bán” để tránh hiểu rằng kiếm đủ Xu là mua được ngay trong bản hiện tại. Không ghi nhận thêm lỗi chức năng chắc chắn ngoài F01/F02. Các giới hạn touch thật, thiết bị yếu, reduced-motion và backend trong danh sách trên vẫn còn.

@@ -139,7 +139,7 @@
 /* ----- Phòng thử đồ ----- */
 .showcase {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
   gap: 1.25rem;
   align-items: center;
   margin-bottom: 1.5rem;
@@ -150,6 +150,7 @@
   aspect-ratio: 560 / 480;
   width: 100%;
   max-width: 560px;
+  justify-self: center;
   border-radius: 28px;
   overflow: hidden;
   background:

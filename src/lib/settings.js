@@ -13,6 +13,8 @@ export const DEFAULTS = {
   soundEffects: true, // tiếng gấu nói, tiếng "vút", tiếng chuông trong chế độ ngắm vũ trụ
   music: true, // nhạc nền chế độ ngắm vũ trụ
   musicVolume: 60, // 0–100
+  dockShop: true, // icon ngôi cửa hàng nổi góc trái dưới
+  dockStats: true, // viên Xu / Sao nổi góc trái dưới
 }
 
 // Preset hiệu năng: chỉ đụng tới các cài đặt hình ảnh, không đụng âm thanh

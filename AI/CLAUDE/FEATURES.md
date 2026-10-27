@@ -137,7 +137,7 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 - `OutfitPanda`: chỉ `showcase` (phòng thử đồ) mới gắn hiệu ứng; lưới thẻ tĩnh. Chuyển động theo Cài đặt "Animation gấu" + reduced-motion; khuất màn hình → pauseAnimations.
 - Shop: `StudentShop` (header + `.shop-hud-anchor` Xu/Sao dính dưới topbar qua `useStickyTop`), `shop/PandaShowcase`, `shop/OutfitGrid` (tab Cửa hàng / Tủ đồ + lọc độ hiếm),
   `shop/OutfitCard`. CSS `styles/panda-shop.css` (biến độ hiếm `--t1/--t2/--tglow` trên `.tier-*`), sân khấu tối cả 2 theme (`--shop-stage` trong base.css).
-- `PandaDock` (Layout): hình ngôi cửa hàng nhỏ nhiều màu `ShopIcon` (không nền tròn) (bấm vào `/shop`) + viên Xu/Sao bên dưới, góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. CSS `styles/panda-dock.css`.
+- `PandaDock` (Layout): hình ngôi cửa hàng nhỏ nhiều màu `ShopIcon` (không nền tròn) (bấm vào `/shop`) + viên Xu/Sao bên dưới, góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. Hai nút nhỏ 🛍️/🪙 dưới cùng bật/tắt riêng icon shop và Xu/Sao (cài đặt `dockShop`/`dockStats` trong `lib/settings.js`, lưu localStorage). CSS `styles/panda-dock.css`.
 - Dữ liệu: `contexts/PandaShopContext` → `lib/pandaShop.js` (TODO backend: ledger Xu/Sao, mua nguyên tử, mặc đồ). Hiện: học sinh 0 Xu / 0 Sao, chỉ có bộ mặc định,
   nút Mua khoá; gia sư sở hữu hết, mặc thử được (chỉ trong bộ nhớ). Không lưu Xu / sở hữu vào localStorage.
 - Đồng bộ mọi tư thế: `BackPanda` / `BallPanda` / `SleepingPanda` cũng nhận `look`; mỗi bộ có `palette` { cloth, trim, cape?, helmet?, pack? }

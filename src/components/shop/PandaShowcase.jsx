@@ -45,10 +45,16 @@ export default function PandaShowcase({ outfit, account, busy, onAction }) {
   const canAct = !prefersReducedMotion()
   const lite = !settings.mascotAnimation
   const act = usePandaAct(outfit)
-  const perform = () => canAct && act.play()
+  const [stageRef, k] = useCanvasScale()
+  const perform = () => {
+    if (!canAct) return
+    // Sân khấu đang khuất (nút nằm dưới, màn hình thấp): đưa vào tầm nhìn rồi mới diễn
+    const r = stageRef.current?.getBoundingClientRect()
+    if (r && (r.top < 0 || r.bottom > window.innerHeight)) stageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    act.play()
+  }
   // Giữ vào gấu để diễn (giống linh vật góc màn hình); bàn phím: Enter / Space
   const hold = useHold(perform, act.has && canAct)
-  const [stageRef, k] = useCanvasScale()
   const [sw, sh] = outfit.stage
   return (
     <section className={`showcase tier-${outfit.tier}`} aria-label="Phòng thử đồ">

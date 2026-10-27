@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useStudying } from '../lib/studyLock.js'
+import { updateSettings, useSettings } from '../lib/settings.js'
 import CoinStarBadge from './CoinStarBadge.jsx'
 
 // Hình ngôi cửa hàng: mái vải sọc tím-hồng, cửa kính có móc áo, cửa ra vào, ngôi sao lấp lánh
@@ -57,15 +58,43 @@ export default function PandaDock() {
   const studying = useStudying()
   const shopPath = `/${profile.role === 'tutor' ? 'tutor' : 'student'}/shop`
 
+  const { dockShop, dockStats } = useSettings()
+
   if (studying || pathname.startsWith(shopPath)) return null
 
   return (
     <aside className={`panda-dock${profile.role === 'tutor' ? ' is-tutor' : ''}`} aria-label="Panda Fashion Shop">
-      <Link to={shopPath} className="panda-shop-icon" title="Panda Fashion Shop" aria-label="Mở Panda Fashion Shop">
-        <ShopIcon />
-      </Link>
-      <div className="panda-dock-stats">
-        <CoinStarBadge variant="compact" />
+      {dockShop && (
+        <Link to={shopPath} className="panda-shop-icon" title="Panda Fashion Shop" aria-label="Mở Panda Fashion Shop">
+          <ShopIcon />
+        </Link>
+      )}
+      {dockStats && (
+        <div className="panda-dock-stats">
+          <CoinStarBadge variant="compact" />
+        </div>
+      )}
+      <div className="panda-dock-toggles">
+        <button
+          type="button"
+          className="panda-dock-toggle"
+          aria-pressed={dockShop}
+          title={dockShop ? 'Ẩn icon cửa hàng' : 'Hiện icon cửa hàng'}
+          aria-label={dockShop ? 'Ẩn icon cửa hàng' : 'Hiện icon cửa hàng'}
+          onClick={() => updateSettings({ dockShop: !dockShop })}
+        >
+          🛍️
+        </button>
+        <button
+          type="button"
+          className="panda-dock-toggle"
+          aria-pressed={dockStats}
+          title={dockStats ? 'Ẩn Xu và Sao' : 'Hiện Xu và Sao'}
+          aria-label={dockStats ? 'Ẩn Xu và Sao' : 'Hiện Xu và Sao'}
+          onClick={() => updateSettings({ dockStats: !dockStats })}
+        >
+          🪙
+        </button>
       </div>
     </aside>
   )
