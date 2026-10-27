@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { INK, starPath } from '../PandaArt.jsx'
 import { ANCHORS, raisedPoint } from './outfitLooks.jsx'
+import { playActSound, stopActSound, unlockSfx } from '../../lib/pandaSfx.js'
 
 // ===== Hoạt cảnh tương tác của trang phục (từ Hiếm ⭐⭐): GIỮ chuột / ngón tay trên gấu → gấu DIỄN một đoạn rồi về idle =====
 // Dữ liệu: catalog lib/outfits.js `interaction` → INTERACTIONS[id] { ms, line, sound, Layer }.
+// sound = tên kịch bản tiếng trong lib/pandaSfx.js (mốc giây khớp Layer); usePandaAct phát / dừng.
 // Hai phần chạy cùng một mốc 0 (lúc gắn class + lớp vào trang):
 //  1. Động tác của gấu: CSS keyframes trên bộ phận SVG có sẵn (.pd-front cả người, .pd-head, .pd-arm-l/-r, .pd-prop-*)
 //     theo class `act-<id> is-acting` gắn ở khung chứa — styles/panda-act.css (thời lượng = ms).
@@ -720,17 +722,48 @@ function StarSummon({ lite, part, box }) {
   )
 }
 
-// ================= Phi Hành Gia — Cực phẩm (4.8s): ngước nhìn → tàu xuất hiện → nhảy vào tàu, đóng cửa, rung → phóng lên → warp → tàu đáp bên kia → bước ra vẫy tay =================
-function Rocket({ face }) {
+// ================= Phi Hành Gia — Cực phẩm (7s): cảm giác một chuyến bay thật — không gian phản ứng theo từng chuyển động của tàu =================
+// Khớp keyframes act-trip-* (panda-act.css) và kịch bản tiếng 'space-trip' (lib/pandaSfx.js), mốc trong TR:
+//  0.15 hạt sáng tụ lại, không gian sau gấu méo nhẹ · 0.4 viền hologram vẽ thân tàu · 0.75 tàu hiện hẳn, xung sáng chạy dọc thân,
+//    đèn bật; gấu quay sang nhìn (mắt tròn) · 1.15 cửa mở: ánh sáng cabin hắt lên gấu, hơi nước mỏng · gấu bị luồng khí đẩy nhẹ,
+//    nhún, 1.7 nhảy vào · 2.0 cửa đóng, đèn chuyển vàng, đường năng lượng sáng dần
+//  · 2.15–2.85 NẠP: quầng sáng dưới tàu tăng dần, tàu rung mạnh dần, hạt dưới tàu bị đẩy ra, vòng gió lan, sao nền rung
+//  · 2.85 PHÓNG: chớp, sóng chấn động, hạt bắn ra, sao bị đẩy; bay lên → tăng tốc (tàu kéo dài, vệt phản lực) → 3.05 sao kéo thành vệt
+//    → 3.3 warp (nền sâu hơn, tinh vân, hành tinh lướt qua) → 3.4 tàu thu thành một điểm sáng, loé; vệt sao chạy thêm rồi tắt
+//  · 3.95 điểm sáng xa (trên trái) sáng dần, vệt sao lao về phía người xem, không gian co lại · 4.3 loé, tàu lao ra (vệt warp, nghiêng),
+//    vượt quá chỗ đáp rồi chỉnh lại · 4.8 lơ lửng: thruster thổi hạt sang hai bên, vòng năng lượng · 5.1 chạm đất: nảy nhẹ, bụi bung,
+//    vài hạt bay lên rồi rơi, động cơ lịm · 5.25 cửa mở, 5.35 gấu bước ra lảo đảo · 5.85 quay lại nhìn tàu, vẫy tay; tàu sáng lên,
+//    tan thành bụi sao hút về một điểm, loé 6.4 · 6.45 ngôi sao nhỏ rơi xuống, gấu ngước nhìn · 7 về idle
+const TR = { holo: 0.4, ship: 0.75, door: 1.15, close: 2.0, charge: 2.15, launch: 2.85, streak: 3.05, warp: 3.3, gone: 3.4, ping: 3.95, back: 4.3, hover: 4.8, land: 5.1, open: 5.25, bye: 5.85, star: 6.45 }
+const TRIP_GO = [100, 70] // tàu đi: bên phải gấu (đơn vị gấu, tàu phóng 1,3)
+const TRIP_HOME = [12, 70] // tàu về: đáp bên trái
+const TRIP_FAR = [-40, -85] // điểm sáng ở xa — tàu lao ra từ đây
+const TRIP_GROUND = 119
+const TRIP_UP = -125 // tàu đi bay lên tới đây (đơn vị trong tàu) rồi thu thành điểm sáng
+const SHIP_K = 1.3
+const HULL = 'M0 -32 C12 -22 14 2 12 32 H-12 C-14 2 -12 -22 0 -32 Z'
+const FINS = 'M-12 22 L-20 34 L-10 32 Z M12 22 L20 34 L10 32 Z'
+const ENERGY = 'M-8.5 -14 Q-10.5 6 -9.5 29 M8.5 -14 Q10.5 6 9.5 29'
+const SHIP_LIGHTS = [
+  [0, -25],
+  [-16, 30.5],
+  [16, 30.5],
+]
+// Điểm trên viền tàu (đơn vị trong tàu) — nơi tàu tan thành bụi sao
+const SHIP_OUTLINE = [[0, -32], [9, -20], [12.5, 0], [12, 30], [-12, 30], [-12.5, 0], [-9, -20], [-20, 34], [20, 34], [0, 37]]
+const TRIP_STARS = Array.from({ length: 18 }, (_, i) => [-85 + ((i * 53) % 290), -135 + ((i * 71) % 205)])
+
+function Rocket({ face, children }) {
   return (
     <g strokeLinejoin="round">
-      <path d="M-12 22 L-20 34 L-10 32 Z M12 22 L20 34 L10 32 Z" fill="#a855f7" stroke={INK} strokeWidth="1.1" />
-      <path d="M0 -32 C12 -22 14 2 12 32 H-12 C-14 2 -12 -22 0 -32 Z" fill="url(#act-hull)" stroke={INK} strokeWidth="1.3" />
+      <path d={FINS} fill="#a855f7" stroke={INK} strokeWidth="1.1" />
+      <path d={HULL} fill="url(#act-hull)" stroke={INK} strokeWidth="1.3" />
       <path d="M-8 -20 Q0 -28 8 -20" fill="none" stroke="#f472b6" strokeWidth="2" />
       <circle cy="-6" r="6.2" fill="#0e7490" stroke="#94a3b8" strokeWidth="1.4" />
       <path d="M-3 -9 q2 -2 4.5 -1.2" fill="none" stroke="#fff" strokeWidth="0.9" opacity="0.7" />
       {face}
       <path d="M-7 32 H7 L5 37 H-5 Z" fill="#475569" stroke={INK} strokeWidth="1" />
+      {children}
     </g>
   )
 }
@@ -745,112 +778,525 @@ const WINDOW_PANDA = (
     <ellipse cy="-4.6" rx="0.8" ry="0.5" fill={INK} />
   </g>
 )
-// Lửa phụt dưới miệng ống (co giãn quanh miệng ống, không quanh tâm tàu)
-function Flame({ begin, out }) {
+function TripDefs() {
+  return (
+    <defs>
+      <linearGradient id="act-hull" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#cbd5e1" />
+        <stop offset="0.45" stopColor="#ffffff" />
+        <stop offset="1" stopColor="#cbd5e1" />
+      </linearGradient>
+      <clipPath id="act-hull-clip">
+        <path d={HULL} />
+      </clipPath>
+      <linearGradient id="act-pulse" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#fff" stopOpacity="0" />
+        <stop offset="0.5" stopColor="#fff" />
+        <stop offset="1" stopColor="#a5f3fc" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id="act-thrust-core" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#fff" />
+        <stop offset="0.5" stopColor="#a5f3fc" />
+        <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id="act-thrust-glow" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#c4b5fd" stopOpacity="0.9" />
+        <stop offset="0.5" stopColor="#a855f7" stopOpacity="0.5" />
+        <stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+      </linearGradient>
+      <radialGradient id="act-engine">
+        <stop offset="0" stopColor="#fff" />
+        <stop offset="0.45" stopColor="#67e8f9" stopOpacity="0.8" />
+        <stop offset="1" stopColor="#67e8f9" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id="act-ground">
+        <stop offset="0" stopColor="#e0f2fe" stopOpacity="0.95" />
+        <stop offset="0.5" stopColor="#38bdf8" stopOpacity="0.5" />
+        <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+      </radialGradient>
+      <linearGradient id="act-cabin" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#fffbeb" />
+        <stop offset="1" stopColor="#fcd34d" />
+      </linearGradient>
+      {['l', 'r'].map((d) => (
+        <linearGradient key={d} id={`act-spill-${d}`} x1={d === 'l' ? 1 : 0} y1="0" x2={d === 'l' ? 0 : 1} y2="0">
+          <stop offset="0" stopColor="#fef3c7" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#fef3c7" stopOpacity="0" />
+        </linearGradient>
+      ))}
+    </defs>
+  )
+}
+// Phản lực dưới miệng ống: lõi trắng xanh + quầng tím mềm, rung liên tục; len = độ dài theo thời gian [[giây, hệ số]...]
+function Thrust({ on, off, len }) {
+  const t0 = len[0][0]
+  const span = len[len.length - 1][0] - t0
   return (
     <g transform="translate(0 37)">
-      <path d="M-6 0 Q0 25 6 0 Z" fill="url(#act-flame)" opacity="0">
-        <Show begin={begin} out={out} dur={0.12} />
-        <animateTransform attributeName="transform" type="scale" values="1 0.6;1 1.15;1 0.85;1 1.2" begin={s(begin)} dur="0.36s" repeatCount="4" />
-      </path>
+      <g opacity="0">
+        <Show begin={on} out={off} dur={0.1} outDur={0.25} />
+        <g>
+          <animateTransform
+            attributeName="transform"
+            type="scale"
+            values={len.map(([, k]) => `1 ${k}`).join(';')}
+            keyTimes={len.map(([t]) => +((t - t0) / span).toFixed(3)).join(';')}
+            begin={s(t0)}
+            dur={s(span)}
+            fill="freeze"
+          />
+          <path d="M-8 0 Q0 30 8 0 Z" fill="url(#act-thrust-glow)" />
+          <path d="M-4.2 0 Q0 17 4.2 0 Z" fill="url(#act-thrust-core)">
+            <animateTransform attributeName="transform" type="scale" values="1 0.75;1 1.15;1 0.85;1 1.2;1 0.75" begin={s(on)} dur="0.24s" repeatCount={Math.ceil((off - on) / 0.24)} />
+          </path>
+        </g>
+      </g>
     </g>
   )
 }
-function SpaceTrip({ lite, part, box }) {
-  if (part === 'back') return null
+// Quầng sáng của động cơ ngay miệng ống; keys = [[giây, rx, opacity]...]
+function EngineGlow({ keys }) {
+  const t0 = keys[0][0]
+  const span = keys[keys.length - 1][0] - t0
+  const kt = keys.map(([t]) => +((t - t0) / span).toFixed(3)).join(';')
+  const anim = (attr, f) => <animate attributeName={attr} values={keys.map(f).join(';')} keyTimes={kt} begin={s(t0)} dur={s(span)} fill="freeze" />
+  return (
+    <ellipse cy="40" rx="3" ry="2" fill="url(#act-engine)" opacity="0">
+      {anim('rx', (k) => k[1])}
+      {anim('ry', (k) => f1(k[1] * 0.5))}
+      {anim('opacity', (k) => k[2])}
+    </ellipse>
+  )
+}
+// Đèn thân tàu: tắt → bật xanh lần lượt (on) → nháy vàng = chuẩn bị phóng (ready)
+function ShipLights({ on, ready }) {
+  return SHIP_LIGHTS.map(([x, y], i) => (
+    <circle key={i} cx={x} cy={y} r="1.4" fill="#475569" stroke={INK} strokeWidth="0.5">
+      <animate attributeName="fill" values="#475569;#67e8f9" begin={s(on + i * 0.08)} dur="0.08s" fill="freeze" />
+      {ready != null && <animate attributeName="fill" values="#fbbf24;#fff7ed;#fbbf24" begin={s(ready + i * 0.05)} dur="0.24s" repeatCount="3" fill="freeze" />}
+    </circle>
+  ))
+}
+// Xung sáng chạy dọc thân tàu từ đuôi lên mũi
+function HullPulse({ begin }) {
+  return (
+    <g clipPath="url(#act-hull-clip)">
+      <rect x="-15" y="30" width="30" height="9" fill="url(#act-pulse)" opacity="0">
+        <animate attributeName="y" values="30;-42" begin={s(begin)} dur="0.42s" fill="freeze" />
+        <Fade begin={begin} dur={0.42} peak={0.9} hold={0.75} />
+      </rect>
+    </g>
+  )
+}
+// Cửa tàu: ô cabin sáng ấm phía sau tấm cửa trượt sang phải
+function Hatch({ open, close }) {
+  return (
+    <>
+      <rect x="-6" y="8" width="12" height="18" rx="3" fill="url(#act-cabin)" opacity="0">
+        <animate attributeName="opacity" values="0;1" begin={s(open)} dur="0.15s" fill="freeze" />
+        {close != null && <animate attributeName="opacity" values="1;0" begin={s(close)} dur="0.18s" fill="freeze" />}
+      </rect>
+      <rect x="-6" y="8" width="12" height="18" rx="3" fill="#e2e8f0" stroke={INK} strokeWidth="1">
+        <animateTransform attributeName="transform" type="translate" values="0 0;11 0" begin={s(open)} dur="0.2s" fill="freeze" />
+        {close != null && <animateTransform attributeName="transform" type="translate" values="11 0;0 0" begin={s(close)} dur="0.18s" fill="freeze" />}
+      </rect>
+    </>
+  )
+}
+// Ánh sáng cabin hắt ra cửa phủ lên gấu (dir -1: sang trái, 1: sang phải) + hơi nước mỏng thoát ra
+function CabinSpill({ dir, begin, out, lite }) {
+  const x = 6 * dir
+  const far = 52 * dir
+  return (
+    <>
+      <polygon points={`${x},8 ${x},26 ${far},52 ${far},-30`} fill={`url(#act-spill-${dir < 0 ? 'l' : 'r'})`} opacity="0">
+        <Show begin={begin + 0.05} out={out} dur={0.3} outDur={0.3} peak={0.55} />
+      </polygon>
+      {!lite &&
+        [0, 1, 2, 3].map((i) => {
+          const t = begin + 0.05 + i * 0.12
+          return (
+            <circle key={i} cx={x} cy={22 - i * 3} r="1.5" fill="#f1f5f9" opacity="0">
+              <animate attributeName="r" values="1.5;5.5" begin={s(t)} dur="0.9s" fill="freeze" />
+              <animateMotion path={`M0 0 q${dir * 8} -2 ${dir * (14 + i * 4)} ${-6 - i * 2}`} begin={s(t)} dur="0.9s" fill="freeze" />
+              <Fade begin={t} dur={0.9} peak={0.4} hold={0.4} />
+            </circle>
+          )
+        })}
+    </>
+  )
+}
+// Hạt sát mặt đất bị luồng phản lực thổi sang hai bên
+function GroundPush({ cx, n, begin, span, dist, dur = 0.5, lift = 3, r = 1, color = '#e0f2fe' }) {
+  return Array.from({ length: n }, (_, i) => {
+    const dir = i % 2 ? 1 : -1
+    const d = f1(dist * (0.55 + ((i * 37) % 45) / 100))
+    const t = begin + (span * i) / n
+    return (
+      <circle key={i} cx={cx + dir * 3} cy={TRIP_GROUND - (i % 3)} r={r} fill={color} opacity="0">
+        <animateMotion path={`M0 0 Q${f1(dir * d * 0.5)} ${-lift - (i % 3)} ${dir * d} ${-(i % 2)}`} begin={s(t)} dur={s(dur)} fill="freeze" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.1 0.7 0.3 1" />
+        <Fade begin={t} dur={dur} hold={0.55} />
+      </circle>
+    )
+  })
+}
+// Quầng sáng in xuống mặt đất dưới tàu; keys = [[giây, rx, opacity]...]
+function GroundGlow({ cx, keys }) {
+  const t0 = keys[0][0]
+  const span = keys[keys.length - 1][0] - t0
+  const kt = keys.map(([t]) => +((t - t0) / span).toFixed(3)).join(';')
+  const anim = (attr, f) => <animate attributeName={attr} values={keys.map(f).join(';')} keyTimes={kt} begin={s(t0)} dur={s(span)} fill="freeze" />
+  return (
+    <ellipse cx={cx} cy={TRIP_GROUND} rx="4" ry="1.5" fill="url(#act-ground)" opacity="0">
+      {anim('rx', (k) => k[1])}
+      {anim('ry', (k) => f1(k[1] * 0.2))}
+      {anim('opacity', (k) => k[2])}
+    </ellipse>
+  )
+}
+// Sao nền: rung khi nạp, bị đẩy khi phóng, kéo thành vệt lao xuống khi tăng tốc / warp, rồi trở lại thành chấm
+function TripStar({ x, y, i }) {
+  const peak = i % 3 ? 0.55 : 0.9
+  const [ux, uy] = unit([TRIP_GO[0], TRIP_GROUND], [x, y])
+  const pushed = `${f1(ux * 5)} ${f1(uy * 5)}`
+  const fallen = `${f1(ux * 5)} ${f1(uy * 5 + 95)}`
+  const line = (l) => `M${x} ${y} v${l}`
+  const reset = TR.ping - 0.02
+  return (
+    <path d={line(-0.01)} stroke={i % 4 ? '#e0f2fe' : '#c4b5fd'} strokeWidth={i % 3 ? 1.1 : 1.6} strokeLinecap="round" opacity="0">
+      <animate attributeName="opacity" values={`0;${peak}`} begin={s(0.25 + (i % 5) * 0.07)} dur="0.4s" fill="freeze" />
+      <animateTransform attributeName="transform" type="translate" values="0 0;0.6 -0.4;-0.6 0.3;0.5 0.4;-0.4 -0.3;0 0" begin={s(TR.charge + 0.25)} dur="0.22s" repeatCount="2" />
+      <animateTransform attributeName="transform" type="translate" values={`0 0;${pushed}`} begin={s(TR.launch)} dur="0.3s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.1 0.7 0.3 1" />
+      <animateTransform attributeName="transform" type="translate" values={`${pushed};${fallen}`} begin={s(TR.streak)} dur="0.85s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.55 0 0.85 0.6" />
+      <animate attributeName="d" values={[-0.01, -7, -30, -14].map(line).join(';')} keyTimes="0;0.3;0.7;1" begin={s(TR.streak)} dur="0.85s" fill="freeze" />
+      <animate attributeName="opacity" values={`${peak};0`} begin={s(3.75)} dur="0.2s" fill="freeze" />
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 0" begin={s(reset)} dur="0.01s" fill="freeze" />
+      <animate attributeName="d" values={`${line(-0.01)};${line(-0.01)}`} begin={s(reset)} dur="0.01s" fill="freeze" />
+      <animate attributeName="opacity" values={`0;${peak}`} begin={s(TR.ping + (i % 5) * 0.05)} dur="0.35s" fill="freeze" />
+      <animate attributeName="opacity" values={`${peak};0`} begin={s(6.4)} dur="0.5s" fill="freeze" />
+    </path>
+  )
+}
+// Sau lưng gấu: nền không gian, sao, méo không gian lúc triệu hồi, tinh vân / hành tinh khi warp, điểm sáng xa lúc tàu quay về
+function TripSky({ lite }) {
+  const [gx, gy] = TRIP_GO
+  const [fx, fy] = TRIP_FAR
+  const nStreak = lite ? 6 : 10
+  const spaceT = [0, 0.5, 2.85, 3.3, 3.9, 4.4, 6.3, 6.95]
   return (
     <>
       <defs>
-        <linearGradient id="act-hull" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#cbd5e1" />
-          <stop offset="0.45" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#cbd5e1" />
-        </linearGradient>
-        <linearGradient id="act-flame" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fef08a" />
-          <stop offset="0.5" stopColor="#fb923c" />
-          <stop offset="1" stopColor="#f43f5e" stopOpacity="0" />
-        </linearGradient>
+        <radialGradient id="act-trip-space">
+          <stop offset="0" stopColor="#0b1030" stopOpacity="0.85" />
+          <stop offset="0.6" stopColor="#131b4a" stopOpacity="0.6" />
+          <stop offset="1" stopColor="#131b4a" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="act-trip-neb-v">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="act-trip-neb-b">
+          <stop offset="0" stopColor="#38bdf8" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="act-ping">
+          <stop offset="0" stopColor="#fff" />
+          <stop offset="0.4" stopColor="#c4b5fd" stopOpacity="0.7" />
+          <stop offset="1" stopColor="#c4b5fd" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      {/* Tàu 1 bên phải: trồi lên → mở cửa đón gấu → đóng cửa, rung → phóng lên */}
-      <g transform="translate(100 70) scale(1.3)">
-        <g opacity="0" transform="translate(0 40)">
-          <animate attributeName="opacity" values="0;1" begin="0.3s" dur="0.35s" fill="freeze" />
-          <animateTransform attributeName="transform" type="translate" values="0 40;0 0" begin="0.3s" dur="0.45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.2 0.8 0.3 1" />
-          <animateTransform attributeName="transform" type="translate" values="0 0;-1.2 0;1.2 0;-1 0;1 0;0 0" begin="1.5s" dur="0.5s" fill="freeze" />
-          <animateTransform attributeName="transform" type="translate" values="0 0;0 -210" begin="2.05s" dur="0.55s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.6 0 0.9 0.6" />
-          {/* Vệt sáng phía sau khi phóng */}
-          <path d="M0 38 V150" stroke="#fde68a" strokeWidth="3" strokeLinecap="round" opacity="0">
-            <animate attributeName="opacity" values="0;0.85;0" keyTimes="0;0.25;1" begin="2.05s" dur="0.9s" fill="freeze" />
-          </path>
-          <Flame begin={1.65} out={2.7} />
-          <Rocket
-            face={
-              <g opacity="0">
-                <Show begin={1.25} out={2.4} />
-                {WINDOW_PANDA}
-              </g>
-            }
-          />
-          {/* Cửa tàu: mở sẵn (lệch sang phải) → đóng lại khi gấu vào */}
-          <rect x="-6" y="8" width="12" height="18" rx="3" fill="#e2e8f0" stroke={INK} strokeWidth="1" transform="translate(11 0)">
-            <animateTransform attributeName="transform" type="translate" values="11 0;0 0" begin="1.35s" dur="0.2s" fill="freeze" />
-          </rect>
-          <rect x="-6" y="8" width="12" height="18" rx="3" fill="#0f172a" opacity="0.8">
-            <animate attributeName="opacity" values="0.8;0" begin="1.35s" dur="0.2s" fill="freeze" />
-          </rect>
-        </g>
+      {/* Nền không gian: nhạt lúc đầu, sâu nhất khi warp, nhạt lại khi tàu về */}
+      <circle cx="60" cy="0" r="175" fill="url(#act-trip-space)" opacity="0">
+        <animate attributeName="opacity" values="0;0.22;0.22;0.6;0.6;0.3;0.3;0" keyTimes={spaceT.map((t) => +(t / 6.95).toFixed(3)).join(';')} begin="0s" dur="6.95s" fill="freeze" />
+      </circle>
+      {/* Triệu hồi: không gian sau gấu méo nhẹ quanh chỗ tàu sắp hiện */}
+      {[0, 1, 2].slice(0, lite ? 1 : 3).map((i) => (
+        <ellipse key={i} cx={gx} cy={gy} rx="14" ry="30" fill="none" stroke="#bae6fd" strokeWidth="0.8" opacity="0">
+          <animate attributeName="rx" values={[12, 28, 18, 32].map((v) => v + i * 6).join(';')} begin={s(0.2 + i * 0.08)} dur="0.65s" fill="freeze" />
+          <animate attributeName="ry" values={[34, 24, 38, 28].map((v) => v + i * 5).join(';')} begin={s(0.2 + i * 0.08)} dur="0.65s" fill="freeze" />
+          <Fade begin={0.2 + i * 0.08} dur={0.65} peak={0.35} hold={0.6} />
+        </ellipse>
+      ))}
+      {TRIP_STARS.slice(0, lite ? 10 : 18).map(([x, y], i) => (
+        <TripStar key={i} x={x} y={y} i={i} />
+      ))}
+      {/* Warp: tinh vân thoáng qua, hành tinh xa lướt vụt xuống */}
+      <ellipse cx="-30" cy="-70" rx="70" ry="38" fill="url(#act-trip-neb-v)" opacity="0">
+        <animateMotion path="M0 0 v70" begin={s(TR.warp - 0.05)} dur="0.6s" fill="freeze" />
+        <Fade begin={TR.warp - 0.05} dur={0.6} peak={0.8} hold={0.55} />
+      </ellipse>
+      {!lite && (
+        <ellipse cx="150" cy="-100" rx="55" ry="30" fill="url(#act-trip-neb-b)" opacity="0">
+          <animateMotion path="M0 0 v60" begin={s(TR.warp + 0.05)} dur="0.55s" fill="freeze" />
+          <Fade begin={TR.warp + 0.05} dur={0.55} peak={0.8} hold={0.5} />
+        </ellipse>
+      )}
+      <g opacity="0">
+        <animateMotion path="M190 -150 L130 160" begin={s(TR.warp + 0.05)} dur="0.32s" fill="freeze" />
+        <Fade begin={TR.warp + 0.05} dur={0.32} hold={0.7} />
+        <circle r="6" fill="#a78bfa" stroke="#ede9fe" strokeWidth="0.6" />
+        <ellipse rx="11" ry="2.6" fill="none" stroke="#f0abfc" strokeWidth="1.2" transform="rotate(-20)" />
       </g>
-      {/* Khói lúc cất cánh */}
-      {!lite &&
-        Array.from({ length: 5 }, (_, i) => (
-          <circle key={i} cx={96 + (i % 3) * 4} cy="118" r="3" fill="#e2e8f0" opacity="0">
-            <animate attributeName="r" values="3;14" begin={s(1.95 + i * 0.1)} dur="0.9s" fill="freeze" />
-            <animate attributeName="opacity" values="0;0.7;0" keyTimes="0;0.2;1" begin={s(1.95 + i * 0.1)} dur="0.9s" fill="freeze" />
-            <animateMotion path={`M0 0 l${(i % 2 ? -1 : 1) * (6 + i * 3)} 10`} begin={s(1.95 + i * 0.1)} dur="0.9s" fill="freeze" />
-          </circle>
-        ))}
-      {/* Warp: vệt sao lao vụt — tàu vừa bay rất xa */}
-      {Array.from({ length: lite ? 5 : 10 }, (_, i) => {
-        const x = -20 + ((i * 37) % 160)
+      {!lite && (
+        <circle r="3" fill="#7dd3fc" opacity="0">
+          <animateMotion path="M-70 -140 L-50 140" begin={s(TR.warp + 0.15)} dur="0.28s" fill="freeze" />
+          <Fade begin={TR.warp + 0.15} dur={0.28} hold={0.7} />
+        </circle>
+      )}
+      {/* Trước khi tàu về: điểm sáng xa sáng dần, vệt sao lao về phía người xem, không gian co lại */}
+      <circle cx={fx} cy={fy} r="4" fill="url(#act-ping)" opacity="0">
+        <animate attributeName="opacity" values="0;0.35;1" keyTimes="0;0.4;1" begin={s(TR.ping)} dur={s(TR.back - TR.ping)} fill="freeze" />
+        <animate attributeName="r" values="4;7;12" keyTimes="0;0.4;1" begin={s(TR.ping)} dur={s(TR.back - TR.ping)} fill="freeze" />
+        <animate attributeName="r" values="12;30" begin={s(TR.back)} dur="0.15s" fill="freeze" />
+        <animate attributeName="opacity" values="1;0" begin={s(TR.back)} dur="0.22s" fill="freeze" />
+      </circle>
+      <circle cx={fx} cy={fy} r="1" fill="#fff" opacity="0">
+        <animate attributeName="opacity" values="0;1" begin={s(TR.ping)} dur={s(TR.back - TR.ping)} fill="freeze" />
+        <animate attributeName="r" values="1;2.6" begin={s(TR.ping)} dur={s(TR.back - TR.ping)} fill="freeze" />
+        <animate attributeName="opacity" values="1;0" begin={s(TR.back + 0.05)} dur="0.1s" fill="freeze" />
+      </circle>
+      {Array.from({ length: nStreak }, (_, i) => {
+        const a = rad(i * (360 / nStreak) + 12)
+        const p = (d) => `${f1(fx + Math.cos(a) * d)} ${f1(fy + Math.sin(a) * d)}`
+        const t = TR.ping + 0.08 + (i % 3) * 0.07
         return (
-          <path key={i} d={`M${x} ${-40 + (i % 4) * 22} v${16 + (i % 3) * 8}`} stroke={i % 3 ? '#bae6fd' : '#f0abfc'} strokeWidth="1.4" strokeLinecap="round" opacity="0">
-            <animateMotion path="M0 0 v150" begin={s(2.55 + (i % 5) * 0.08)} dur="0.42s" fill="freeze" />
-            <Fade begin={2.55 + (i % 5) * 0.08} dur={0.42} hold={0.6} />
+          <path key={i} d={`M${p(5)} L${p(7)}`} stroke={i % 2 ? '#e0f2fe' : '#c4b5fd'} strokeWidth="1.2" strokeLinecap="round" opacity="0">
+            <animate attributeName="d" values={`M${p(5)} L${p(7)};M${p(50)} L${p(90)}`} begin={s(t)} dur="0.3s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.5 0 0.9 0.6" />
+            <Fade begin={t} dur={0.3} peak={0.85} hold={0.6} />
           </path>
         )
       })}
-      <StageFlash box={box} cx={60} cy={40} begin={2.9} color="#bae6fd" peak={0.24} dur={0.35} />
-      {/* Tàu 2 đáp xuống bên trái → mở cửa, gấu bước ra → tàu mờ đi */}
-      <g transform="translate(12 70) scale(1.3)">
-        <g opacity="0" transform="translate(0 -210)">
-          <animate attributeName="opacity" values="0;1" begin="3.05s" dur="0.1s" fill="freeze" />
-          <animateTransform attributeName="transform" type="translate" values="0 -210;0 6;0 0" keyTimes="0;0.85;1" begin="3.05s" dur="0.6s" fill="freeze" calcMode="spline" keySplines="0.2 0.7 0.3 1;0.4 0 0.6 1" />
-          <animate attributeName="opacity" values="1;0" begin="4.3s" dur="0.45s" fill="freeze" />
-          <Flame begin={3.05} out={3.6} />
-          <Rocket
-            face={
-              <g opacity="0">
-                <Show begin={3.05} out={3.75} outDur={0.1} />
-                {WINDOW_PANDA}
-              </g>
-            }
-          />
-          <rect x="-6" y="8" width="12" height="18" rx="3" fill="#e2e8f0" stroke={INK} strokeWidth="1">
-            <animateTransform attributeName="transform" type="translate" values="0 0;11 0" begin="3.7s" dur="0.2s" fill="freeze" />
-          </rect>
+      {[0, 1].map((i) => (
+        <ellipse key={i} cx={fx} cy={fy} rx="36" ry="20" fill="none" stroke="#c4b5fd" strokeWidth="0.9" opacity="0">
+          <animate attributeName="rx" values="36;20;24;5" begin={s(TR.ping + 0.05 + i * 0.12)} dur="0.3s" fill="freeze" />
+          <animate attributeName="ry" values="20;26;12;4" begin={s(TR.ping + 0.05 + i * 0.12)} dur="0.3s" fill="freeze" />
+          <Fade begin={TR.ping + 0.05 + i * 0.12} dur={0.3} peak={0.5} hold={0.7} />
+        </ellipse>
+      ))}
+    </>
+  )
+}
+function SpaceTrip({ lite, part, box }) {
+  if (part === 'back') return <TripSky lite={lite} />
+  const [gx, gy] = TRIP_GO
+  const [hx, hy] = TRIP_HOME
+  const [fx, fy] = TRIP_FAR
+  const G = TRIP_GROUND
+  const top = [gx, f1(gy + TRIP_UP * SHIP_K)] // chỗ tàu đi thu thành điểm sáng
+  const loc = (v) => f1(v / SHIP_K) // đơn vị gấu → đơn vị trong tàu
+  const over = [hx + 14, hy - 30] // tàu về lao quá chỗ đáp rồi mới chỉnh lại
+  const sink = [hx, 48] // bụi sao của tàu về hút vào đây
+  const lerp = (k) => `${f1(fx + (over[0] - fx) * k)} ${f1(fy + (over[1] - fy) * k)}`
+  const warpTrail = [[0, 0], [0.08, 0.75], [0.6, 0.95], [1, 1]].map(([a, b]) => `M${lerp(a)} L${lerp(b)}`).join(';')
+  return (
+    <>
+      <TripDefs />
+      {/* 1. Triệu hồi: hạt sáng tụ lại, vòng hologram dưới đáy, tàu hiện hẳn thì sóng sáng lan ra */}
+      <Converge cx={gx} cy={gy} n={lite ? 5 : 9} dist={46} begin={0.15} dur={0.45}>
+        <circle r="1.3" fill="#e0f2fe" />
+      </Converge>
+      <ellipse cx={gx} cy={G} rx="26" ry="5" fill="none" stroke="#67e8f9" strokeWidth="1" strokeDasharray="3 2.4" opacity="0">
+        <Fade begin={TR.holo - 0.05} dur={0.75} peak={0.8} />
+      </ellipse>
+      <Ring cx={gx} cy={gy} from={4} to={44} begin={TR.ship} dur={0.6} color="#a5f3fc" width={1.2} />
+      {/* 3. Nạp: quầng sáng dưới tàu tăng dần, vòng gió lan, hạt bị đẩy ra — bùng lên lúc phóng rồi tắt */}
+      <GroundGlow cx={gx} keys={[[TR.charge, 4, 0], [TR.launch, 28, 0.8], [TR.launch + 0.17, 44, 1], [TR.launch + 0.7, 10, 0]]} />
+      <Ring cx={gx} cy={G} from={5} to={30} ry={0.25} begin={TR.charge + 0.3} dur={0.5} color="#7dd3fc" width={1} />
+      {!lite && <Ring cx={gx} cy={G} from={5} to={34} ry={0.25} begin={TR.charge + 0.52} dur={0.45} color="#7dd3fc" width={1} />}
+      <GroundPush cx={gx} n={lite ? 4 : 8} begin={TR.charge + 0.2} span={0.5} dist={34} dur={0.45} />
+      {/* 4. Phóng: chớp, sóng chấn động, hạt bắn mạnh ra, khói */}
+      <StageFlash box={box} cx={gx} cy={108} begin={TR.launch} color="#e0f2fe" peak={0.32} dur={0.32} />
+      <circle cx={gx} cy={G - 3} r="3" fill="#fff" opacity="0">
+        <animate attributeName="r" values="3;20" begin={s(TR.launch)} dur="0.25s" fill="freeze" />
+        <Fade begin={TR.launch} dur={0.28} hold={0.3} />
+      </circle>
+      <Ring cx={gx} cy={G} from={8} to={100} ry={0.22} begin={TR.launch} dur={0.75} color="#bae6fd" width={2.2} boom />
+      <Ring cx={gx} cy={G} from={6} to={62} ry={0.3} begin={TR.launch + 0.06} dur={0.6} color="#c4b5fd" width={1.4} boom />
+      <GroundPush cx={gx} n={lite ? 6 : 12} begin={TR.launch} span={0.12} dist={88} dur={0.6} lift={7} r={1.3} />
+      {!lite &&
+        Array.from({ length: 5 }, (_, i) => (
+          <circle key={i} cx={gx - 4 + (i % 3) * 4} cy={G - 1} r="3" fill="#e2e8f0" opacity="0">
+            <animate attributeName="r" values="3;14" begin={s(TR.launch + i * 0.06)} dur="0.9s" fill="freeze" />
+            <animate attributeName="opacity" values="0;0.6;0" keyTimes="0;0.2;1" begin={s(TR.launch + i * 0.06)} dur="0.9s" fill="freeze" />
+            <animateMotion path={`M0 0 l${(i % 2 ? -1 : 1) * (10 + i * 5)} -4`} begin={s(TR.launch + i * 0.06)} dur="0.9s" fill="freeze" />
+          </circle>
+        ))}
+      {/* Tàu đi (bên phải): hologram → hiện hẳn → cửa mở đón gấu → đóng, nạp, rung → phóng, tăng tốc → thu thành điểm sáng */}
+      <g transform={`translate(${gx} ${gy}) scale(${SHIP_K})`}>
+        <g opacity="0">
+          <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.75;1" begin={s(TR.holo)} dur="0.6s" fill="freeze" />
+          <path d={`${HULL} ${FINS}`} fill="#67e8f9" fillOpacity="0.12" stroke="#67e8f9" strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset="1">
+            <animate attributeName="stroke-dashoffset" values="1;0" begin={s(TR.holo)} dur="0.35s" fill="freeze" />
+          </path>
+          <path d="M-14 0 H14" stroke="#a5f3fc" strokeWidth="0.8">
+            <animateMotion path="M0 36 V-32" begin={s(TR.holo)} dur="0.35s" fill="freeze" />
+          </path>
+        </g>
+        <g opacity="0">
+          <animate attributeName="opacity" values="0;1" begin={s(TR.ship)} dur="0.25s" fill="freeze" />
+          {/* Rung mạnh dần khi nạp, rồi bay lên → tăng tốc */}
+          <animateTransform attributeName="transform" type="translate" values="0 0;-0.3 0;0.3 0;-0.5 0.1;0.5 0;-0.7 0.2;0.7 0;-0.9 0.2;0.9 0;-1.1 0.3;1.1 0;0 0" begin={s(TR.charge + 0.05)} dur={s(TR.launch - TR.charge - 0.05)} fill="freeze" />
+          <animateTransform attributeName="transform" type="translate" values="0 0;0 -26" begin={s(TR.launch)} dur="0.25s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.5 0 0.85 0.6" />
+          <animateTransform attributeName="transform" type="translate" values={`0 -26;0 ${TRIP_UP}`} begin={s(TR.launch + 0.25)} dur={s(TR.gone - TR.launch - 0.25)} fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.55 0 1 0.7" />
+          {/* Vệt phản lực kéo dài theo tốc độ, tàu biến mất thì thu lại */}
+          <g opacity="0">
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.6;1" begin={s(TR.launch + 0.05)} dur="0.85s" fill="freeze" />
+            {[
+              ['#a5f3fc', 6, 0.35],
+              ['#fff', 1.6, 0.9],
+            ].map(([c, w, o]) => (
+              <path key={c} d="M0 40 V40" stroke={c} strokeWidth={w} strokeLinecap="round" opacity={o}>
+                <animate attributeName="d" values={`M0 40 V40;M0 40 V64;M0 40 V${40 - TRIP_UP}`} keyTimes="0;0.4;1" begin={s(TR.launch + 0.05)} dur={s(TR.gone - TR.launch - 0.05)} fill="freeze" />
+                <animate attributeName="d" values={`M0 40 V${40 - TRIP_UP};M0 40 V52`} begin={s(TR.gone)} dur="0.35s" fill="freeze" />
+              </path>
+            ))}
+          </g>
+          <g>
+            <animateTransform attributeName="transform" type="scale" values="1 1;0.9 1.16" begin={s(TR.launch + 0.2)} dur="0.3s" fill="freeze" />
+            <animateTransform attributeName="transform" type="scale" values="0.9 1.16;0.05 0.25" begin={s(TR.gone - 0.06)} dur="0.1s" fill="freeze" />
+            <animate attributeName="opacity" values="1;0" begin={s(TR.gone - 0.02)} dur="0.08s" fill="freeze" />
+            <EngineGlow keys={[[TR.charge, 3, 0], [TR.launch - 0.1, 13, 0.9], [TR.launch, 18, 1], [TR.gone, 20, 1]]} />
+            <Thrust on={TR.charge + 0.45} off={TR.gone} len={[[TR.charge + 0.45, 0.45], [TR.launch, 1.3], [TR.launch + 0.25, 1.7], [TR.gone, 2.6]]} />
+            <Rocket
+              face={
+                <g opacity="0">
+                  <Show begin={TR.close - 0.05} out={TR.gone} dur={0.15} />
+                  <g>
+                    <animateTransform attributeName="transform" type="translate" values="0 0;0.5 0.3;-0.5 0;0.4 0.4;-0.3 0.1;0 0" begin={s(TR.charge + 0.2)} dur="0.25s" repeatCount="2" />
+                    <animateTransform attributeName="transform" type="translate" values="0 0;0 1.2" begin={s(TR.launch)} dur="0.15s" fill="freeze" />
+                    {WINDOW_PANDA}
+                  </g>
+                </g>
+              }
+            >
+              <path d={ENERGY} fill="none" stroke="#22d3ee" strokeWidth="1" strokeLinecap="round" opacity="0">
+                <animate attributeName="opacity" values="0;0.4;0.9;0.6;1" keyTimes="0;0.3;0.6;0.8;1" begin={s(TR.close + 0.1)} dur={s(TR.launch - TR.close - 0.1)} fill="freeze" />
+              </path>
+              <ShipLights on={TR.ship + 0.25} ready={TR.close + 0.1} />
+              <HullPulse begin={TR.ship + 0.2} />
+              <Hatch open={TR.door} close={TR.close} />
+              {/* Vật chất hoá: thân tàu loé trắng rồi hiện màu thật */}
+              <path d={`${HULL} ${FINS}`} fill="#fff" opacity="0">
+                <animate attributeName="opacity" values="0.9;0.9;0" keyTimes="0;0.4;1" begin={s(TR.ship)} dur="0.45s" fill="freeze" />
+              </path>
+            </Rocket>
+            <CabinSpill dir={-1} begin={TR.door} out={TR.close} lite={lite} />
+          </g>
         </g>
       </g>
-      {/* Bước ra: vài lấp lánh vui */}
+      {/* 5. Tàu thu thành một điểm sáng rồi loé */}
+      <Grow cx={top[0]} cy={top[1]} begin={TR.gone - 0.02} dur={0.1} out={TR.gone + 0.1} outDur={0.25}>
+        <path d={sparkle(0, 0, 10)} fill="#fff" />
+      </Grow>
+      <Ring cx={top[0]} cy={top[1]} from={2} to={24} begin={TR.gone} dur={0.45} color="#e0f2fe" width={1.4} />
+      <StageFlash box={box} cx={top[0]} cy={top[1]} begin={TR.gone} color="#bae6fd" peak={0.2} dur={0.32} />
+      {/* 7. Tàu về: loé ở điểm xa, vệt warp phía sau ngắn dần khi giảm tốc */}
+      <StageFlash box={box} cx={fx} cy={fy} begin={TR.back} color="#ddd6fe" peak={0.28} dur={0.32} />
+      <Ring cx={fx} cy={fy} from={3} to={30} begin={TR.back} dur={0.4} color="#ede9fe" width={1.6} boom />
       {[
-        [28, 30],
-        [92, 34],
-        [100, 70],
-      ].map(([x, y], i) => (
-        <path key={i} d={sparkle(x, y, 3)} fill="#e0f2fe" opacity="0">
-          <Fade begin={4.05 + i * 0.12} dur={0.6} />
+        ['#c4b5fd', 7, 0.4],
+        ['#fff', 1.6, 0.95],
+      ].map(([c, w, o]) => (
+        <path key={c} d={`M${lerp(0)} L${lerp(0)}`} stroke={c} strokeWidth={w} strokeLinecap="round" opacity="0">
+          <animate attributeName="d" values={warpTrail} keyTimes="0;0.4;0.75;1" begin={s(TR.back)} dur="0.4s" fill="freeze" />
+          <animate attributeName="opacity" values={`0;${o};${o};0`} keyTimes="0;0.1;0.6;1" begin={s(TR.back)} dur="0.45s" fill="freeze" />
         </path>
       ))}
+      {/* 8. Lơ lửng + đáp: quầng sáng dưới tàu, hạt bị thổi sang hai bên, vòng năng lượng, chạm đất */}
+      <GroundGlow cx={hx} keys={[[TR.hover - 0.1, 4, 0], [TR.hover + 0.15, 20, 0.7], [TR.land, 26, 0.9], [TR.land + 0.1, 34, 1], [TR.land + 0.6, 6, 0]]} />
+      <GroundPush cx={hx} n={lite ? 4 : 8} begin={TR.hover + 0.05} span={0.3} dist={42} dur={0.5} />
+      <Ring cx={hx} cy={G} from={5} to={26} ry={0.25} begin={TR.hover + 0.15} dur={0.5} color="#7dd3fc" width={1} />
+      <Ring cx={hx} cy={G} from={6} to={52} ry={0.25} begin={TR.land} dur={0.6} color="#bae6fd" width={1.7} boom />
+      {Array.from({ length: lite ? 3 : 6 }, (_, i) => {
+        const dir = i % 2 ? 1 : -1
+        return (
+          <circle key={i} cx={hx + dir * 4} cy={G - 1} r="2" fill="#e2e8f0" opacity="0">
+            <animate attributeName="r" values="2;7" begin={s(TR.land)} dur="0.55s" fill="freeze" />
+            <animateMotion path={`M0 0 l${dir * (8 + i * 2.5)} -3`} begin={s(TR.land)} dur="0.55s" fill="freeze" />
+            <Fade begin={TR.land} dur={0.55} peak={0.6} hold={0.4} />
+          </circle>
+        )
+      })}
+      {[
+        [-14, 14],
+        [-6, 22],
+        [5, 18],
+        [13, 12],
+        [20, 8],
+      ]
+        .slice(0, lite ? 3 : 5)
+        .map(([dx, h], i) => (
+          <circle key={i} cx={hx} cy={G - 1} r="1" fill={i % 2 ? '#fde68a' : '#e0f2fe'} opacity="0">
+            <animateMotion path={`M0 0 Q${dx} ${-h * 2} ${dx * 2} -1`} begin={s(TR.land + 0.02 + i * 0.03)} dur="0.65s" fill="freeze" />
+            <Fade begin={TR.land + 0.02 + i * 0.03} dur={0.65} hold={0.75} />
+          </circle>
+        ))}
+      {/* Tàu về (bên trái): lao ra từ điểm xa, nghiêng, vượt quá rồi chỉnh lại → lơ lửng → chạm đất nảy nhẹ → mở cửa → tan thành bụi sao */}
+      <g transform={`translate(${hx} ${hy}) scale(${SHIP_K})`}>
+        <g opacity="0" transform={`translate(${loc(fx - hx)} ${loc(fy - hy)})`}>
+          <animate attributeName="opacity" values="0;1" begin={s(TR.back)} dur="0.06s" fill="freeze" />
+          <animate attributeName="opacity" values="1;0" begin={s(TR.bye + 0.15)} dur="0.15s" fill="freeze" />
+          <animateTransform attributeName="transform" type="translate" values={`${loc(fx - hx)} ${loc(fy - hy)};${loc(over[0] - hx)} ${loc(over[1] - hy)}`} begin={s(TR.back)} dur="0.32s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.1 0.8 0.3 1" />
+          <animateTransform attributeName="transform" type="translate" values={`${loc(over[0] - hx)} ${loc(over[1] - hy)};0 -20`} begin={s(TR.back + 0.32)} dur={s(TR.hover - TR.back - 0.32)} fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.6 1" />
+          <animateTransform attributeName="transform" type="translate" values="0 -20;0 -15;0 -16.5;0 0" keyTimes="0;0.35;0.55;1" begin={s(TR.hover)} dur={s(TR.land - TR.hover)} fill="freeze" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.5 0 0.9 0.6" />
+          <animateTransform attributeName="transform" type="translate" values="0 0;0 -1.8;0 0" begin={s(TR.land)} dur="0.28s" fill="freeze" />
+          <g>
+            <animateTransform attributeName="transform" type="rotate" values="22;-14;6;0" keyTimes="0;0.45;0.8;1" begin={s(TR.back)} dur="0.6s" fill="freeze" />
+            <g transform="scale(0.12)">
+              <animateTransform attributeName="transform" type="scale" values="0.12;1.08;1" keyTimes="0;0.6;1" begin={s(TR.back)} dur="0.42s" fill="freeze" />
+              <animateTransform attributeName="transform" type="scale" values="1 1;1.07 0.9;0.97 1.04;1 1" begin={s(TR.land)} dur="0.32s" fill="freeze" />
+              <EngineGlow keys={[[TR.back, 18, 1], [TR.back + 0.3, 10, 0.8], [TR.hover - 0.05, 5, 0.5], [TR.hover + 0.1, 11, 0.9], [TR.land, 14, 1], [TR.land + 0.4, 3, 0]]} />
+              <Thrust on={TR.back} off={TR.land + 0.35} len={[[TR.back, 2.4], [TR.back + 0.25, 1.5], [TR.hover - 0.05, 0.6], [TR.hover + 0.05, 1.15], [TR.land, 1.25], [TR.land + 0.35, 0.35]]} />
+              <Rocket
+                face={
+                  <g opacity="0">
+                    <Show begin={TR.back} out={TR.open + 0.1} outDur={0.1} />
+                    {WINDOW_PANDA}
+                  </g>
+                }
+              >
+                <path d={ENERGY} fill="none" stroke="#22d3ee" strokeWidth="1" strokeLinecap="round" opacity="0.9">
+                  <animate attributeName="opacity" values="0.9;0.3" begin={s(TR.land + 0.15)} dur="0.4s" fill="freeze" />
+                </path>
+                <ShipLights on={TR.back - 0.05} />
+                <Hatch open={TR.open} />
+                {/* Tan biến: thân tàu sáng rực trước khi vỡ thành bụi sao */}
+                <path d={`${HULL} ${FINS}`} fill="#fff" opacity="0">
+                  <animate attributeName="opacity" values="0;0.9" begin={s(TR.bye)} dur="0.22s" fill="freeze" />
+                </path>
+              </Rocket>
+              <CabinSpill dir={1} begin={TR.open} out={TR.bye + 0.1} lite={lite} />
+            </g>
+          </g>
+        </g>
+      </g>
+      {/* 10. Viền tàu vỡ thành bụi sao, hút về một điểm, loé rồi tắt */}
+      {SHIP_OUTLINE.slice(0, lite ? 6 : 10).map(([x, y], i) => {
+        const px = f1(hx + x * SHIP_K)
+        const py = f1(hy + y * SHIP_K)
+        const [sx, sy] = sink
+        const t = TR.bye + 0.12 + (i % 4) * 0.02
+        return (
+          <path key={i} d={sparkle(px, py, 1.8)} fill={i % 3 ? '#e0f2fe' : '#f0abfc'} opacity="0">
+            <animateMotion path={`M0 0 Q${f1((px - sx) * 0.35)} ${f1((py - sy) * 0.35 - 4)} ${f1(sx - px)} ${f1(sy - py)}`} begin={s(t)} dur="0.42s" fill="freeze" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.5 0 0.8 0.5" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" begin={s(t)} dur="0.42s" fill="freeze" />
+          </path>
+        )
+      })}
+      <Grow cx={sink[0]} cy={sink[1]} begin={TR.bye + 0.55} dur={0.1} out={TR.bye + 0.65} outDur={0.22}>
+        <path d={sparkle(0, 0, 7)} fill="#fff" />
+      </Grow>
+      <Ring cx={sink[0]} cy={sink[1]} from={2} to={16} begin={TR.bye + 0.57} dur={0.4} color="#e0f2fe" width={1.2} />
+      {/* Kết: một ngôi sao nhỏ rơi xuống cạnh tai gấu rồi tắt */}
+      <g opacity="0">
+        <animateMotion path="M0 0 L-8 52" begin={s(TR.star)} dur="0.32s" fill="freeze" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.4 0 0.7 1" />
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.8;1" begin={s(TR.star)} dur="0.5s" fill="freeze" />
+        <path d="M100 -26 l3 -18" stroke="#fde68a" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+        <path d={sparkle(100, -26, 3.2)} fill="#fef9c3" />
+      </g>
+      <Grow cx={92} cy={26} begin={TR.star + 0.36} dur={0.08} out={TR.star + 0.44} outDur={0.16}>
+        <path d={sparkle(0, 0, 5)} fill="#fff" />
+      </Grow>
     </>
   )
 }
@@ -1190,11 +1636,11 @@ function GalaxyDescent({ lite, part, box }) {
 }
 
 export const INTERACTIONS = {
-  'dj-set': { ms: 3000, line: 'Lên nhạc nào! 🎧', sound: null, Layer: DjSet },
-  'star-duel': { ms: 4600, line: 'Ánh sáng tinh hệ — xuất kiếm! ⚔️', sound: null, Layer: StarDuel },
-  'star-summon': { ms: 5000, line: 'Sao trời ơi, nghe lệnh ta! 🪄', sound: null, Layer: StarSummon },
-  'space-trip': { ms: 4800, line: '3… 2… 1… Cất cánh! 🚀', sound: null, Layer: SpaceTrip },
-  'galaxy-descent': { ms: 7400, line: 'Ngân Hà Giáng Lâm! 🌌', sound: null, Layer: GalaxyDescent },
+  'dj-set': { ms: 3000, line: 'Lên nhạc nào! 🎧', sound: 'dj-set', Layer: DjSet },
+  'star-duel': { ms: 4600, line: 'Ánh sáng tinh hệ — xuất kiếm! ⚔️', sound: 'star-duel', Layer: StarDuel },
+  'star-summon': { ms: 5000, line: 'Sao trời ơi, nghe lệnh ta! 🪄', sound: 'star-summon', Layer: StarSummon },
+  'space-trip': { ms: 7000, line: '3… 2… 1… Cất cánh! 🚀', sound: 'space-trip', Layer: SpaceTrip },
+  'galaxy-descent': { ms: 7400, line: 'Ngân Hà Giáng Lâm! 🌌', sound: 'galaxy-descent', Layer: GalaxyDescent },
 }
 
 // Lớp cảnh của hoạt cảnh đang chạy (run = { id, key }); đổi key để chạy lại từ đầu.
@@ -1248,6 +1694,7 @@ export function useHold(onHold, enabled = true) {
     ? {
         onPointerDown: (e) => {
           if (e.button !== 0) return
+          unlockSfx() // mở tiếng ngay trong cú chạm: lúc giữ đủ lâu hoạt cảnh mới có tiếng
           fired.current = false
           clearTimeout(timer.current)
           setHolding(true)
@@ -1275,14 +1722,22 @@ export function usePandaAct(outfit) {
   const [run, setRun] = useState(null)
   const phase = useRef('idle')
   const timer = useRef(null)
+  const sfx = useRef(null)
   const id = outfit?.interaction
 
   useEffect(() => {
     clearTimeout(timer.current)
     phase.current = 'idle'
     setRun(null)
+    stopActSound(sfx.current)
   }, [id])
-  useEffect(() => () => clearTimeout(timer.current), [])
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current)
+      stopActSound(sfx.current)
+    },
+    []
+  )
 
   const play = useCallback(
     (onEnd) => {
@@ -1290,6 +1745,7 @@ export function usePandaAct(outfit) {
       if (!def || phase.current !== 'idle') return false
       phase.current = 'playing'
       setRun({ id, key: Date.now() })
+      sfx.current = playActSound(def.sound)
       timer.current = setTimeout(() => {
         phase.current = 'cooldown'
         setRun(null)

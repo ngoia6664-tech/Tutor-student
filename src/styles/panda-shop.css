@@ -15,7 +15,40 @@
   margin: 0 auto;
 }
 
-/* ----- Xu / Sao: neo dính dưới thanh trên cùng, viên nổi ở góc phải (không chiếm dòng riêng) ----- */
+/* ----- Bảng đèn LED nhỏ: nền tối như sân khấu, lưới chấm LED rất mờ, số phát sáng -----
+   Dùng chung: Xu / Sao (CoinStarBadge, cả cụm góc PandaDock), giá ở phòng thử đồ, giá trên từng thẻ đồ.
+   Là "thiết bị" nên giữ nguyên màu ở cả 2 theme. Số Xu sáng vàng, số Sao sáng xanh băng. */
+.led-panel {
+  --led: #fde68a;
+  --led-glow: rgba(252, 211, 77, 0.7);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.34rem 0.8rem;
+  border: 1px solid rgba(252, 211, 77, 0.32);
+  border-radius: 10px;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.06) 0.7px, transparent 1px) 0 0 / 4px 4px,
+    linear-gradient(180deg, var(--shop-stage-2), var(--shop-stage));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 16px -6px var(--led-glow);
+  color: var(--led);
+  white-space: nowrap;
+}
+.led-panel b {
+  color: var(--led);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 6px var(--led-glow), 0 0 1px #fff;
+}
+.led-panel .is-star {
+  --led: #bae6fd;
+  --led-glow: rgba(56, 189, 248, 0.75);
+}
+
+/* ----- Xu / Sao: neo dính dưới thanh trên cùng, bảng LED ở góc phải (không chiếm dòng riêng) ----- */
 .shop-hud-anchor {
   position: sticky;
   z-index: 6;
@@ -23,56 +56,36 @@
 }
 .shop-hud-anchor .coin-star {
   position: absolute;
-  top: 0.6rem;
+  top: 0.7rem;
   right: 0;
-}
-
-.coin-star {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  white-space: nowrap;
 }
 .coin-star-item {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.28rem;
-}
-.coin-star-item b {
-  font-variant-numeric: tabular-nums;
+  gap: 0.3rem;
 }
 .coin-star-icon {
   align-self: center;
-  font-size: 1em;
+  font-size: 0.95em;
 }
 .coin-star-unit {
-  color: var(--muted);
-  font-size: 0.78em;
+  color: rgba(226, 222, 255, 0.6);
+  font-size: 0.76em;
   font-weight: 600;
 }
-.coin-star-sep {
-  width: 1px;
-  height: 1.1em;
-  background: var(--border-strong);
-}
 .coin-star-hud {
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-solid);
-  box-shadow: var(--shadow), 0 0 0 1px rgba(252, 211, 77, 0.08) inset;
+  padding: 0.45rem 0.95rem;
   font-size: 0.95rem;
 }
-.coin-star-hud .is-coin b { color: var(--shop-gold); }
-:root[data-theme='light'] .coin-star-hud .is-coin b { color: #a16207; }
 .coin-star-retry {
   padding: 0.1rem 0.5rem;
   border: 0;
   border-radius: 999px;
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: rgba(252, 211, 77, 0.16);
+  color: var(--led);
   font: inherit;
   font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -83,17 +96,12 @@
 .shop-head h1 {
   margin: 0.4rem 0 0.2rem;
   font-size: clamp(1.6rem, 4.2vw, 2.3rem);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   line-height: 1.1;
-}
-.shop-head h1 span {
-  background: linear-gradient(90deg, #c084fc, #f472b6 55%, #fcd34d);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 .shop-head p {
   margin: 0;
+  max-width: 34rem;
   color: var(--muted);
   font-size: 0.92rem;
 }
@@ -235,14 +243,17 @@
   gap: 0.75rem 1rem;
   margin-top: 0.5rem;
 }
+/* Giá: bảng LED lớn cạnh nút mua */
 .showcase-price {
-  font-size: 1.35rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 1.05rem;
 }
+.showcase-price b { font-size: 1.4em; }
 .showcase-price small {
-  color: var(--muted);
-  font-size: 0.75em;
+  color: rgba(226, 222, 255, 0.6);
+  font-size: 0.8em;
   font-weight: 600;
 }
 .showcase-cta {
@@ -390,12 +401,17 @@
   font-weight: 700;
   line-height: 1.25;
 }
-.ocard-price {
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+/* Giá nhỏ: bảng LED ở góc phải dưới của ảnh */
+.ocard-tag {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  gap: 0.25rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.74rem;
 }
+.ocard-tag b { font-size: 1.15em; }
 
 /* Hiếm ⭐: viền xanh + quầng nhẹ góc trên */
 .ocard.tier-rare1 { --frame: color-mix(in srgb, var(--t1) 55%, transparent); }
@@ -491,4 +507,12 @@
 @media (prefers-reduced-motion: reduce) {
   .ocard, .ocard-thumb::after { transition: none; }
   .ocard:hover { transform: none; }
+}
+.ocard-tag .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

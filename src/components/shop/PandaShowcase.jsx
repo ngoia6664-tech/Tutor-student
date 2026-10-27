@@ -80,12 +80,12 @@ export default function PandaShowcase({ outfit, account, busy, onAction }) {
         <h2>{outfit.name}</h2>
         <p className="showcase-desc">{outfit.description}</p>
         <div className="showcase-buy">
-          <span className="showcase-price">
+          <span className="led-panel showcase-price">
             {outfit.isDefault ? (
-              'Sở hữu sẵn'
+              <b>Sở hữu sẵn</b>
             ) : (
               <>
-                <span aria-hidden="true">🪙</span> {number.format(outfit.price)} <small>Xu</small>
+                <span aria-hidden="true">🪙</span> <b>{number.format(outfit.price)}</b> <small>Xu</small>
               </>
             )}
           </span>

@@ -274,8 +274,7 @@ function MascotBody() {
     if (!act.play(rest)) return false
     sleepy.current = false
     setBubble(null)
-    setMood('act')
-    sound('cheer')
+    setMood('act') // tiếng của hoạt cảnh do usePandaAct phát (lib/pandaSfx.js)
     return true
   }
 

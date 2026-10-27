@@ -14,11 +14,21 @@ export default memo(function OutfitCard({ outfit, account, selected, onSelect })
       <span className="ocard-thumb">
         <OutfitPanda outfit={outfit} />
         {status && <span className={`ocard-status${state.equipped ? ' is-on' : ''}`}>{state.equipped ? '✓ ' : ''}{status}</span>}
+        <span className="led-panel ocard-tag">
+          {outfit.isDefault ? (
+            <b>Miễn phí</b>
+          ) : (
+            <>
+              <span aria-hidden="true">🪙</span>
+              <b>{number.format(outfit.price)}</b>
+              <span className="sr-only">Xu</span>
+            </>
+          )}
+        </span>
       </span>
       <span className="ocard-body">
         <span className="ocard-rarity">{outfit.isDefault ? 'Mặc định' : OUTFIT_TIERS[outfit.tier]}</span>
         <span className="ocard-name">{outfit.name.replace(/^Panda /, '')}</span>
-        <span className="ocard-price">{outfit.isDefault ? 'Miễn phí' : <>🪙 {number.format(outfit.price)}</>}</span>
       </span>
     </button>
   )

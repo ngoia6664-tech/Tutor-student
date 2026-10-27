@@ -1,6 +1,7 @@
-/* ===== Icon shop nổi góc trái dưới (components/PandaDock.jsx) =====
+/* ===== Cụm góc trái dưới (components/PandaDock.jsx) =====
    Học sinh: nằm trên nút Góp ý (feedback.css); gia sư không có nút Góp ý nên hạ xuống sát đáy.
-   Chỉ một hình ngôi cửa hàng nhỏ + viên Xu / Sao bên dưới. Không dùng backdrop-filter. */
+   Logo tiệm quần áo + gấu vẫy tay (ShopIcon) + bảng LED Xu / Sao (.led-panel ở panda-shop.css) + nút ‹ / › thu gọn cả cụm.
+   Không dùng backdrop-filter. */
 .panda-dock {
   position: fixed;
   left: max(1rem, env(safe-area-inset-left));
@@ -9,21 +10,21 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.45rem;
+  gap: 0.4rem;
   max-width: calc(100vw - 2rem);
 }
 .panda-dock.is-tutor { bottom: calc(1rem + env(safe-area-inset-bottom)); }
 
 .panda-shop-icon {
+  position: relative;
+  z-index: 1;
   display: block;
-  width: 58px;
-  height: 58px;
-  padding: 0;
+  width: 60px;
+  height: 60px;
   color: inherit;
   text-decoration: none;
-  cursor: pointer;
-  filter: drop-shadow(0 4px 8px rgba(124, 58, 237, 0.55));
-  transition: transform 0.25s var(--ease), filter 0.25s var(--ease);
+  filter: drop-shadow(0 4px 8px rgba(124, 58, 237, 0.5));
+  transition: transform 0.25s var(--ease);
 }
 .panda-shop-icon svg {
   display: block;
@@ -31,10 +32,7 @@
   height: 100%;
   overflow: visible;
 }
-.panda-shop-icon:hover {
-  transform: translateY(-3px) scale(1.08);
-  filter: drop-shadow(0 6px 12px rgba(217, 70, 239, 0.8));
-}
+.panda-shop-icon:hover { transform: translateY(-2px) scale(1.06); }
 .panda-shop-icon:active { transform: scale(0.94); }
 .panda-shop-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 12px; }
 .shop-sparkle {
@@ -46,52 +44,60 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.7); }
 }
-
-/* Viên Xu / Sao: cùng kiểu thẻ nổi với các phần khác của app */
-.panda-dock-stats {
-  display: inline-flex;
-  margin-left: 0.25rem;
-  padding: 0.22rem 0.75rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-solid);
-  box-shadow: var(--shadow);
+/* Gấu trước cửa vẫy tay: vài nhịp rồi nghỉ (chỉ xoay một nét tay, nhẹ); rê chuột thì vẫy liền */
+.shop-wave {
+  transform-box: view-box;
+  transform-origin: 53px 51.5px;
+  animation: shop-wave 4s ease-in-out infinite;
 }
-.coin-star-compact {
-  font-size: 0.8rem;
+.panda-shop-icon:hover .shop-wave { animation-duration: 1.2s; }
+@keyframes shop-wave {
+  0%, 62%, 100% { transform: rotate(0deg); }
+  70% { transform: rotate(-22deg); }
+  78% { transform: rotate(10deg); }
+  86% { transform: rotate(-18deg); }
+  94% { transform: rotate(4deg); }
 }
-.coin-star-compact .coin-star-unit { display: none; }
-.coin-star-compact .is-coin b { color: var(--shop-gold); }
-:root[data-theme='light'] .coin-star-compact .is-coin b { color: #a16207; }
 
-/* Hai nút nhỏ bật / tắt từng phần: mờ khi đang tắt */
-.panda-dock-toggles {
+.panda-dock-row {
   display: flex;
-  gap: 0.35rem;
-  margin-left: 0.25rem;
+  align-items: center;
+  gap: 0.45rem;
 }
-.panda-dock-toggle {
-  width: 28px;
-  height: 28px;
+
+/* Bảng LED Xu / Sao: cũng là lối vào cửa hàng */
+.panda-dock-tag {
+  display: block;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease);
+}
+.panda-dock-tag:hover { transform: translateY(-1px); }
+.panda-dock-tag:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.coin-star-compact { font-size: 0.82rem; }
+.coin-star-compact .coin-star-unit { display: none; }
+
+/* Nút ‹ / ›: thu gọn hoặc mở lại cả cụm; khi thu gọn chỉ còn nút này (mờ, rê chuột thì rõ) */
+.dock-toggle {
+  width: 26px;
+  height: 26px;
   padding: 0;
   display: grid;
   place-items: center;
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   background: var(--surface-solid);
-  box-shadow: var(--shadow);
-  font-size: 0.8rem;
-  line-height: 1;
+  color: var(--muted);
   cursor: pointer;
-  opacity: 0.55;
-  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+  opacity: 0.75;
+  transition: opacity 0.2s var(--ease), color 0.2s var(--ease);
 }
-.panda-dock-toggle[aria-pressed='true'] { opacity: 1; }
-.panda-dock-toggle:hover { opacity: 1; transform: scale(1.1); }
-.panda-dock-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dock-toggle[aria-expanded='false'] { opacity: 0.55; }
+.dock-toggle:hover { opacity: 1; color: var(--text); }
+.dock-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .panda-dock-toggle { transition: none; }
-  .panda-shop-icon { transition: none; }
-  .shop-sparkle { animation: none; }
+  .panda-shop-icon, .panda-dock-tag, .dock-toggle { transition: none; }
+  .shop-sparkle, .shop-wave { animation: none; }
 }

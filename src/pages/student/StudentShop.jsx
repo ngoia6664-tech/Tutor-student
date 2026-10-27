@@ -61,10 +61,8 @@ export default function StudentShop() {
         <Link to={isTutor ? '/tutor' : '/student'} className="small">
           ← Quay lại học tập
         </Link>
-        <h1>
-          Panda <span>Fashion Shop</span>
-        </h1>
-        <p>Chọn phong cách cho Giáo sư Gấu Trúc — từ đồng phục đến cả dải ngân hà.</p>
+        <h1>Panda Fashion Shop</h1>
+        <p>Chọn đồ cho Giáo sư Gấu Trúc mặc thử. Bấm vào một bộ để xem gấu diện lên người.</p>
         {isTutor && <span className="shop-access">♔ Gia sư: mặc thử mọi bộ</span>}
       </header>
 

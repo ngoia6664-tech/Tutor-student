@@ -137,7 +137,9 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 - `OutfitPanda`: chỉ `showcase` (phòng thử đồ) mới gắn hiệu ứng; lưới thẻ tĩnh. Chuyển động theo Cài đặt "Animation gấu" + reduced-motion; khuất màn hình → pauseAnimations.
 - Shop: `StudentShop` (header + `.shop-hud-anchor` Xu/Sao dính dưới topbar qua `useStickyTop`), `shop/PandaShowcase`, `shop/OutfitGrid` (tab Cửa hàng / Tủ đồ + lọc độ hiếm),
   `shop/OutfitCard`. CSS `styles/panda-shop.css` (biến độ hiếm `--t1/--t2/--tglow` trên `.tier-*`), sân khấu tối cả 2 theme (`--shop-stage` trong base.css).
-- `PandaDock` (Layout): hình ngôi cửa hàng nhỏ nhiều màu `ShopIcon` (không nền tròn) (bấm vào `/shop`) + viên Xu/Sao bên dưới, góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. Hai nút nhỏ 🛍️/🪙 dưới cùng bật/tắt riêng icon shop và Xu/Sao (cài đặt `dockShop`/`dockStats` trong `lib/settings.js`, lưu localStorage). CSS `styles/panda-dock.css`.
+  Số tiền hiển thị bằng **bảng đèn LED** `.led-panel` (panda-shop.css; nền `--shop-stage`, lưới chấm mờ, số phát sáng — Xu vàng, Sao `.is-star` xanh băng; giống nhau 2 theme; đã thử thẻ kraft nhưng lạc quẻ với app, đừng quay lại).
+  Dùng cho Xu/Sao (`CoinStarBadge`), giá ở phòng thử đồ (`.showcase-price`), giá trên thẻ đồ (`.ocard-tag` góc ảnh). Tiêu đề shop chữ thường, không gradient.
+- `PandaDock` (Layout): logo `ShopIcon` = tiệm quần áo nhỏ (biển móc treo áo vàng, mái sọc tím-hồng, tủ kính trưng váy) + gấu trúc đeo nơ trước cửa vẫy tay `.shop-wave` (vài nhịp rồi nghỉ; bấm vào `/shop`) + bảng LED Xu/Sao bên dưới (cũng là link vào shop), góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. Một nút ‹ / › cạnh bảng LED thu gọn hoặc mở lại cả cụm (cài đặt `dock` trong `lib/settings.js`, lưu localStorage); thu gọn thì chỉ còn nút ›. CSS `styles/panda-dock.css`.
 - Dữ liệu: `contexts/PandaShopContext` → `lib/pandaShop.js` (TODO backend: ledger Xu/Sao, mua nguyên tử, mặc đồ). Hiện: học sinh 0 Xu / 0 Sao, chỉ có bộ mặc định,
   nút Mua khoá; gia sư sở hữu hết, mặc thử được (chỉ trong bộ nhớ). Không lưu Xu / sở hữu vào localStorage.
 - Đồng bộ mọi tư thế: `BackPanda` / `BallPanda` / `SleepingPanda` cũng nhận `look`; mỗi bộ có `palette` { cloth, trim, cape?, helmet?, pack? }
@@ -146,12 +148,16 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
   localStorage `panda-tutor-outfit` (tuỳ chọn hiển thị); học sinh luôn bộ mặc định cho tới khi có backend.
 - Viền sáng (catalog `glow` [sát thân, quầng], từ Hiếm ⭐⭐): class `has-glow glow-<tier>` + biến `--glow-a/--glow-b`; `styles/panda-skin.css`
   (drop-shadow nhiều lớp trên cả hình gấu; linh vật đổi `--pd-rim/--pd-aura/--pd-spark` sẵn có).
-- Hoạt cảnh tương tác (catalog `interaction`, từ Hiếm ⭐⭐): `components/panda/PandaAct.jsx` = registry `INTERACTIONS` { ms, line, sound (để sau), Layer({ lite, part }) }
+- Hoạt cảnh tương tác (catalog `interaction`, từ Hiếm ⭐⭐): `components/panda/PandaAct.jsx` = registry `INTERACTIONS` { ms, line, sound (tên kịch bản trong `lib/pandaSfx.js`), Layer({ lite, part }) }
   + hook `usePandaAct(outfit)` (idle → playing → cooldown 0,9s → idle; đổi bộ = dừng) + `<PandaActLayer part="back|front">` (kẹp gấu ở giữa) + `actClass()`.
+  Tiếng: `lib/pandaSfx.js` tổng hợp Web Audio (AudioContext riêng, compressor + vang), mỗi hoạt cảnh một kịch bản nhiều tiếng ngắn đặt đúng mốc giây của Layer
+  (DJ: scratch → riser → drop · Kiếm Sĩ: combo 8 nhát → im → "cạch" 2.74 → BOOM 2.86 · Pháp Sư: nạp → bloom 1.45 → nén → nổ phép 3.95
+  · Phi Hành Gia: triệu hồi tàu 0.75 → cửa → nạp → phóng 2.85 → warp 3.3 → điểm sáng xa → lao về 4.3 → đáp 5.1 → tan thành bụi sao · Ngân Hà: hút vào 1.3 → chòm sao → siêu tân tinh 3.8 → im 5.55 → Galaxy Burst 5.75).
+  `usePandaAct` phát / dừng (đổi bộ, unmount); `useHold` gọi `unlockSfx()` lúc chạm. Theo Cài đặt "Hiệu ứng âm thanh"; ra nền thì im. Sửa hình nhớ dời mốc tiếng.
   Động tác gấu = keyframes `styles/panda-act.css` trên bộ phận FrontPanda: `.pd-front` cả người, `.pd-head`, `.pd-arm-l` (vai 40,80), `.pd-arm-r` (vai 80,80),
   `.pd-prop-l/-r` (đạo cụ), `.pd-blade-glow` (kiếm). Thời lượng keyframes = `ms`; vệt kiếm / đầu trượng tính từ góc xoay tay (sửa góc thì sửa cả 2 file).
   DJ `dj-set` 3s · Kiếm Sĩ `star-duel` 4,6s (combo 8 nhát → im lặng → tra kiếm → hành tinh nổ) · Pháp Sư `star-summon` 5s (niệm → triệu hồi → dẫn → ra lệnh → phá huỷ)
-  · Phi Hành Gia `space-trip` 4,8s · Ngân Hà `galaxy-descent` 7,4s (tan thành bụi sao → vũ trụ + chòm sao gấu → giáng xuống quyền năng
+  · Phi Hành Gia `space-trip` 7s (không gian phản ứng theo tàu: méo/hologram khi triệu hồi, rung + hạt bị đẩy khi nạp, sóng chấn động + sao kéo vệt khi phóng, warp, điểm sáng xa → tàu lao về, vượt quá rồi chỉnh, lơ lửng → đáp; mốc ở `TR`) · Ngân Hà `galaxy-descent` 7,4s (tan thành bụi sao → vũ trụ + chòm sao gấu → giáng xuống quyền năng
     → ngân hà co thành một điểm → GALAXY BURST phủ gần cả sân → ngân hà mini trên tay).
   Sân diễn = catalog `stage` [rộng, cao] px desktop cho MỌI bộ (Học Sinh 220×240 … DJ 350×330 · Kiếm Sĩ 460×380 · Pháp Sư 430×420
     · Phi Hành Gia 480×430 · Ngân Hà 540×470). Gấu luôn `PANDA_PX` 180px ở cùng chỗ; `stageRect` (PandaAct) đổi sang đơn vị gấu,
