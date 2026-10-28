@@ -2,6 +2,7 @@ import { memo } from 'react'
 import OutfitPanda from '../panda/OutfitPanda.jsx'
 import { OUTFIT_TIERS } from '../../lib/outfits.js'
 import { outfitState } from '../../lib/outfitState.js'
+import { priceOf } from '../../lib/pandaShop.js'
 
 const number = new Intl.NumberFormat('vi-VN')
 
@@ -20,7 +21,7 @@ export default memo(function OutfitCard({ outfit, account, selected, onSelect })
           ) : (
             <>
               <span aria-hidden="true">🪙</span>
-              <b>{number.format(outfit.price)}</b>
+              <b>{number.format(priceOf(outfit, account))}</b>
               <span className="sr-only">Xu</span>
             </>
           )}

@@ -6,6 +6,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { isAnswered } from '../../components/ExerciseBody.jsx'
 import Icon from '../../components/Icon.jsx'
 import { askConfirm } from '../../lib/dialog.js'
+import { economyChanged } from '../../lib/pandaShop.js'
 
 const MAX_IMAGES = 15
 
@@ -105,6 +106,8 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       // 2) Gửi câu trả lời; máy chủ lưu, chấm trắc nghiệm và đánh dấu đã nộp
       setProgress('Đang nộp bài...')
       unwrap(await supabase.rpc('submit_assignment', { p_assignment_id: assignmentId, p_answers: payload }))
+      // Máy chủ đã xét thưởng điểm cao / mốc số bài (bài chấm máy) → cụm Xu/Sao đọc lại
+      economyChanged()
       onSubmitted()
     } catch (e) {
       setError(errMsg(e))

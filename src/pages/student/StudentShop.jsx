@@ -10,10 +10,12 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import CoinStarBadge from '../../components/CoinStarBadge.jsx'
 import PandaShowcase from '../../components/shop/PandaShowcase.jsx'
 import OutfitGrid from '../../components/shop/OutfitGrid.jsx'
+import StreakShield from '../../components/shop/StreakShield.jsx'
 
 // Panda Fashion Shop (/student/shop, gia sư /tutor/shop): header gọn + Xu/Sao dính đầu trang,
 // phòng thử đồ (gấu lớn + hiệu ứng riêng), tab Cửa hàng / Tủ đồ, lưới thẻ tĩnh.
-// Mua / mặc đi qua adapter lib/pandaShop.js (chưa có backend: học sinh chỉ xem, gia sư mặc thử được mọi bộ).
+// Mua / mặc đi qua adapter lib/pandaShop.js (máy chủ quyết định giá + số dư; gia sư mặc thử mọi bộ, không có ví).
+// Học sinh có thêm thẻ chuỗi Ôn tập + mua khiên (StreakShield).
 export default function StudentShop() {
   const { profile } = useAuth()
   const { data: account, error, reload, act } = usePandaShop()
@@ -71,6 +73,8 @@ export default function StudentShop() {
       <div ref={showcaseRef} className="shop-scroll-target">
         <PandaShowcase outfit={preview} account={account} busy={busy || !account} onAction={onAction} />
       </div>
+
+      <StreakShield />
 
       <OutfitGrid account={account} tab={tab} setTab={setTab} tier={tier} setTier={setTier} selectedId={preview.id} onSelect={onSelect} />
     </div>

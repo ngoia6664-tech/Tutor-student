@@ -4,6 +4,7 @@ import { useHold, usePandaAct } from '../panda/PandaAct.jsx'
 import { prefersReducedMotion, useSettings } from '../../lib/settings.js'
 import { OUTFIT_TIERS } from '../../lib/outfits.js'
 import { outfitState } from '../../lib/outfitState.js'
+import { priceOf } from '../../lib/pandaShop.js'
 
 const number = new Intl.NumberFormat('vi-VN')
 // Khung trưng bày (px thiết kế): vừa sân lớn nhất (Ngân Hà 540×470). Gấu luôn 180px ở cùng một chỗ, sân từng bộ
@@ -31,6 +32,7 @@ function useCanvasScale() {
 function hint(outfit, state, account) {
   if (state.equipped) return 'Gấu đang mặc bộ này ✨'
   if (state.owned) return 'Có trong tủ đồ — mặc ngay nhé!'
+  if (account?.isTutor) return 'Gia sư mặc thử được mọi bộ ✨'
   if (!account?.purchasesEnabled)
     return outfit.tier === 'premium' ? 'Bộ này xịn đấy 👀 Cửa hàng sắp mở bán.' : 'Cửa hàng sắp mở bán — ngắm trước nhé 👀'
   if (state.missing) return `Thiếu ${number.format(state.missing)} Xu nữa thôi!`
@@ -85,7 +87,7 @@ export default function PandaShowcase({ outfit, account, busy, onAction }) {
               <b>Sở hữu sẵn</b>
             ) : (
               <>
-                <span aria-hidden="true">🪙</span> <b>{number.format(outfit.price)}</b> <small>Xu</small>
+                <span aria-hidden="true">🪙</span> <b>{number.format(priceOf(outfit, account))}</b> <small>Xu</small>
               </>
             )}
           </span>

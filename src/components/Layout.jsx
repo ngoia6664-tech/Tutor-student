@@ -28,6 +28,7 @@ import ScrollJump from './ScrollJump.jsx'
 import { askConfirm } from '../lib/dialog.js'
 import { PandaShopProvider } from '../contexts/PandaShopContext.jsx'
 import PandaDock from './PandaDock.jsx'
+import StreakFlame from './StreakFlame.jsx'
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -107,6 +108,7 @@ export default function Layout() {
             <span className="user-name" title={profile.full_name}>
               {profile.full_name || 'Tài khoản'}
             </span>
+            {profile.role === 'student' && <StreakFlame />}
             <NotificationBell />
             <button
               type="button"

@@ -140,12 +140,12 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
   Số tiền hiển thị bằng **bảng đèn LED** `.led-panel` (panda-shop.css; nền `--shop-stage`, lưới chấm mờ, số phát sáng — Xu vàng, Sao `.is-star` xanh băng; giống nhau 2 theme; đã thử thẻ kraft nhưng lạc quẻ với app, đừng quay lại).
   Dùng cho Xu/Sao (`CoinStarBadge`), giá ở phòng thử đồ (`.showcase-price`), giá trên thẻ đồ (`.ocard-tag` góc ảnh). Tiêu đề shop chữ thường, không gradient.
 - `PandaDock` (Layout): logo `ShopIcon` = tiệm quần áo nhỏ (biển móc treo áo vàng, mái sọc tím-hồng, tủ kính trưng váy) + gấu trúc đeo nơ trước cửa vẫy tay `.shop-wave` (vài nhịp rồi nghỉ; bấm vào `/shop`) + bảng LED Xu/Sao bên dưới (cũng là link vào shop), góc trái dưới, trên nút Góp ý; ẩn khi làm bài (`useStudying`) và khi đang trong shop. Một nút ‹ / › cạnh bảng LED thu gọn hoặc mở lại cả cụm (cài đặt `dock` trong `lib/settings.js`, lưu localStorage); thu gọn thì chỉ còn nút ›. CSS `styles/panda-dock.css`.
-- Dữ liệu: `contexts/PandaShopContext` → `lib/pandaShop.js` (TODO backend: ledger Xu/Sao, mua nguyên tử, mặc đồ). Hiện: học sinh 0 Xu / 0 Sao, chỉ có bộ mặc định,
-  nút Mua khoá; gia sư sở hữu hết, mặc thử được (chỉ trong bộ nhớ). Không lưu Xu / sở hữu vào localStorage.
+- Dữ liệu: `contexts/PandaShopContext` → `lib/pandaShop.js` → RPC `get_economy` / `buy_outfit` / `equip_outfit` / `buy_streak_shield` (xem mục Kinh tế bên dưới).
+  Giá hiển thị = `account.prices` (máy chủ, `priceOf`), catalog chỉ dự phòng. Gia sư: không có ví (HUD hiện ∞), sở hữu + mặc thử mọi bộ. Không lưu Xu / sở hữu vào localStorage.
 - Đồng bộ mọi tư thế: `BackPanda` / `BallPanda` / `SleepingPanda` cũng nhận `look`; mỗi bộ có `palette` { cloth, trim, cape?, helmet?, pack? }
   → áo cắt theo thân tư thế đó, áo choàng thành áo khoác sau lưng / chăn đắp khi ngủ, mũ của bộ dùng lại (ngủ: thu nhỏ + nghiêng).
 - Bộ đang mặc: `useEquippedOutfit()` (PandaShopContext) → Mascot (mọi tư thế + nút gọi gấu), DialogScene, SpaceExplorer. Gia sư nhớ bộ đang mặc ở
-  localStorage `panda-tutor-outfit` (tuỳ chọn hiển thị); học sinh luôn bộ mặc định cho tới khi có backend.
+  localStorage `panda-tutor-outfit` (tuỳ chọn hiển thị); học sinh lưu ở `economy_wallets.equipped_outfit`.
 - Viền sáng (catalog `glow` [sát thân, quầng], từ Hiếm ⭐⭐): class `has-glow glow-<tier>` + biến `--glow-a/--glow-b`; `styles/panda-skin.css`
   (drop-shadow nhiều lớp trên cả hình gấu; linh vật đổi `--pd-rim/--pd-aura/--pd-spark` sẵn có).
 - Hoạt cảnh tương tác (catalog `interaction`, từ Hiếm ⭐⭐): `components/panda/PandaAct.jsx` = registry `INTERACTIONS` { ms, line, sound (tên kịch bản trong `lib/pandaSfx.js`), Layer({ lite, part }) }
@@ -175,3 +175,17 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
   máy bật giảm chuyển động = chỉ nói câu. Selector `:root .is-acting.act-<id>` để thắng luật tắt chuyển động của settings.css.
   Kiểm tra từng khung: trang tạm (vite) đóng băng ở mốc t — `getAnimations({subtree:true})` pause + currentTime cho CSS, `svg.pauseAnimations()` + `setCurrentTime(t)` cho SMIL
   SAU sự kiện load (gọi sớm hơn bị bỏ qua); chụp bằng Chrome headless `--screenshot --virtual-time-budget`.
+
+## Kinh tế: Xu 🪙 · Sao ⭐ · Chuỗi 🔥 · Ôn tập mỗi ngày (schema.sql mục "Kinh tế", grep `econ_`)
+- Nguồn sự thật: `economy_ledger` (resource coin|star|shield, `reward_key` UNIQUE → chống thưởng trùng / bấm nhiều lần / 2 yêu cầu cùng lúc); `economy_wallets` = số dư cộng dồn (check ≥ 0).
+  Học sinh + gia sư chỉ SELECT; mọi ghi qua hàm security definer. Hàm nội bộ `econ_*` đã `revoke` khỏi anon/authenticated.
+- Cấu hình một chỗ: `econ_cfg()` (mặc định) || `economy_settings.overrides` (Owner ghi đè khoá cấp 1, chạy lại schema không mất). Gồm: Xu khởi đầu 300, Ôn tập 10 Xu,
+  `score_tiers` (≥8: 5 Xu, ≥9: 20 Xu + 1 Sao, 10: 30 Xu + 2 Sao — tổng theo lần nộp, lên mốc thì bù chênh), khiên (30 Xu, giữ tối đa 2, 1 lần / 7 ngày), mốc số bài, mốc chuỗi (+badge 365/730), `outfit_prices`.
+- Lần nộp chính thức: `assignment_recipients.attempt_no` (trigger `econ_attempt_no`: todo → done/checked = +1; "Cho nộp lại" rồi nộp = lần mới, thưởng độc lập).
+  Trigger `econ_on_recipient_change` → `econ_eval_official` (điểm = điểm gia sư khi checked, không thì điểm máy khi cả bài chấm máy, như `pointScore`). Làm lại (`submit_retry`) / Ôn tập câu sai: không thưởng.
+- Ôn tập mỗi ngày: `get_daily_review` (bộ câu cố định theo học sinh + ngày VN trong `daily_reviews`/`daily_review_items`; pool = câu máy chấm của bài đã nộp; ≤5 câu: tránh 3 lần gần nhất, ưu tiên câu sai → lâu chưa ra → ngẫu nhiên),
+  `answer_daily_review` (máy chủ chấm; xong câu cuối → +10 Xu + `econ_complete_day`). UI: ngọn lửa chuỗi trên thanh trên cùng `components/StreakFlame.jsx` (màu lửa theo mốc 1/7/30/50/100/200/365/730; nút icon ngay dưới mở bảng nổi `components/DailyReview.jsx`), gấu nhắc khi mở app (PandaShopContext), CSS `styles/economy.css`.
+- Chuỗi: `student_streaks`; `econ_settle_streak` xét từng ngày đã qua (lười, khi mở app / mua khiên): ngày trước khi có pool → bỏ qua; bỏ 1 ngày → tự dùng khiên nếu còn + hết hồi; bỏ 2 ngày liền → đứt.
+  Mốc trọn đời ở `student_achievements` (đạt lại sau khi đứt không nhận lại). Mọi RPC gọi `econ_lock` (khoá ví) trước → các yêu cầu cùng học sinh chạy lần lượt.
+- Báo thưởng: `get_economy.unseen` → PandaShopContext cho gấu nói (`rewardMessage`) rồi `mark_rewards_seen`. Sau nộp bài / xong Ôn tập gọi `economyChanged()` để HUD đọc lại.
+- Dữ liệu cũ: chạy schema tự tạo ví (+300 Xu) và xét lại thưởng điểm + mốc số bài theo lần nộp hiện tại (idempotent). Không suy ra được chuỗi / Ôn tập quá khứ.

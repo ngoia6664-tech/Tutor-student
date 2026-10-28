@@ -1,0 +1,190 @@
+/* Xu · Sao · Chuỗi 🔥: phần chuỗi trên bảng LED, ngọn lửa chuỗi trên thanh trên cùng (StreakFlame), bảng Ôn tập mỗi ngày, thẻ khiên (cửa hàng) */
+
+/* ----- Chuỗi trên bảng LED (CoinStarBadge) ----- */
+.led-panel .is-streak {
+  --led: #fdba74;
+  --led-glow: rgba(251, 146, 60, 0.75);
+}
+.led-panel .is-streak:not(.is-done) b { opacity: 0.72; }
+.coin-star-shield {
+  margin-left: 0.15rem;
+  font-size: 0.78em;
+  opacity: 0.9;
+}
+@media (max-width: 420px) {
+  .coin-star-hud { gap: 0.55rem; }
+  .coin-star-hud .coin-star-unit { display: none; }
+}
+
+/* ----- Ngọn lửa chuỗi (StreakFlame, thanh trên cùng) -----
+   Màu theo mốc: --f1 viền ngoài, --f2 giữa, --f3 lõi. Chỉ animate transform/opacity (nhẹ máy). */
+.streak-flame-wrap {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+.streak-flame {
+  --f1: #f97316;
+  --f2: #fb923c;
+  --f3: #fde68a;
+  --f-glow: rgba(249, 115, 22, 0.45);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.35rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1;
+  cursor: default;
+}
+.streak-flame svg {
+  width: 1.15rem;
+  height: 1.5rem;
+  overflow: visible;
+}
+.streak-flame .flame-outer { fill: var(--f1); }
+.streak-flame .flame-mid { fill: var(--f2); }
+.streak-flame .flame-core { fill: var(--f3); }
+.streak-flame path {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flame-flicker 1.6s ease-in-out infinite;
+}
+.streak-flame .flame-mid { animation-duration: 1.1s; animation-delay: -0.4s; }
+.streak-flame .flame-core { animation-duration: 0.8s; animation-delay: -0.2s; }
+.streak-flame b { color: var(--text); }
+/* Đã giữ chuỗi hôm nay: lửa cháy rực + quầng sáng; chưa làm: leo lét, nhạt */
+.streak-flame.is-lit {
+  border-color: var(--f2);
+  box-shadow: 0 0 12px -2px var(--f-glow);
+}
+.streak-flame:not(.is-lit) svg { opacity: 0.6; }
+.streak-flame:not(.is-lit) path { animation-duration: 2.6s; }
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1, 1) skewX(0deg); }
+  25% { transform: scale(0.95, 1.07) skewX(-3deg); }
+  50% { transform: scale(1.03, 0.94) skewX(2deg); }
+  75% { transform: scale(0.97, 1.04) skewX(-1.5deg); }
+}
+.streak-flame.tier-red { --f1: #dc2626; --f2: #f97316; --f3: #fde047; --f-glow: rgba(220, 38, 38, 0.5); }
+.streak-flame.tier-pink { --f1: #db2777; --f2: #f472b6; --f3: #fce7f3; --f-glow: rgba(236, 72, 153, 0.5); }
+.streak-flame.tier-purple { --f1: #7c3aed; --f2: #a78bfa; --f3: #ede9fe; --f-glow: rgba(124, 58, 237, 0.5); }
+.streak-flame.tier-blue { --f1: #2563eb; --f2: #60a5fa; --f3: #e0f2fe; --f-glow: rgba(37, 99, 235, 0.5); }
+.streak-flame.tier-cyan { --f1: #0d9488; --f2: #2dd4bf; --f3: #ccfbf1; --f-glow: rgba(20, 184, 166, 0.5); }
+.streak-flame.tier-gold { --f1: #ca8a04; --f2: #facc15; --f3: #fffbeb; --f-glow: rgba(250, 204, 21, 0.55); }
+.streak-flame.tier-rainbow { --f1: #9333ea; --f2: #38bdf8; --f3: #fef9c3; --f-glow: rgba(236, 72, 153, 0.55); }
+.streak-flame.tier-rainbow .flame-outer { animation-name: flame-flicker, flame-hue; animation-duration: 1.6s, 6s; }
+@keyframes flame-hue {
+  0%, 100% { fill: #9333ea; }
+  33% { fill: #ec4899; }
+  66% { fill: #f97316; }
+}
+/* Chuỗi 0: lửa tắt, đứng yên */
+.streak-flame.tier-out { --f1: #9ca3af; --f2: #d1d5db; --f3: #f3f4f6; }
+.streak-flame.tier-out path { animation: none; }
+
+/* Nút icon ngay dưới ngọn lửa: mở Ôn tập giữ chuỗi */
+.streak-review-btn {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--warn);
+  background: var(--surface-solid);
+  color: var(--warn);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: review-bob 2.4s ease-in-out infinite;
+}
+.streak-review-btn:hover { color: var(--text); border-color: var(--primary); }
+.streak-review-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@keyframes review-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-flame path, .streak-review-btn { animation: none; }
+}
+@media (max-width: 420px) {
+  .streak-flame { padding: 0.15rem 0.4rem 0.15rem 0.25rem; font-size: 0.85rem; }
+  .streak-flame svg { width: 1rem; height: 1.3rem; }
+}
+
+/* ----- Ôn tập mỗi ngày (bảng nổi) ----- */
+.daily-dialog { width: min(640px, 100%); }
+.daily-card.is-empty p { margin: 0.5rem 0 0; }
+.daily-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.4rem;
+}
+.daily-card.is-done .daily-head .muted { color: var(--ok); font-weight: 600; }
+.daily-note { margin: 0 0 0.25rem; }
+.daily-dots {
+  display: inline-flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.daily-dots span {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+}
+.daily-dots span.is-on {
+  border-color: var(--ok);
+  background: var(--ok);
+}
+.daily-from {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+}
+
+/* ----- Thẻ chuỗi + khiên (cửa hàng) ----- */
+.streak-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin: 1.25rem 0;
+  padding: 0.85rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.streak-card-main {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.streak-card-main div {
+  display: flex;
+  flex-direction: column;
+}
+.streak-card-fire { font-size: 1.7rem; }
+.streak-card-shield {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.streak-card-held span { font-size: 1.15rem; opacity: 0.25; filter: grayscale(1); }
+.streak-card-held span.is-on { opacity: 1; filter: none; }
+.streak-card-note {
+  flex-basis: 100%;
+  margin: 0;
+}

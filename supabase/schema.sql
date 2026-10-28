@@ -1222,6 +1222,945 @@ create policy answer_comments_own_select on public.answer_comments
   using (student_id = auth.uid());
 
 
+-- ---------- Kinh tế: Xu 🪙 · Sao ⭐ · Chuỗi 🔥 · Ôn tập mỗi ngày ----------
+-- Xu: tiêu được (mua trang phục, khiên chuỗi). Sao: tiến trình, chỉ tăng, không bao giờ trừ.
+-- Sổ cái economy_ledger là nguồn sự thật: mỗi dòng có reward_key DUY NHẤT → bấm nhiều lần / tải lại /
+-- hai yêu cầu cùng lúc cũng chỉ ghi được một lần. economy_wallets chỉ là số dư cộng dồn (cập nhật cùng transaction).
+-- Học sinh chỉ ĐỌC các bảng này; mọi thay đổi đi qua hàm security definer bên dưới (máy chủ tự chấm, tự tính ngày).
+-- Ngày chuỗi / Ôn tập theo giờ Việt Nam (Asia/Ho_Chi_Minh), không dùng giờ máy học sinh.
+
+-- Cấu hình: số mặc định nằm trong econ_cfg(). Owner đổi số bằng cách ghi đè khoá cấp 1 vào economy_settings.overrides
+-- (chạy lại file này không xoá phần ghi đè), vd.:
+--   update public.economy_settings set overrides = overrides || '{"daily_coins": 15}' where id = 1;
+--   update public.economy_settings set overrides = overrides || '{"shield": {"price": 40, "max_held": 2, "cooldown_days": 7}}' where id = 1;
+create table if not exists public.economy_settings (
+  id          int primary key default 1 check (id = 1),
+  overrides   jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now()
+);
+insert into public.economy_settings (id) values (1) on conflict (id) do nothing;
+
+-- Ví: số dư hiện tại (khớp tổng sổ cái). Không âm.
+create table if not exists public.economy_wallets (
+  student_id       uuid primary key references public.profiles (id) on delete cascade,
+  coins            int not null default 0 check (coins >= 0),
+  stars            int not null default 0 check (stars >= 0),
+  shields          int not null default 0 check (shields >= 0),
+  equipped_outfit  text not null default 'student',
+  rewards_seen_id  bigint not null default 0,   -- dòng sổ cái cuối cùng đã báo cho học sinh (gấu nói "+10 Xu")
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+
+-- Sổ cái. resource: coin | star | shield. amount âm = tiêu (Sao không bao giờ âm).
+-- source: starting (Xu khởi đầu), daily, official_score, progress_milestone, streak_milestone,
+--         outfit_purchase, shield_purchase, shield_use, tutor_reward (sau này)
+-- reward_key ví dụ: daily:<hs>:<ngày> · score:<hs>:<bài>:<lần nộp>:<mốc điểm>:coin · ms:streak:<hs>:30:star
+--                   outfit:<hs>:<bộ> · shield_buy:<hs>:<mã yêu cầu>:coin · shield_use:<hs>:<ngày>
+create table if not exists public.economy_ledger (
+  id          bigserial primary key,
+  student_id  uuid not null references public.profiles (id) on delete cascade,
+  resource    text not null check (resource in ('coin', 'star', 'shield')),
+  amount      int not null check (amount <> 0),
+  source      text not null,
+  reward_key  text not null unique,
+  meta        jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now(),
+  check (resource <> 'star' or amount > 0)
+);
+create index if not exists economy_ledger_student_idx on public.economy_ledger (student_id, id);
+
+-- Mốc thành tích trọn đời (mỗi mốc nhận đúng 1 lần, chuỗi đứt rồi đạt lại cũng không nhận lại).
+-- kind: progress (số bài chính thức đã hoàn thành) | streak (số ngày chuỗi). badge: vd. "Đồng hành 1 năm".
+create table if not exists public.student_achievements (
+  student_id   uuid not null references public.profiles (id) on delete cascade,
+  kind         text not null check (kind in ('progress', 'streak')),
+  milestone    int not null,
+  badge        text,
+  achieved_at  timestamptz not null default now(),
+  primary key (student_id, kind, milestone)
+);
+
+-- Chuỗi ngày Ôn tập. settled_through: các ngày ≤ ngày này đã xét xong (đứt / dùng khiên / hoàn thành).
+-- miss_run: số ngày bỏ liên tiếp tính tới settled_through (0 sau một ngày hoàn thành).
+create table if not exists public.student_streaks (
+  student_id           uuid primary key references public.profiles (id) on delete cascade,
+  current_streak       int not null default 0,
+  longest_streak       int not null default 0,
+  last_completed_date  date,
+  settled_through      date,
+  miss_run             int not null default 0,
+  last_shield_date     date,   -- ngày gần nhất khiên tự đỡ chuỗi
+  updated_at           timestamptz not null default now()
+);
+
+-- Trang phục đã mua (bộ mặc định không cần dòng: ai cũng có)
+create table if not exists public.panda_owned_outfits (
+  student_id   uuid not null references public.profiles (id) on delete cascade,
+  outfit_id    text not null,
+  price_paid   int not null default 0,
+  acquired_at  timestamptz not null default now(),
+  primary key (student_id, outfit_id)
+);
+
+-- Ôn tập mỗi ngày: bộ câu cố định theo học sinh + ngày (tải lại / đổi máy không đổi câu)
+create table if not exists public.daily_reviews (
+  student_id    uuid not null references public.profiles (id) on delete cascade,
+  review_date   date not null,
+  completed_at  timestamptz,
+  created_at    timestamptz not null default now(),
+  primary key (student_id, review_date)
+);
+
+create table if not exists public.daily_review_items (
+  student_id   uuid not null,
+  review_date  date not null,
+  exercise_id  uuid not null references public.exercises (id) on delete cascade,
+  position     int not null,
+  tries        int not null default 0,
+  wrong        int not null default 0,
+  solved_at    timestamptz,
+  last_answer  jsonb,          -- câu trả lời đúng lần đầu (hiện lại khi mở trang)
+  primary key (student_id, review_date, exercise_id),
+  foreign key (student_id, review_date) references public.daily_reviews (student_id, review_date) on delete cascade
+);
+create index if not exists daily_review_items_ex_idx on public.daily_review_items (student_id, exercise_id);
+
+-- Lần nộp chính thức: tăng 1 mỗi lần bài chuyển từ "chưa nộp" sang đã nộp / đã chấm
+-- (học sinh nộp, gia sư "Cho nộp lại" rồi học sinh nộp lần nữa, hoặc gia sư chấm bài làm trên giấy).
+-- Làm lại luyện tập (assignment_retries) và Ôn tập câu sai KHÔNG phải lần nộp chính thức.
+alter table public.assignment_recipients add column if not exists attempt_no int not null default 0;
+-- Bài đã nộp trước bản nâng cấp: coi là lần nộp chính thức thứ 1 (chạy trước khi tạo trigger, chạy lại không đổi gì)
+update public.assignment_recipients set attempt_no = 1 where status in ('done', 'checked') and attempt_no = 0;
+
+alter table public.economy_settings     enable row level security;
+alter table public.economy_wallets      enable row level security;
+alter table public.economy_ledger       enable row level security;
+alter table public.student_achievements enable row level security;
+alter table public.student_streaks      enable row level security;
+alter table public.panda_owned_outfits  enable row level security;
+alter table public.daily_reviews        enable row level security;
+alter table public.daily_review_items   enable row level security;
+
+-- Chỉ có policy SELECT: không ai (kể cả gia sư) ghi trực tiếp từ app; ghi qua hàm bên dưới.
+drop policy if exists economy_settings_tutor_select on public.economy_settings;
+create policy economy_settings_tutor_select on public.economy_settings
+  for select to authenticated using (public.is_tutor());
+
+drop policy if exists economy_wallets_select on public.economy_wallets;
+create policy economy_wallets_select on public.economy_wallets
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists economy_ledger_select on public.economy_ledger;
+create policy economy_ledger_select on public.economy_ledger
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists student_achievements_select on public.student_achievements;
+create policy student_achievements_select on public.student_achievements
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists student_streaks_select on public.student_streaks;
+create policy student_streaks_select on public.student_streaks
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists panda_owned_outfits_select on public.panda_owned_outfits;
+create policy panda_owned_outfits_select on public.panda_owned_outfits
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists daily_reviews_select on public.daily_reviews;
+create policy daily_reviews_select on public.daily_reviews
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+drop policy if exists daily_review_items_select on public.daily_review_items;
+create policy daily_review_items_select on public.daily_review_items
+  for select to authenticated using (student_id = auth.uid() or public.is_tutor());
+
+-- Số mặc định (một chỗ duy nhất). Thưởng mốc là đề xuất ban đầu — Owner đổi qua economy_settings.overrides.
+-- score_tiers: tổng thưởng của một lần nộp chính thức theo điểm (thang 10): ≥8: 5 Xu · ≥9: 20 Xu + 1 Sao · 10: 30 Xu + 2 Sao; lên mốc được bù phần chênh.
+-- outfit_prices: giá trang phục phía máy chủ (khớp lib/outfits.js để hiển thị; mua luôn theo giá ở đây).
+create or replace function public.econ_cfg()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'timezone', 'Asia/Ho_Chi_Minh',
+    'starting_coins', 300,
+    'daily_coins', 10,
+    'daily_size', 5,
+    'daily_recent_window', 3,
+    'score_tiers', '[{"min": 8, "coins": 5, "stars": 0}, {"min": 9, "coins": 20, "stars": 1}, {"min": 10, "coins": 30, "stars": 2}]'::jsonb,
+    'shield', '{"price": 30, "max_held": 2, "cooldown_days": 7}'::jsonb,
+    'progress_milestones', '[
+      {"at": 5, "stars": 1}, {"at": 10, "stars": 2}, {"at": 20, "stars": 3}, {"at": 50, "stars": 5},
+      {"at": 100, "stars": 8}, {"at": 150, "stars": 10}, {"at": 200, "stars": 12}, {"at": 300, "stars": 15},
+      {"at": 500, "stars": 25}]'::jsonb,
+    'streak_milestones', '[
+      {"at": 7, "coins": 20, "stars": 1}, {"at": 30, "coins": 50, "stars": 2}, {"at": 50, "coins": 80, "stars": 3},
+      {"at": 100, "coins": 150, "stars": 5}, {"at": 150, "coins": 200, "stars": 6}, {"at": 200, "coins": 250, "stars": 8},
+      {"at": 250, "coins": 300, "stars": 10}, {"at": 365, "coins": 500, "stars": 15, "badge": "Đồng hành 1 năm"},
+      {"at": 500, "coins": 600, "stars": 18}, {"at": 730, "coins": 1000, "stars": 25, "badge": "Đồng hành 2 năm"},
+      {"at": 1000, "coins": 1500, "stars": 30}]'::jsonb,
+    'default_outfit', 'student',
+    'outfit_prices', '{"student": 0, "sport": 150, "sleep": 200, "artist": 250, "explorer": 400, "scientist": 450,
+      "dj": 650, "swordsman": 800, "wizard": 1000, "astronaut": 1500, "galaxy": 2000}'::jsonb
+  ) || coalesce((select overrides from economy_settings where id = 1), '{}'::jsonb);
+$$;
+
+-- Hôm nay theo giờ Việt Nam
+create or replace function public.econ_today()
+returns date
+language sql
+stable
+as $$
+  select (now() at time zone 'Asia/Ho_Chi_Minh')::date;
+$$;
+
+-- Câu máy chấm được (đưa vào Ôn tập mỗi ngày): có đáp án máy chấm đúng dạng
+create or replace function public.econ_gradable(p_kind text, p_correct jsonb)
+returns boolean
+language sql
+immutable
+as $$
+  select p_correct is not null
+     and (p_kind in ('mcq', 'short') or (p_kind in ('true_false', 'fill_blank') and jsonb_typeof(p_correct) = 'object'));
+$$;
+
+-- Ghi một dòng sổ cái + cập nhật ví. Trùng reward_key → bỏ qua, trả false (chống thưởng trùng).
+-- Ví phải có sẵn (econ_lock / econ_ensure_wallet). Tiêu quá số dư → lỗi do ràng buộc coins >= 0.
+create or replace function public.econ_grant(p_uid uuid, p_resource text, p_amount int, p_source text,
+                                             p_key text, p_meta jsonb default '{}'::jsonb)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id bigint;
+begin
+  if coalesce(p_amount, 0) = 0 then
+    return false;
+  end if;
+  insert into economy_ledger (student_id, resource, amount, source, reward_key, meta)
+  values (p_uid, p_resource, p_amount, p_source, p_key, coalesce(p_meta, '{}'::jsonb))
+  on conflict (reward_key) do nothing
+  returning id into v_id;
+  if v_id is null then
+    return false;
+  end if;
+  update economy_wallets
+     set coins   = coins   + case when p_resource = 'coin'   then p_amount else 0 end,
+         stars   = stars   + case when p_resource = 'star'   then p_amount else 0 end,
+         shields = shields + case when p_resource = 'shield' then p_amount else 0 end,
+         updated_at = now()
+   where student_id = p_uid;
+  if not found then
+    raise exception 'Chưa có ví Xu cho học sinh này';
+  end if;
+  return true;
+end;
+$$;
+
+-- Tạo ví lần đầu (kèm Xu khởi đầu, một lần trọn đời). Chỉ học sinh có ví; gia sư xem / mặc mọi bộ không cần Xu.
+create or replace function public.econ_ensure_wallet(p_uid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_n int;
+begin
+  if not exists (select 1 from profiles where id = p_uid and role = 'student') then
+    raise exception 'Chỉ học sinh mới có ví Xu';
+  end if;
+  insert into economy_wallets (student_id) values (p_uid) on conflict (student_id) do nothing;
+  get diagnostics v_n = row_count;
+  if v_n > 0 then
+    perform econ_grant(p_uid, 'coin', (econ_cfg() ->> 'starting_coins')::int, 'starting', 'start:' || p_uid);
+  end if;
+end;
+$$;
+
+-- Khoá ví của học sinh (tạo nếu chưa có). Mọi hàm đổi số dư / chuỗi gọi hàm này TRƯỚC TIÊN
+-- → các yêu cầu cùng một học sinh chạy lần lượt, không giẫm lên nhau (và không khoá chéo).
+create or replace function public.econ_lock(p_uid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform econ_ensure_wallet(p_uid);
+  perform 1 from economy_wallets where student_id = p_uid for update;
+end;
+$$;
+
+-- Điểm chính thức (thang 10) của bài: điểm gia sư chấm → điểm máy khi cả bài chấm máy → null (chờ chấm).
+-- Giống pointScore() ở lib/scoreChart.js. Lúc "done" bỏ qua cột score (có thể là điểm của lần nộp trước khi được mở lại).
+create or replace function public.econ_official_score(p_aid uuid, p_sid uuid)
+returns numeric
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_status text;
+  v_score numeric;
+  v_exam boolean;
+  v_total int;
+  v_auto int;
+  v_max numeric;
+  v_got numeric;
+  v_correct int;
+begin
+  select status, score into v_status, v_score
+    from assignment_recipients where assignment_id = p_aid and student_id = p_sid;
+  if v_status is null or v_status not in ('done', 'checked') then
+    return null;
+  end if;
+  if v_status = 'checked' and v_score is not null then
+    return v_score;
+  end if;
+  select is_exam into v_exam from assignments where id = p_aid;
+  select count(*),
+         count(*) filter (where kind in ('mcq', 'fill_blank', 'true_false', 'short')),
+         coalesce(sum(case when kind in ('mcq', 'short') then 0.25 when kind = 'true_false' then 1 else 0 end), 0)
+    into v_total, v_auto, v_max
+    from exercises where assignment_id = p_aid;
+  if v_total = 0 or v_auto < v_total then
+    return null;   -- có câu tự luận: chờ gia sư chấm
+  end if;
+  if v_exam then
+    if v_max = 0 then
+      return null;
+    end if;
+    select coalesce(sum(sa.points), 0) into v_got
+      from submission_answers sa join exercises e on e.id = sa.exercise_id
+     where sa.assignment_id = p_aid and sa.student_id = p_sid and e.kind in ('mcq', 'short', 'true_false');
+    return round(v_got / v_max * 10, 2);
+  end if;
+  select count(*) into v_correct
+    from submission_answers where assignment_id = p_aid and student_id = p_sid and is_correct = true;
+  return round(v_correct::numeric / v_auto * 10, 2);
+end;
+$$;
+
+-- Nhận một mốc trọn đời (lần đầu chạm mốc) + thưởng theo cấu hình của mốc
+create or replace function public.econ_claim_milestone(p_uid uuid, p_kind text, p_ms jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_at int := (p_ms ->> 'at')::int;
+  v_n int;
+  v_key text := 'ms:' || p_kind || ':' || p_uid || ':' || (p_ms ->> 'at');
+  v_meta jsonb := jsonb_build_object('kind', p_kind, 'milestone', v_at, 'badge', p_ms ->> 'badge');
+begin
+  insert into student_achievements (student_id, kind, milestone, badge)
+  values (p_uid, p_kind, v_at, p_ms ->> 'badge')
+  on conflict do nothing;
+  get diagnostics v_n = row_count;
+  if v_n = 0 then
+    return;
+  end if;
+  perform econ_grant(p_uid, 'coin', greatest(coalesce((p_ms ->> 'coins')::int, 0), 0), p_kind || '_milestone', v_key || ':coin', v_meta);
+  perform econ_grant(p_uid, 'star', greatest(coalesce((p_ms ->> 'stars')::int, 0), 0), p_kind || '_milestone', v_key || ':star', v_meta);
+end;
+$$;
+
+-- Mốc số bài chính thức đã hoàn thành (đếm bài, không đếm lần làm lại / bài giảng / số lần mở bài)
+create or replace function public.econ_check_progress(p_uid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_n int;
+  m jsonb;
+begin
+  select count(*) into v_n
+    from assignment_recipients
+   where student_id = p_uid and status in ('done', 'checked') and attempt_no >= 1;
+  for m in select value from jsonb_array_elements(econ_cfg() -> 'progress_milestones') loop
+    if v_n >= (m ->> 'at')::int then
+      perform econ_claim_milestone(p_uid, 'progress', m);
+    end if;
+  end loop;
+end;
+$$;
+
+-- Xét thưởng một lần nộp chính thức: điểm cao (theo từng mốc điểm, key theo lần nộp) + mốc số bài.
+-- Gọi lại bao nhiêu lần cũng được (gia sư sửa điểm 9 → 10 thì chỉ được bù phần chênh; hạ điểm không trừ lại).
+create or replace function public.econ_eval_official(p_aid uuid, p_sid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_no int;
+  v_score numeric;
+  t jsonb;
+  v_c int;
+  v_s int;
+  v_prev_c int := 0;
+  v_prev_s int := 0;
+  v_key text;
+  v_tier text;
+  v_meta jsonb;
+begin
+  if not exists (select 1 from profiles where id = p_sid and role = 'student') then
+    return;
+  end if;
+  select attempt_no into v_no
+    from assignment_recipients
+   where assignment_id = p_aid and student_id = p_sid and status in ('done', 'checked');
+  if coalesce(v_no, 0) < 1 then
+    return;
+  end if;
+  perform econ_ensure_wallet(p_sid);
+  v_score := econ_official_score(p_aid, p_sid);
+  if v_score is not null then
+    v_meta := jsonb_build_object('assignment_id', p_aid, 'attempt', v_no, 'score', v_score);
+    -- Mốc cao nhất đạt được (thưởng mỗi mốc là TỔNG của lần nộp, không cộng dồn các mốc)
+    for t in select value from jsonb_array_elements(econ_cfg() -> 'score_tiers') order by (value ->> 'min')::numeric loop
+      exit when v_score < (t ->> 'min')::numeric;
+      v_c := coalesce((t ->> 'coins')::int, 0);
+      v_s := coalesce((t ->> 'stars')::int, 0);
+      v_tier := t ->> 'min';
+    end loop;
+    if v_tier is not null then
+      -- Chỉ cấp phần còn thiếu so với đã nhận cho lần nộp này (sửa điểm 8 → 9 → 10 thì bù dần; thêm mốc mới không cộng trùng)
+      v_key := 'score:' || p_sid || ':' || p_aid || ':' || v_no || ':';
+      select coalesce(sum(amount) filter (where resource = 'coin'), 0), coalesce(sum(amount) filter (where resource = 'star'), 0)
+        into v_prev_c, v_prev_s
+        from economy_ledger
+       where student_id = p_sid and source = 'official_score' and left(reward_key, length(v_key)) = v_key;
+      v_key := v_key || v_tier;
+      perform econ_grant(p_sid, 'coin', greatest(v_c - v_prev_c, 0), 'official_score', v_key || ':coin', v_meta);
+      perform econ_grant(p_sid, 'star', greatest(v_s - v_prev_s, 0), 'official_score', v_key || ':star', v_meta);
+    end if;
+  end if;
+  perform econ_check_progress(p_sid);
+end;
+$$;
+
+-- Ngày đầu tiên học sinh có câu cho Ôn tập mỗi ngày (bài đã nộp có câu máy chấm). Trước ngày này
+-- (pool = 0) không có Ôn tập → không tính là bỏ chuỗi.
+create or replace function public.econ_daily_pool_from(p_uid uuid)
+returns date
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select min((coalesce(ar.submitted_at, ar.assigned_at) at time zone 'Asia/Ho_Chi_Minh')::date)
+    from assignment_recipients ar
+   where ar.student_id = p_uid
+     and ar.status in ('done', 'checked')
+     and exists (select 1 from exercises e join answer_keys k on k.exercise_id = e.id
+                  where e.assignment_id = ar.assignment_id and public.econ_gradable(e.kind, k.correct));
+$$;
+
+-- Xét các ngày đã qua (tới hôm qua) chưa xét, từng ngày một, đúng như thể xét mỗi đêm:
+--   ngày không có Ôn tập (pool = 0) → bỏ qua, không phạt;
+--   ngày có Ôn tập mà không hoàn thành → nếu ngày trước đó không bỏ, còn khiên, và đã ≥ cooldown_days từ lần dùng khiên trước
+--   thì tự dùng 1 khiên (chuỗi giữ nguyên, KHÔNG tăng, không thưởng); ngược lại chuỗi về 0.
+--   → bỏ 2 ngày liên tiếp luôn đứt chuỗi (khiên chỉ đỡ một ngày lẻ).
+-- Gọi sau econ_lock().
+create or replace function public.econ_settle_streak(p_uid uuid, p_today date)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  s student_streaks;
+  d date;
+  v_from date;
+  v_shields int;
+  v_cd int := coalesce((econ_cfg() -> 'shield' ->> 'cooldown_days')::int, 7);
+begin
+  insert into student_streaks (student_id) values (p_uid) on conflict (student_id) do nothing;
+  select * into s from student_streaks where student_id = p_uid for update;
+  if s.settled_through is null or s.settled_through >= p_today - 1 then
+    return;
+  end if;
+  if s.current_streak > 0 then
+    v_from := econ_daily_pool_from(p_uid);
+    d := s.settled_through + 1;
+    while d < p_today and s.current_streak > 0 loop
+      if v_from is not null and d >= v_from then
+        select shields into v_shields from economy_wallets where student_id = p_uid;
+        if s.miss_run = 0 and coalesce(v_shields, 0) > 0
+           and (s.last_shield_date is null or d - s.last_shield_date >= v_cd) then
+          perform econ_grant(p_uid, 'shield', -1, 'shield_use', 'shield_use:' || p_uid || ':' || d,
+                             jsonb_build_object('date', d, 'streak', s.current_streak));
+          s.last_shield_date := d;
+          s.miss_run := 1;
+        else
+          s.current_streak := 0;
+          s.miss_run := s.miss_run + 1;
+        end if;
+      end if;
+      d := d + 1;
+    end loop;
+  end if;
+  update student_streaks
+     set current_streak = s.current_streak, miss_run = s.miss_run, last_shield_date = s.last_shield_date,
+         settled_through = p_today - 1, updated_at = now()
+   where student_id = p_uid;
+end;
+$$;
+
+-- Hoàn thành Ôn tập ngày p_day: chuỗi +1 (một lần mỗi ngày) + xét mốc chuỗi. Gọi sau econ_lock().
+create or replace function public.econ_complete_day(p_uid uuid, p_day date)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  s student_streaks;
+  m jsonb;
+begin
+  perform econ_settle_streak(p_uid, p_day);
+  select * into s from student_streaks where student_id = p_uid for update;
+  if s.last_completed_date >= p_day then
+    return;
+  end if;
+  s.current_streak := s.current_streak + 1;
+  update student_streaks
+     set current_streak = s.current_streak,
+         longest_streak = greatest(longest_streak, s.current_streak),
+         last_completed_date = p_day, settled_through = p_day, miss_run = 0, updated_at = now()
+   where student_id = p_uid;
+  for m in select value from jsonb_array_elements(econ_cfg() -> 'streak_milestones') loop
+    if s.current_streak >= (m ->> 'at')::int then
+      perform econ_claim_milestone(p_uid, 'streak', m);
+    end if;
+  end loop;
+end;
+$$;
+
+-- Trigger: đếm lần nộp chính thức (todo → done/checked = lần mới)
+create or replace function public.econ_attempt_no()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.status in ('done', 'checked') then
+    if tg_op = 'INSERT' then
+      new.attempt_no := greatest(coalesce(new.attempt_no, 0), 1);
+    elsif old.status = 'todo' then
+      new.attempt_no := coalesce(old.attempt_no, 0) + 1;
+    elsif coalesce(new.attempt_no, 0) < 1 then
+      new.attempt_no := 1;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists econ_attempt_no on public.assignment_recipients;
+create trigger econ_attempt_no
+  before insert or update on public.assignment_recipients
+  for each row execute function public.econ_attempt_no();
+
+-- Trigger: nộp bài / gia sư chấm / sửa điểm → xét thưởng. Lỗi tính thưởng không được làm hỏng việc nộp / chấm.
+create or replace function public.econ_on_recipient_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.status in ('done', 'checked')
+     and (tg_op = 'INSERT' or new.status is distinct from old.status or new.score is distinct from old.score
+          or new.attempt_no is distinct from old.attempt_no) then
+    begin
+      perform econ_eval_official(new.assignment_id, new.student_id);
+    exception when others then
+      raise warning 'Không tính được thưởng Xu/Sao: %', sqlerrm;
+    end;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists econ_on_recipient_change on public.assignment_recipients;
+create trigger econ_on_recipient_change
+  after insert or update on public.assignment_recipients
+  for each row execute function public.econ_on_recipient_change();
+
+-- Học sinh đang đăng nhập (chặn gia sư / khách ở các hàm dành cho học sinh)
+create or replace function public.econ_student()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập';
+  end if;
+  if not exists (select 1 from profiles where id = v_uid and role = 'student') then
+    raise exception 'Chức năng này dành cho học sinh';
+  end if;
+  return v_uid;
+end;
+$$;
+
+-- Tài khoản Xu/Sao/Chuỗi cho app (HUD, cửa hàng). Gia sư: chỉ trả bảng giá (toàn quyền xem/mặc ở app, không có ví).
+-- unseen: các khoản thưởng chưa báo cho học sinh (app cho gấu nói rồi gọi mark_rewards_seen).
+create or replace function public.get_economy()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_cfg jsonb := econ_cfg();
+  v_today date := econ_today();
+  w economy_wallets;
+  s student_streaks;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập';
+  end if;
+  if public.is_tutor() then
+    return jsonb_build_object('role', 'tutor', 'prices', v_cfg -> 'outfit_prices', 'shield', v_cfg -> 'shield');
+  end if;
+  v_uid := econ_student();
+  perform econ_lock(v_uid);
+  perform econ_settle_streak(v_uid, v_today);
+  select * into w from economy_wallets where student_id = v_uid;
+  select * into s from student_streaks where student_id = v_uid;
+  return jsonb_build_object(
+    'role', 'student',
+    'today', v_today,
+    'coins', w.coins,
+    'stars', w.stars,
+    'shields', w.shields,
+    'equipped_outfit', w.equipped_outfit,
+    'owned', (select coalesce(jsonb_agg(outfit_id), '[]'::jsonb) from panda_owned_outfits where student_id = v_uid),
+    'prices', v_cfg -> 'outfit_prices',
+    'shield', v_cfg -> 'shield',
+    'default_outfit', v_cfg ->> 'default_outfit',
+    'daily_available', econ_daily_pool_from(v_uid) is not null,
+    'streak', jsonb_build_object(
+      'current', s.current_streak,
+      'longest', s.longest_streak,
+      'last_completed_date', s.last_completed_date,
+      'done_today', coalesce(s.last_completed_date = v_today, false),
+      'last_shield_date', s.last_shield_date,
+      'shield_ready', s.last_shield_date is null
+                      or v_today - s.last_shield_date >= coalesce((v_cfg -> 'shield' ->> 'cooldown_days')::int, 7)),
+    'achievements', (select coalesce(jsonb_agg(jsonb_build_object('kind', kind, 'milestone', milestone, 'badge', badge,
+                                                                  'achieved_at', achieved_at) order by achieved_at), '[]'::jsonb)
+                       from student_achievements where student_id = v_uid),
+    'unseen', (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'resource', resource, 'amount', amount,
+                                                            'source', source, 'meta', meta) order by id), '[]'::jsonb)
+                 from economy_ledger
+                where student_id = v_uid and id > w.rewards_seen_id
+                  and (amount > 0 or source = 'shield_use') and source <> 'shield_purchase')
+  );
+end;
+$$;
+
+create or replace function public.mark_rewards_seen(p_upto bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+begin
+  update economy_wallets
+     set rewards_seen_id = greatest(rewards_seen_id,
+           least(p_upto, (select coalesce(max(id), 0) from economy_ledger where student_id = v_uid)))
+   where student_id = v_uid;
+end;
+$$;
+
+-- Ôn tập mỗi ngày: lấy (hoặc tạo lần đầu trong ngày) bộ câu hôm nay.
+-- Pool = câu máy chấm được trong các bài chính thức đã nộp (đáp án học sinh đã được xem). Pool 0 → không có Ôn tập.
+-- Chọn tối đa daily_size câu: tránh câu của daily_recent_window lần Ôn tập gần nhất (khi còn đủ câu khác),
+-- ưu tiên câu từng sai → câu lâu chưa ra → ngẫu nhiên.
+create or replace function public.get_daily_review()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+  v_cfg jsonb := econ_cfg();
+  v_today date := econ_today();
+  v_ids uuid[];
+  v_done timestamptz;
+begin
+  perform econ_lock(v_uid);
+  perform econ_settle_streak(v_uid, v_today);
+  if not exists (select 1 from daily_reviews where student_id = v_uid and review_date = v_today) then
+    select array_agg(x.id order by x.rn) into v_ids
+      from (
+        select p.id, row_number() over (order by p.recent, p.wrong desc, p.last_seen nulls first, random()) as rn
+          from (
+            select e.id,
+                   exists (select 1 from daily_review_items i
+                            where i.student_id = v_uid and i.exercise_id = e.id
+                              and i.review_date in (select r.review_date from daily_reviews r
+                                                     where r.student_id = v_uid and r.review_date < v_today
+                                                     order by r.review_date desc
+                                                     limit coalesce((v_cfg ->> 'daily_recent_window')::int, 3))) as recent,
+                   (exists (select 1 from submission_answers sa
+                             where sa.student_id = v_uid and sa.exercise_id = e.id and sa.is_correct is not true)
+                    or exists (select 1 from daily_review_items i
+                                where i.student_id = v_uid and i.exercise_id = e.id and i.wrong > 0)) as wrong,
+                   (select max(i.review_date) from daily_review_items i
+                     where i.student_id = v_uid and i.exercise_id = e.id) as last_seen
+              from exercises e
+              join assignment_recipients ar
+                on ar.assignment_id = e.assignment_id and ar.student_id = v_uid and ar.status in ('done', 'checked')
+              join answer_keys k on k.exercise_id = e.id
+             where public.econ_gradable(e.kind, k.correct)
+          ) p
+      ) x
+     where x.rn <= coalesce((v_cfg ->> 'daily_size')::int, 5);
+    if coalesce(cardinality(v_ids), 0) = 0 then
+      return jsonb_build_object('date', v_today, 'pool', 0, 'items', '[]'::jsonb, 'completed', false);
+    end if;
+    insert into daily_reviews (student_id, review_date) values (v_uid, v_today);
+    insert into daily_review_items (student_id, review_date, exercise_id, position)
+    select v_uid, v_today, t.id, t.n from unnest(v_ids) with ordinality as t (id, n);
+  end if;
+  select completed_at into v_done from daily_reviews where student_id = v_uid and review_date = v_today;
+  return jsonb_build_object(
+    'date', v_today,
+    'completed', v_done is not null,
+    'coins', (v_cfg ->> 'daily_coins')::int,
+    'items', (select coalesce(jsonb_agg(jsonb_build_object(
+                'exercise_id', e.id, 'kind', e.kind, 'question_md', e.question_md, 'options', e.options,
+                'assignment_id', a.id, 'assignment_title', a.title,
+                'solved', i.solved_at is not null, 'tries', i.tries, 'answer', i.last_answer) order by i.position), '[]'::jsonb)
+                from daily_review_items i
+                join exercises e on e.id = i.exercise_id
+                join assignments a on a.id = e.assignment_id
+               where i.student_id = v_uid and i.review_date = v_today)
+  );
+end;
+$$;
+
+-- Trả lời một câu Ôn tập hôm nay (máy chủ chấm). Sai thì thử lại tới khi đúng.
+-- Câu cuối cùng đúng → hoàn thành (một lần): +daily_coins Xu, chuỗi +1, xét mốc chuỗi. Không thưởng Sao.
+-- Qua nửa đêm (giờ VN) mà còn gửi câu của hôm qua → expired (app tải bộ câu mới).
+create or replace function public.answer_daily_review(p_exercise_id uuid, p_answer jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+  v_today date := econ_today();
+  v_done timestamptz;
+  v_kind text;
+  v_correct jsonb;
+  v_ok boolean;
+  v_just boolean := false;
+begin
+  if p_answer is null or jsonb_typeof(p_answer) <> 'object' then
+    raise exception 'Câu trả lời không hợp lệ';
+  end if;
+  perform econ_lock(v_uid);
+  select completed_at into v_done
+    from daily_reviews where student_id = v_uid and review_date = v_today for update;
+  if not found or not exists (select 1 from daily_review_items
+                               where student_id = v_uid and review_date = v_today and exercise_id = p_exercise_id) then
+    return jsonb_build_object('expired', true);
+  end if;
+  select e.kind, k.correct into v_kind, v_correct
+    from exercises e left join answer_keys k on k.exercise_id = e.id
+   where e.id = p_exercise_id;
+  v_ok := coalesce(public.grade_answer(v_kind, v_correct, p_answer), false);
+  update daily_review_items
+     set tries = tries + 1,
+         wrong = wrong + case when v_ok then 0 else 1 end,
+         last_answer = case when v_ok and solved_at is null then p_answer else last_answer end,
+         solved_at = case when v_ok then coalesce(solved_at, now()) else solved_at end
+   where student_id = v_uid and review_date = v_today and exercise_id = p_exercise_id;
+  if v_done is null and not exists (select 1 from daily_review_items
+                                     where student_id = v_uid and review_date = v_today and solved_at is null) then
+    update daily_reviews set completed_at = now() where student_id = v_uid and review_date = v_today;
+    perform econ_grant(v_uid, 'coin', (econ_cfg() ->> 'daily_coins')::int, 'daily', 'daily:' || v_uid || ':' || v_today,
+                       jsonb_build_object('date', v_today));
+    perform econ_complete_day(v_uid, v_today);
+    v_just := true;
+  end if;
+  return jsonb_build_object(
+    'correct', v_ok,
+    'completed', v_just or v_done is not null,
+    'just_completed', v_just,
+    'streak', (select current_streak from student_streaks where student_id = v_uid)
+  );
+end;
+$$;
+
+-- Mua khiên bảo vệ chuỗi. p_request_id: mã một lần bấm (gửi lại cùng mã = không mua thêm).
+create or replace function public.buy_streak_shield(p_request_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+  v_cfg jsonb := econ_cfg();
+  v_price int := (v_cfg -> 'shield' ->> 'price')::int;
+  v_max int := (v_cfg -> 'shield' ->> 'max_held')::int;
+  v_key text := 'shield_buy:' || v_uid || ':' || p_request_id;
+  w economy_wallets;
+begin
+  if p_request_id is null then
+    raise exception 'Thiếu mã giao dịch';
+  end if;
+  perform econ_lock(v_uid);
+  -- Xét chuỗi trước: mua khiên sau khi đã bỏ ngày không cứu được ngày đó
+  perform econ_settle_streak(v_uid, econ_today());
+  select * into w from economy_wallets where student_id = v_uid;
+  if exists (select 1 from economy_ledger where reward_key = v_key || ':shield') then
+    return jsonb_build_object('coins', w.coins, 'shields', w.shields, 'repeated', true);
+  end if;
+  if w.shields >= v_max then
+    raise exception 'Bạn đang giữ tối đa % khiên bảo vệ chuỗi', v_max;
+  end if;
+  if w.coins < v_price then
+    raise exception 'Chưa đủ Xu: khiên giá % Xu, bạn có % Xu', v_price, w.coins;
+  end if;
+  perform econ_grant(v_uid, 'coin', -v_price, 'shield_purchase', v_key || ':coin', jsonb_build_object('price', v_price));
+  perform econ_grant(v_uid, 'shield', 1, 'shield_purchase', v_key || ':shield', jsonb_build_object('price', v_price));
+  select * into w from economy_wallets where student_id = v_uid;
+  return jsonb_build_object('coins', w.coins, 'shields', w.shields, 'repeated', false);
+end;
+$$;
+
+-- Mua trang phục: máy chủ quyết định giá (econ_cfg.outfit_prices), mỗi bộ chỉ mua được một lần.
+create or replace function public.buy_outfit(p_outfit_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+  v_cfg jsonb := econ_cfg();
+  v_price int := (v_cfg -> 'outfit_prices' ->> p_outfit_id)::int;
+  w economy_wallets;
+begin
+  if v_price is null or v_price < 0 then
+    raise exception 'Không có trang phục này trong cửa hàng';
+  end if;
+  perform econ_lock(v_uid);
+  select * into w from economy_wallets where student_id = v_uid;
+  if p_outfit_id = v_cfg ->> 'default_outfit'
+     or exists (select 1 from panda_owned_outfits where student_id = v_uid and outfit_id = p_outfit_id) then
+    return jsonb_build_object('coins', w.coins, 'already_owned', true);
+  end if;
+  if w.coins < v_price then
+    raise exception 'Chưa đủ Xu: bộ này giá % Xu, bạn có % Xu', v_price, w.coins;
+  end if;
+  insert into panda_owned_outfits (student_id, outfit_id, price_paid) values (v_uid, p_outfit_id, v_price);
+  perform econ_grant(v_uid, 'coin', -v_price, 'outfit_purchase', 'outfit:' || v_uid || ':' || p_outfit_id,
+                     jsonb_build_object('outfit_id', p_outfit_id, 'price', v_price));
+  select * into w from economy_wallets where student_id = v_uid;
+  return jsonb_build_object('coins', w.coins, 'already_owned', false);
+end;
+$$;
+
+-- Mặc trang phục đã sở hữu (học sinh). Gia sư mặc thử nhớ trên máy (lib/pandaShop.js).
+create or replace function public.equip_outfit(p_outfit_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+begin
+  if p_outfit_id is distinct from econ_cfg() ->> 'default_outfit'
+     and not exists (select 1 from panda_owned_outfits where student_id = v_uid and outfit_id = p_outfit_id) then
+    raise exception 'Bạn chưa sở hữu bộ này';
+  end if;
+  perform econ_lock(v_uid);
+  update economy_wallets set equipped_outfit = p_outfit_id, updated_at = now() where student_id = v_uid;
+end;
+$$;
+
+-- Hàm nội bộ: không ai gọi trực tiếp qua API (Supabase mặc định cấp EXECUTE cho anon/authenticated)
+revoke all on function public.econ_grant(uuid, text, int, text, text, jsonb) from public, anon, authenticated;
+revoke all on function public.econ_ensure_wallet(uuid) from public, anon, authenticated;
+revoke all on function public.econ_lock(uuid) from public, anon, authenticated;
+revoke all on function public.econ_official_score(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.econ_claim_milestone(uuid, text, jsonb) from public, anon, authenticated;
+revoke all on function public.econ_check_progress(uuid) from public, anon, authenticated;
+revoke all on function public.econ_eval_official(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.econ_daily_pool_from(uuid) from public, anon, authenticated;
+revoke all on function public.econ_settle_streak(uuid, date) from public, anon, authenticated;
+revoke all on function public.econ_complete_day(uuid, date) from public, anon, authenticated;
+revoke all on function public.econ_attempt_no() from public, anon, authenticated;
+revoke all on function public.econ_on_recipient_change() from public, anon, authenticated;
+revoke all on function public.econ_student() from public, anon, authenticated;
+revoke all on function public.econ_cfg() from public, anon;
+grant execute on function public.econ_cfg() to authenticated;
+
+revoke all on function public.get_economy() from public, anon;
+revoke all on function public.mark_rewards_seen(bigint) from public, anon;
+revoke all on function public.get_daily_review() from public, anon;
+revoke all on function public.answer_daily_review(uuid, jsonb) from public, anon;
+revoke all on function public.buy_streak_shield(uuid) from public, anon;
+revoke all on function public.buy_outfit(text) from public, anon;
+revoke all on function public.equip_outfit(text) from public, anon;
+grant execute on function public.get_economy() to authenticated;
+grant execute on function public.mark_rewards_seen(bigint) to authenticated;
+grant execute on function public.get_daily_review() to authenticated;
+grant execute on function public.answer_daily_review(uuid, jsonb) to authenticated;
+grant execute on function public.buy_streak_shield(uuid) to authenticated;
+grant execute on function public.buy_outfit(text) to authenticated;
+grant execute on function public.equip_outfit(text) to authenticated;
+
+-- Dữ liệu cũ (chỉ phần kiểm chứng được, chạy lại không cộng trùng):
+--   mọi học sinh có ví + Xu khởi đầu; thưởng điểm cao + mốc số bài theo lần nộp chính thức hiện tại của từng bài.
+--   Không suy ra được: Ôn tập / chuỗi các ngày trước (chưa có dữ liệu) và các lần nộp đã bị "Cho nộp lại" ghi đè.
+do $$
+declare
+  r record;
+begin
+  perform public.econ_ensure_wallet(p.id) from public.profiles p where p.role = 'student';
+  for r in
+    select ar.assignment_id, ar.student_id
+      from public.assignment_recipients ar
+      join public.profiles p on p.id = ar.student_id and p.role = 'student'
+     where ar.status in ('done', 'checked')
+  loop
+    perform public.econ_eval_official(r.assignment_id, r.student_id);
+  end loop;
+end;
+$$;
+
 -- =====================================================================
 -- 7. STORAGE (bucket riêng tư + policy)
 -- lesson-files: <thư mục ngẫu nhiên>/<tên file>   – gia sư tải lên
