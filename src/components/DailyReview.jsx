@@ -34,7 +34,7 @@ export default function DailyReview() {
   if (!data?.items?.length) {
     return (
       <div className="daily-card is-empty">
-        <p className="muted small">Nộp bài có câu trắc nghiệm / đúng sai / trả lời ngắn để mở Ôn tập mỗi ngày. Hôm nay không tính vào chuỗi.</p>
+        <p className="muted small">Nộp bài có câu trắc nghiệm để mở Ôn tập mỗi ngày. Hôm nay không tính vào chuỗi.</p>
       </div>
     )
   }

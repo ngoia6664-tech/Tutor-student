@@ -1391,6 +1391,7 @@ as $$
     'daily_coins', 10,
     'daily_size', 5,
     'daily_recent_window', 3,
+    'daily_kinds', '["mcq"]'::jsonb,
     'score_tiers', '[{"min": 8, "coins": 5, "stars": 0}, {"min": 9, "coins": 20, "stars": 1}, {"min": 10, "coins": 30, "stars": 2}]'::jsonb,
     'shield', '{"price": 30, "max_held": 2, "cooldown_days": 7}'::jsonb,
     'progress_milestones', '[
@@ -1426,6 +1427,17 @@ immutable
 as $$
   select p_correct is not null
      and (p_kind in ('mcq', 'short') or (p_kind in ('true_false', 'fill_blank') and jsonb_typeof(p_correct) = 'object'));
+$$;
+
+-- Loại câu được đưa vào Ôn tập mỗi ngày (cấu hình daily_kinds, mặc định chỉ 'mcq')
+create or replace function public.econ_daily_kind(p_kind text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select p_kind in (select jsonb_array_elements_text(coalesce(econ_cfg() -> 'daily_kinds', '["mcq"]'::jsonb)));
 $$;
 
 -- Ghi một dòng sổ cái + cập nhật ví. Trùng reward_key → bỏ qua, trả false (chống thưởng trùng).
@@ -1666,7 +1678,7 @@ as $$
    where ar.student_id = p_uid
      and ar.status in ('done', 'checked')
      and exists (select 1 from exercises e join answer_keys k on k.exercise_id = e.id
-                  where e.assignment_id = ar.assignment_id and public.econ_gradable(e.kind, k.correct));
+                  where e.assignment_id = ar.assignment_id and public.econ_daily_kind(e.kind) and public.econ_gradable(e.kind, k.correct));
 $$;
 
 -- Xét các ngày đã qua (tới hôm qua) chưa xét, từng ngày một, đúng như thể xét mỗi đêm:
@@ -1897,7 +1909,8 @@ end;
 $$;
 
 -- Ôn tập mỗi ngày: lấy (hoặc tạo lần đầu trong ngày) bộ câu hôm nay.
--- Pool = câu máy chấm được trong các bài chính thức đã nộp (đáp án học sinh đã được xem). Pool 0 → không có Ôn tập.
+-- Pool = câu máy chấm được, đúng loại daily_kinds (mặc định chỉ trắc nghiệm), trong các bài chính thức đã nộp
+-- (đáp án học sinh đã được xem). Pool 0 → không có Ôn tập.
 -- Chọn tối đa daily_size câu: tránh câu của daily_recent_window lần Ôn tập gần nhất (khi còn đủ câu khác),
 -- ưu tiên câu từng sai → câu lâu chưa ra → ngẫu nhiên.
 create or replace function public.get_daily_review()
@@ -1937,7 +1950,7 @@ begin
               join assignment_recipients ar
                 on ar.assignment_id = e.assignment_id and ar.student_id = v_uid and ar.status in ('done', 'checked')
               join answer_keys k on k.exercise_id = e.id
-             where public.econ_gradable(e.kind, k.correct)
+             where public.econ_daily_kind(e.kind) and public.econ_gradable(e.kind, k.correct)
           ) p
       ) x
      where x.rn <= coalesce((v_cfg ->> 'daily_size')::int, 5);
@@ -2119,6 +2132,7 @@ revoke all on function public.econ_claim_milestone(uuid, text, jsonb) from publi
 revoke all on function public.econ_check_progress(uuid) from public, anon, authenticated;
 revoke all on function public.econ_eval_official(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.econ_daily_pool_from(uuid) from public, anon, authenticated;
+revoke all on function public.econ_daily_kind(text) from public, anon, authenticated;
 revoke all on function public.econ_settle_streak(uuid, date) from public, anon, authenticated;
 revoke all on function public.econ_complete_day(uuid, date) from public, anon, authenticated;
 revoke all on function public.econ_attempt_no() from public, anon, authenticated;
