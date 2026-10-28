@@ -108,7 +108,6 @@ export default function Layout() {
             <span className="user-name" title={profile.full_name}>
               {profile.full_name || 'Tài khoản'}
             </span>
-            {profile.role === 'student' && <StreakFlame />}
             <NotificationBell />
             <button
               type="button"
@@ -172,6 +171,7 @@ export default function Layout() {
       )}
       <ScrollJump />
       <PandaDock />
+      {profile.role === 'student' && <StreakFlame />}
       <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (

@@ -16,12 +16,16 @@
   .coin-star-hud .coin-star-unit { display: none; }
 }
 
-/* ----- Ngọn lửa chuỗi (StreakFlame, thanh trên cùng) -----
+/* ----- Ngọn lửa chuỗi (StreakFlame): cụm nổi góc trên bên phải, ngay dưới thanh trên cùng (top đặt bằng JS) -----
    Màu theo mốc: --f1 viền ngoài, --f2 giữa, --f3 lõi. Chỉ animate transform/opacity (nhẹ máy). */
 .streak-flame-wrap {
-  position: relative;
+  position: fixed;
+  right: 1rem;
+  z-index: 8; /* như gấu: dưới thanh menu (10), thông báo nổi (60) */
   display: flex;
-  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 .streak-flame {
   --f1: #f97316;
@@ -30,19 +34,20 @@
   --f-glow: rgba(249, 115, 22, 0.45);
   display: inline-flex;
   align-items: center;
-  gap: 0.15rem;
-  padding: 0.2rem 0.5rem 0.2rem 0.35rem;
+  gap: 0.3rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.55rem;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--surface-solid);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 1.25rem;
   line-height: 1;
   cursor: default;
 }
 .streak-flame svg {
-  width: 1.15rem;
-  height: 1.5rem;
+  width: 1.7rem;
+  height: 2.2rem;
   overflow: visible;
 }
 .streak-flame .flame-outer { fill: var(--f1); }
@@ -59,7 +64,7 @@
 /* Đã giữ chuỗi hôm nay: lửa cháy rực + quầng sáng; chưa làm: leo lét, nhạt */
 .streak-flame.is-lit {
   border-color: var(--f2);
-  box-shadow: 0 0 12px -2px var(--f-glow);
+  box-shadow: var(--shadow), 0 0 16px -2px var(--f-glow);
 }
 .streak-flame:not(.is-lit) svg { opacity: 0.6; }
 .streak-flame:not(.is-lit) path { animation-duration: 2.6s; }
@@ -88,17 +93,13 @@
 
 /* Nút icon ngay dưới ngọn lửa: mở Ôn tập giữ chuỗi */
 .streak-review-btn {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 50%;
-  transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: 50%;
-  border: 1px solid var(--warn);
+  border: 2px solid var(--warn);
   background: var(--surface-solid);
   color: var(--warn);
   box-shadow: var(--shadow);
@@ -108,15 +109,16 @@
 .streak-review-btn:hover { color: var(--text); border-color: var(--primary); }
 .streak-review-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @keyframes review-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-3px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .streak-flame path, .streak-review-btn { animation: none; }
 }
 @media (max-width: 420px) {
-  .streak-flame { padding: 0.15rem 0.4rem 0.15rem 0.25rem; font-size: 0.85rem; }
-  .streak-flame svg { width: 1rem; height: 1.3rem; }
+  .streak-flame-wrap { right: 0.6rem; }
+  .streak-flame { padding: 0.3rem 0.7rem 0.3rem 0.45rem; font-size: 1.1rem; }
+  .streak-flame svg { width: 1.45rem; height: 1.9rem; }
 }
 
 /* ----- Ôn tập mỗi ngày (bảng nổi) ----- */

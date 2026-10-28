@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 import { usePandaShop } from '../contexts/PandaShopContext.jsx'
 import { useStudying } from '../lib/studyLock.js'
 import Loading from './Loading.jsx'
@@ -21,20 +22,38 @@ const TIERS = [
 ]
 const NEXT = [...TIERS].reverse()
 
-// Ngọn lửa chuỗi 🔥 trên thanh trên cùng (góc phải, chỉ học sinh). Chưa làm hôm nay: lửa leo lét;
-// chuỗi 0: lửa tắt. Ngay dưới là nút icon mở Ôn tập mỗi ngày (ẩn khi đã xong / không có câu / đang làm bài).
+// Đặt cụm lửa ngay dưới thanh trên cùng (chiều cao đổi khi xoay máy / menu xuống dòng)
+function useTopbarHeight() {
+  const [h, setH] = useState(0)
+  useEffect(() => {
+    const topbar = document.querySelector('.topbar')
+    if (!topbar) return
+    const update = () => setH(topbar.offsetHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(topbar)
+    return () => ro.disconnect()
+  }, [])
+  return h
+}
+
+// Ngọn lửa chuỗi 🔥 nổi ở góc trên bên phải màn hình (như gấu ở góc dưới phải; chỉ học sinh). Chưa làm hôm nay:
+// lửa leo lét; chuỗi 0: lửa tắt. Ngay dưới là nút icon mở Ôn tập mỗi ngày (ẩn khi đã xong / không có câu).
+// Ẩn cả cụm khi đang làm bài (thanh tiến độ dính đầu trang) và trong cửa hàng (đã có bảng Xu/Sao/chuỗi ở góc phải).
 export default function StreakFlame() {
   const { data, loading, error } = usePandaShop() || {}
   const studying = useStudying()
+  const { pathname } = useLocation()
+  const top = useTopbarHeight()
   const [open, setOpen] = useState(false)
   // Xong Ôn tập → tài khoản tải lại: bảng đang mở vẫn giữ nguyên
   const dialog = open && <DailyDialog onClose={() => setOpen(false)} />
-  if (loading || error || !data || data.isTutor || !data.streak) return dialog || null
+  if (studying || pathname.startsWith('/student/shop') || loading || error || !data || data.isTutor || !data.streak) return dialog || null
 
   const { current, done_today, longest } = data.streak
   const tier = TIERS.find((t) => current >= t.min)
   const next = NEXT.find((t) => t.min > current)
-  const canReview = data.dailyAvailable && !done_today && !studying
+  const canReview = data.dailyAvailable && !done_today
   const title = [
     `Chuỗi Ôn tập: ${current} ngày${tier ? ` · ${tier.name}` : ''}`,
     done_today ? 'Hôm nay đã giữ chuỗi' : data.dailyAvailable ? 'Hôm nay chưa làm Ôn tập' : 'Hôm nay chưa có câu Ôn tập',
@@ -45,7 +64,7 @@ export default function StreakFlame() {
     .join('\n')
 
   return (
-    <div className="streak-flame-wrap">
+    <div className="streak-flame-wrap" style={{ top: `calc(${top}px + 0.6rem)` }}>
       <span
         className={`streak-flame tier-${tier?.id || 'out'}${done_today ? ' is-lit' : ''}`}
         title={title}
@@ -57,7 +76,7 @@ export default function StreakFlame() {
       </span>
       {canReview && (
         <button type="button" className="streak-review-btn" onClick={() => setOpen(true)} title="Làm Ôn tập để giữ chuỗi" aria-label="Làm Ôn tập để giữ chuỗi">
-          <Icon name="todo" size={16} />
+          <Icon name="todo" size={20} />
         </button>
       )}
       {dialog}

@@ -9,6 +9,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   (AssignmentEditor, ImportJson, Library, StudentAssignment, importTutorLesson, AssignmentTracking): grep rồi Read với `offset`/`limit`.
 - Chi tiết từng tính năng (gấu, vũ trụ, nhạc, chấm bài, biểu đồ, ôn tập, làm lại...): **`AI/CLAUDE/FEATURES.md`** — grep đúng mục, không đọc hết.
 - Đã biết file cần sửa thì mở thẳng. Bản đồ sai/thiếu thì sửa file này (ngắn) hoặc FEATURES.md (chi tiết).
+- Trước mỗi yêu cầu thay đổi: đọc `AI/CLAUDE/FILE_MAP.md` (công dụng từng file) và làm theo skill `prompt-triage` (phân loại nhỏ/phức tạp, chọn build hay build + test).
 
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang. Trang mới: thêm vào cả hai.
@@ -24,7 +25,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Panda Fashion Shop (`/student/shop`, `/tutor/shop`): `StudentShop` + `components/shop/*`; danh mục `lib/outfits.js`; trang phục SVG
   `components/panda/outfitLooks.jsx` (FrontPanda prop `look`), hiệu ứng `panda/SkinEffect.jsx`, hoạt cảnh khi giữ vào gấu `panda/PandaAct.jsx` + `styles/panda-act.css`, gấu mặc đồ `panda/OutfitPanda.jsx`;
   Xu/Sao/🔥 `CoinStarBadge`, nút góc `PandaDock`; dữ liệu qua adapter `lib/pandaShop.js` → RPC Supabase (mục "Kinh tế" trong schema.sql). Chi tiết: FEATURES.md.
-- Kinh tế Xu/Sao/Chuỗi + Ôn tập mỗi ngày (`components/StreakFlame.jsx` trên thanh trên cùng → bảng nổi `DailyReview.jsx`, `lib/dailyReview.js`): sổ cái `economy_ledger` (reward_key duy nhất), cấu hình `econ_cfg()`. Chi tiết: FEATURES.md mục "Kinh tế".
+- Kinh tế Xu/Sao/Chuỗi + Ôn tập mỗi ngày (`components/StreakFlame.jsx` nổi góc trên bên phải → bảng nổi `DailyReview.jsx`, `lib/dailyReview.js`): sổ cái `economy_ledger` (reward_key duy nhất), cấu hình `econ_cfg()`. Chi tiết: FEATURES.md mục "Kinh tế".
   Âm thanh hoạt cảnh: kế hoạch chuyển sang file mp3 ở **`AI/CLAUDE/SFX_PLAN.md`**.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
