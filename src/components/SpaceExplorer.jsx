@@ -3,7 +3,14 @@ import { createPortal } from 'react-dom'
 import FormulaText from './FormulaText.jsx'
 import Icon from './Icon.jsx'
 import { FrontPanda } from './PandaArt.jsx'
-import { useEquippedOutfit } from '../contexts/PandaShopContext.jsx'
+import { useEquippedOutfit, usePandaShop } from '../contexts/PandaShopContext.jsx'
+import AltSolar from './telescope/AltSolar.jsx'
+import PlacePicker from './telescope/PlacePicker.jsx'
+import WarpTravel from './telescope/WarpTravel.jsx'
+import FreeFlight from './telescope/FreeFlight.jsx'
+import { FLIGHT_PLACES } from '../lib/flight.js'
+import { SYSTEMS } from '../lib/starSystems.js'
+import { findPlace, lockedMessage, placeAccess, PLACES, SOLAR_ID } from '../lib/telescope.js'
 import { LOOKS } from './panda/outfitLooks.jsx'
 import PlanetPortrait from './PlanetPortrait.jsx'
 import SpaceMusic from './SpaceMusic.jsx'
@@ -18,6 +25,7 @@ import {
   playFocus,
   playPandaTalk,
   playWhoosh,
+  preloadShipLaunch,
   releaseAudio,
   setMusicChoice,
   setSoundOn,
@@ -27,10 +35,12 @@ import {
   unlockAudio,
   useMusicPlaying,
 } from '../lib/spaceSound.js'
-import { useSettings } from '../lib/settings.js'
+import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 import '../styles/explorer.css'
 
 // Chế độ ngắm vũ trụ (tải lười từ Layout): dùng lại chính hệ Mặt Trời của nền (SpaceBackdrop), không vẽ thêm.
+// Hệ sao khác (Kính thiên văn, lib/telescope.js): dựng cùng kiểu bằng components/telescope/AltSolar.jsx, dữ liệu lib/starSystems.js;
+// kéo xoay, phóng to, bấm thiên thể, gấu giải thích, soi chân dung đều chạy chung một đường như Hệ Mặt Trời.
 // Kéo để xoay góc nhìn, lăn chuột / chụm 2 ngón để phóng to, bấm hành tinh xem số liệu Vật lý. Esc để thoát.
 const G_EARTH = 9.8
 // Bấm hành tinh / Mặt Trời: gấu giải thích trong bong bóng. stats = [nhãn, giá trị], about = các đoạn giải thích
@@ -188,8 +198,32 @@ const SPACE_FACTS = [
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const fmt = (n) => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 
-export default function SpaceExplorer({ onClose }) {
+// initialPlace: địa điểm xin mở từ URL (?vu-tru=...) — vẫn phải qua placeAccess; onPlaceChange: Layout ghi lại vào URL
+export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) {
   const [picked, setPicked] = useState(null)
+  // Địa điểm đang xem (lib/telescope.js). Luôn bắt đầu ở Hệ Mặt Trời; địa điểm khác chỉ vào khi placeAccess = 'open'
+  const shop = usePandaShop()
+  const [place, setPlace] = useState(SOLAR_ID)
+  const asked = initialPlace && initialPlace !== SOLAR_ID ? initialPlace : null
+  const [pending, setPending] = useState(asked) // chờ tải xong số Sao rồi mới quyết định
+  const [picking, setPicking] = useState(!!asked)
+  const [notice, setNotice] = useState('')
+  // Đang du hành sang địa điểm khác (WarpTravel): { id, name, color } — đổi place ở giữa chặng bay
+  const [travel, setTravel] = useState(null)
+  // Bay tự do trong hệ đang xem (FreeFlight, lib/flight.js); sayText = lời gấu khi bay xong
+  const [flying, setFlying] = useState(false)
+  const [sayText, setSayText] = useState('')
+  const placeInfo = findPlace(place)
+  const access = placeAccess(placeInfo, shop)
+  const far = place !== SOLAR_ID
+  // Chỉ dựng hệ khác khi placeAccess = 'open' (kiểm lại mỗi lần render, không chỉ lúc bấm chọn)
+  const sys = far && access.state === 'open' ? SYSTEMS[place] || null : null
+  const bodies = sys ? sys.bodies : BODIES
+  const bodiesRef = useRef(bodies)
+  bodiesRef.current = bodies
+  const spaceEl = sys ? document.querySelector('.space') : null // lớp nền (SpaceBackdrop) để gắn hệ khác vào
+  const pickingRef = useRef(picking)
+  pickingRef.current = picking
   const outfit = useEquippedOutfit() // gấu kể chuyện mặc bộ đang chọn ở Panda Fashion Shop
   const view = useRef({ tilt: 55, turn: 0, zoom: 1.4 })
   // Giữ onClose mới nhất mà không phải gắn lại sự kiện mỗi lần Layout render
@@ -199,24 +233,30 @@ export default function SpaceExplorer({ onClose }) {
   const openedAt = useRef(0)
   const pickedRef = useRef(picked)
   pickedRef.current = picked
+  const applyRef = useRef(null) // đặt góc nhìn lên hệ đang xem (gán trong effect kéo xoay)
 
   useEffect(() => {
-    const solar = document.querySelector('.solar')
+    // solar = hệ Mặt Trời của nền (khôi phục góc nhìn lúc thoát); current() = hệ đang xem (hệ khác nếu có)
+    const solar = document.querySelector('.space > .solar:not(.solar-alt)')
     const space = document.querySelector('.space')
     if (!solar || !space) return
+    const current = () => space.querySelector('.solar-alt') || solar
     const saved = { tilt: solar.style.getPropertyValue('--tilt'), turn: solar.style.getPropertyValue('--turn') }
     const root = document.documentElement
     root.classList.add('space-exploring')
     playWhoosh()
+    preloadShipLaunch()
 
     let frame = 0
     const apply = () => {
       frame = 0
       const v = view.current
-      solar.style.setProperty('--tilt', `${v.tilt}deg`)
-      solar.style.setProperty('--turn', `${v.turn}deg`)
-      solar.style.setProperty('--zoom', v.zoom)
+      const el = current()
+      el.style.setProperty('--tilt', `${v.tilt}deg`)
+      el.style.setProperty('--turn', `${v.turn}deg`)
+      el.style.setProperty('--zoom', v.zoom)
     }
+    applyRef.current = apply
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(apply)
     }
@@ -229,9 +269,10 @@ export default function SpaceExplorer({ onClose }) {
     let downHit = null
     // Thiên thể dưới điểm bấm (hoặc null)
     const bodyAt = (x, y) => {
-      const hit = document.elementFromPoint(x, y)?.closest('.solar-moon, .solar-planet, .solar-sun')
-      const key = hit && (hit.classList.contains('solar-sun') ? 'sun' : [...hit.classList].find((c) => c.startsWith('solar-') && c !== 'solar-planet')?.slice(6))
-      return key && BODIES[key] ? key : null
+      const hit = document.elementFromPoint(x, y)?.closest('[data-body], .solar-moon, .solar-planet, .solar-sun')
+      const key =
+        hit && (hit.dataset.body || (hit.classList.contains('solar-sun') ? 'sun' : [...hit.classList].find((c) => c.startsWith('solar-') && c !== 'solar-planet')?.slice(6)))
+      return key && Object.hasOwn(bodiesRef.current, key) ? key : null
     }
     const down = (e) => {
       if (e.target.closest('.explorer-ui')) return
@@ -291,7 +332,8 @@ export default function SpaceExplorer({ onClose }) {
       schedule()
     }
     // Esc: đang soi một hành tinh thì thoát soi trước, lần nữa mới thoát chế độ ngắm
-    const key = (e) => e.key === 'Escape' && (pickedRef.current ? setPicked(null) : closeRef.current())
+    // Bảng chọn địa điểm đang mở thì Esc đóng bảng trước
+    const key = (e) => e.key === 'Escape' && (pickingRef.current ? setPicking(false) : pickedRef.current ? setPicked(null) : closeRef.current())
     const noDrag = (e) => e.preventDefault()
 
     space.addEventListener('pointerdown', down)
@@ -319,23 +361,103 @@ export default function SpaceExplorer({ onClose }) {
       solar.style.setProperty('--tilt', saved.tilt)
       solar.style.setProperty('--turn', saved.turn)
       solar.style.removeProperty('--zoom')
+      applyRef.current = null
       document.querySelectorAll('.solar .is-picked').forEach((el) => el.classList.remove('is-picked'))
     }
   }, [])
 
+  // Địa điểm xin từ URL: đợi số Sao tải xong rồi mới cho vào (hoặc báo vì sao bị khóa)
+  const pendingState = pending ? placeAccess(findPlace(pending), shop).state : null
+  useEffect(() => {
+    if (!pending || pendingState === 'loading') return
+    const p = findPlace(pending)
+    if (pendingState === 'open') {
+      setPlace(pending)
+      setPicking(false)
+    } else setNotice(lockedMessage(p, placeAccess(p, shop)))
+    setPending(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending, pendingState])
+  // Lưới an toàn: đang ở một địa điểm mà quyền vào mất đi (dữ liệu Sao lỗi, đổi cấu hình...) → về Hệ Mặt Trời + bảng chọn
+  useEffect(() => {
+    if (!far || access.state === 'open' || access.state === 'loading') return
+    setNotice(lockedMessage(placeInfo, access))
+    setPlace(SOLAR_ID)
+    setPicking(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [far, access.state])
+  const placeChangeRef = useRef(onPlaceChange)
+  placeChangeRef.current = onPlaceChange
+  useEffect(() => {
+    placeChangeRef.current?.(pending || place)
+  }, [pending, place])
+  // Ở hệ sao khác: ẩn hệ Mặt Trời của nền (CSS html.telescope-away), không cho kéo xoay nó.
+  // html[data-place]: nền vũ trụ riêng của từng địa điểm (styles/telescope.css)
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.toggle('telescope-away', far)
+    root.dataset.place = place
+    return () => {
+      root.classList.remove('telescope-away')
+      delete root.dataset.place
+    }
+  }, [far, place])
+  function choose(p, a) {
+    if (a.state !== 'open') return setNotice(lockedMessage(p, a))
+    setNotice('')
+    setPicking(false)
+    if (p.id === place || travel) return
+    setPicked(null)
+    // Hiệu ứng du hành (Cài đặt) — máy bật "Giảm chuyển động" thì sang thẳng. Tiếng tàu do WarpTravel phát.
+    if (settings.travelAnimation && !prefersReducedMotion()) {
+      setMode(null)
+      setTravel({ id: p.id, name: p.name, color: p.color })
+      return
+    }
+    playWhoosh()
+    arrive(p.id)
+    setMode('hint')
+  }
+  // Bay xong: gấu kể lại chuyện gì đã xảy ra (không thưởng / trừ gì)
+  function endFlight({ reason, name, coins = 0 }) {
+    setFlying(false)
+    const text = {
+      heat: `Phù, suýt cháy tàu! Bay quá gần ${name} nên vỏ tàu nóng quá mức, mình phải quay về. Lần sau nhớ tránh xa vùng đỏ và giữ tốc độ trên vạch đỏ khi ở gần sao nhé!`,
+      planet: `Tàu va vào ${name} rồi! May mà mình quay về an toàn. Xem đường chấm phía trước để né hành tinh nhé.`,
+      quit: coins ? 'Về tới nơi rồi! Chuyến bay vui ghê.' : '',
+    }[reason]
+    const got = coins ? ` Chuyến này bạn nhặt được ${coins} Xu, đã cộng vào ví!` : ''
+    if (!text && !got) return setMode('hint')
+    setSayText((text || '') + got)
+    setMode('say')
+  }
+  function arrive(id) {
+    setFactIdx(-1)
+    setPlace(id)
+  }
+  const openedCount = PLACES.filter((p) => placeAccess(p, shop).state === 'open').length
+
   // Đánh dấu hành tinh đang xem
   useEffect(() => {
     document.querySelectorAll('.solar .is-picked').forEach((el) => el.classList.remove('is-picked'))
-    if (picked) document.querySelector(picked === 'sun' ? '.solar-sun' : `.solar-${picked}`)?.classList.add('is-picked')
-  }, [picked])
+    if (!picked) return
+    const el = far ? document.querySelector(`.solar-alt [data-body="${picked}"]`) : document.querySelector(picked === 'sun' ? '.solar-sun' : `.solar-${picked}`)
+    el?.classList.add('is-picked')
+  }, [picked, far])
+  // Đổi địa điểm: góc nhìn mặc định, đặt lên hệ mới (AltSolar đã gắn vào .space trong cùng lần render)
+  useEffect(() => {
+    view.current = { tilt: 55, turn: 0, zoom: 1.4 }
+    applyRef.current?.()
+    setFlying(false) // mất quyền vào / đổi nơi: thôi bay
+  }, [place, !!sys])
 
   function zoomBy(f) {
     const v = view.current
     v.zoom = clamp(v.zoom * f, 0.5, 3)
-    document.querySelector('.solar')?.style.setProperty('--zoom', v.zoom)
+    ;(document.querySelector('.solar-alt') || document.querySelector('.solar'))?.style.setProperty('--zoom', v.zoom)
   }
 
-  const b = picked && BODIES[picked]
+  const b = picked && bodies[picked]
 
   // Bong bóng của gấu. mode: 'hint' lời chào | 'fact' một câu | 'menu' mục lục | 'body' giải thích hành tinh | null đóng
   const [mode, setMode] = useState('hint')
@@ -407,7 +529,8 @@ export default function SpaceExplorer({ onClose }) {
   }
   const [factIdx, setFactIdx] = useState(-1)
   const bubbleRef = useRef(null)
-  const total = SPACE_FACTS.length
+  const facts = sys ? sys.facts : SPACE_FACTS
+  const total = facts.length
   function showFact(i) {
     playPandaTalk()
     setFactIdx((i + total) % total)
@@ -430,14 +553,36 @@ export default function SpaceExplorer({ onClose }) {
     bubbleRef.current?.scrollTo(0, 0)
   }, [mode, factIdx, picked])
   const pandaPose = mode === 'body' || mode === 'menu' ? 'teach' : factIdx % 2 ? 'cheer' : 'teach'
-  const fact = factIdx >= 0 && SPACE_FACTS[factIdx]
+  const fact = factIdx >= 0 && facts[factIdx]
 
   return createPortal(
-    <div className={`explorer-ui${b ? ' is-focus' : ''}`} role="dialog" aria-label="Ngắm hệ Mặt Trời">
+    <div className={`explorer-ui${b ? ' is-focus' : ''}${far ? ' is-far' : ''}${travel ? ' is-travel' : ''}`} role="dialog" aria-label={`Kính thiên văn: ${placeInfo?.name || ''}`}>
       <div className="explorer-top">
         <div>
-          <h2 className="explorer-title">Hệ Mặt Trời</h2>
-          <p className="explorer-hint">Kéo để xoay, lăn chuột hoặc chụm hai ngón để phóng to, bấm vào hành tinh để gấu giải thích.</p>
+          <h2 className="explorer-title">{placeInfo?.name}</h2>
+          <p className="explorer-hint">
+            Kéo để xoay, lăn chuột hoặc chụm hai ngón để phóng to, bấm vào {far ? 'ngôi sao hoặc hành tinh' : 'hành tinh'} để gấu giải thích.
+          </p>
+          <button type="button" className="tpick-open" onClick={() => setPicking(true)} aria-haspopup="dialog">
+            <Icon name="telescope" size={16} /> Địa điểm <span className="tpick-open-count">{openedCount}</span>
+          </button>
+          {sys && FLIGHT_PLACES.includes(place) && (
+            <button
+              type="button"
+              className="tpick-open flight-open"
+              disabled={!!travel}
+              onClick={() => {
+                setPicked(null)
+                setMode(null)
+                setFlying(true)
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path d="M12 2c3 2.5 4.5 6 4 10l2.5 3-1 4-3-2h-5l-3 2-1-4L7.5 12C7 8 9 4.5 12 2Z" fill="currentColor" />
+              </svg>
+              Bay tự do
+            </button>
+          )}
         </div>
         <div className="explorer-actions">
           {/* Tắt "Nhạc nền" trong Cài đặt thì ẩn nút (không có gì để phát); nút này không đụng tới hiệu ứng âm thanh */}
@@ -486,12 +631,41 @@ export default function SpaceExplorer({ onClose }) {
 
       {musicMode === 'youtube' && <SpaceMusic volume={volume} enabled={settings.music} onFail={musicFail} />}
 
+      {sys && <AltSolar sys={sys} host={spaceEl} />}
+
+      {travel && (
+        <WarpTravel
+          to={travel.name}
+          color={travel.color}
+          onSwap={() => arrive(travel.id)}
+          onDone={() => {
+            setTravel(null)
+            setMode('hint')
+          }}
+        />
+      )}
+
+      {flying && sys && <FreeFlight placeId={place} placeName={placeInfo.name} color={placeInfo.color} panda={<FrontPanda pose="teach" look={LOOKS[outfit.id]} />} onExit={endFlight} />}
+
+      {picking && (
+        <PlacePicker
+          current={pending || place}
+          shop={shop}
+          notice={notice}
+          onChoose={choose}
+          onClose={() => {
+            setPicking(false)
+            setNotice('')
+          }}
+        />
+      )}
+
       {/* Soi một hành tinh: phủ tối mọi thứ (z 100), chỉ gấu và chân dung hành tinh nổi lên trên (z 101) */}
       {b && (
         <>
           <div className="explorer-dim" onClick={() => performance.now() - openedAt.current > 500 && setPicked(null)} aria-hidden="true" />
-          <figure className={`explorer-focus is-${picked}`} key={picked}>
-            <PlanetPortrait body={picked} />
+          <figure className={`explorer-focus is-${picked}`} key={picked} style={b.look ? { '--glow': glowOf(b.look) } : undefined}>
+            <PlanetPortrait body={picked} look={b.look} />
             <figcaption>
               <strong>{b.name}</strong>
               <span>{b.tag}</span>
@@ -507,7 +681,11 @@ export default function SpaceExplorer({ onClose }) {
               ×
             </button>
             <div className="explorer-bubble-body" ref={bubbleRef}>
-              {mode === 'hint' && <p>Chào bạn! Bấm vào mình để nghe chuyện về hệ Mặt Trời, hoặc bấm vào một hành tinh để mình giải thích nhé!</p>}
+              {mode === 'hint' && (
+                <p>{sys ? sys.greeting : 'Chào bạn! Bấm vào mình để nghe chuyện về hệ Mặt Trời, bấm một hành tinh để mình giải thích, hoặc bấm "Địa điểm" để du hành tới hệ sao khác nhé!'}</p>
+              )}
+
+              {mode === 'say' && <p>{sayText}</p>}
 
               {mode === 'fact' && fact && (
                 <>
@@ -524,7 +702,7 @@ export default function SpaceExplorer({ onClose }) {
                 <>
                   <h3>Mục lục ({total} câu)</h3>
                   <ol className="explorer-menu">
-                    {SPACE_FACTS.map(([title], i) => (
+                    {facts.map(([title], i) => (
                       <li key={title}>
                         <button type="button" className={i === factIdx ? 'is-current' : ''} onClick={() => showFact(i)}>
                           <span className="explorer-num">{i + 1}.</span> <FormulaText text={title} />
@@ -538,11 +716,14 @@ export default function SpaceExplorer({ onClose }) {
               {mode === 'body' && b && (
                 <>
                   <h3>{b.name}</h3>
-                  <p className="explorer-g">
-                    g ≈ {fmt(b.g)} m/s²
-                    {picked !== 'earth' && <span className="muted"> ({fmt(b.g / G_EARTH)} lần Trái Đất)</span>}
-                  </p>
-                  {picked !== 'earth' && picked !== 'sun' && (
+                  {/* Hệ khác: g chỉ có khi biết cả khối lượng lẫn bán kính (sao / hành tinh chưa đo đủ thì bỏ qua) */}
+                  {b.g != null && (
+                    <p className="explorer-g">
+                      g ≈ {fmt(b.g)} m/s²
+                      {picked !== 'earth' && <span className="muted"> ({fmt(b.g / G_EARTH)} lần Trái Đất)</span>}
+                    </p>
+                  )}
+                  {b.g != null && picked !== 'earth' && picked !== 'sun' && (
                     <p>
                       Bạn nặng 50 kg ở Trái Đất thì ở đây cảm giác nặng như <b>{fmt((50 * b.g) / G_EARTH)} kg</b>.
                     </p>
@@ -579,7 +760,7 @@ export default function SpaceExplorer({ onClose }) {
                 </>
               ) : mode === 'body' && b?.related ? (
                 <button type="button" onClick={() => setPicked(b.related)}>
-                  Xem {BODIES[b.related].name} ›
+                  Xem {bodies[b.related].name} ›
                 </button>
               ) : (
                 <span className="explorer-bubble-count">{mode === 'body' ? 'Bấm vùng tối để xem hành tinh khác' : 'Bấm gấu để nghe một câu'}</span>
@@ -606,4 +787,11 @@ export default function SpaceExplorer({ onClose }) {
     </div>,
     document.body
   )
+}
+
+// Màu quầng sáng sau chân dung (thiên thể hệ khác): lấy màu giữa của look, độ mờ như các hành tinh Hệ Mặt Trời
+function glowOf(look) {
+  const h = look.c[1].replace('#', '')
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16))
+  return `rgba(${r}, ${g}, ${b}, ${look.type === 'star' ? 0.5 : 0.35})`
 }

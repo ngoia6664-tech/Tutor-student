@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
@@ -29,6 +29,9 @@ import { askConfirm } from '../lib/dialog.js'
 import { PandaShopProvider } from '../contexts/PandaShopContext.jsx'
 import PandaDock from './PandaDock.jsx'
 import StreakFlame from './StreakFlame.jsx'
+
+// Tham số URL của Kính thiên văn (địa điểm đang xem)
+const PLACE_PARAM = 'vu-tru'
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -85,6 +88,36 @@ export default function Layout() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const studying = useStudying()
   const showMascot = useSettings().mascot
+  // Kính thiên văn ghi địa điểm đang xem lên URL (?vu-tru=<id>): tải lại trang thì mở lại đúng chỗ.
+  // Địa điểm trong URL chỉ là lời xin — SpaceExplorer vẫn kiểm placeAccess (lib/telescope.js) trước khi cho vào.
+  const [params, setParams] = useSearchParams()
+  const askedPlace = params.get(PLACE_PARAM)
+  const setPlaceParam = useCallback(
+    (id) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (id) next.set(PLACE_PARAM, id)
+          else next.delete(PLACE_PARAM)
+          return next
+        },
+        { replace: true }
+      ),
+    [setParams]
+  )
+  useEffect(() => {
+    if (!askedPlace || exploring) return
+    if (studying) {
+      setPlaceParam(null)
+      mascotSay(TELESCOPE_LOCKED)
+    } else setExploring(true)
+    // Chỉ chạy khi tham số URL đổi (mở link / tải lại trang); không theo exploring để lúc đóng không tự mở lại
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [askedPlace])
+  const closeExplorer = useCallback(() => {
+    setExploring(false)
+    setPlaceParam(null)
+  }, [setPlaceParam])
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
     onScroll()
@@ -176,7 +209,7 @@ export default function Layout() {
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (
         <Suspense fallback={null}>
-          <SpaceExplorer onClose={() => setExploring(false)} />
+          <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />
         </Suspense>
       )}
       {settingsOpen && (

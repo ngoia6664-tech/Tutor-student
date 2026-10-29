@@ -1254,7 +1254,7 @@ create table if not exists public.economy_wallets (
 
 -- Sổ cái. resource: coin | star | shield. amount âm = tiêu (Sao không bao giờ âm).
 -- source: starting (Xu khởi đầu), daily, official_score, progress_milestone, streak_milestone,
---         outfit_purchase, shield_purchase, shield_use, tutor_reward (sau này)
+--         outfit_purchase, shield_purchase, shield_use, flight_coin (Xu nhặt khi Bay tự do), tutor_reward (sau này)
 -- reward_key ví dụ: daily:<hs>:<ngày> · score:<hs>:<bài>:<lần nộp>:<mốc điểm>:coin · ms:streak:<hs>:30:star
 --                   outfit:<hs>:<bộ> · shield_buy:<hs>:<mã yêu cầu>:coin · shield_use:<hs>:<ngày>
 create table if not exists public.economy_ledger (
@@ -2123,6 +2123,97 @@ begin
 end;
 $$;
 
+-- ---------- Xu nhặt khi Bay tự do (Kính thiên văn) ----------
+-- Mỗi hệ sao rải (ngưỡng Sao × 5) đồng Xu, mỗi đồng 1 Xu, nhặt được MỘT lần trọn đời (reward_key theo từng đồng).
+-- Đồng đã nhặt không hiện lại; đồng chưa nhặt còn đó cho lần bay sau. Ngưỡng Sao khớp PLACES trong src/lib/telescope.js:
+-- đổi ngưỡng ở đó thì đổi ở đây. Máy chủ kiểm: là học sinh, đủ Sao mở hệ đó, số thứ tự đồng hợp lệ.
+-- (Máy chủ không kiểm được đường bay của tàu: tối đa mỗi học sinh nhận đủ số Xu của các hệ đã mở, một lần.)
+create or replace function public.flight_place(p_place text)
+returns jsonb
+language sql
+immutable
+as $$
+  select case p_place
+    when 'alpha-centauri' then '{"stars": 5, "coins": 25}'::jsonb
+    when 'trappist-1'     then '{"stars": 12, "coins": 60}'::jsonb
+    when 'kepler-90'      then '{"stars": 20, "coins": 100}'::jsonb
+  end
+$$;
+
+-- Các đồng đã nhặt ở một hệ. Gia sư không có ví → total 0 (không hiện Xu).
+create or replace function public.get_flight_coins(p_place text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_cfg jsonb := flight_place(p_place);
+  v_pre text;
+begin
+  if v_uid is null then
+    raise exception 'Bạn cần đăng nhập';
+  end if;
+  if v_cfg is null then
+    raise exception 'Không có địa điểm bay này';
+  end if;
+  if public.is_tutor() then
+    return jsonb_build_object('total', 0, 'collected', '[]'::jsonb);
+  end if;
+  v_uid := econ_student();
+  v_pre := 'flight:' || v_uid || ':' || p_place || ':';
+  return jsonb_build_object(
+    'total', (v_cfg ->> 'coins')::int,
+    'collected', (select coalesce(jsonb_agg(substr(reward_key, length(v_pre) + 1)::int order by id), '[]'::jsonb)
+                    from economy_ledger
+                   where student_id = v_uid and source = 'flight_coin' and left(reward_key, length(v_pre)) = v_pre)
+  );
+end;
+$$;
+
+-- Nhặt các đồng p_coins (số thứ tự 0..total-1) ở hệ p_place. Đồng đã nhặt → bỏ qua (không cộng lần 2).
+-- Trả { coins: số dư, added: số Xu vừa cộng }.
+create or replace function public.collect_flight_coins(p_place text, p_coins int[])
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := econ_student();
+  v_cfg jsonb := flight_place(p_place);
+  v_total int;
+  v_added int := 0;
+  v_i int;
+  w economy_wallets;
+begin
+  if v_cfg is null then
+    raise exception 'Không có địa điểm bay này';
+  end if;
+  v_total := (v_cfg ->> 'coins')::int;
+  if p_coins is null or cardinality(p_coins) = 0 or cardinality(p_coins) > v_total then
+    raise exception 'Danh sách Xu không hợp lệ';
+  end if;
+  perform econ_lock(v_uid);
+  select * into w from economy_wallets where student_id = v_uid;
+  if w.stars < (v_cfg ->> 'stars')::int then
+    raise exception 'Chưa đủ Sao để bay ở hệ này';
+  end if;
+  foreach v_i in array (select array_agg(distinct x) from unnest(p_coins) x) loop
+    if v_i is null or v_i < 0 or v_i >= v_total then
+      raise exception 'Số thứ tự Xu không hợp lệ: %', v_i;
+    end if;
+    if econ_grant(v_uid, 'coin', 1, 'flight_coin', 'flight:' || v_uid || ':' || p_place || ':' || v_i,
+                  jsonb_build_object('place', p_place, 'coin', v_i)) then
+      v_added := v_added + 1;
+    end if;
+  end loop;
+  select * into w from economy_wallets where student_id = v_uid;
+  return jsonb_build_object('coins', w.coins, 'added', v_added);
+end;
+$$;
+
 -- Hàm nội bộ: không ai gọi trực tiếp qua API (Supabase mặc định cấp EXECUTE cho anon/authenticated)
 revoke all on function public.econ_grant(uuid, text, int, text, text, jsonb) from public, anon, authenticated;
 revoke all on function public.econ_ensure_wallet(uuid) from public, anon, authenticated;
@@ -2148,6 +2239,8 @@ revoke all on function public.answer_daily_review(uuid, jsonb) from public, anon
 revoke all on function public.buy_streak_shield(uuid) from public, anon;
 revoke all on function public.buy_outfit(text) from public, anon;
 revoke all on function public.equip_outfit(text) from public, anon;
+revoke all on function public.get_flight_coins(text) from public, anon;
+revoke all on function public.collect_flight_coins(text, int[]) from public, anon;
 grant execute on function public.get_economy() to authenticated;
 grant execute on function public.mark_rewards_seen(bigint) to authenticated;
 grant execute on function public.get_daily_review() to authenticated;
@@ -2155,6 +2248,8 @@ grant execute on function public.answer_daily_review(uuid, jsonb) to authenticat
 grant execute on function public.buy_streak_shield(uuid) to authenticated;
 grant execute on function public.buy_outfit(text) to authenticated;
 grant execute on function public.equip_outfit(text) to authenticated;
+grant execute on function public.get_flight_coins(text) to authenticated;
+grant execute on function public.collect_flight_coins(text, int[]) to authenticated;
 
 -- Dữ liệu cũ (chỉ phần kiểm chứng được, chạy lại không cộng trùng):
 --   mọi học sinh có ví + Xu khởi đầu; thưởng điểm cao + mốc số bài theo lần nộp chính thức hiện tại của từng bài.

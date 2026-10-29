@@ -333,10 +333,92 @@ function Moon({ u }) {
   )
 }
 
+// Thiên thể ngoài Hệ Mặt Trời (Kính thiên văn, lib/starSystems.js): vẽ chung theo look = { type, c: [sáng, giữa, tối] }
+// type: 'star' (sao, có quầng) | 'rock' (hành tinh đá) | 'mini' (tiểu Hải Vương, mây mờ) | 'gas' (khí khổng lồ, có dải)
+function Star({ u, c }) {
+  return (
+    <>
+      <defs>
+        <radialGradient id={`${u}corona`}>
+          <stop offset="0.55" stopColor={c[0]} stopOpacity="0.55" />
+          <stop offset="0.75" stopColor={c[1]} stopOpacity="0.18" />
+          <stop offset="1" stopColor={c[2]} stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${u}disc`} cx="45%" cy="45%" r="60%">
+          <stop offset="0" stopColor="#fffbea" />
+          <stop offset="0.45" stopColor={c[0]} />
+          <stop offset="0.8" stopColor={c[1]} />
+          <stop offset="1" stopColor={c[2]} />
+        </radialGradient>
+      </defs>
+      <circle className="pf-corona" r="118" fill={`url(#${u}corona)`} />
+      <circle r={R} fill={`url(#${u}disc)`} />
+      <g clipPath={`url(#${u}clip)`}>
+        <Spin speed={90}>
+          <ellipse cx="-22" cy="14" rx="5" ry="3.5" fill={c[2]} opacity="0.55" />
+          <ellipse cx="30" cy="-20" rx="3.5" ry="2.6" fill={c[2]} opacity="0.5" />
+          <ellipse cx="-50" cy="-24" rx="2.2" ry="1.6" fill={c[2]} opacity="0.45" />
+        </Spin>
+      </g>
+      <circle r={R - 1} fill="none" stroke={c[2]} strokeOpacity="0.35" strokeWidth="3" />
+    </>
+  )
+}
+
+function Rock({ u, c }) {
+  return (
+    <>
+      <defs>
+        <radialGradient id={`${u}base`} cx="42%" cy="40%">
+          <stop offset="0" stopColor={c[0]} />
+          <stop offset="1" stopColor={c[1]} />
+        </radialGradient>
+      </defs>
+      <circle r={R} fill={`url(#${u}base)`} />
+      <g clipPath={`url(#${u}clip)`}>
+        <Spin speed={70}>
+          <path d="M-62 -10 Q-40 -22 -18 -12 Q0 0 24 -8 Q44 -16 64 -4 Q60 12 40 10 Q18 18 -4 12 Q-30 6 -60 10Z" fill={c[2]} opacity="0.45" />
+          <circle cx="-44" cy="-34" r="6" fill={c[2]} opacity="0.5" />
+          <circle cx="30" cy="30" r="8" fill={c[2]} opacity="0.4" />
+          <circle cx="8" cy="-40" r="3" fill={c[2]} opacity="0.5" />
+          <path d="M10 34 Q30 28 50 36 Q36 46 16 42Z" fill={c[2]} opacity="0.35" />
+        </Spin>
+      </g>
+    </>
+  )
+}
+
+function Banded({ u, c, soft }) {
+  const bands = [-70, -52, -38, -22, -8, 8, 24, 38, 52]
+  return (
+    <g clipPath={`url(#${u}clip)`}>
+      <circle r={R} fill={c[1]} />
+      {bands.map((y, i) => (
+        <rect key={y} x={-R} y={y} width={2 * R} height={i % 2 ? 12 : 16} fill={c[i % 3]} opacity={soft ? 0.35 : 0.85} />
+      ))}
+      <Spin speed={soft ? 50 : 35}>
+        <g fill="none" strokeLinecap="round" opacity={soft ? 0.35 : 0.7}>
+          <path d="M-70 -20 Q-52 -26 -34 -20 T2 -20 T38 -20 T70 -20" stroke={c[2]} strokeWidth="2.5" />
+          <path d="M-70 14 Q-54 8 -36 14 T0 14 T36 14 T70 14" stroke={c[2]} strokeWidth="2.5" />
+          <path d="M-40 0 q8 -6 16 0" stroke="#fff" strokeWidth="2" />
+        </g>
+      </Spin>
+    </g>
+  )
+}
+
+const ALT = {
+  star: Star,
+  rock: Rock,
+  mini: (p) => <Banded {...p} soft />,
+  gas: Banded,
+}
+
 const ART = { sun: Sun, mercury: Mercury, venus: Venus, earth: Earth, moon: Moon, mars: Mars, jupiter: Jupiter, saturn: Saturn }
 
-export default function PlanetPortrait({ body }) {
+export default function PlanetPortrait({ body, look }) {
   const u = useId().replace(/:/g, '')
+  if (look) return <AltPortrait u={u} body={body} look={look} />
   const Art = ART[body]
   if (!Art) return null
   return (
@@ -366,6 +448,21 @@ export default function PlanetPortrait({ body }) {
           <circle cx="-94" cy="-78" r="13" fill={`url(#${u}shade)`} />
         </g>
       )}
+    </svg>
+  )
+}
+
+function AltPortrait({ u, body, look }) {
+  const Art = ALT[look.type] || Rock
+  return (
+    <svg className={`pf pf-${body}`} viewBox="-120 -120 240 240" aria-hidden="true">
+      <defs>
+        <clipPath id={`${u}clip`}>
+          <circle r={R} />
+        </clipPath>
+      </defs>
+      <Art u={u} c={look.c} />
+      {look.type !== 'star' && <Shade id={`${u}shade`} />}
     </svg>
   )
 }

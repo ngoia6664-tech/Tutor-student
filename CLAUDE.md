@@ -27,6 +27,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   Xu/Sao/🔥 `CoinStarBadge`, nút góc `PandaDock`; dữ liệu qua adapter `lib/pandaShop.js` → RPC Supabase (mục "Kinh tế" trong schema.sql). Chi tiết: FEATURES.md.
 - Kinh tế Xu/Sao/Chuỗi + Ôn tập mỗi ngày (`components/StreakFlame.jsx` nổi góc trên bên phải → bảng nổi `DailyReview.jsx`, `lib/dailyReview.js`): sổ cái `economy_ledger` (reward_key duy nhất), cấu hình `econ_cfg()`. Chi tiết: FEATURES.md mục "Kinh tế".
   Âm thanh hoạt cảnh: kế hoạch chuyển sang file mp3 ở **`AI/CLAUDE/SFX_PLAN.md`**.
+- Kính thiên văn nhiều địa điểm: cấu hình + luật mở khóa `lib/telescope.js` (ngưỡng Sao, `ready`), nội dung `lib/starSystems.js`, UI `components/telescope/*` trong `SpaceExplorer`. Chi tiết: FEATURES.md.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
 ## Quy ước

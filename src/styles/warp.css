@@ -1,0 +1,317 @@
+/* ===== Du hành giữa các địa điểm Kính thiên văn (components/telescope/WarpTravel.jsx) =====
+   Tổng 4,8 s (--warp-dur = TRAVEL_MS trong WarpTravel.jsx), khớp tiếng public/audio/sfx/ship-launch.mp3. Mốc:
+   0–20,8 %     (0–1 s)      tàu hiện cạnh gấu, cửa mở, gấu chui vào, cửa đóng
+   20,8–37,5 %  (1–1,8 s)    động cơ khởi động: lửa nhỏ phụt, tàu rung tại chỗ
+   37,5–48,4 %  (1,8–2,3 s)  tàu cất cánh, bay ra giữa màn hình, phóng to; trời du hành hiện dần
+   48,4–79,7 %  (2,3–3,8 s)  du hành: vệt sao kéo dài (60,9 % = 2,925 s đổi địa điểm phía sau)
+   79,7–90,6 %  (3,8–4,35 s) tàu bay về góc, đáp xuống (nhún nhẹ)
+   90,6–100 %   (4,35–4,8 s) cửa mở, gấu bước ra, tàu mờ đi
+   Chỉ transform / opacity cho mượt; không filter, không backdrop-filter. */
+.warp {
+  --warp-dur: 4.8s;
+  --warp-c: #a855f7;
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.warp-sky {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--warp-c) 45%, #05030c) 0%, #0b0618 35%, #05030c 75%);
+  opacity: 0;
+  animation: warp-sky var(--warp-dur) ease both;
+}
+.warp-streak {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--a));
+}
+.warp-streak i {
+  position: absolute;
+  top: calc(var(--w) / -2);
+  left: 0;
+  width: 45vmax;
+  height: var(--w);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--warp-c) 40%, #fff) 70%, #fff);
+  transform-origin: left center;
+  opacity: 0;
+  animation: warp-line var(--t) linear var(--d) infinite;
+}
+.warp-to {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12vh;
+  margin: 0;
+  color: #f3eaff;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  animation: warp-to var(--warp-dur) ease both;
+}
+.warp-to b {
+  color: color-mix(in srgb, var(--warp-c) 55%, #fff);
+}
+
+/* Tàu: đặt ngay bên phải gấu ở góc trái dưới (nút gấu 84 px tại left/bottom 0,6rem) */
+.warp-ship {
+  --dx: calc(50vw - 132px);
+  --dy: calc(60px - 50vh);
+  position: absolute;
+  left: 96px;
+  bottom: 10px;
+  width: 72px;
+  height: 99px;
+  opacity: 0;
+  animation: warp-ship var(--warp-dur) cubic-bezier(0.45, 0, 0.3, 1) both;
+}
+.warp-ship-shake {
+  width: 100%;
+  height: 100%;
+  animation: warp-shake 0.12s linear infinite;
+}
+.warp-ship-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.warp-door {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: warp-door var(--warp-dur) ease both;
+}
+.warp-face {
+  opacity: 0;
+  animation: warp-face var(--warp-dur) linear both;
+}
+.warp-fire {
+  transform-box: fill-box;
+  transform-origin: center top;
+  opacity: 0;
+  animation:
+    warp-fire var(--warp-dur) linear both,
+    warp-flicker 0.1s linear infinite alternate;
+}
+
+/* Gấu ở góc chui vào cửa tàu rồi bước ra lại (đồng bộ với tàu) */
+.explorer-ui.is-travel .explorer-panda {
+  z-index: 125;
+}
+.explorer-ui.is-travel .explorer-bubble {
+  visibility: hidden;
+}
+.explorer-ui.is-travel .explorer-panda-btn {
+  pointer-events: none;
+  animation: warp-panda var(--warp-dur, 4.8s) ease both;
+}
+
+@keyframes warp-sky {
+  0%,
+  39% {
+    opacity: 0;
+  }
+  47%,
+  79.7% {
+    opacity: 1;
+  }
+  87.5%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes warp-line {
+  0% {
+    opacity: 0;
+    transform: translateX(1vmax) scaleX(0.04);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(65vmax) scaleX(1);
+  }
+}
+@keyframes warp-to {
+  0%,
+  48.4% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  54.7%,
+  75% {
+    opacity: 1;
+    transform: none;
+  }
+  81.3%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes warp-ship {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  6.3%,
+  20.8% {
+    opacity: 1;
+    transform: none;
+  }
+  /* động cơ khởi động: nhấc nhẹ, rung mạnh dần rồi hạ xuống chờ phóng */
+  25% {
+    transform: translateY(-2px);
+  }
+  29% {
+    transform: translateY(0);
+  }
+  33% {
+    transform: translateY(-3px);
+  }
+  37.5% {
+    transform: translateY(1px) scale(1.02, 0.97);
+  }
+  40.6% {
+    transform: translateY(-14px);
+  }
+  48.4%,
+  79.7% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) scale(2.4);
+  }
+  87.5% {
+    transform: translateY(-26px) scale(1.08);
+  }
+  90.6% {
+    transform: none;
+  }
+  92.2% {
+    transform: scale(1.06, 0.9);
+  }
+  94.5%,
+  96.9% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+@keyframes warp-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: 0.6px -0.5px;
+  }
+  75% {
+    translate: -0.6px 0.5px;
+  }
+}
+@keyframes warp-door {
+  0% {
+    transform: scaleX(1);
+  }
+  5.2%,
+  16.7% {
+    transform: scaleX(0.12);
+  }
+  20.8%,
+  90.6% {
+    transform: scaleX(1);
+  }
+  93.8%,
+  100% {
+    transform: scaleX(0.12);
+  }
+}
+@keyframes warp-face {
+  0%,
+  18.8% {
+    opacity: 0;
+  }
+  21.9%,
+  92.2% {
+    opacity: 1;
+  }
+  94.5%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes warp-fire {
+  0%,
+  22.9% {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+  /* khởi động: lửa nhỏ phụt từng đợt, lớn dần tới lúc phóng */
+  26% {
+    opacity: 0.8;
+    transform: scaleY(0.35);
+  }
+  29% {
+    opacity: 0.3;
+    transform: scaleY(0.25);
+  }
+  33% {
+    opacity: 0.9;
+    transform: scaleY(0.5);
+  }
+  37.5% {
+    opacity: 1;
+    transform: scaleY(0.6);
+  }
+  41.4%,
+  84.4% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  89.1% {
+    opacity: 0.8;
+    transform: scaleY(0.5);
+  }
+  91.4%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+}
+@keyframes warp-flicker {
+  to {
+    scale: 1 1.15;
+  }
+}
+@keyframes warp-panda {
+  0%,
+  4.2% {
+    opacity: 1;
+    transform: none;
+  }
+  10.4% {
+    transform: translate(30px, -16px) scale(0.8);
+  }
+  16.7%,
+  92.2% {
+    opacity: 0;
+    transform: translate(80px, 0) scale(0.12);
+  }
+  96.9% {
+    opacity: 1;
+    transform: translate(-6px, -10px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}

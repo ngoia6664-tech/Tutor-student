@@ -84,6 +84,15 @@ export async function buyStreakShield(requestId) {
   return unwrap(await supabase.rpc('buy_streak_shield', { p_request_id: requestId }))
 }
 
+// Xu nhặt khi Bay tự do (Kính thiên văn): { total, collected: [số thứ tự đã nhặt] }. Gia sư: total 0.
+export async function fetchFlightCoins(place) {
+  return unwrap(await supabase.rpc('get_flight_coins', { p_place: place }))
+}
+// Máy chủ cộng 1 Xu cho mỗi đồng chưa từng nhặt (đồng đã nhặt bỏ qua). Trả { coins: số dư, added }.
+export async function collectFlightCoins(place, coins) {
+  return unwrap(await supabase.rpc('collect_flight_coins', { p_place: place, p_coins: coins }))
+}
+
 export async function markRewardsSeen(upto) {
   unwrap(await supabase.rpc('mark_rewards_seen', { p_upto: upto }))
 }
@@ -96,6 +105,7 @@ const SOURCE_LABEL = {
   progress_milestone: 'mốc số bài',
   streak_milestone: 'mốc chuỗi',
   tutor_reward: 'quà gia sư',
+  flight_coin: 'nhặt khi bay ngoài vũ trụ',
 }
 
 export function rewardMessage(list) {

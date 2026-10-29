@@ -64,6 +64,7 @@ export default function SettingsPanel({ onClose }) {
           <Toggle label="Linh vật Panda" desc="Giáo sư Gấu Trúc ở góc màn hình" on={s.mascot} set={(v) => updateSettings({ mascot: v })} />
           <Toggle label="Animation của Panda" desc="Đi dạo, leo tre, lăn tròn" on={s.mascotAnimation} disabled={!s.mascot} set={(v) => updateSettings({ mascotAnimation: v })} />
           <Toggle label="Hiệu ứng ăn mừng" desc="Pháo giấy khi nộp bài, ôn đúng" on={s.celebration} set={(v) => updateSettings({ celebration: v })} />
+          <Toggle label="Hiệu ứng du hành" desc="Gấu lên tàu vũ trụ khi đổi địa điểm Kính thiên văn" on={s.travelAnimation} set={(v) => updateSettings({ travelAnimation: v })} />
         </section>
 
         <section className="settings-section">

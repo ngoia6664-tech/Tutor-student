@@ -1,0 +1,395 @@
+/* ===== Kính thiên văn nhiều địa điểm (components/telescope/*, lib/telescope.js) =====
+   Bảng chọn điểm đến .tpick (trong .explorer-ui) + sao / vệ tinh của hệ khác (AltSolar trong .space). */
+
+/* Ở hệ sao khác: ẩn hệ Mặt Trời của nền (hệ khác vẽ bằng .solar.solar-alt), vẫn giữ các lớp sao trôi phía sau */
+html.telescope-away .solar:not(.solar-alt) {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none !important;
+}
+
+/* Nút mở bảng chọn (dưới tiêu đề) */
+/* Nút "Bay tự do" (FreeFlight) cạnh nút Địa điểm */
+.tpick-open.flight-open {
+  margin-left: 0.4rem;
+  border-color: color-mix(in srgb, #a855f7 55%, var(--border-strong));
+}
+.tpick-open.flight-open:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tpick-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-solid);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+.tpick-open:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.tpick-open-count {
+  min-width: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ---------- Bảng chọn điểm đến ---------- */
+.tpick {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 4, 22, 0.78);
+  animation: tpick-in 0.25s ease both;
+}
+.tpick-box {
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  max-height: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.tpick-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem 0.4rem;
+}
+.tpick-head h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.tpick-sub {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.tpick-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  padding: 0 1rem 0.6rem;
+  font-size: 0.9rem;
+}
+.tpick-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+.tpick-stars b {
+  color: var(--shop-gold, #fbbf24);
+  font-size: 1.1rem;
+}
+.tpick-stars.is-wait,
+.tpick-count {
+  color: var(--muted);
+}
+.tpick-stars.is-error {
+  color: var(--danger);
+}
+.tpick-notice {
+  margin: 0 1rem 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--text);
+  font-size: 0.88rem;
+  animation: tpick-in 0.25s ease both;
+}
+.tpick-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.2rem 1rem 1rem;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tpick-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.7rem 0.8rem 0.7rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--grad-soft, transparent);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+.tpick-card.is-open:hover,
+.tpick-card.is-open:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  transform: translateY(-2px);
+}
+.tpick-card.is-open:active {
+  transform: scale(0.98);
+}
+.tpick-card.is-current {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.tpick-card[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+.tpick-card[aria-disabled='true'] .tpick-emblem svg {
+  opacity: 0.42;
+}
+.tpick-card.is-soon {
+  border-style: dashed;
+  background: transparent;
+}
+.tpick-card.is-shake {
+  animation: tpick-shake 0.4s ease;
+}
+.tpick-step {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.45rem;
+  min-width: 1.15rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--surface-solid);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+.tpick-emblem {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1e1240 0%, #0b0618 75%);
+}
+.tpick-emblem svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tpick-lock {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--muted);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.tpick-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.tpick-text strong {
+  font-size: 1rem;
+}
+.tpick-dist {
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.tpick-teaser {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.tpick-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.tpick-state.is-open {
+  color: var(--ok);
+}
+.tpick-state.is-locked {
+  color: var(--warn);
+}
+.tpick-state.is-soon,
+.tpick-state.is-wait {
+  color: var(--muted);
+}
+.tpick-plan {
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+/* Thanh tiến độ Sao tới mốc (--p = phần trăm) */
+.tpick-bar {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--shop-gold, #fbbf24) var(--p), var(--border) var(--p));
+}
+
+@keyframes tpick-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tpick-shake {
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* ---------- Hệ sao khác: dựng y hệt Hệ Mặt Trời (components/telescope/AltSolar.jsx, class .solar-*) ---------- */
+/* Sao của hệ khác: cùng kiểu quầng sáng như .solar-sun nhưng cỡ + màu theo từng sao (--s, --c0..2) */
+.solar-sun.tele-star {
+  left: calc(var(--s) / -2);
+  top: calc(var(--s) / -2);
+  width: var(--s);
+  height: var(--s);
+  background: radial-gradient(
+    circle,
+    #fffbea 0,
+    var(--c0) 14%,
+    color-mix(in srgb, var(--c1) 60%, transparent) 28%,
+    color-mix(in srgb, var(--c2) 20%, transparent) 46%,
+    transparent 70%
+  );
+}
+/* Vệ tinh / hành tinh quay quanh một ngôi sao trên quỹ đạo (Proxima b): bán kính --r, cỡ --m, chu kỳ --mp */
+.solar-moon.tele-moon {
+  width: var(--m);
+  height: var(--m);
+  margin: calc(var(--m) / -2);
+  animation: tele-moon var(--mp) linear infinite;
+}
+.space-exploring .tele-moon {
+  pointer-events: auto;
+}
+.space-exploring .tele-moon::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
+@keyframes tele-moon {
+  from {
+    transform: rotate(0) translateX(var(--r));
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--r));
+  }
+}
+
+@media (max-width: 640px) {
+  .tpick {
+    align-items: stretch;
+    padding: 0.5rem;
+  }
+  .tpick-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tpick-emblem {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpick,
+  .tpick-card {
+    animation: none !important;
+    transition: none !important;
+  }
+  .tele-moon {
+    animation: none !important;
+  }
+  /* Quỹ đạo đứng yên: vẫn đặt thiên thể ở góc xuất phát (sao đôi A, B ở hai phía, hành tinh không xếp một hàng) */
+  .solar-alt .solar-orbit {
+    transform: rotate(calc(var(--phase) * 360deg));
+  }
+  .solar-alt .solar-carrier {
+    transform: rotate(calc(var(--phase) * -360deg));
+  }
+}
+
+/* ---------- Nền vũ trụ riêng từng địa điểm (SpaceExplorer gắn html[data-place] khi đang ngắm) ----------
+   Thay quầng sáng tím – hồng mặc định của .space (styles/space.css) bằng tinh vân + màu sao riêng. Chỉ gradient, không filter. */
+/* Alpha Centauri: trời phương Nam — dải Ngân Hà vắt chéo, ánh vàng cam của hai mặt trời A, B */
+html.space-exploring[data-place='alpha-centauri'] {
+  --star: #fff3d6;
+}
+html.space-exploring[data-place='alpha-centauri'] .space {
+  background-image:
+    radial-gradient(40vw 34vh at 50% 52%, rgba(253, 224, 138, 0.16), transparent 70%),
+    linear-gradient(125deg, transparent 28%, rgba(196, 181, 253, 0.07) 40%, rgba(253, 230, 138, 0.1) 48%, rgba(196, 181, 253, 0.07) 56%, transparent 68%),
+    radial-gradient(55vw 45vh at 92% 8%, rgba(251, 146, 60, 0.2), transparent 70%),
+    radial-gradient(50vw 45vh at 4% 96%, rgba(124, 58, 237, 0.22), transparent 70%);
+}
+/* TRAPPIST-1: sao lùn đỏ — cả bầu trời nhuốm đỏ thẫm, khói bụi đỏ tía, sao ửng hồng */
+html.space-exploring[data-place='trappist-1'] {
+  --star: #ffd5cc;
+  --star-far: 0.3;
+}
+html.space-exploring[data-place='trappist-1'] .space {
+  background-image:
+    radial-gradient(70vw 60vh at 50% 52%, rgba(220, 38, 38, 0.2), transparent 70%),
+    radial-gradient(55vw 42vh at 100% 0%, rgba(190, 24, 93, 0.24), transparent 70%),
+    radial-gradient(60vw 50vh at 0% 100%, rgba(127, 29, 29, 0.38), transparent 72%),
+    radial-gradient(30vw 22vh at 18% 18%, rgba(251, 113, 133, 0.1), transparent 70%);
+}
+/* Kepler-90: rất xa (≈ 2 500 năm ánh sáng) — trời lạnh xanh lam – ngọc, một thiên hà mờ xa xa ở góc */
+html.space-exploring[data-place='kepler-90'] {
+  --star: #d9f6ff;
+}
+html.space-exploring[data-place='kepler-90'] .space {
+  background-image:
+    radial-gradient(14vw 4.5vw at 80% 22%, rgba(186, 230, 253, 0.2), transparent 70%),
+    radial-gradient(5vw 1.8vw at 80% 22%, rgba(240, 249, 255, 0.28), transparent 70%),
+    radial-gradient(60vw 50vh at 100% 100%, rgba(20, 184, 166, 0.22), transparent 70%),
+    radial-gradient(60vw 52vh at 0% 6%, rgba(37, 99, 235, 0.26), transparent 70%);
+}

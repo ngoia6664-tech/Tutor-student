@@ -108,6 +108,38 @@ export function playWhoosh() {
   src.start(t)
 }
 
+// Tiếng tàu du hành (file có sẵn, 4,8 s): 0–1,8 s động cơ khởi động, sau đó tàu phóng đi, nhỏ dần cuối file.
+// Khớp mốc với WarpTravel.jsx / warp.css. Tải một lần lúc mở Kính thiên văn, giữ lại để phát ngay đúng mốc.
+const SHIP_URL = '/audio/sfx/ship-launch.mp3'
+let shipBuf = null
+let shipLoading = null
+export function preloadShipLaunch() {
+  if (shipBuf || shipLoading || !audio()) return
+  shipLoading = fetch(SHIP_URL)
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+    .then((data) => new Promise((ok, fail) => ctx.decodeAudioData(data, ok, fail)))
+    .then((buf) => (shipBuf = buf))
+    .catch(() => (shipLoading = null)) // thiếu file / lỗi mạng: im lặng, lần sau thử lại
+}
+// Trả về hàm dừng (huỷ chuyến bay giữa chừng). Chưa tải xong thì bỏ qua, không phát lệch mốc.
+export function playShipLaunch() {
+  if (!fx() || !audio()) return () => {}
+  if (!shipBuf) {
+    preloadShipLaunch()
+    return () => {}
+  }
+  const src = ctx.createBufferSource()
+  src.buffer = shipBuf
+  const g = ctx.createGain()
+  g.gain.value = 1.6
+  src.connect(g).connect(master)
+  src.start()
+  return () => {
+    g.gain.setTargetAtTime(0, ctx.currentTime, 0.05)
+    src.stop(ctx.currentTime + 0.3)
+  }
+}
+
 // Nền vũ trụ: hai nốt trầm lệch nhau (quãng 5) qua bộ lọc thở chậm + tiếng lấp lánh rải rác thang ngũ cung
 export function startAmbient() {
   if (!musicOn() || ambient || !audio()) return

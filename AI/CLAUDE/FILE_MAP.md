@@ -10,14 +10,14 @@
 - `src/` — mã ứng dụng (danh sách dưới)
 
 ## `src/pages/`
-- `ConfigError.jsx` — Hiện khi thiếu biến môi trường Supabase (thay vì trang tr�
+- `ConfigError.jsx` — Hiện khi thiếu biến môi trường Supabase (thay vì trang tr�
 - `Login.jsx` — Đã đăng nhập: chuyển thẳng tới trang theo vai trò
 - `NotFound.jsx` — Trang 404 (đường dẫn không tồn tại)
 - `registry.js` — Mỗi trang là một file JS riêng, chỉ tải khi cần (mở app
 
 ## `src/pages/tutor/`
 - `AssignmentEditor.jsx` — Dạng dữ liệu trong form (dễ sửa hơn dạng lưu trong CSDL)
-- `AssignmentTracking.jsx` — Bảng theo dõi một bài tập: trạng thái từng học sinh, �
+- `AssignmentTracking.jsx` — Bảng theo dõi một bài tập: trạng thái từng học sinh, �
 - `ChapterDetail.jsx` — Nội dung một chương (cột phải của Thư viện): các bài
 - `ImportJson.jsx` — Chương liên kết lần dán trước (lưu trên máy này)
 - `LessonEditor.jsx` — Soạn / sửa bài giảng. Dùng cho /tutor/lessons/new, /tutor/less
@@ -51,20 +51,20 @@
 - `CoinStarBadge.jsx` — Xu (tiêu được: mua trang phục, thẻ bảo vệ chuỗi) + Sao
 - `DailyReview.jsx` — Ôn tập mỗi ngày (bảng nổi mở từ nút dưới ngọn lử
 - `DialogHost.jsx` — Cảnh gấu trong hộp thoại: không nằm trong gói khởi độ
-- `DialogScene.jsx` — Cảnh minh họa trong hộp thoại (components/DialogHost.jsx): g�
+- `DialogScene.jsx` — Cảnh minh họa trong hộp thoại (components/DialogHost.jsx): g�
 - `ErrorBoundary.jsx` — Bắt lỗi khi render để không bao giờ hiện trang trắng
 - `ErrorBox.jsx` — Khối báo lỗi, có nút thử lại (onRetry)
 - `ExamParts.jsx` — Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm n
-- `ExerciseBody.jsx` — Hiển thị một câu hỏi theo loại (tự luận / trắc nghi�
+- `ExerciseBody.jsx` — Hiển thị một câu hỏi theo loại (tự luận / trắc nghi�
 - `FeedbackButton.jsx` — Nút "Góp ý" nổi ở góc trái dưới (học sinh). Bấm mở b
 - `FilterTree.jsx` — Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn
 - `FormulaText.jsx` — Chữ gấu nói (Mascot, SpaceExplorer): đoạn đặt trong `...` l
 - `HardNote.jsx` — Ghi chú câu khó của học sinh (lưu qua RPC)
-- `Icon.jsx` — Bộ icon nét mảnh (SVG, theo màu chữ hiện tại nên tự h�
-- `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
+- `Icon.jsx` — Bộ icon nét mảnh (SVG, theo màu chữ hiện tại nên tự h�
+- `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
 - `InstallBanner.jsx` — Gợi ý cài app lên màn hình chính.
 - `Layout.jsx` — Khung chung: thanh trên cùng, menu, linh vật, cụm nổi, hộp thoại, ngắm vũ trụ
-- `LessonSelect.jsx` — Ô chọn bài giảng dạng cây Lớp › Môn › Chuyên đề �
+- `LessonSelect.jsx` — Ô chọn bài giảng dạng cây Lớp › Môn › Chuyên đề �
 - `LessonView.jsx` — Dấu phân trang trong Markdown (một dòng riêng). Bài nhập JSO
 - `Loading.jsx` — Trạng thái đang tải.
 - `MarkHard.jsx` — Nút đánh dấu câu khó (học sinh)
@@ -102,11 +102,17 @@
 - `SkinEffect.jsx` — Hiệu ứng riêng của từng trang phục (catalog `effect` → EF
 - `outfitLooks.jsx` — Trang phục vẽ đè lên Giáo sư Gấu Trúc (FrontPanda prop `lo
 
+## `src/components/telescope/`
+- `PlacePicker.jsx` — Bảng chọn điểm đến của Kính thiên văn (thẻ + trạng thái từ placeAccess)
+- `AltSolar.jsx` — Hệ sao khác dựng y hệt hệ Mặt Trời của nền (class .solar-*, gắn vào .space), chỉ khi đã mở khóa
+- `WarpTravel.jsx` — Chuyển địa điểm: gấu lên tàu vũ trụ, du hành vệt sao, đáp xuống mở cửa (~4,8 s kèm tiếng ship-launch.mp3, tắt trong Cài đặt)
+- `FreeFlight.jsx` — Bay tự do trong hệ sao đã mở: canvas, núm kéo nổi + thanh tốc độ, đồng hồ cung tròn, phóng to/thu nhỏ, nhặt Xu (RPC), gấu cảnh báo; vật lý ở lib/flight.js
+
 ## `src/components/shop/`
 - `OutfitCard.jsx` — Thẻ trong lưới: gấu tĩnh (không hiệu ứng chạy), khung t
 - `OutfitGrid.jsx` — Tab Cửa hàng / Tủ đồ + lọc độ hiếm (chỉ ở Cửa hà
-- `PandaShowcase.jsx` — Khung trưng bày (px thiết kế): vừa sân lớn nhất (Ngân H�
-- `StreakShield.jsx` — Chuỗi Ôn tập + mua khiên (học sinh). Máy chủ kiểm Xu / s�
+- `PandaShowcase.jsx` — Khung trưng bày (px thiết kế): vừa sân lớn nhất (Ngân H�
+- `StreakShield.jsx` — Chuỗi Ôn tập + mua khiên (học sinh). Máy chủ kiểm Xu / s�
 
 ## `src/contexts/`
 - `AuthContext.jsx` — Lưu hồ sơ lần trước trên máy: mở app hiện giao diện n
@@ -133,7 +139,7 @@
 - `outfitState.js` — Trạng thái một bộ với tài khoản hiện tại: chưa có /
 - `outfits.js` — Danh mục trang phục Panda (một nơi duy nhất). Hình vẽ từ
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
-- `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
+- `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
 - `pandaShop.js` — Xu / Sao / Chuỗi / trang phục: số thật ở Supabase (sổ cái
 - `practice.js` — Chấm ngay trên máy khi học sinh ôn lại câu sai (không lưu
 - `recipients.js` — Giao nhanh bài giảng / bài tập cho học sinh ngay từ danh sá
@@ -142,13 +148,16 @@
 - `scoreChart.js` — Dữ liệu cho biểu đồ điểm (components/ScoreChart.jsx): quy
 - `settings.js` — Cài đặt trải nghiệm (hiệu ứng, linh vật, âm thanh), lư
 - `spaceSound.js` — Âm thanh chế độ ngắm vũ trụ, tổng hợp bằng Web Audio
+- `starSystems.js` — Các hệ sao khác: quỹ đạo, thiên thể (như BODIES), chuyện gấu kể (Alpha Centauri, TRAPPIST-1, Kepler-90)
 - `studentReport.js` — Trạng thái hiển thị của một bài: chưa nộp còn hạn /
 - `students.js` — Danh sách học sinh (chỉ gia sư đọc được tất cả, nhờ
 - `studyLock.js` — "Đang làm bài": trang làm bài chưa nộp đang mở. Khi đó kh
 - `studyNow.js` — Chương "đang học" của học sinh: lưu trên máy chủ (profil
 - `submissions.js` — Lấy danh sách ảnh bài nộp trong thư mục <student_id>/<assig
 - `supabase.js` — Đọc key từ biến môi trường (file .env), không hardcode
-- `svg.js` — Hình SVG nhúng (data URI) thường tự đổi màu theo chế đ�
+- `flight.js` — Vật lý bay tự do (Kính thiên văn): khối lượng thiên thể, trọng lực, động cơ giới hạn, viền vùng bay, vị trí Xu, va chạm, dự đoán đường bay
+- `telescope.js` — Danh sách địa điểm Kính thiên văn + ngưỡng Sao + ready; luật mở khóa placeAccess
+- `svg.js` — Hình SVG nhúng (data URI) thường tự đổi màu theo chế đ�
 - `theme.js` — Giao diện hiện tại ('dark' | 'light'), lấy từ <html data-the
 - `useAsync.js` — Hook tải dữ liệu chung: luôn có loading / error / data / reloa
 
@@ -160,9 +169,12 @@
 - `components.css` — Khối nội dung
 - `content.css` — Bài giảng: dòng thông tin, tiêu đề, khung kế hoạch, mỗi
 - `dialog.css` — Hộp thoại có Gấu Trúc (components/DialogHost.jsx)
-- `economy.css` — Xu · Sao · Chuỗi 🔥: phần chuỗi trên bảng LED, ngọn l�
+- `economy.css` — Xu · Sao · Chuỗi 🔥: phần chuỗi trên bảng LED, ngọn l�
 - `exam.css` — Đề thi THPT
 - `explorer.css` — Chế độ ngắm vũ trụ (components/SpaceExplorer.jsx, chỉ tả
+- `telescope.css` — Bảng chọn điểm đến + sao / vệ tinh của hệ khác (components/telescope/*)
+- `flight.css` — Giao diện bay tự do (components/telescope/FreeFlight.jsx)
+- `warp.css` — Hiệu ứng du hành giữa các địa điểm (components/telescope/WarpTravel.jsx)
 - `feedback.css` — Góp ý (components/FeedbackButton.jsx, trang gia sư pages/tutor/Tuto
 - `grading.css` — Chấm bài (pages/tutor/AssignmentTracking.jsx)
 - `icons.css` — Icon
@@ -174,7 +186,7 @@
 - `panda-act.css` — Hoạt cảnh tương tác của trang phục (components/panda/PandaA
 - `panda-dock.css` — Cụm góc trái dưới (components/PandaDock.jsx)
 - `panda-shop.css` — Panda Fashion Shop (pages/student/StudentShop.jsx + components/shop/*,
-- `panda-skin.css` — Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tư�
+- `panda-skin.css` — Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tư�
 - `reports.css` — Báo lỗi đề (học sinh)
 - `settings.css` — Cài đặt (components/SettingsPanel.jsx, lib/settings.js)
 - `space.css` — Nền vũ trụ (components/SpaceBackdrop.jsx)

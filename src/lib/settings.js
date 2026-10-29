@@ -10,6 +10,7 @@ export const DEFAULTS = {
   mascot: true, // hiện Giáo sư Gấu Trúc
   mascotAnimation: true, // gấu đi dạo / leo / lăn + chuyển động nhẹ
   celebration: true, // pháo giấy + gấu nhảy khi nộp bài / ôn đúng
+  travelAnimation: true, // Kính thiên văn: gấu lên tàu vũ trụ bay sang địa điểm mới (~4,8 giây)
   soundEffects: true, // tiếng gấu nói, tiếng "vút", tiếng chuông trong chế độ ngắm vũ trụ
   music: true, // nhạc nền chế độ ngắm vũ trụ
   musicVolume: 60, // 0–100
@@ -18,8 +19,8 @@ export const DEFAULTS = {
 
 // Preset hiệu năng: chỉ đụng tới các cài đặt hình ảnh, không đụng âm thanh
 export const PRESETS = {
-  full: { animatedBackground: true, mascotAnimation: true, celebration: true },
-  lite: { animatedBackground: false, mascotAnimation: false, celebration: false },
+  full: { animatedBackground: true, mascotAnimation: true, celebration: true, travelAnimation: true },
+  lite: { animatedBackground: false, mascotAnimation: false, celebration: false, travelAnimation: false },
 }
 
 // Đọc giá trị cũ trước khi có trang Cài đặt (spaceSound: 'space-sound', 'space-volume') để người dùng cũ giữ lựa chọn
