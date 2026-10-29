@@ -318,9 +318,13 @@ export default function ImportJson() {
   }
 
   const pending = rows.filter((r) => opts[r.key]?.include && !saved[r.key]).length
-  const allSaved = rows.length > 0 && rows.every((r) => !opts[r.key]?.include || saved[r.key])
+  // Bỏ chọn (vd. do trùng tên) không có nghĩa là đã lưu thành công.
+  const allSaved = rows.some((r) => saved[r.key]) && rows.every((r) => !opts[r.key]?.include || saved[r.key])
   const failed = sources.filter((s) => s.error).length
-  const sourceDone = (s) => (s.result?.drafts || []).every((_, i) => saved[`${s.id}-${i}`] || !opts[`${s.id}-${i}`]?.include)
+  const sourceDone = (s) => {
+    const drafts = s.result?.drafts || []
+    return drafts.some((_, i) => saved[`${s.id}-${i}`]) && drafts.every((_, i) => saved[`${s.id}-${i}`] || !opts[`${s.id}-${i}`]?.include)
+  }
 
   function chapterLabel(s) {
     if (!s.chapterChoice) return 'Chưa xếp chương'
@@ -578,6 +582,11 @@ export default function ImportJson() {
                 {single?.result.drafts.some((d) => d.kind === 'lesson') ? ' Bài tập sẽ được liên kết với bài giảng trong cùng file.' : ''}
               </p>
               <StudentPicker value={studentIds} onChange={setStudentIds} />
+              {pending === 0 && (
+                <p className="alert alert-info">
+                  Chưa chọn phần nào để lưu. Các phần trùng tên bài đã có được tự bỏ chọn; hãy tick phần muốn nhập trong bản xem trước bên dưới. Nội dung mới chưa được lưu.
+                </p>
+              )}
               {single && <div style={{ marginTop: '1rem' }}>{renderSettings(single)}</div>}
               {batch && (
                 <div style={{ marginTop: '1rem' }}>
@@ -669,7 +678,7 @@ export default function ImportJson() {
                   Đã lưu xong. <Link to="/tutor/assignments">Xem danh sách bài tập</Link> · <Link to="/tutor/lessons">Xem bài giảng</Link>
                 </div>
               ) : (
-                <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving}>
+                <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving || pending === 0}>
                   <Icon name="save" />
                   {saving ? 'Đang lưu...' : `Lưu ${pending} phần đã chọn`}
                 </button>
