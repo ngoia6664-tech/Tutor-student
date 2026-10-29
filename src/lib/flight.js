@@ -62,6 +62,7 @@ export const ENGINE = 30 // gia tốc tối đa của động cơ trong hệ (đ
 const ENGINE_OUT = 260 // ngoài mép hệ: chế độ lái nhẹ
 const RESPONSE = 0.8 // giây: động cơ đưa vận tốc về vận tốc mong muốn (trong hệ)
 const RESPONSE_OUT = 0.12
+const COAST = 0.15 // nhả "Duy trì": vận tốc giảm dần theo e^(−COAST·t) (≈ 4,6 s giảm một nửa), lực hút bẻ cong đường bay
 const TURN = 5 // tốc độ quay mũi tàu (rad/s)
 export const WALL = 1.7 // viền vùng bay = 1,7 × bán kính mép hệ
 export const SHIP_SCALE = 0.9 // cỡ hình tàu theo đv (tàu dài ≈ 29 đv): zoom thì tàu to / nhỏ theo bản đồ
@@ -231,7 +232,8 @@ export function heatLevel(world, x, y) {
 }
 
 // Một bước vật lý cho tàu (dùng chung cho mô phỏng thật và đường dự đoán).
-// input = { aim: hướng mong muốn (rad) | null = giữ hướng mũi tàu, speed: vận tốc mong muốn (đv/s) }
+// input = { aim: hướng mong muốn (rad) | null = giữ hướng mũi tàu, speed: vận tốc mong muốn (đv/s),
+//           hold: đang giữ "Duy trì vận tốc" (hoặc đang vuốt thanh tốc độ) }
 function advance(world, ship, input, h) {
   const outside = ship.x * ship.x + ship.y * ship.y > world.edge * world.edge
   if (input.aim != null) {
@@ -241,11 +243,11 @@ function advance(world, ship, input, h) {
     ship.heading += Math.abs(d) <= turn ? d : Math.sign(d) * turn
   }
   const [gx, gy] = gravity(world, ship.x, ship.y)
-  // Động cơ KHÔNG chống trọng lực: lực hút luôn kéo tàu, tàu giữ quán tính.
-  //   vận tốc mong muốn = 0 → tắt máy, tàu trôi và rơi theo lực hút
+  // Động cơ KHÔNG chống trọng lực: lực hút luôn kéo tàu.
+  //   chỉ chạy khi giữ "Duy trì"; nhả ra (hoặc vận tốc mong muốn = 0) → tắt máy, quán tính giảm dần, tàu trôi và rơi theo lực hút
   //   trong hệ: chỉ đẩy / hãm dọc mũi tàu (tối đa ENGINE) → phần vận tốc ngang vẫn trôi theo quán tính
   //   ngoài hệ: lái nhẹ, đẩy cả vector vận tốc về hướng kéo (tối đa ENGINE_OUT)
-  const want = Math.max(0, Math.min(V_MAX, input.speed || 0))
+  const want = input.hold ? Math.max(0, Math.min(V_MAX, input.speed || 0)) : 0
   let ex = 0
   let ey = 0
   const lim = outside ? ENGINE_OUT : ENGINE
@@ -267,6 +269,11 @@ function advance(world, ship, input, h) {
   ship.engine = Math.min(e, lim) / lim // 0–1: độ mạnh lửa đuôi
   ship.vx += (gx + ex) * h
   ship.vy += (gy + ey) * h
+  if (!input.hold) {
+    const k = Math.exp(-COAST * h)
+    ship.vx *= k
+    ship.vy *= k
+  }
   ship.x += ship.vx * h
   ship.y += ship.vy * h
   // Viền vùng bay: không ra được nữa, bỏ phần vận tốc hướng ra ngoài

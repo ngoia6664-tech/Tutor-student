@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
 import { buildWorld, coinSpots, ENGINE, hasFlightCoins, SHIP_SCALE, escapeSpeed, gravity, heatLevel, predict, startShip, step, strongest, V_MAX } from '../../lib/flight.js'
 import { collectFlightCoins, economyChanged, fetchFlightCoins } from '../../lib/pandaShop.js'
+import { leaveLandscape, PHONE, PHONE_PORTRAIT } from '../../lib/landscape.js'
 import '../../styles/flight.css'
 
 // Bay tự do trong một hệ sao đã mở (Kính thiên văn, SpaceExplorer). Vật lý ở lib/flight.js.
 // Vẽ bằng một canvas (vòng rAF, vị trí giữ trong ref, không setState mỗi khung hình); HUD cập nhật ~8 lần/giây.
 // Điều khiển: núm kéo nổi (chạm đâu ở vùng trái dưới thì núm hiện ở đó) chọn hướng; thanh tốc độ bên phải (vuốt) chọn
-// vận tốc mong muốn — động cơ có giới hạn nên sát sao có thể không đủ sức. Máy tính: mũi tên / WASD, phím + −, lăn chuột
-// để phóng to, Esc để về. Xu: (ngưỡng Sao × 5) đồng mỗi hệ, nhặt lần đầu được Xu thật (RPC collect_flight_coins).
+// vận tốc mong muốn — động cơ có giới hạn nên sát sao có thể không đủ sức. Động cơ chỉ chạy khi giữ nút "Duy trì"
+// (hoặc đang vuốt thanh); nhả ra thì quán tính giảm dần, lực hút bẻ cong đường bay. Máy tính: mũi tên / WASD, phím + −, giữ Space, lăn chuột
+// để phóng to, Esc để về. Điện thoại dọc: màn che "Xoay ngang" + tạm dừng (lib/landscape.js). Xu: (ngưỡng Sao × 5) đồng mỗi hệ, nhặt lần đầu được Xu thật (RPC collect_flight_coins).
 // Kết thúc: chạm vùng nóng của sao / va hành tinh (tự về), hoặc bấm "Về hệ sao" → onExit({ reason, name, coins }).
 const STICK = 52 // bán kính núm (px)
 const END_MS = 1500
@@ -19,11 +21,15 @@ const fmt = (n) => Math.round(n)
 // music: { on, toggle } — nút nhạc nền (null khi tắt "Nhạc nền" trong Cài đặt)
 export default function FreeFlight({ placeId, placeName, color, panda, music, onExit }) {
   const canvasRef = useRef(null)
-  const input = useRef({ aim: null, speed: 0, keys: new Set() })
+  const input = useRef({ aim: null, speed: 0, hold: false, keys: new Set() })
   const sim = useRef(null)
   const zoom = useRef(1)
   const [hud, setHud] = useState(null)
   const [speed, setSpeedState] = useState(0)
+  const [holding, setHolding] = useState(false)
+  const [portrait, setPortrait] = useState(() => window.matchMedia(PHONE_PORTRAIT).matches)
+  const paused = useRef(portrait)
+  const [dashOpen, setDashOpen] = useState(() => !window.matchMedia(PHONE).matches) // điện thoại: đồng hồ thu gọn ở góc
   const [stick, setStick] = useState(null) // { x, y, kx, ky } vị trí núm trên màn hình
   const [end, setEnd] = useState(null) // { reason, name }
   const [coinInfo, setCoinInfo] = useState(null) // { total, got } — null: đang tải / gia sư
@@ -33,6 +39,15 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
     const n = Math.round(Math.max(0, Math.min(V_MAX, v)))
     input.current.speed = n
     setSpeedState(n)
+  }
+  // Động cơ chạy khi còn ít nhất một nguồn giữ: nút "Duy trì", ngón tay trên thanh tốc độ, phím Space
+  const holds = useRef(new Set())
+  const setHold = (src, on) => {
+    if (on) holds.current.add(src)
+    else holds.current.delete(src)
+    const h = holds.current.size > 0
+    input.current.hold = h
+    setHolding(h)
   }
 
   // Xu: tải các đồng đã nhặt, gửi đồng mới nhặt lên máy chủ theo lô (chậm 0,8 s), gửi nốt khi rời màn bay
@@ -50,6 +65,25 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
   }
   const flushRef = useRef(flush)
   flushRef.current = flush
+
+  // Điện thoại dọc: tạm dừng, nhả hết nút giữ; rời màn bay thì trả lại xoay tự do + thoát toàn màn hình
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_PORTRAIT)
+    const on = () => {
+      paused.current = mq.matches
+      setPortrait(mq.matches)
+      if (mq.matches) {
+        holds.current.clear()
+        input.current.hold = false
+        setHolding(false)
+      }
+    }
+    mq.addEventListener('change', on)
+    return () => {
+      mq.removeEventListener('change', on)
+      leaveLandscape()
+    }
+  }, [])
 
   // Mô phỏng + vẽ
   useEffect(() => {
@@ -74,7 +108,9 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
       base = Math.min(W, H) / 560 // px trên mỗi đv ở zoom 1: điện thoại dọc thấy khoảng nửa hệ
     }
     resize()
-    window.addEventListener('resize', resize)
+    // Theo dõi chính canvas: iOS báo resize trước khi xoay xong → đo theo window thì hình bị bẹt
+    const ro = new ResizeObserver(resize)
+    ro.observe(cv)
     const toast = (text, now, ms = 4000) => (s.toast = { text, until: now + ms })
 
     let last = performance.now()
@@ -84,7 +120,7 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
       raf = requestAnimationFrame(frame)
       const dt = (now - last) / 1000
       last = now
-      if (!s.end) {
+      if (!s.end && !paused.current) {
         const r = step(world, ship, input.current, s.t, dt)
         s.t = r.t
         for (const i of r.coins) {
@@ -179,7 +215,7 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
     return () => {
       alive = false
       cancelAnimationFrame(raf)
-      window.removeEventListener('resize', resize)
+      ro.disconnect()
       cv.removeEventListener('wheel', wheel)
       flushRef.current()
     }
@@ -206,6 +242,9 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
         e.preventDefault()
         input.current.keys.add(k)
         aim()
+      } else if (e.code === 'Space') {
+        e.preventDefault()
+        setHold('key', true)
       } else if (k === '+' || k === '=' || e.code === 'NumpadAdd') {
         e.preventDefault()
         setSpeed(input.current.speed + 20)
@@ -214,8 +253,15 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
         setSpeed(input.current.speed - 20)
       }
     }
-    const up = (e) => input.current.keys.delete(e.key.toLowerCase())
-    const blur = () => input.current.keys.clear()
+    const up = (e) => {
+      input.current.keys.delete(e.key.toLowerCase())
+      if (e.code === 'Space') setHold('key', false)
+    }
+    const blur = () => {
+      input.current.keys.clear()
+      holds.current.clear()
+      setHold('key', false)
+    }
     window.addEventListener('keydown', down, true)
     window.addEventListener('keyup', up, true)
     window.addEventListener('blur', blur)
@@ -254,7 +300,7 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
     setStick(null)
   }
 
-  // Thanh tốc độ: vuốt dọc (trên = nhanh)
+  // Thanh tốc độ: vuốt dọc (trên = nhanh); đang vuốt cũng là đang giữ động cơ
   const trackRef = useRef(null)
   const throttleAt = (e) => {
     const r = trackRef.current.getBoundingClientRect()
@@ -264,8 +310,19 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
     onPointerDown: (e) => {
       e.currentTarget.setPointerCapture(e.pointerId)
       throttleAt(e)
+      setHold('track', true)
     },
     onPointerMove: (e) => e.currentTarget.hasPointerCapture(e.pointerId) && throttleAt(e),
+    onLostPointerCapture: () => setHold('track', false),
+  }
+  // Nút "Duy trì vận tốc": giữ để động cơ giữ tốc độ đã chọn, nhả ra là tắt máy
+  const keep = {
+    onPointerDown: (e) => {
+      e.currentTarget.setPointerCapture(e.pointerId)
+      setHold('btn', true)
+    },
+    onLostPointerCapture: () => setHold('btn', false),
+    onContextMenu: (e) => e.preventDefault(),
   }
 
   const zoomBy = (k) => (zoom.current = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom.current * k)))
@@ -278,6 +335,16 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
     <div className={`flight${danger ? ' is-danger' : ''}${end ? ` is-end is-${end.reason}` : ''}`} style={{ '--flight-c': color }} role="dialog" aria-label={`Bay tự do: ${placeName}`}>
       <canvas ref={canvasRef} className="flight-canvas" aria-hidden="true" />
       <div className="flight-frame" aria-hidden="true" />
+      {portrait && !end && (
+        <div className="flight-rotate" role="alert">
+          <span className="flight-rotate-phone" aria-hidden="true" />
+          <b>Xoay ngang điện thoại để bay</b>
+          <small>Tàu đang tạm dừng. Nếu màn hình không xoay, hãy tắt Khoá xoay màn hình của máy.</small>
+          <button type="button" className="flight-quit" onClick={quit}>
+            ‹ Về hệ sao
+          </button>
+        </div>
+      )}
 
       <header className="flight-topbar">
         <div className="flight-place">
@@ -301,24 +368,29 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
       </header>
 
       <div className="flight-left">
-        <section className="flight-dash" aria-label="Đồng hồ bay">
+        <section className={`flight-dash${dashOpen ? '' : ' is-mini'}`} aria-label="Đồng hồ bay">
+          <button type="button" className="flight-dash-toggle" onClick={() => setDashOpen((o) => !o)} aria-expanded={dashOpen}>
+            {dashOpen ? 'Ẩn' : 'Chi tiết'}
+          </button>
           <Gauge v={hud?.v || 0} need={hud?.need || 0} want={speed} />
-          <dl className="flight-read">
-            <div>
-              <dt>Vận tốc thoát tại đây</dt>
-              <dd className={hud && hud.v >= hud.need ? 'is-ok' : ''}>{hud ? fmt(hud.need) : '–'} đv/s</dd>
-            </div>
-            <div>
-              <dt>Lực hút / động cơ</dt>
-              <dd className={hud && hud.g > ENGINE && !hud.outside ? 'is-bad' : ''}>
-                {hud ? (hud.g < 10 ? hud.g.toFixed(1).replace('.', ',') : fmt(hud.g)) : '–'} / {ENGINE}
-              </dd>
-            </div>
-            <div className="flight-read-wide">
-              <dt>Kéo mạnh nhất</dt>
-              <dd>{hud?.pull || '–'}</dd>
-            </div>
-          </dl>
+          {dashOpen && (
+            <dl className="flight-read">
+              <div>
+                <dt>Vận tốc thoát tại đây</dt>
+                <dd className={hud && hud.v >= hud.need ? 'is-ok' : ''}>{hud ? fmt(hud.need) : '–'} đv/s</dd>
+              </div>
+              <div>
+                <dt>Lực hút / động cơ</dt>
+                <dd className={hud && hud.g > ENGINE && !hud.outside ? 'is-bad' : ''}>
+                  {hud ? (hud.g < 10 ? hud.g.toFixed(1).replace('.', ',') : fmt(hud.g)) : '–'} / {ENGINE}
+                </dd>
+              </div>
+              <div className="flight-read-wide">
+                <dt>Kéo mạnh nhất</dt>
+                <dd>{hud?.pull || '–'}</dd>
+              </div>
+            </dl>
+          )}
           {hud && hud.heat > 0 && (
             <div className="flight-heat">
               <span>Nhiệt độ vỏ tàu</span>
@@ -327,7 +399,7 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
               </span>
             </div>
           )}
-          <p className="flight-note">v<sub>thoát</sub> = √(2GM/r) · đơn vị mô phỏng (khoảng cách, tốc độ đã thu nhỏ)</p>
+          {dashOpen && <p className="flight-note">v<sub>thoát</sub> = √(2GM/r) · đơn vị mô phỏng (khoảng cách, tốc độ đã thu nhỏ)</p>}
         </section>
 
         <div className="flight-copilot">
@@ -387,6 +459,9 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
             </div>
             <small>Tốc độ</small>
           </div>
+          <button type="button" className={`flight-keep${holding ? ' is-on' : ''}`} aria-pressed={holding} aria-label="Giữ để duy trì vận tốc" {...keep}>
+            Duy trì
+          </button>
         </>
       )}
     </div>
@@ -428,10 +503,10 @@ function sayFor(end, hud, coinInfo) {
   if (!hud) return null
   if ((hud.hit?.star && hud.hit.time < 3.5) || hud.heat > 0.3) return `Nhiệt độ nóng quá! Mình đang sát ${hud.hot || hud.hit?.name} — mau thoát ra ngoài đi!`
   if (hud.hit && hud.hit.time < 3) return `Cẩn thận! Sắp va vào ${hud.hit.name} — đổi hướng ngay!`
-  if (!hud.outside && hud.g > ENGINE && hud.v < hud.need) return `Lực hút của ${hud.pull} mạnh hơn động cơ rồi! Kéo tốc độ lên trên vạch đỏ và lao ra xa!`
+  if (!hud.outside && hud.g > ENGINE && hud.v < hud.need) return `Lực hút của ${hud.pull} mạnh hơn động cơ rồi! Kéo tốc độ lên trên vạch đỏ, giữ Duy trì và lao ra xa!`
   if (hud.toast) return hud.toast
   if (hud.intro)
-    return `Mình lái phụ nhé! Kéo núm bên trái để chọn hướng, vuốt thanh bên phải để chỉnh tốc độ.${coinInfo && coinInfo.got < coinInfo.total ? ' Xu vàng rải khắp nơi, cả ngoài hệ nữa!' : ''}`
+    return `Mình lái phụ nhé! Kéo núm bên trái để chọn hướng, vuốt thanh bên phải chọn tốc độ, giữ Duy trì để động cơ chạy — nhả ra là tàu trôi chậm dần.${coinInfo && coinInfo.got < coinInfo.total ? ' Xu vàng rải khắp nơi, cả ngoài hệ nữa!' : ''}`
   return null
 }
 

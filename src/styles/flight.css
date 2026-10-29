@@ -132,10 +132,48 @@
   pointer-events: none;
 }
 .flight-dash {
+  position: relative;
   padding: 0.5rem 0.65rem 0.45rem;
   border: 1px solid var(--flight-line);
   border-radius: 18px;
   background: var(--flight-panel);
+}
+/* Nút Ẩn / Chi tiết: thu gọn chỉ còn đồng hồ ở góc (mặc định trên điện thoại) */
+.flight-dash-toggle {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 1;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--flight-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.flight-dash.is-mini {
+  align-self: flex-start;
+  width: 6.6rem;
+  padding: 0.3rem 0.35rem 0.25rem;
+  border-radius: 14px;
+}
+.flight-dash.is-mini .flight-gauge {
+  margin: 0.55rem auto -0.3rem;
+}
+.flight-dash.is-mini .flight-dash-toggle {
+  top: 0.2rem;
+  right: 50%;
+  transform: translateX(50%);
+  font-size: 0.56rem;
+  padding: 0 0.4rem;
+}
+.flight-dash.is-mini .flight-heat {
+  margin-top: 0.2rem;
+  font-size: 0;
 }
 .flight-gauge {
   display: block;
@@ -297,7 +335,7 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 42%;
+  width: min(42%, calc(100% - 7rem));
   height: 46%;
   touch-action: none;
 }
@@ -338,11 +376,12 @@
   opacity: 0.8;
 }
 
-/* Thanh tốc độ (vuốt dọc) */
+/* Thanh tốc độ (vuốt dọc), nằm ngay trên nút Duy trì */
 .flight-throttle {
   position: absolute;
+  z-index: 3;
   right: 0.6rem;
-  bottom: 1rem;
+  bottom: calc(1rem + var(--keep) + 0.6rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -404,6 +443,38 @@
   border-radius: 9px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+/* Nút giữ "Duy trì vận tốc" (tròn, góc phải dưới — chỗ ngón cái phải): nhả ra là tắt máy */
+.flight {
+  --keep: 72px;
+}
+.flight-keep {
+  position: absolute;
+  z-index: 3;
+  right: calc(0.6rem + (64px - var(--keep)) / 2);
+  bottom: 1rem;
+  width: var(--keep);
+  height: var(--keep);
+  padding: 0;
+  border: 2px solid var(--flight-line);
+  border-radius: 50%;
+  background: var(--flight-panel);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.flight-keep.is-on {
+  border-color: transparent;
+  background: var(--flight-c);
+  color: #0c081c;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--flight-c) 70%, transparent);
 }
 
 /* Nguy hiểm: viền đỏ nhấp nháy */
@@ -468,6 +539,9 @@
   .flight-gauge {
     margin: -0.2rem 0 -0.35rem;
   }
+  .flight-dash.is-mini {
+    display: block;
+  }
   .flight-read {
     grid-template-columns: 1fr;
     gap: 0.15rem;
@@ -489,6 +563,103 @@
   .flight-say {
     font-size: 0.8rem;
     padding: 0.4rem 0.6rem;
+  }
+}
+
+/* Điện thoại cầm dọc: che màn bay, nhắc xoay ngang (tàu tạm dừng) */
+.flight-rotate {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 1.5rem;
+  background: rgba(8, 6, 20, 0.92);
+  text-align: center;
+}
+.flight-rotate b {
+  font-size: 1.1rem;
+}
+.flight-rotate small {
+  max-width: 18rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+.flight-rotate .flight-quit {
+  position: static;
+  margin-top: 0.4rem;
+}
+.flight-rotate-phone {
+  width: 42px;
+  height: 70px;
+  margin-bottom: 0.5rem;
+  border: 3px solid var(--flight-c);
+  border-radius: 9px;
+  animation: flight-rotate 2.2s ease-in-out infinite;
+}
+@keyframes flight-rotate {
+  0%,
+  25% {
+    transform: rotate(0deg);
+  }
+  60%,
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+
+/* Màn thấp (điện thoại xoay ngang): thanh tốc độ và nút Duy trì gọn lại */
+@media (max-height: 520px) {
+  .flight {
+    --keep: 54px;
+  }
+  .flight-left {
+    top: 3.6rem;
+  }
+  .flight-panda {
+    width: 38px;
+  }
+  .flight-say {
+    max-width: 16rem;
+    font-size: 0.74rem;
+    padding: 0.35rem 0.55rem;
+  }
+}
+/* Điện thoại (dọc hoặc ngang): thanh tốc độ nhỏ lại */
+@media (max-width: 600px), (max-height: 520px) {
+  .flight-throttle {
+    right: 0.5rem;
+    width: 48px;
+    padding: 0.3rem 0;
+    border-radius: 16px;
+  }
+  .flight-throttle b {
+    font-size: 0.85rem;
+  }
+  .flight-throttle small {
+    font-size: 0.55rem;
+  }
+  .flight-track {
+    width: 28px;
+    height: clamp(70px, 20vh, 120px);
+    margin: 0.2rem 0;
+    border-radius: 10px;
+  }
+  .flight-track-fill {
+    border-radius: 10px;
+  }
+  .flight-track-thumb {
+    width: 36px;
+    height: 13px;
+    margin: 0 0 -6.5px -18px;
+    border-radius: 7px;
+  }
+  .flight-keep {
+    right: calc(0.5rem + (48px - var(--keep)) / 2);
+    font-size: 0.68rem;
   }
 }
 
@@ -522,7 +693,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flight.is-danger::after {
+  .flight.is-danger::after,
+  .flight-rotate-phone {
     animation: none;
+  }
+  .flight-rotate-phone {
+    transform: rotate(-90deg);
   }
 }

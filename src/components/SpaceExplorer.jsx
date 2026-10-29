@@ -9,6 +9,7 @@ import PlacePicker from './telescope/PlacePicker.jsx'
 import WarpTravel from './telescope/WarpTravel.jsx'
 import FreeFlight from './telescope/FreeFlight.jsx'
 import { FLIGHT_PLACES } from '../lib/flight.js'
+import { enterLandscape } from '../lib/landscape.js'
 import { SYSTEMS } from '../lib/starSystems.js'
 import { findPlace, lockedMessage, placeAccess, PLACES, SOLAR_ID } from '../lib/telescope.js'
 import { LOOKS } from './panda/outfitLooks.jsx'
@@ -574,6 +575,7 @@ export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) 
               onClick={() => {
                 setPicked(null)
                 setMode(null)
+                enterLandscape()
                 setFlying(true)
               }}
             >
