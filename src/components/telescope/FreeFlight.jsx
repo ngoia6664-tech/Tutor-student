@@ -247,10 +247,10 @@ export default function FreeFlight({ placeId, placeName, color, panda, music, on
         setHold('key', true)
       } else if (k === '+' || k === '=' || e.code === 'NumpadAdd') {
         e.preventDefault()
-        setSpeed(input.current.speed + 20)
+        setSpeed(input.current.speed + 10)
       } else if (k === '-' || k === '_' || e.code === 'NumpadSubtract') {
         e.preventDefault()
-        setSpeed(input.current.speed - 20)
+        setSpeed(input.current.speed - 10)
       }
     }
     const up = (e) => {

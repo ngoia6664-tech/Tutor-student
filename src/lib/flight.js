@@ -57,7 +57,7 @@ export const FLIGHT_PLACES = Object.keys(MASS)
 // Xu khi bay = ngưỡng Sao × 5 → Hệ Mặt Trời (0 Sao) không có Xu
 export const hasFlightCoins = (id) => id !== SOLAR_ID
 export const V_EDGE = 55 // vận tốc thoát khỏi hệ ở mép (đv/s)
-export const V_MAX = 400 // vận tốc mong muốn tối đa trên thanh tốc độ (đv/s)
+export const V_MAX = 200 // vận tốc mong muốn tối đa trên thanh tốc độ (đv/s)
 export const ENGINE = 30 // gia tốc tối đa của động cơ trong hệ (đv/s²) — sát sao lực hút lớn hơn số này
 const ENGINE_OUT = 260 // ngoài mép hệ: chế độ lái nhẹ
 const RESPONSE = 0.8 // giây: động cơ đưa vận tốc về vận tốc mong muốn (trong hệ)
