@@ -1,7 +1,7 @@
 # Gia sư Vật lý — bản đồ dự án cho Claude
 
 React 19 + Vite 8 + react-router 7, backend Supabase (Postgres + RLS + Storage), deploy Vercel (SPA).
-Markdown + KaTeX cho nội dung. Không có test, không có linter. Kiểm tra: `npm run build`.
+Markdown + KaTeX cho nội dung. Không có linter. Kiểm tra: `npm run build` + `npm test` (Vitest, `tests/*.test.js`: logic thuần trong `src/lib`).
 Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao diện điện thoại.
 
 ## Tiết kiệm ngữ cảnh (bắt buộc)

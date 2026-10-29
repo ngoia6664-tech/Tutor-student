@@ -37,7 +37,7 @@ Làm theo đúng thứ tự. Trả lời người dùng bằng tiếng Việt, n
   - luôn chạy `npm run build`;
   - nếu đụng `supabase/schema.sql`: chạy bộ test SQL trong thư mục tạm của phiên (`pgtest/`) nếu còn tồn tại; nếu không còn thì nói rõ là chưa test SQL và vì sao;
   - nếu đụng chấm điểm / thưởng: thêm test cho trường hợp biên đã nêu.
-- Dự án không có test tự động trong repo; đừng tuyên bố "đã test" khi chỉ chạy build.
+- Có test tự động `npm test` (Vitest, `tests/`) cho logic thuần trong `src/lib`: đổi file lib có test thì chạy `npm test`, logic mới quan trọng thì thêm test. Không có test cho giao diện / SQL — đừng tuyên bố "đã test" phần đó.
 
 ## 4. Tiết kiệm token khi làm
 

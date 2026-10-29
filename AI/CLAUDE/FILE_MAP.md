@@ -194,3 +194,6 @@
 - `student-detail.css` — Trang một học sinh
 - `tree-picker.css` — Nhập mục lục (Thư viện)
 
+
+## `tests/`
+- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight)
