@@ -14,17 +14,48 @@
 // nên tàu dùng chế độ lái nhẹ (ENGINE_OUT, phản ứng nhanh): kéo hướng nào tàu gần như đi ngay hướng đó.
 // Vùng bay có viền (WALL × mép hệ): chạm viền thì không ra được nữa, phải quay về.
 import { SYSTEMS } from './starSystems.js'
+import { SOLAR_ID } from './telescope.js'
+
+// Hệ Mặt Trời cho bay tự do: cùng dạng SYSTEMS (lib/starSystems.js). Quỹ đạo khớp PLANETS trong components/SpaceBackdrop.jsx
+// (đường kính px, cỡ px, chu kỳ giây, góc đầu) — đổi ở đó thì đổi ở đây. Mặt Trăng đặt xa Trái Đất hơn bản nền (22 thay 13 px)
+// để không dính vào Trái Đất khi xét va chạm.
+const sun = (c) => ({ type: 'star', c })
+const rock = (c) => ({ type: 'rock', c })
+const SOLAR = {
+  center: { key: 'sun', size: 160 },
+  orbits: [
+    { key: 'mercury', d: 230, size: 7, period: 36, start: 40 },
+    { key: 'venus', d: 330, size: 11, period: 60, start: 200 },
+    { key: 'earth', d: 450, size: 12, period: 95, start: 310, moon: { key: 'moon', r: 22, size: 4, period: 24 } },
+    { key: 'mars', d: 580, size: 9, period: 150, start: 120 },
+    { key: 'jupiter', d: 760, size: 26, period: 260, start: 250 },
+    { key: 'saturn', d: 960, size: 21, period: 400, start: 20 },
+  ],
+  bodies: {
+    sun: { name: 'Mặt Trời', look: sun(['#fff7d6', '#fbbf24', '#ea580c']) },
+    mercury: { name: 'Sao Thủy', look: rock(['#d6d3d1', '#a8a29e', '#57534e']) },
+    venus: { name: 'Sao Kim', look: rock(['#fef3c7', '#d6a756', '#8a5a1c']) },
+    earth: { name: 'Trái Đất', look: rock(['#7dd3fc', '#2563eb', '#166534']) },
+    moon: { name: 'Mặt Trăng', look: rock(['#f3f4f6', '#d1d5db', '#6b7280']) },
+    mars: { name: 'Sao Hỏa', look: rock(['#fca5a5', '#c2410c', '#7c2d12']) },
+    jupiter: { name: 'Sao Mộc', look: rock(['#fde68a', '#d4a373', '#8b5e34']) },
+    saturn: { name: 'Sao Thổ', look: rock(['#fef3c7', '#e9c46a', '#a27b2c']) },
+  },
+}
 
 const ME = 3.0e-6 // khối lượng Trái Đất tính theo Mặt Trời
 // Khối lượng (lần Mặt Trời). Hành tinh Kepler-90 b…f chưa đo được khối lượng: ước tính theo bán kính, chỉ dùng cho mô phỏng
 // (không hiển thị). Kepler-90 g, h: đo nhờ biến thiên thời điểm đi qua (TTV) ≈ 15 và ≈ 203 lần Trái Đất.
 const MASS = {
+  [SOLAR_ID]: { sun: 1, mercury: 0.055 * ME, venus: 0.815 * ME, earth: ME, moon: 0.0123 * ME, mars: 0.107 * ME, jupiter: 317.8 * ME, saturn: 95.2 * ME },
   'alpha-centauri': { 'alpha-a': 1.1, 'alpha-b': 0.9, proxima: 0.12, 'proxima-b': 1.07 * ME },
   'trappist-1': { 'trappist-1': 0.09, b: 1.37 * ME, c: 1.31 * ME, d: 0.39 * ME, e: 0.69 * ME, f: 1.04 * ME, g: 1.32 * ME, h: 0.33 * ME },
   'kepler-90': { 'kepler-90': 1.2, b: 2 * ME, c: 1.6 * ME, i: 2 * ME, d: 8 * ME, e: 7 * ME, f: 8 * ME, g: 15 * ME, h: 203 * ME },
 }
 
 export const FLIGHT_PLACES = Object.keys(MASS)
+// Xu khi bay = ngưỡng Sao × 5 → Hệ Mặt Trời (0 Sao) không có Xu
+export const hasFlightCoins = (id) => id !== SOLAR_ID
 export const V_EDGE = 55 // vận tốc thoát khỏi hệ ở mép (đv/s)
 export const V_MAX = 400 // vận tốc mong muốn tối đa trên thanh tốc độ (đv/s)
 export const ENGINE = 30 // gia tốc tối đa của động cơ trong hệ (đv/s²) — sát sao lực hút lớn hơn số này
@@ -33,7 +64,8 @@ const RESPONSE = 0.8 // giây: động cơ đưa vận tốc về vận tốc mo
 const RESPONSE_OUT = 0.12
 const TURN = 5 // tốc độ quay mũi tàu (rad/s)
 export const WALL = 1.7 // viền vùng bay = 1,7 × bán kính mép hệ
-export const SHIP_R = 6 // bán kính va chạm của tàu (đv)
+export const SHIP_SCALE = 0.9 // cỡ hình tàu theo đv (tàu dài ≈ 29 đv): zoom thì tàu to / nhỏ theo bản đồ
+export const SHIP_R = 10 // bán kính va chạm của tàu (đv), khớp cỡ hình tàu
 export const COIN_R = 16 // nhặt Xu khi tàu cách đồng Xu dưới chừng này (đv)
 const STAR_R = 0.3 // bán kính sao trên bản đồ bay = size × 0.3 (nhỏ hơn bản 3D để hành tinh trong cùng không nằm trong vùng nóng)
 const HEAT = 1.6 // vùng nóng = 1,6 × bán kính sao (quy ước trò chơi: thật ra sao chỉ nguy hiểm sát bề mặt)
@@ -42,7 +74,7 @@ const DT = 1 / 120
 
 // Dựng thế giới bay cho một địa điểm (null nếu hệ chưa có dữ liệu bay)
 export function buildWorld(id) {
-  const sys = SYSTEMS[id]
+  const sys = id === SOLAR_ID ? SOLAR : SYSTEMS[id]
   const mass = MASS[id]
   if (!sys || !mass) return null
   const bodies = []

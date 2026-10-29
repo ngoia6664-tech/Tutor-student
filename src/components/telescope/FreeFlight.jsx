@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildWorld, coinSpots, ENGINE, escapeSpeed, gravity, heatLevel, predict, startShip, step, strongest, V_MAX } from '../../lib/flight.js'
+import Icon from '../Icon.jsx'
+import { buildWorld, coinSpots, ENGINE, hasFlightCoins, SHIP_SCALE, escapeSpeed, gravity, heatLevel, predict, startShip, step, strongest, V_MAX } from '../../lib/flight.js'
 import { collectFlightCoins, economyChanged, fetchFlightCoins } from '../../lib/pandaShop.js'
 import '../../styles/flight.css'
 
@@ -15,7 +16,8 @@ const ZOOM_MIN = 0.45
 const ZOOM_MAX = 2.2
 const fmt = (n) => Math.round(n)
 
-export default function FreeFlight({ placeId, placeName, color, panda, onExit }) {
+// music: { on, toggle } — nút nhạc nền (null khi tắt "Nhạc nền" trong Cài đặt)
+export default function FreeFlight({ placeId, placeName, color, panda, music, onExit }) {
   const canvasRef = useRef(null)
   const input = useRef({ aim: null, speed: 0, keys: new Set() })
   const sim = useRef(null)
@@ -157,16 +159,17 @@ export default function FreeFlight({ placeId, placeName, color, panda, onExit })
 
     // Xu chưa nhặt của hệ này (gia sư / lỗi mạng: không có Xu, vẫn bay bình thường)
     let alive = true
-    fetchFlightCoins(placeId)
-      .then(({ total, collected }) => {
-        if (!alive || !total) return
-        const got = new Set(collected)
-        world.coins = coinSpots(world, total).filter((c) => !got.has(c.i))
-        s.coinTotal = total
-        s.coinLeft = world.coins.length
-        setCoinInfo({ total, got: got.size })
-      })
-      .catch(() => {})
+    if (hasFlightCoins(placeId))
+        fetchFlightCoins(placeId)
+        .then(({ total, collected }) => {
+          if (!alive || !total) return
+          const got = new Set(collected)
+          world.coins = coinSpots(world, total).filter((c) => !got.has(c.i))
+          s.coinTotal = total
+          s.coinLeft = world.coins.length
+          setCoinInfo({ total, got: got.size })
+        })
+        .catch(() => {})
 
     const wheel = (e) => {
       e.preventDefault()
@@ -286,6 +289,11 @@ export default function FreeFlight({ placeId, placeName, color, panda, onExit })
             <span className="flight-coin-ico" aria-hidden="true" />
             {coinInfo.got}/{coinInfo.total}
           </div>
+        )}
+        {music && (
+          <button type="button" className="flight-music" onClick={music.toggle} aria-pressed={music.on} aria-label={music.on ? 'Tắt nhạc nền' : 'Bật nhạc nền'} title={music.on ? 'Tắt nhạc nền' : 'Bật nhạc nền'}>
+            <Icon name={music.on ? 'pause' : 'resume'} size={16} />
+          </button>
         )}
         <button type="button" className="flight-quit" onClick={() => !end && quit()}>
           ‹ Về hệ sao
@@ -613,7 +621,8 @@ function draw(ctx, s, W, H, S, color, now) {
 
   // Tàu
   const shrink = s.end ? Math.max(0, 1 - (now - s.endAt) / 900) : 1
-  if (shrink > 0) drawShip(ctx, X(ship.x), Y(ship.y), ship.heading, shrink * 1.25, s.end ? 0 : ship.engine, color, now)
+  // Tàu là vật thể trong không gian: phóng to / thu nhỏ thì tàu to / nhỏ theo (cùng tỉ lệ S với hành tinh, Xu)
+  if (shrink > 0) drawShip(ctx, X(ship.x), Y(ship.y), ship.heading, shrink * S * SHIP_SCALE, s.end ? 0 : ship.engine, color, now)
 
   // Bản đồ nhỏ (giữa đáy, giữa núm kéo và thanh tốc độ): cả vùng bay, tàu là chấm trắng
   const mr = Math.min(42, W * 0.105)

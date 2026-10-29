@@ -566,7 +566,7 @@ export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) 
           <button type="button" className="tpick-open" onClick={() => setPicking(true)} aria-haspopup="dialog">
             <Icon name="telescope" size={16} /> Địa điểm <span className="tpick-open-count">{openedCount}</span>
           </button>
-          {sys && FLIGHT_PLACES.includes(place) && (
+          {(sys || !far) && FLIGHT_PLACES.includes(place) && (
             <button
               type="button"
               className="tpick-open flight-open"
@@ -645,7 +645,16 @@ export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) 
         />
       )}
 
-      {flying && sys && <FreeFlight placeId={place} placeName={placeInfo.name} color={placeInfo.color} panda={<FrontPanda pose="teach" look={LOOKS[outfit.id]} />} onExit={endFlight} />}
+      {flying && (sys || !far) && (
+        <FreeFlight
+          placeId={place}
+          placeName={placeInfo.name}
+          color={placeInfo.color}
+          panda={<FrontPanda pose="teach" look={LOOKS[outfit.id]} />}
+          music={settings.music ? { on: playing, toggle: toggleMusic } : null}
+          onExit={endFlight}
+        />
+      )}
 
       {picking && (
         <PlacePicker

@@ -102,6 +102,24 @@
   cursor: pointer;
 }
 
+/* Nút nhạc nền (bật / tắt ngay trong lúc bay) */
+.flight-music {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--flight-line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+}
+.flight-music[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--flight-c) 60%, transparent);
+  color: color-mix(in srgb, var(--flight-c) 40%, #fff);
+}
+
 /* Cột trái: bảng đồng hồ + gấu lái phụ */
 .flight-left {
   position: absolute;
