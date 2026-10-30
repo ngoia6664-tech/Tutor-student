@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
+import { forgetUrlsWith, useRemembered } from '../../lib/navMemory.js'
 import { errMsg } from '../../lib/errors.js'
 import {
   buildTree,
@@ -22,7 +23,9 @@ import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../comp
 import ChapterDetail from './ChapterDetail.jsx'
 import Icon from '../../components/Icon.jsx'
 import OutlineImport from '../../components/OutlineImport.jsx'
-import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
+import { confirmDelete, confirmDeleteMany, notifyDeleted, notifyDone, notifyError } from '../../lib/dialog.js'
+import { SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { chapterContent, deleteChapters, deleteWarning, itemsLabel } from '../../lib/bulk.js'
 
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
 const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
@@ -55,7 +58,7 @@ export default function Library() {
 
   const { open, toggle, ensure, remap } = useOpenNodes('library-open')
   const [storedGrade, setStoredGrade] = useState(loadGrade)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useRemembered('library-query', '', (v) => typeof v === 'string')
   const [treeShown, setTreeShown] = useState(!id && lop === undefined) // điện thoại: mục lục mở khi chưa chọn gì
   const [editing, setEditing] = useState(null) // null | {} (thêm mới) | chương đang sửa
   const [editingGroup, setEditingGroup] = useState(null)
@@ -63,6 +66,8 @@ export default function Library() {
   const [detailKey, setDetailKey] = useState(0)
   const [importing, setImporting] = useState(false) // khung "Nhập mục lục"
   const [notice, setNotice] = useState(null)
+  const pickCh = useAssignSelection() // Xóa nhiều chương trong nhóm đang xem
+  const [withContent, setWithContent] = useState(false)
   useEffect(() => {
     if (!notice) return
     const t = setTimeout(() => setNotice(null), 6000)
@@ -110,8 +115,10 @@ export default function Library() {
     if (keys.length) ensure(keys)
   }, [current, lop, mon, cd, ensure])
 
-  // Chọn mục khác: đóng form đang mở, trên điện thoại thu mục lục lại
+  // Chọn mục khác: đóng form đang mở, thoát Xóa nhiều, trên điện thoại thu mục lục lại
   useEffect(() => {
+    pickCh.stop()
+    setWithContent(false)
     setEditing(null)
     setEditingGroup(null)
     setActionError(null)
@@ -167,6 +174,7 @@ export default function Library() {
     setActionError(null)
     try {
       unwrap(await supabase.from('chapters').delete().eq('id', c.id))
+      forgetUrlsWith([c.id])
       if (id === c.id) navigate(libraryUrl(keyOf(c.grade), keyOf(c.subject), keyOf(c.section)))
       reload()
       notifyDeleted('chương')
@@ -185,12 +193,51 @@ export default function Library() {
     setActionError(null)
     try {
       unwrap(await supabase.from('chapters').delete().in('id', inGroup.map((c) => c.id)))
+      forgetUrlsWith(inGroup.map((c) => c.id))
       navigate(libraryUrl(lop, mon))
       reload()
       notifyDeleted('chuyên đề')
     } catch (e) {
       setActionError(errMsg(e))
     }
+  }
+
+  // Xóa nhiều chương. Mặc định bài bên trong giữ lại (về "Chưa xếp chương") như xóa một chương;
+  // tick "Xóa luôn bài bên trong" thì xóa cả bài giảng, bài tập (bài nộp, điểm cũng mất) — chương còn bài xóa lỗi thì giữ.
+  async function deleteChosenChapters(chosen) {
+    const ids = chosen.map((c) => c.id)
+    const inside = chosen.reduce((n, c) => n + c.n, 0)
+    setActionError(null)
+    let content = null
+    try {
+      if (withContent && inside) content = await chapterContent(ids)
+    } catch (e) {
+      setActionError(errMsg(e))
+      return
+    }
+    const what = content?.length ? `${ids.length} chương kèm ${itemsLabel(content)}` : `${ids.length} chương`
+    const msg = content?.length
+      ? `Xóa ${ids.length} chương và mọi bài bên trong. ${deleteWarning(content)}`
+      : inside
+        ? `${inside} bài giảng / bài tập bên trong KHÔNG bị xóa, chỉ chuyển sang "Chưa xếp chương".`
+        : 'Các chương này chưa có bài nào.'
+    if (!(await confirmDeleteMany(what, msg))) return
+    const r = await deleteChapters(ids, content)
+    forgetUrlsWith(ids)
+    pickCh.stop()
+    setWithContent(false)
+    reload()
+    setDetailKey((k) => k + 1)
+    if (!r.failed.length && !r.chapterError) {
+      notifyDone({ title: `Đã xóa ${what}`, say: 'Xong rồi! Các chương đã chọn đã được dọn sạch ✨', scene: 'deleted' })
+      if (level === 3 && r.chapters === inGroup.length) navigate(libraryUrl(lop, mon))
+      return
+    }
+    const lines = []
+    if (r.failed.length)
+      lines.push(`Không xóa được ${r.failed.length} bài: ${r.failed.map((f) => `"${f.item.title}" (${errMsg(f.error)})`).join('; ')}. Chương chứa các bài này được giữ lại.`)
+    if (r.chapterError) lines.push(`Lỗi khi xóa chương: ${errMsg(r.chapterError)}`)
+    notifyError(`Đã xóa ${r.chapters}/${ids.length} chương, ${r.done} bài`, lines.join(' '))
   }
 
   // Thêm chương mới: điền sẵn lớp / môn / chuyên đề đang xem
@@ -348,7 +395,7 @@ export default function Library() {
             ← Về {back.backLabel || 'trang trước'}
           </Link>
         )}
-        {id && <ChapterDetail id={id} reloadKey={detailKey} onEdit={openChapterForm} onDelete={handleDelete} />}
+        {id && <ChapterDetail id={id} reloadKey={detailKey} onEdit={openChapterForm} onDelete={handleDelete} onChanged={reload} />}
 
         {!id && level === 0 && !loading && <Overview tree={fullTree} onImport={openImport} />}
 
@@ -378,6 +425,7 @@ export default function Library() {
                     Sửa {level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}
                   </button>
                 )}
+                {inGroup.length > 0 && <SelectModes sel={pickCh} modes={['delete']} />}
                 {level === 3 && inGroup.length > 0 && (
                   <button type="button" className="btn btn-small btn-danger" onClick={handleDeleteSection}>
                     <Icon name="trash" />
@@ -414,10 +462,22 @@ export default function Library() {
                   <span className="badge">{sum(inGroup, 'assignments')} bài tập</span>
                 </div>
                 <GroupChapters
+                  pick={pickCh}
                   chapters={inGroup}
                   showSection={level < 3}
                   onEdit={openChapterForm}
                   onDelete={(c) => handleDelete(c, countOf(c.lessons) + countOf(c.assignments))}
+                />
+                <SelectBar
+                  sel={pickCh}
+                  visible={inGroup.map(chapterItem)}
+                  onDelete={deleteChosenChapters}
+                  extra={
+                    <label className="assign-bar-extra">
+                      <input type="checkbox" checked={withContent} onChange={(e) => setWithContent(e.target.checked)} />
+                      Xóa luôn bài giảng, bài tập bên trong
+                    </label>
+                  }
                 />
               </>
             )}
@@ -429,7 +489,10 @@ export default function Library() {
 }
 
 // Các chương trong nhóm đang chọn (nhóm theo chuyên đề nếu đang xem cả lớp / môn)
-function GroupChapters({ chapters, showSection, onEdit, onDelete }) {
+// Chương dưới dạng mục chọn nhiều; n = số bài giảng + bài tập bên trong
+const chapterItem = (c) => ({ kind: 'chapter', id: c.id, title: c.title, n: countOf(c.lessons) + countOf(c.assignments) })
+
+function GroupChapters({ pick, chapters, showSection, onEdit, onDelete }) {
   const groups = []
   for (const c of chapters) {
     const k = showSection ? `${keyOf(c.grade)}|${keyOf(c.subject)}|${keyOf(c.section)}` : 'all'
@@ -442,11 +505,14 @@ function GroupChapters({ chapters, showSection, onEdit, onDelete }) {
       {g.title && <h2 className="section-title">{g.title}</h2>}
       <div className="list">
         {g.items.map((c) => (
-          <div key={c.id} className="list-item list-item-row">
+          <div key={c.id} className={pick.has('chapter', c.id) ? 'list-item list-item-row is-picked' : 'list-item list-item-row'}>
             <div style={{ minWidth: 0 }}>
-              <Link to={chapterUrl(c.id)} className="list-item-title" style={{ display: 'block', color: 'inherit' }}>
-                {c.title}
-              </Link>
+              <div className="list-item-title assign-title">
+                <SelectCheck sel={pick} item={chapterItem(c)} />
+                <Link to={chapterUrl(c.id)} style={{ color: 'inherit' }}>
+                  {c.title}
+                </Link>
+              </div>
               <div className="row small">
                 <span className="badge">{countOf(c.lessons)} bài giảng</span>
                 <span className="badge">{countOf(c.assignments)} bài tập</span>

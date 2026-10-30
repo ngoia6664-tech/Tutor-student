@@ -28,6 +28,7 @@ import MarkHard from '../../components/MarkHard.jsx'
 import AnswerProgress from '../../components/AnswerProgress.jsx'
 import ResultProgress from '../../components/ResultProgress.jsx'
 import { loadAnswerNotes, NOTE_LABEL } from '../../lib/answerNotes.js'
+import ListLink from '../../components/ListLink.jsx'
 
 // Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài)
 const draftKey = (assignmentId, studentId, retry = false) => `${retry ? 'draft-retry' : 'draft-answers'}:${studentId}:${assignmentId}`
@@ -94,7 +95,7 @@ export default function StudentAssignment() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/student">← Về danh sách bài</Link>
+        <ListLink to="/student">← Về danh sách bài</ListLink>
       </div>
     )
 
@@ -104,9 +105,9 @@ export default function StudentAssignment() {
 
   return (
     <div>
-      <Link to={submitted ? '/student/results' : '/student'} className="small">
+      <ListLink to={submitted ? '/student/results' : '/student'} className="small">
         ← Quay lại
-      </Link>
+      </ListLink>
       <div className="card" style={{ marginTop: '0.5rem' }}>
         <h1>{a.title}</h1>
         <div className="row">

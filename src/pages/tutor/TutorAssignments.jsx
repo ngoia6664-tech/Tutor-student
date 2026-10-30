@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
+import { useRemembered } from '../../lib/navMemory.js'
 import { errMsg } from '../../lib/errors.js'
 import { formatDate } from '../../lib/format.js'
 import { deleteAssignment } from '../../lib/assignments.js'
@@ -13,15 +14,17 @@ import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../c
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
-import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 export default function TutorAssignments() {
-  const [filter, setFilter] = useState('all')
+  // Lọc "Chờ chấm" nhớ trong phiên: mở bài rồi quay lại vẫn còn
+  const [filter, setFilter] = useRemembered('tutor-assignments-filter', 'all', (v) => v === 'all' || v === 'pending')
   const sel = useTreeSelection()
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
+  const [moving, setMoving] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, chapters] = await Promise.all([
@@ -80,7 +83,7 @@ export default function TutorAssignments() {
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">
-            <SelectToggle sel={pick} />
+            <SelectModes sel={pick} />
             <Link className="btn" to="/tutor/import">
               <Icon name="import" />
               Dán JSON
@@ -111,7 +114,28 @@ export default function TutorAssignments() {
 
         {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderAssignment)}</div>}
         {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderAssignment} />}
-        <SelectBar sel={pick} onAssign={() => setAssigning(pick.items)} />
+        <SelectBar
+          sel={pick}
+          visible={rows.map(itemOf)}
+          onAssign={setAssigning}
+          onMove={setMoving}
+          onDelete={async (items) => {
+            if (await deletePicked(items)) {
+              pick.stop()
+              reload()
+            }
+          }}
+        />
+        {moving && (
+          <MoveDialog
+            items={moving}
+            onClose={() => setMoving(null)}
+            onSaved={(ok) => {
+              if (ok) pick.stop()
+              reload()
+            }}
+          />
+        )}
         {assigning && (
           <AssignDialog
             items={assigning}
@@ -126,8 +150,13 @@ export default function TutorAssignments() {
     </div>
   )
 
+  // Mục dùng cho chọn nhiều; submitted = số học sinh đã nộp (cảnh báo khi xóa)
+  function itemOf(a) {
+    return { kind: 'assignment', id: a.id, title: a.title, submitted: a.counts.done + a.counts.checked }
+  }
+
   function renderAssignment(a) {
-    const item = { kind: 'assignment', id: a.id, title: a.title }
+    const item = itemOf(a)
     return (
       <div key={a.id} className={pick.has('assignment', a.id) ? 'list-item is-picked' : 'list-item'}>
         <div className="list-item-title assign-title">

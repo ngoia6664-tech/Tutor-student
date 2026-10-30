@@ -6,6 +6,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import LessonView from '../../components/LessonView.jsx'
 import Icon from '../../components/Icon.jsx'
+import ListLink from '../../components/ListLink.jsx'
 
 export default function TutorLessonView() {
   const { id } = useParams()
@@ -29,7 +30,7 @@ export default function TutorLessonView() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/tutor/lessons">← Danh sách bài giảng</Link>
+        <ListLink to="/tutor/lessons">← Danh sách bài giảng</ListLink>
       </div>
     )
 
@@ -37,9 +38,9 @@ export default function TutorLessonView() {
   return (
     <div>
       <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
-        <Link to="/tutor/lessons" className="small">
+        <ListLink to="/tutor/lessons" className="small">
           ← Danh sách bài giảng
-        </Link>
+        </ListLink>
         <Link className="btn btn-small" to={`/tutor/lessons/${id}/edit`}>
           <Icon name="edit" />
           Sửa

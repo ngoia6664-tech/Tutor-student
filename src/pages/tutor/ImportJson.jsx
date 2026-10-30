@@ -20,6 +20,7 @@ import Icon from '../../components/Icon.jsx'
 import { ExamTimer } from '../../components/ExamParts.jsx'
 import { EXAM_MINUTES } from '../../lib/exam.js'
 import LessonSelect from '../../components/LessonSelect.jsx'
+import ListLink from '../../components/ListLink.jsx'
 
 // Chương liên kết lần dán trước (lưu trên máy này)
 const LAST_CHAPTER_KEY = 'import.lastChapterId'
@@ -675,7 +676,7 @@ export default function ImportJson() {
               <ErrorBox message={saveError} />
               {allSaved ? (
                 <div className="alert alert-ok" style={{ width: '100%' }}>
-                  Đã lưu xong. <Link to="/tutor/assignments">Xem danh sách bài tập</Link> · <Link to="/tutor/lessons">Xem bài giảng</Link>
+                  Đã lưu xong. <ListLink to="/tutor/assignments">Xem danh sách bài tập</ListLink> · <ListLink to="/tutor/lessons">Xem bài giảng</ListLink>
                 </div>
               ) : (
                 <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving || pending === 0}>

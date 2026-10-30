@@ -23,6 +23,8 @@ import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, questionLabels, viNum } from '../../lib/exam.js'
 import { retryScore } from '../../lib/retries.js'
 import { toggleGradeDock, useGradeDockOpen, useGradingMode } from '../../lib/gradeDock.js'
+import ListLink, { RESTORE } from '../../components/ListLink.jsx'
+import { listUrl } from '../../lib/navMemory.js'
 
 const STATUS_ORDER = { done: 0, todo: 1, checked: 2 }
 
@@ -50,7 +52,7 @@ export default function AssignmentTracking() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/tutor/assignments">← Về danh sách bài tập</Link>
+        <ListLink to="/tutor/assignments">← Về danh sách bài tập</ListLink>
       </div>
     )
 
@@ -77,7 +79,7 @@ export default function AssignmentTracking() {
     setActionError(null)
     try {
       await deleteAssignment(a.id)
-      navigate('/tutor/assignments', { replace: true })
+      navigate(listUrl('/tutor/assignments'), { replace: true, state: RESTORE })
       notifyDeleted('bài tập')
     } catch (e) {
       setActionError(errMsg(e))
@@ -92,9 +94,9 @@ export default function AssignmentTracking() {
           ← Về {backStudent.student?.full_name || 'học sinh'}
         </Link>
       ) : (
-        <Link to="/tutor/assignments" className="small">
+        <ListLink to="/tutor/assignments" className="small">
           ← Danh sách bài tập
-        </Link>
+        </ListLink>
       )}
       <div className="card" style={{ marginTop: '0.5rem' }}>
         <h1>{a.title}</h1>

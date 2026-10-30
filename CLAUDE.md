@@ -4,12 +4,16 @@ React 19 + Vite 8 + react-router 7, backend Supabase (Postgres + RLS + Storage),
 Markdown + KaTeX cho nội dung. Không có linter. Kiểm tra: `npm run build` + `npm test` (Vitest, `tests/*.test.js`: logic thuần trong `src/lib`).
 Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao diện điện thoại.
 
+## ⚠️ BẮT ĐẦU MỖI PHIÊN / MỖI YÊU CẦU: đọc `AI/CLAUDE/FILE_MAP.md` trước (bắt buộc)
+- Đọc **`AI/CLAUDE/FILE_MAP.md`** (công dụng từng file) TRƯỚC khi mở bất kỳ file nào trong `src/`, kể cả khi yêu cầu chỉ là câu hỏi.
+- Rồi làm theo skill `prompt-triage` (phân loại nhỏ/phức tạp, chọn build hay build + test).
+- Thêm / xóa / đổi công dụng file → sửa dòng tương ứng trong FILE_MAP.md ngay trong cùng lần sửa.
+
 ## Tiết kiệm ngữ cảnh (bắt buộc)
 - Không đọc nguyên file `README.md`, `supabase/schema.sql`, `package-lock.json`, `dist/`, file > 15KB
   (AssignmentEditor, ImportJson, Library, StudentAssignment, importTutorLesson, AssignmentTracking): grep rồi Read với `offset`/`limit`.
 - Chi tiết từng tính năng (gấu, vũ trụ, nhạc, chấm bài, biểu đồ, ôn tập, làm lại...): **`AI/CLAUDE/FEATURES.md`** — grep đúng mục, không đọc hết.
 - Đã biết file cần sửa thì mở thẳng. Bản đồ sai/thiếu thì sửa file này (ngắn) hoặc FEATURES.md (chi tiết).
-- Trước mỗi yêu cầu thay đổi: đọc `AI/CLAUDE/FILE_MAP.md` (công dụng từng file) và làm theo skill `prompt-triage` (phân loại nhỏ/phức tạp, chọn build hay build + test).
 
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang. Trang mới: thêm vào cả hai.
@@ -28,6 +32,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Kinh tế Xu/Sao/Chuỗi + Ôn tập mỗi ngày (`components/StreakFlame.jsx` nổi góc trên bên phải → bảng nổi `DailyReview.jsx`, `lib/dailyReview.js`): sổ cái `economy_ledger` (reward_key duy nhất), cấu hình `econ_cfg()`. Chi tiết: FEATURES.md mục "Kinh tế".
   Âm thanh hoạt cảnh: kế hoạch chuyển sang file mp3 ở **`AI/CLAUDE/SFX_PLAN.md`**.
 - Kính thiên văn nhiều địa điểm: cấu hình + luật mở khóa `lib/telescope.js` (ngưỡng Sao, `ready`), nội dung `lib/starSystems.js`, UI `components/telescope/*` trong `SpaceExplorer`. Chi tiết: FEATURES.md.
+- Nhớ điều hướng (URL lọc của từng tab, vị trí cuộn khi Back / mở lại tab): `lib/navMemory.js` + `components/ScrollMemory.jsx` (trong Layout) + `ListLink`.
+  Trang danh sách mới: thêm vào `LIST_ROUTES`; link về danh sách dùng `ListLink`. Chi tiết: FEATURES.md.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
 ## Quy ước

@@ -4,7 +4,7 @@ import TreePicker, { chapterNodes } from './TreePicker.jsx'
 
 // Ô chọn chương dạng cây Lớp › Môn › Chuyên đề › Chương. value = chapter_id hoặc ''.
 // extraTop: lựa chọn thêm ở đầu danh sách, vd. [{ value: 'new', label: '+ Tạo chương mới…' }]
-export default function ChapterSelect({ chapters, value, onChange, label = 'Chương', extraTop = [], hint }) {
+export default function ChapterSelect({ chapters, value, onChange, label = 'Chương', extraTop = [], hint, defaultOpen }) {
   const nodes = useMemo(() => chapterNodes(chapters || []), [chapters])
   return (
     <TreePicker
@@ -21,6 +21,7 @@ export default function ChapterSelect({ chapters, value, onChange, label = 'Chư
       placeholder="— Chưa xếp chương —"
       searchPlaceholder="Tìm chương, chuyên đề…"
       hint={hint}
+      defaultOpen={defaultOpen}
     />
   )
 }

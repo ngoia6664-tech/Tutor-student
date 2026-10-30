@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -22,7 +22,7 @@ export default function StudentLessons() {
   const { isNew } = useNotifications()
   const sel = useTreeSelection()
   const studyId = useStudyChapterId()
-  const [q, setQ] = useState('')
+  const [q, setQ] = useRemembered('student-lessons-q', '', (v) => typeof v === 'string')
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, chapters] = await Promise.all([

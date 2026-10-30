@@ -81,9 +81,21 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `TreeNav` (cây mục lục, nhớ nút mở), `FilterTree` (lọc theo cây qua URL `?lop=&mon=&cd=&ch=`),
   `ChapterForms`, `ChapterGroups`, `OutlineImport`, `ReportQuestion`, `NotificationBell`, `Layout`,
   `ProtectedRoute`, `Markdown`/`MarkdownField`, `Icon`, `ThemeToggle`,
-  `QuickAssign` (nút "Giao (n)" + "Chọn nhiều để giao" ở TutorLessons/TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
+  `QuickAssign` (nút "Giao (n)" ở TutorLessons/TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
   nhiều bài = chỉ giao thêm; ghi qua `lib/recipients.js`, CSS `styles/assign.css`).
+  Sửa nhiều / Xóa nhiều (`SelectModes` + `SelectBar`, hai chế độ không bật cùng lúc, đổi chế độ / đổi bộ lọc là bỏ tick cũ; "Chọn tất cả" = chỉ mục đang hiển thị):
+  Sửa nhiều = Chuyển chương (`MoveDialog`, chỉ đổi `chapter_id`) + Giao cho... (giao thêm, không trùng nhờ upsert ignoreDuplicates);
+  Xóa nhiều = hỏi xác nhận (số lượng + bài tập đã có học sinh nộp) → xóa lần lượt bằng `deleteLesson`/`deleteAssignment`, báo thành công một phần.
+  Thư viện (lớp / môn / chuyên đề): Xóa nhiều chương; mặc định bài bên trong về "Chưa xếp chương", tick "Xóa luôn bài bên trong" thì xóa hết
+  (chương còn bài xóa lỗi thì giữ). Logic ở `lib/bulk.js` (test `tests/bulk.test.js`).
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
+- Nhớ điều hướng (`lib/navMemory.js`, sessionStorage `nav-memory-v1`, test `tests/navMemory.test.js`):
+  tab menu (`Layout` NavLink `listUrl(tab)`) và link "← Danh sách" (`components/ListLink.jsx`) mở lại đúng URL lọc lần trước của tab
+  (trang danh sách khai báo ở `LIST_ROUTES`); bộ lọc không nằm trên URL dùng `useRemembered(key, init, valid)`
+  (Chờ chấm, Nhóm học sinh, ô tìm, tab Ôn tập). Cuộn: `components/ScrollMemory.jsx` trong Layout (thay `scrollTo(0)` cũ):
+  link thường → lên đầu; chỉ đổi ?query → giữ chỗ; Back/Forward hoặc `state.restore` → về mục neo (link đầu tiên đang thấy + độ lệch),
+  mất neo → mục vừa mở → y kẹp. Chờ hết `Loading` (`[role=status]`) bằng MutationObserver, người dùng cuộn/chạm thì bỏ.
+  Không nhớ tick Sửa/Xóa nhiều, hộp thoại. Xóa chương → `forgetUrlsWith(ids)`.
 
 ## CSS
 `src/index.css` chỉ `@import` các file trong `src/styles/` (thứ tự = thứ tự cascade). Màu dùng biến trong `base.css`;

@@ -64,6 +64,7 @@
 - `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
 - `InstallBanner.jsx` — Gợi ý cài app lên màn hình chính.
 - `Layout.jsx` — Khung chung: thanh trên cùng, menu, linh vật, cụm nổi, hộp thoại, ngắm vũ trụ
+- `ListLink.jsx` — Link "← Danh sách" về đúng URL lọc + vị trí cuộn lần trước của tab (RESTORE)
 - `LessonSelect.jsx` — Ô chọn bài giảng dạng cây Lớp › Môn › Chuyên đề �
 - `LessonView.jsx` — Dấu phân trang trong Markdown (một dòng riêng). Bài nhập JSO
 - `Loading.jsx` — Trạng thái đang tải.
@@ -77,11 +78,12 @@
 - `PandaDock.jsx` — Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
 - `PlanetPortrait.jsx` — Chân dung hành tinh khi gấu giải thích (SpaceExplorer, chế đ
 - `ProtectedRoute.jsx` — Chặn trang theo vai trò: sai vai trò thì chuyển về trang củ
-- `QuickAssign.jsx` — Giao bài nhanh từ danh sách (Bài giảng, Bài tập, chương tr
+- `QuickAssign.jsx` — Giao bài nhanh + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Bài giảng, Bài tập, chương trong Thư viện
 - `ReportQuestion.jsx` — Trạng thái báo lỗi học sinh thấy
 - `ResultProgress.jsx` — Thanh tiến độ và chip câu đúng/sai ở trang kết quả
 - `RootRedirect.jsx` — Trang gốc "/": chuyển theo vai trò
 - `ScoreChart.jsx` — Khung SVG (viewBox), co giãn theo bề rộng thẻ
+- `ScrollMemory.jsx` — Nhớ / khôi phục vị trí cuộn (Back/Forward, mở lại tab) theo mục neo, chờ hết khung tải
 - `ScrollJump.jsx` — Hai mũi tên nổi cạnh phải giữa màn hình: lên đầu trang
 - `SettingsPanel.jsx` — Bảng Cài đặt (tải lười từ Layout, mở bằng nút bánh
 - `SpaceBackdrop.jsx` — Nền vũ trụ phía sau toàn app: 3 lớp sao ở 3 độ xa (trôi
@@ -120,6 +122,7 @@
 - `PandaShopContext.jsx` — Một tài khoản dùng chung cho cụm nổi, cửa hàng và linh v
 
 ## `src/lib/`
+- `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chương (chỉ chapter_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chương kèm / không kèm bài bên trong
 - `answerNotes.js` — Lời phê từng câu của gia sư ("Giáo viên chấm:"), bảng a
 - `assignments.js` — Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_
 - `celebrate.js` — Ăn mừng: pháo giấy + bé Nguyên Tử (components/Mascot.jsx) nh
@@ -136,6 +139,7 @@
 - `importTutorLesson.js` — Chuyển file định dạng "tutor-lesson/v1" (lý thuyết + trắc
 - `lessons.js` — Tải file đính kèm lên Storage, trả về đường dẫn
 - `marks.js` — Câu khó học sinh tự đánh dấu (bảng question_marks): chỉ
+- `navMemory.js` — Nhớ điều hướng trong phiên: URL lọc của từng tab, vị trí cuộn từng URL, useRemembered (bộ lọc ngoài URL)
 - `outfitState.js` — Trạng thái một bộ với tài khoản hiện tại: chưa có /
 - `outfits.js` — Danh mục trang phục Panda (một nơi duy nhất). Hình vẽ từ
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
@@ -196,4 +200,4 @@
 
 
 ## `tests/`
-- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight)
+- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight), Sửa nhiều / Xóa nhiều (bulk, Supabase giả lập), nhớ điều hướng (navMemory)

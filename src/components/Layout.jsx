@@ -29,6 +29,9 @@ import { askConfirm } from '../lib/dialog.js'
 import { PandaShopProvider } from '../contexts/PandaShopContext.jsx'
 import PandaDock from './PandaDock.jsx'
 import StreakFlame from './StreakFlame.jsx'
+import ScrollMemory from './ScrollMemory.jsx'
+import { RESTORE } from './ListLink.jsx'
+import { listUrl, rememberList } from '../lib/navMemory.js'
 
 // Tham số URL của Kính thiên văn (địa điểm đang xem)
 const PLACE_PARAM = 'vu-tru'
@@ -58,7 +61,9 @@ const NAV = {
 export default function Layout() {
   const { profile, signOut } = useAuth()
   const items = NAV[profile.role] || []
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  // Trang danh sách: nhớ URL (chương, bộ lọc) cho tab menu của nó — bấm lại tab là về đúng chỗ cũ
+  rememberList(pathname, search)
   // Trong Thư viện, đổi chương chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
   const pageKey = pathname.match(/^\/(tutor|student)\/library/)?.[0] ?? pathname
 
@@ -125,11 +130,6 @@ export default function Layout() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Đổi trang thì về đầu trang
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [pathname])
-
   const content = (
     <div className="app">
       <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
@@ -174,7 +174,7 @@ export default function Layout() {
         </div>
         <nav className="nav">
           {items.map((it) => (
-            <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
+            <NavLink key={it.to} to={listUrl(it.to)} state={RESTORE} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
               <Icon name={it.icon} size={17} />
               <span>{it.label}</span>
               {it.badge && badges[it.badge] > 0 && (
@@ -202,6 +202,8 @@ export default function Layout() {
           <Mascot />
         </Suspense>
       )}
+      {/* Đổi trang thì lên đầu; Back / Forward / mở lại tab thì về đúng chỗ cũ */}
+      <ScrollMemory />
       <ScrollJump />
       <PandaDock />
       {profile.role === 'student' && <StreakFlame />}

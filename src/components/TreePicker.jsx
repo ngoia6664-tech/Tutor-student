@@ -96,8 +96,8 @@ const countLeaves = (nodes) => nodes.reduce((s, n) => s + (n.children ? countLea
  * - clearLabel: đã chọn thì hiện gọn tên + nút "Đổi" và nút xoá (chọn lại value '')
  * - top: lựa chọn đặc biệt hiện trên cùng, vd. [{ value:'', label:'— Chưa xếp chương —' }, { value:'new', label:'+ Tạo chương mới…' }]
  */
-export default function TreePicker({ label, labelExtra, nodes, value, onChange, top = [], placeholder = 'Chọn…', disabled = false, hint, searchPlaceholder = 'Tìm theo tên…', focusKey, clearLabel }) {
-  const [open, setOpen] = useState(false)
+export default function TreePicker({ label, labelExtra, nodes, value, onChange, top = [], placeholder = 'Chọn…', disabled = false, hint, searchPlaceholder = 'Tìm theo tên…', focusKey, clearLabel, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState(() => new Set())
   const boxRef = useRef(null)

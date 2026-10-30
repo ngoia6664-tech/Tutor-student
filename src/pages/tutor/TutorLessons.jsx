@@ -12,7 +12,7 @@ import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../c
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
-import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 // Bài giảng (gia sư): cây Lớp › Môn › Chuyên đề › Chương bên trái để lọc, danh sách bên phải
 export default function TutorLessons() {
@@ -21,6 +21,7 @@ export default function TutorLessons() {
   const sel = useTreeSelection()
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
+  const [moving, setMoving] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [list, chapters] = await Promise.all([
@@ -53,8 +54,11 @@ export default function TutorLessons() {
     }
   }
 
+  // Mục dùng cho chọn nhiều; file_path để xóa luôn file đính kèm
+  const itemOf = (l) => ({ kind: 'lesson', id: l.id, title: l.title, file_path: l.file_path })
+
   function renderLesson(l) {
-    const item = { kind: 'lesson', id: l.id, title: l.title }
+    const item = itemOf(l)
     return (
       <div key={l.id} className={pick.has('lesson', l.id) ? 'list-item is-picked' : 'list-item'}>
         <div className="list-item-title assign-title">
@@ -103,7 +107,7 @@ export default function TutorLessons() {
             {where && <p className="muted small page-sub">{where}</p>}
           </div>
           <div className="row">
-            <SelectToggle sel={pick} />
+            <SelectModes sel={pick} />
             <Link className="btn" to="/tutor/import">
               <Icon name="import" />
               Dán JSON
@@ -123,7 +127,28 @@ export default function TutorLessons() {
 
         {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderLesson)}</div>}
         {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderLesson} />}
-        <SelectBar sel={pick} onAssign={() => setAssigning(pick.items)} />
+        <SelectBar
+          sel={pick}
+          visible={rows.map(itemOf)}
+          onAssign={setAssigning}
+          onMove={setMoving}
+          onDelete={async (items) => {
+            if (await deletePicked(items)) {
+              pick.stop()
+              reload()
+            }
+          }}
+        />
+        {moving && (
+          <MoveDialog
+            items={moving}
+            onClose={() => setMoving(null)}
+            onSaved={(ok) => {
+              if (ok) pick.stop()
+              reload()
+            }}
+          />
+        )}
         {assigning && (
           <AssignDialog
             items={assigning}

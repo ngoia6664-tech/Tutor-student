@@ -5,6 +5,8 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import LessonView from '../../components/LessonView.jsx'
 import StudyNowButton from '../../components/StudyNowButton.jsx'
+import { listUrl } from '../../lib/navMemory.js'
+import { RESTORE } from '../../components/ListLink.jsx'
 
 export default function StudentLesson() {
   const { id } = useParams()
@@ -25,18 +27,18 @@ export default function StudentLesson() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to={fromLessons ? '/student/lessons' : '/student/library'}>{fromLessons ? '← Bài giảng' : '← Thư viện'}</Link>
+        <Link to={listUrl(fromLessons ? '/student/lessons' : '/student/library')} state={RESTORE}>{fromLessons ? '← Bài giảng' : '← Thư viện'}</Link>
       </div>
     )
 
   // Vào từ trang Bài giảng thì quay lại Bài giảng, còn lại về chương trong Thư viện
   const back = fromLessons
-    ? { to: '/student/lessons', label: '← Bài giảng' }
+    ? { to: listUrl('/student/lessons'), label: '← Bài giảng' }
     : { to: data.lesson.chapter_id ? `/student/library/${data.lesson.chapter_id}` : '/student/library', label: '← Thư viện' }
 
   return (
     <div>
-      <Link to={back.to} className="small">
+      <Link to={back.to} state={RESTORE} className="small">
         {back.label}
       </Link>
       {data.lesson.chapter_id && (

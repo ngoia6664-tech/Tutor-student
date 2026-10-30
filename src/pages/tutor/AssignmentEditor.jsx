@@ -19,6 +19,7 @@ import Markdown from '../../components/Markdown.jsx'
 import { packImages, unpackImages } from '../../lib/svg.js'
 import { EXAM_MINUTES, EXAM_PARTS, examStructure, questionLabels, viNum } from '../../lib/exam.js'
 import { ExamTimer } from '../../components/ExamParts.jsx'
+import ListLink from '../../components/ListLink.jsx'
 
 const letter = (i) => String.fromCharCode(65 + i) // A, B, C...
 const blankId = (i) => String.fromCharCode(97 + i) // a, b, c...
@@ -185,7 +186,7 @@ export default function AssignmentEditor() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/tutor/assignments">← Về danh sách bài tập</Link>
+        <ListLink to="/tutor/assignments">← Về danh sách bài tập</ListLink>
       </div>
     )
 
@@ -284,7 +285,7 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
         <h1>
           <span className="title-icon"><Icon name="assignment" /></span>{isEdit ? 'Sửa bài tập' : 'Soạn bài tập'}
         </h1>
-        <Link to="/tutor/assignments">← Danh sách</Link>
+        <ListLink to="/tutor/assignments">← Danh sách</ListLink>
       </div>
 
       {focusId && returnTo && (

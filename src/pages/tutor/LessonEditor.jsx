@@ -15,6 +15,7 @@ import { packImages, unpackImages } from '../../lib/svg.js'
 import StudentPicker from '../../components/StudentPicker.jsx'
 import Icon from '../../components/Icon.jsx'
 import { confirmNoStudents } from '../../lib/dialog.js'
+import ListLink from '../../components/ListLink.jsx'
 
 const MAX_FILE_MB = 50
 
@@ -60,7 +61,7 @@ export default function LessonEditor() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to="/tutor/lessons">← Danh sách bài giảng</Link>
+        <ListLink to="/tutor/lessons">← Danh sách bài giảng</ListLink>
       </div>
     )
   return <LessonForm key={id || 'new'} initial={data} fromImport={!!draft && !id} />
@@ -151,7 +152,7 @@ function LessonForm({ initial, fromImport }) {
         <h1>
           <span className="title-icon"><Icon name="lesson" /></span>{isEdit ? 'Sửa bài giảng' : 'Soạn bài giảng'}
         </h1>
-        <Link to="/tutor/lessons">← Danh sách</Link>
+        <ListLink to="/tutor/lessons">← Danh sách</ListLink>
       </div>
 
       {fromImport && <div className="alert alert-info">Đã nạp nội dung từ JSON. Kiểm tra lại, chọn học sinh nhận rồi bấm Lưu.</div>}

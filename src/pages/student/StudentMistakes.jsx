@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
+import { useRemembered } from '../../lib/navMemory.js'
 import { fetchStudentChapters } from '../../lib/chapters.js'
 import { gradeLocal, readMastered, writeMastered } from '../../lib/practice.js'
 import { celebrate, mascotSay } from '../../lib/celebrate.js'
@@ -26,7 +27,7 @@ const EXERCISE_FIELDS = 'id, sort_order, kind, question_md, options, assignment:
 export default function StudentMistakes() {
   const { profile } = useAuth()
   const sel = useTreeSelection()
-  const [tab, setTab] = useState('wrong') // 'wrong' | 'hard'
+  const [tab, setTab] = useRemembered('student-mistakes-tab', 'wrong', (v) => v === 'wrong' || v === 'hard') // 'wrong' | 'hard'
   const [mastered, setMastered] = useState(() => readMastered(profile.id))
   const [showMastered, setShowMastered] = useState(false)
   // Câu vừa bấm đánh dấu / bỏ đánh dấu trên trang này: { exercise_id: true | false }

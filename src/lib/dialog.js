@@ -57,6 +57,18 @@ export function confirmDelete(kind, name, message) {
   })
 }
 
+// Xóa nhiều mục một lần (Xóa nhiều): what = "3 bài giảng + 2 bài tập", "4 chương"...
+export function confirmDeleteMany(what, message) {
+  return askConfirm({
+    title: `Xóa ${what}?`,
+    message,
+    say: `Xóa một lúc ${what} đó nha, không hoàn tác được đâu. Bạn kiểm tra kỹ rồi chứ?`,
+    scene: 'delete',
+    confirmText: 'Xóa đã chọn',
+    danger: true,
+  })
+}
+
 // Chưa chọn học sinh nào mà vẫn lưu bài giảng / bài tập
 export function confirmNoStudents(kind) {
   return askConfirm({

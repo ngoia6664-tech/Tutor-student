@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { fetchStudentStats } from '../../lib/studentReport.js'
@@ -11,7 +12,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
 
 export default function TutorStudents() {
-  const [group, setGroup] = useState('all')
+  const [group, setGroup] = useRemembered('tutor-students-group', 'all', (v) => v === 'all' || GROUPS.includes(v))
   const [editing, setEditing] = useState(null) // học sinh đang sửa
 
   const { data, loading, error, reload } = useAsync(async () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -8,16 +8,20 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import { gradeLabel, keyOf, libraryUrl, sectionLabel, subjectLabel } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
-import { AssignDialog, SelectBar, SelectCheck, SelectToggle, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
-// Nội dung một chương (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài
-export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
+// Nội dung một chương (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài.
+// onChanged: báo Thư viện tải lại số bài của từng chương sau khi Sửa nhiều / Xóa nhiều
+export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onChanged }) {
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
+  const [moving, setMoving] = useState(null)
+  // Sang chương khác: thoát chế độ chọn, không mang tick cũ theo
+  useEffect(() => pick.stop(), [id]) // eslint-disable-line react-hooks/exhaustive-deps
   const { data, loading, error, reload } = useAsync(async () => {
     const [chapter, lessons, assignments] = await Promise.all([
       supabase.from('chapters').select('*').eq('id', id).maybeSingle().then(unwrap),
-      supabase.from('lessons').select('id, title, created_at, lesson_recipients(student_id)').eq('chapter_id', id).order('created_at').then(unwrap),
+      supabase.from('lessons').select('id, title, file_path, created_at, lesson_recipients(student_id)').eq('chapter_id', id).order('created_at').then(unwrap),
       supabase
         .from('assignments')
         .select('id, title, type, due_date, created_at, assignment_recipients(status)')
@@ -41,6 +45,12 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
   const { chapter, lessons, assignments } = data
   const newState = { state: { chapterId: chapter.id } }
   const [g, s, c] = [keyOf(chapter.grade), keyOf(chapter.subject), keyOf(chapter.section)]
+  const lessonItem = (l) => ({ kind: 'lesson', id: l.id, title: l.title, file_path: l.file_path })
+  const assignmentItem = (a) => ({ kind: 'assignment', id: a.id, title: a.title, submitted: a.assignment_recipients.filter((r) => r.status !== 'todo').length })
+  const changed = () => {
+    reload()
+    onChanged?.()
+  }
 
   return (
     <div className="assign-space">
@@ -62,7 +72,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
             <Icon name="plus" />
             Bài tập
           </Link>
-          {lessons.length + assignments.length > 0 && <SelectToggle sel={pick} />}
+          {lessons.length + assignments.length > 0 && <SelectModes sel={pick} />}
           {onEdit && (
             <button type="button" className="btn btn-small" onClick={() => onEdit(chapter)}>
               <Icon name="edit" />
@@ -86,7 +96,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
       ) : (
         <div className="list" style={{ marginBottom: '1.25rem' }}>
           {lessons.map((l) => {
-            const item = { kind: 'lesson', id: l.id, title: l.title }
+            const item = lessonItem(l)
             return (
               <div key={l.id} className={pick.has('lesson', l.id) ? 'list-item is-picked' : 'list-item'}>
                 <div className="list-item-title assign-title">
@@ -113,7 +123,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
           {assignments.map((a) => {
             const cnt = { todo: 0, done: 0, checked: 0 }
             a.assignment_recipients.forEach((r) => (cnt[r.status] += 1))
-            const item = { kind: 'assignment', id: a.id, title: a.title }
+            const item = assignmentItem(a)
             return (
               <div key={a.id} className={pick.has('assignment', a.id) ? 'list-item is-picked' : 'list-item'}>
                 <div className="list-item-title assign-title">
@@ -139,7 +149,28 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete }) {
         </div>
       )}
 
-      <SelectBar sel={pick} onAssign={() => setAssigning(pick.items)} />
+      <SelectBar
+        sel={pick}
+        visible={[...lessons.map(lessonItem), ...assignments.map(assignmentItem)]}
+        onAssign={setAssigning}
+        onMove={setMoving}
+        onDelete={async (items) => {
+          if (await deletePicked(items)) {
+            pick.stop()
+            changed()
+          }
+        }}
+      />
+      {moving && (
+        <MoveDialog
+          items={moving}
+          onClose={() => setMoving(null)}
+          onSaved={(ok) => {
+            if (ok) pick.stop()
+            changed()
+          }}
+        />
+      )}
       {assigning && (
         <AssignDialog
           items={assigning}
