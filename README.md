@@ -21,7 +21,7 @@ Công nghệ: React + Vite (JavaScript), React Router, Supabase (Auth, PostgreSQ
 ├── vercel.json               # cho Vercel trả index.html với mọi đường dẫn (SPA)
 ├── vite.config.js
 ├── public/
-│   └── favicon.svg
+│   └── favicon.png, apple-touch-icon.png, icon-*.png, logo-dark/light.webp
 ├── supabase/
 │   └── schema.sql            # bảng + RLS + trigger + hàm + Storage (chạy trong SQL Editor)
 └── src/
