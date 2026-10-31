@@ -28,7 +28,13 @@
   --warn-soft: rgba(251, 191, 36, 0.13);
   --aura-1: rgba(124, 58, 237, 0.28);
   --aura-2: rgba(219, 39, 119, 0.2);
-  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --glow-big: 0 12px 40px -6px rgba(217, 70, 239, 0.8);
+  --reward: #fcd34d; /* vàng sao: chỉ dùng cho thứ "kiếm được" (Xu, Sao, chuỗi) */
+  --reward-2: #f59e0b;
+  --reward-soft: rgba(252, 211, 77, 0.14);
+  --on-reward: #3b2300;
+  --edge-p: #7e22ce; /* đáy nút chính (phím nổi) */
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px -14px rgba(0, 0, 0, 0.65);
   --focus: rgba(192, 132, 252, 0.6);
   --skeleton: rgba(255, 255, 255, 0.06);
   --topbar-bg: rgba(12, 10, 29, 0.96); /* nền header khi đã cuộn (đủ che chữ phía dưới); không làm mờ nền để nhẹ máy */
@@ -60,7 +66,13 @@
   --warn-soft: rgba(161, 98, 7, 0.1);
   --aura-1: rgba(124, 58, 237, 0.12);
   --aura-2: rgba(219, 39, 119, 0.08);
-  --shadow: 0 10px 30px -14px rgba(60, 30, 120, 0.25);
+  --glow-big: 0 12px 34px -8px rgba(192, 38, 211, 0.7);
+  --reward: #d97706;
+  --reward-2: #b45309;
+  --reward-soft: rgba(217, 119, 6, 0.12);
+  --on-reward: #ffffff;
+  --edge-p: #5b21b6;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 4px rgba(60, 30, 120, 0.06), 0 14px 32px -16px rgba(60, 30, 120, 0.28);
   --focus: rgba(124, 58, 237, 0.45);
   --skeleton: rgba(60, 30, 120, 0.07);
   --topbar-bg: rgba(245, 243, 255, 0.96);
@@ -68,9 +80,15 @@
 }
 
 :root {
-  --radius: 16px;
-  --radius-sm: 10px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --r-btn: 10px; /* kiểu "phím nổi": góc vuông mềm, nút có đáy dày (--lift) */
+  --r-chip: 10px;
+  --r-badge: 6px;
+  --lift: 4px;
+  --edge-n: var(--border-strong); /* đáy nút thường */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Cửa hàng Panda: sân khấu thử đồ luôn tối như tủ kính trưng bày (cả 2 theme) */
   --shop-stage: #120c2a;
   --shop-stage-2: #24124a;

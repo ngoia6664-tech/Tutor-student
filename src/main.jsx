@@ -8,6 +8,9 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import App from './App.jsx'
 import SpaceBackdrop from './components/SpaceBackdrop.jsx'
+import { installPressFx } from './lib/pressFx.js'
+
+installPressFx()
 
 // Service worker (cài app lên màn hình chính). Chỉ bản build, để lúc dev không bị dùng file cũ
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

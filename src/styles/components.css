@@ -3,6 +3,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  border-bottom-width: 3px; /* đáy dày như phím nổi */
   padding: 1.05rem 1.2rem;
   margin-bottom: 1rem;
   box-shadow: var(--shadow);
@@ -13,20 +14,39 @@
   gap: 0.65rem;
 }
 .list-item {
+  position: relative;
   display: block;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-bottom-width: 3px;
   border-radius: var(--radius);
   padding: 0.9rem 1.05rem;
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow);
-  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  transition: transform 0.3s var(--ease), border-color 0.2s var(--ease), box-shadow 0.3s var(--ease);
+}
+/* Viền chuyển màu tím – hồng hiện ra khi rê chuột */
+a.list-item::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px -3px;
+  padding: 1px 1px 3px;
+  border-radius: inherit;
+  background: var(--grad);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+a.list-item:hover::before {
+  opacity: 1;
 }
 a.list-item:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow), 0 12px 30px -16px rgba(217, 70, 239, 0.5);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow), 0 18px 36px -18px rgba(217, 70, 239, 0.55);
 }
 a.list-item:active {
   transform: translateY(0) scale(0.995);
@@ -64,7 +84,7 @@ a.list-item:active {
   font-size: 0.78rem;
   font-weight: 500;
   padding: 0.12rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--r-badge);
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--muted);
@@ -96,14 +116,16 @@ a.list-item:active {
   color: var(--muted);
 }
 
-/* ===== Nút: dạng viên thuốc, nút chính chuyển màu tím – hồng có quầng sáng ===== */
+/* ===== Nút "phím nổi": góc 10px, đáy dày (--lift) như phím cơ; rê chuột thì nhô lên, nhấn thì lún.
+   Nút chính chuyển màu tím – hồng có quầng sáng và vệt sáng quét ngang ===== */
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   padding: 0.5rem 1.1rem;
-  border-radius: 999px;
+  border-radius: var(--r-btn);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--text);
@@ -113,16 +135,35 @@ a.list-item:active {
   cursor: pointer;
   text-decoration: none;
   min-height: 42px;
-  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), border-color 0.18s var(--ease),
+  box-shadow: 0 var(--lift) 0 var(--edge-n);
+  transition: transform 0.45s var(--spring), box-shadow 0.25s var(--ease), border-color 0.18s var(--ease),
     background-color 0.18s var(--ease), filter 0.18s;
   -webkit-tap-highlight-color: transparent;
 }
+/* Vệt sáng tại điểm chạm: lib/pressFx.js ghi --px/--py, :active bật lên rồi mờ dần khi thả tay */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(168, 85, 247, 0.3), transparent 60%);
+  transition: opacity 0.5s var(--ease);
+}
+.btn:active:not(:disabled)::before {
+  opacity: 1;
+  transition: none;
+}
 .btn:hover:not(:disabled) {
+  --lift: 5px;
   border-color: var(--primary);
   transform: translateY(-1px);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
+  --lift: 0px;
+  transform: translateY(4px);
+  transition-duration: 0.08s;
 }
 .btn:disabled {
   opacity: 0.5;
@@ -132,12 +173,48 @@ a.list-item:active {
   background: var(--grad);
   border-color: transparent;
   color: var(--on-primary);
-  box-shadow: var(--glow);
+  box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow);
+}
+.btn-primary::before {
+  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, 0.45), transparent 60%);
 }
 .btn-primary:hover:not(:disabled) {
   border-color: transparent;
   filter: brightness(1.08) saturate(1.05);
-  box-shadow: 0 12px 34px -8px rgba(217, 70, 239, 0.7);
+  box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow-big);
+}
+/* Vệt sáng quét ngang khi rê chuột (dịch nền thay vì dịch phần tử nên không cần overflow: hidden) */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 100% 0;
+}
+.btn-primary:hover:not(:disabled)::after {
+  background-position: 0 0;
+  transition: background-position 0.7s var(--ease);
+}
+/* Nút hành động chính đang chờ (vd. Nộp bài): quầng sáng "thở" */
+.btn-breathe:not(:disabled) {
+  animation: btn-breathe 2.8s ease-in-out infinite;
+}
+@keyframes btn-breathe {
+  0%,
+  100% {
+    box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow);
+  }
+  50% {
+    box-shadow: 0 var(--lift) 0 var(--edge-p), 0 10px 44px -4px rgba(236, 72, 153, 0.85);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-breathe:not(:disabled) {
+    animation: none;
+  }
 }
 .btn-danger {
   color: var(--danger);
@@ -146,6 +223,7 @@ a.list-item:active {
   border-color: var(--danger);
 }
 .btn-ghost {
+  --edge-n: transparent;
   background: transparent;
 }
 .btn-small {
@@ -168,7 +246,7 @@ a.list-item:active {
 }
 .chip {
   padding: 0.3rem 0.9rem;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--text);
@@ -187,7 +265,7 @@ a.list-item:active {
   background: var(--grad);
   color: var(--on-primary);
   border-color: transparent;
-  box-shadow: var(--glow);
+  box-shadow: 0 3px 0 var(--edge-p), var(--glow);
 }
 /* Lối tắt tới cấp con trong thẻ Lớp / Môn / Chuyên đề */
 .list-item .chips {
@@ -252,7 +330,7 @@ a.chip {
 select.chapter-filter {
   width: auto;
   max-width: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   padding: 0.3rem 2rem 0.3rem 0.9rem;
   font-size: 0.9rem;
   border-color: var(--border-strong);

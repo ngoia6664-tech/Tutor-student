@@ -185,7 +185,7 @@ export default function SubmitPanel({ assignmentId, studentId, exercises, answer
       <ErrorBox message={error} />
       {progress && <div className="alert alert-info">{progress}</div>}
 
-      <button type="button" className="btn btn-primary btn-block btn-big" disabled={busy} onClick={() => submit()}>
+      <button type="button" className="btn btn-primary btn-block btn-big btn-breathe" disabled={busy} onClick={() => submit()}>
         <Icon name="send" />
         {busy ? 'Đang nộp...' : 'Nộp bài'}
       </button>

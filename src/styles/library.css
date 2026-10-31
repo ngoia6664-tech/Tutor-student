@@ -217,7 +217,7 @@
 }
 .grade-tab {
   padding: 0.3rem 0.8rem;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--text);

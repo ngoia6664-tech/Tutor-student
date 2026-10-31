@@ -61,7 +61,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Logo: ảnh /favicon.png (gấu trong đĩa bay) */
+/* Logo: icon app /app-icon.svg (chữ DA), tự bo góc */
 .brand-mark {
   flex-shrink: 0;
   width: 32px;
@@ -107,7 +107,7 @@
 .nav-link {
   position: relative;
   padding: 0.38rem 0.95rem;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   border: 1px solid transparent;
   text-decoration: none;
   color: var(--muted);

@@ -146,6 +146,7 @@
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
 - `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
 - `pandaShop.js` — Xu / Sao / Chuỗi / trang phục: số thật ở Supabase (sổ cái
+- `pressFx.js` — Hiệu ứng chạm nút: ghi điểm chạm vào --px/--py cho vệt sáng `.btn::before` (cài ở main.jsx)
 - `practice.js` — Chấm ngay trên máy khi học sinh ôn lại câu sai (không lưu
 - `recipients.js` — Giao nhanh bài giảng / bài tập cho học sinh ngay từ danh sá
 - `reports.js` — Sự kiện báo thanh menu cập nhật số câu bị báo lỗi đa
