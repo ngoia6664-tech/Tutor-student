@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Study with Duy Anh"><defs>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0f2fe"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+  <linearGradient id="saucer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9a4ff"/><stop offset="1" stop-color="#6d4bd8"/></linearGradient>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a36a8"/><stop offset="1" stop-color="#140f35"/></linearGradient></defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <path d="M11 8.8Q11 12 14.2 12Q11 12 11 15.2Q11 12 7.8 12Q11 12 11 8.8Z" fill="#fff"/><path d="M54 50.4Q54 53 56.6 53Q54 53 54 55.6Q54 53 51.4 53Q54 53 54 50.4Z" fill="#f9a8d4"/>
+  <g transform="translate(0 2)">
+  <path d="M14 36Q32 50 50 36Z" fill="#5b3fd0" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M16 33A16 16 0 0 1 48 33Z" fill="url(#glass)"/>
+  <circle cx="25.8" cy="20.6" r="2.8" fill="#1e1838"/><circle cx="38.2" cy="20.6" r="2.8" fill="#1e1838"/>
+  <circle cx="32" cy="26.5" r="8" fill="#fff" stroke="#1e1838" stroke-width=".7"/>
+  <ellipse cx="28.7" cy="26.2" rx="2.2" ry="2.8" transform="rotate(25 28.7 26.2)" fill="#1e1838"/>
+  <ellipse cx="35.3" cy="26.2" rx="2.2" ry="2.8" transform="rotate(-25 35.3 26.2)" fill="#1e1838"/>
+  <circle cx="29" cy="25.7" r=".85" fill="#fff"/><circle cx="35" cy="25.7" r=".85" fill="#fff"/>
+  <ellipse cx="32" cy="29.1" rx="1.2" ry=".85" fill="#1e1838"/>
+  <path d="M30.9 30.6Q32 31.7 33.1 30.6" fill="none" stroke="#1e1838" stroke-width=".7" stroke-linecap="round"/>
+  <circle cx="26.3" cy="29.6" r="1.3" fill="#f9a8d4"/><circle cx="37.7" cy="29.6" r="1.3" fill="#f9a8d4"/>
+  <path d="M16 33A16 16 0 0 1 48 33" fill="none" stroke="#fff" stroke-width="1.5"/>
+  <path d="M20.6 26.5A12 12 0 0 1 26.5 19.6" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.4" stroke-linecap="round"/>
+  <ellipse cx="32" cy="35" rx="24" ry="6" fill="url(#saucer)" stroke="#fff" stroke-width="1.5"/>
+  <ellipse cx="26.6" cy="32.4" rx="2.5" ry="1.7" fill="#1e1838"/><ellipse cx="37.4" cy="32.4" rx="2.5" ry="1.7" fill="#1e1838"/>
+  <circle cx="17.5" cy="35.4" r="1.4" fill="#f9a8d4"/><circle cx="24.6" cy="37.2" r="1.4" fill="#7dd3fc"/>
+  <circle cx="32" cy="37.8" r="1.4" fill="#fff"/><circle cx="39.4" cy="37.2" r="1.4" fill="#7dd3fc"/>
+  <circle cx="46.5" cy="35.4" r="1.4" fill="#f9a8d4"/></g></svg>

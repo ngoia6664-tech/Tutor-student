@@ -135,7 +135,7 @@ export default function Layout() {
       <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="topbar-inner">
           <span className="brand">
-            <img className="brand-mark" src="/favicon.png" alt="" /> <span className="brand-text">Study with Duy Anh</span>
+            <img className="brand-mark" src="/app-icon.svg" alt="" /> <span className="brand-text">Study with Duy Anh</span>
           </span>
           <div className="topbar-user">
             <span className="user-name" title={profile.full_name}>

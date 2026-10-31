@@ -33,8 +33,8 @@ export default function Login() {
       <ThemeToggle className="login-theme" />
       <form className="card login-card" onSubmit={handleSubmit}>
         <h1 className="login-logo">
-          <img className="logo-dark" src="/logo-dark.webp" alt="Study with Duy Anh" />
-          <img className="logo-light" src="/logo-light.webp" alt="Study with Duy Anh" />
+          <img className="logo-dark" src="/logo-dark.svg" alt="Study with Duy Anh" />
+          <img className="logo-light" src="/logo-light.svg" alt="Study with Duy Anh" />
         </h1>
         <p className="muted">Đăng nhập bằng tài khoản được gia sư cấp.</p>
 
