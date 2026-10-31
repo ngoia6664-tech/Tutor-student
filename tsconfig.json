@@ -1,0 +1,20 @@
+{
+  // Kiểm tra kiểu cả file .js/.jsx hiện có (checkJs); file mới có thể viết .ts/.tsx. Vite tự build, tsc chỉ kiểm tra.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "tests", "vite.config.js"]
+}

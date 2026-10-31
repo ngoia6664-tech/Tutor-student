@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useLayoutEffect, useRef, useState } from 'react'
 import OutfitPanda from '../panda/OutfitPanda.jsx'
 import { useHold, usePandaAct } from '../panda/PandaAct.jsx'

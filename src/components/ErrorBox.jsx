@@ -1,4 +1,5 @@
 import Icon from './Icon.jsx'
+/** @param {{ message?: string | null, onRetry?: () => void, children?: import('react').ReactNode }} props */
 export default function ErrorBox({ message, onRetry, children }) {
   if (!message) return null
   return (

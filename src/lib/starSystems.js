@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 // Nội dung các hệ sao ngoài Hệ Mặt Trời trong Kính thiên văn — hiển thị Y HỆT Hệ Mặt Trời (SpaceExplorer):
 // cảnh 3D kéo xoay / phóng to (components/telescope/AltSolar.jsx, cùng class .solar-* của nền), bấm thiên thể thì gấu giải thích.
 // Danh sách địa điểm + ngưỡng Sao ở lib/telescope.js; file này chỉ chứa địa điểm đã làm xong.

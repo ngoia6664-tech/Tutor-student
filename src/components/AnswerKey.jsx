@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { Fragment, useState } from 'react'
 import Markdown from './Markdown.jsx'
 import ExerciseBody, { KIND_LABEL } from './ExerciseBody.jsx'

@@ -22,7 +22,7 @@ export function daysUntil(d) {
   if (!date) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  return Math.round((date - today) / 86400000)
+  return Math.round((date.getTime() - today.getTime()) / 86400000)
 }
 
 export function dueInfo(d) {

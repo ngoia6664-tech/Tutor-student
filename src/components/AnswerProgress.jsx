@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useRef, useState } from 'react'
 import { isAnswered } from './ExerciseBody.jsx'
 import Icon from './Icon.jsx'

@@ -1,7 +1,8 @@
 # Gia sư Vật lý — bản đồ dự án cho Claude
 
 React 19 + Vite 8 + react-router 7, backend Supabase (Postgres + RLS + Storage), deploy Vercel (SPA).
-Markdown + KaTeX cho nội dung. Không có linter. Kiểm tra: `npm run build` + `npm test` (Vitest, `tests/*.test.js`: logic thuần trong `src/lib`).
+Markdown + KaTeX cho nội dung. Không có linter. Kiểm tra: `npm run build` + `npm test` (Vitest, `tests/*.test.js`: logic thuần trong `src/lib`) + `npm run typecheck` (tsc, `checkJs`: kiểm tra kiểu cả file .js/.jsx).
+TypeScript: file mới có thể viết `.ts/.tsx`; kiểu props/tham số trong .js dùng JSDoc (`/** @param {{...}} props */`). File có dòng đầu `// @ts-nocheck` là nợ kiểu: sửa file nào thì xóa dòng đó và sửa cho `typecheck` sạch.
 Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao diện điện thoại.
 
 ## ⚠️ BẮT ĐẦU MỖI PHIÊN / MỖI YÊU CẦU: đọc `AI/CLAUDE/FILE_MAP.md` trước (bắt buộc)

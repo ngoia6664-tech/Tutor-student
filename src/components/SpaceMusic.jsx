@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useRef } from 'react'
 import { canPlayNow, getMusicChoice, registerExternalMusic, setExternalPlaying } from '../lib/spaceSound.js'
 

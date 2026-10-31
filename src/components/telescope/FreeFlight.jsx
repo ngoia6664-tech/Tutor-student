@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon.jsx'
 import { buildWorld, coinSpots, ENGINE, hasFlightCoins, SHIP_SCALE, escapeSpeed, gravity, heatLevel, predict, startShip, step, strongest, V_MAX } from '../../lib/flight.js'

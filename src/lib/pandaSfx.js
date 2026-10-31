@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { getSettings, subscribeSettings } from './settings.js'
 
 // ===== Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), tổng hợp bằng Web Audio, không cần file =====

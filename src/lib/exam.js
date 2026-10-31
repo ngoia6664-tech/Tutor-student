@@ -26,7 +26,7 @@ export function clockText(totalSeconds) {
 // Thời gian làm bài thực tế (phút, làm tròn lên) từ lúc bắt đầu đến lúc nộp
 export function minutesUsed(startedAt, submittedAt) {
   if (!startedAt || !submittedAt) return null
-  return Math.max(0, Math.ceil((new Date(submittedAt) - new Date(startedAt)) / 60000))
+  return Math.max(0, Math.ceil((new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 60000))
 }
 
 // Điểm tối đa của một câu trong đề thi

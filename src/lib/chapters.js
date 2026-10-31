@@ -90,6 +90,7 @@ const norm = (v) => (v || '').toString().trim().toLowerCase()
 
 // Tìm chương khớp file nhập: đúng tên + lớp + môn; không có thì chương cũ cùng tên chưa ghi lớp/môn
 // (giống hàm ensure_chapter trên CSDL)
+/** @param {any[]} chapters @param {{ title?: string, grade?: number | null, subject?: string | null }} [opts] */
 export function findChapter(chapters, { title, grade = null, subject = null } = {}) {
   const t = norm(title)
   if (!t) return null

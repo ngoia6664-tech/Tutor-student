@@ -12,6 +12,7 @@ const MAX_SCROLL = 60 // số URL nhớ vị trí cuộn tối đa (cũ nhất b
 const IGNORED_PARAMS = ['vu-tru']
 
 // Trang danh sách → tab menu chứa nó. Chỉ những trang này được nhớ URL cho tab.
+/** @type {[string, RegExp][]} */
 const LIST_ROUTES = [
   ['/tutor', /^\/tutor\/?$/],
   ['/tutor/library', /^\/tutor\/library(\/[^/]+)?\/?$/],

@@ -1,6 +1,7 @@
 // Trạng thái đang tải.
 // - Cả màn hình (full) hoặc có chữ (text): vòng xoay + chữ.
 // - Mặc định trong trang: khung xương mờ đúng dáng danh sách, đỡ cảm giác "nháy".
+/** @param {{ text?: string, full?: boolean, rows?: number }} props */
 export default function Loading({ text, full = false, rows = 3 }) {
   if (full || text) {
     return (

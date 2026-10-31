@@ -54,6 +54,7 @@ function toRgb(c) {
 const MIN_L = 0.72
 const MAX_L = 0.2
 
+/** @param {number[]} rgb @param {(l: number) => number} pick */
 function withLightness([r, g, b], pick) {
   r /= 255
   g /= 255

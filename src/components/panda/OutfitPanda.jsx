@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { memo, useEffect, useRef } from 'react'
 import { FrontPanda } from '../PandaArt.jsx'
 import { prefersReducedMotion, useSettings } from '../../lib/settings.js'

@@ -1,3 +1,4 @@
+// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { supabase, unwrap } from './supabase.js'
 import { removeSubmissionFiles } from './assignments.js'
 

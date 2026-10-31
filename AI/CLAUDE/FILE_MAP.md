@@ -7,6 +7,7 @@
 - `CURRENT_STATE.md` — trạng thái hiện tại, việc đang làm, lỗi đã biết
 - `AI/CLAUDE/` — FEATURES (chi tiết tính năng), HANDOFF (ghi chú ca), ROLE, SFX_PL
 - `supabase/schema.sql` — toàn bộ CSDL: bảng, RLS, hàm RPC, kinh tế Xu/Sao/Chuỗi, Stor
+- `tsconfig.json` — tsc chỉ kiểm tra kiểu (`npm run typecheck`, allowJs + checkJs, không strict); Vite vẫn tự build
 - `src/` — mã ứng dụng (danh sách dưới)
 
 ## `src/pages/`
