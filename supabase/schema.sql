@@ -2123,6 +2123,42 @@ begin
 end;
 $$;
 
+-- Gia sư đặt lại chuỗi cho một học sinh (khôi phục sau khi mất chuỗi do đổi CSDL). Không cộng thưởng / mốc.
+-- Chuỗi tính tới hết hôm qua: hôm nay học sinh làm Ôn tập xong thì +1 như thường (hoặc giữ nguyên nếu đã xong hôm nay).
+-- p_longest trống = giữ kỷ lục cũ (nếu thấp hơn chuỗi mới thì lấy chuỗi mới).
+-- TẠM THỜI: dùng xong khôi phục thì có thể xóa hàm này (và 2 dòng revoke/grant ở dưới).
+create or replace function public.tutor_set_streak(p_student uuid, p_current int, p_longest int default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_today date := econ_today();
+  s student_streaks;
+begin
+  if not is_tutor() then
+    raise exception 'Chỉ gia sư được sửa chuỗi';
+  end if;
+  if not exists (select 1 from profiles where id = p_student and role = 'student') then
+    raise exception 'Không tìm thấy học sinh';
+  end if;
+  if p_current is null or p_current < 0 or p_current > 5000 or coalesce(p_longest, 0) < 0 or coalesce(p_longest, 0) > 5000 then
+    raise exception 'Chuỗi phải từ 0 đến 5000 ngày';
+  end if;
+  perform econ_lock(p_student);
+  insert into student_streaks (student_id) values (p_student) on conflict (student_id) do nothing;
+  update student_streaks
+     set current_streak = p_current,
+         longest_streak = greatest(coalesce(p_longest, longest_streak), p_current),
+         settled_through = greatest(coalesce(settled_through, v_today - 1), v_today - 1),
+         miss_run = 0, updated_at = now()
+   where student_id = p_student
+  returning * into s;
+  return jsonb_build_object('current', s.current_streak, 'longest', s.longest_streak);
+end;
+$$;
+
 -- Mua trang phục: máy chủ quyết định giá (econ_cfg.outfit_prices), mỗi bộ chỉ mua được một lần.
 create or replace function public.buy_outfit(p_outfit_id text)
 returns jsonb
@@ -2289,6 +2325,7 @@ revoke all on function public.mark_rewards_seen(bigint) from public, anon;
 revoke all on function public.get_daily_review() from public, anon;
 revoke all on function public.answer_daily_review(uuid, jsonb) from public, anon;
 revoke all on function public.buy_streak_shield(uuid) from public, anon;
+revoke all on function public.tutor_set_streak(uuid, int, int) from public, anon;
 revoke all on function public.buy_outfit(text) from public, anon;
 revoke all on function public.equip_outfit(text) from public, anon;
 revoke all on function public.get_flight_coins(text) from public, anon;
@@ -2298,6 +2335,7 @@ grant execute on function public.mark_rewards_seen(bigint) to authenticated;
 grant execute on function public.get_daily_review() to authenticated;
 grant execute on function public.answer_daily_review(uuid, jsonb) to authenticated;
 grant execute on function public.buy_streak_shield(uuid) to authenticated;
+grant execute on function public.tutor_set_streak(uuid, int, int) to authenticated;
 grant execute on function public.buy_outfit(text) to authenticated;
 grant execute on function public.equip_outfit(text) to authenticated;
 grant execute on function public.get_flight_coins(text) to authenticated;

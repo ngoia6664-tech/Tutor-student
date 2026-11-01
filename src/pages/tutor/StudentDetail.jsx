@@ -12,6 +12,9 @@ import Icon from '../../components/Icon.jsx'
 import ScoreChart from '../../components/ScoreChart.jsx'
 import { inChapter, NO_CHAPTER, toPoints } from '../../lib/scoreChart.js'
 import { EditStudent } from './TutorStudents.jsx'
+import { fetchStreak, setStreak } from '../../lib/streakBackup.js'
+import { notifyDone, notifyError } from '../../lib/dialog.js'
+import { errMsg } from '../../lib/errors.js'
 
 const FILTERS = [
   { key: 'all', label: 'Tất cả' },
@@ -33,13 +36,14 @@ export default function StudentDetail() {
   const setChapter = (cid) => setParams(cid ? { chuong: cid } : {}, { replace: true })
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [report, chapters, study] = await Promise.all([
+    const [report, chapters, study, streak] = await Promise.all([
       fetchStudentReport(id),
       fetchChapters(),
+      fetchStreak(id).catch(() => null), // chưa chạy schema.sql / lỗi mạng: ẩn khối chuỗi, không chặn trang
       // Chương đang học (học sinh tự đánh dấu / bài tập đang làm). Chưa chạy lại schema.sql thì bỏ qua
       supabase.from('profiles').select('study_chapter_id, study_chapter_at').eq('id', id).maybeSingle().then(({ data }) => data),
     ])
-    return { ...report, study, chapterById: new Map(chapters.map((c) => [c.id, c])) }
+    return { ...report, study, streak, chapterById: new Map(chapters.map((c) => [c.id, c])) }
   }, [id])
 
   if (loading && !data) return <Loading />
@@ -51,7 +55,7 @@ export default function StudentDetail() {
       </div>
     )
 
-  const { student: s, assignments, lessons, summary: sum, chapterById, study } = data
+  const { student: s, assignments, lessons, summary: sum, chapterById, study, streak } = data
   const studyChapter = study?.study_chapter_id ? chapterById.get(study.study_chapter_id) : null
   const chapterName = (cid) => chapterById.get(cid)?.title || ''
   const inCh = assignments.filter((r) => inChapter(r.assignment.chapter_id, chapter))
@@ -119,6 +123,8 @@ export default function StudentDetail() {
         />
         <Stat label="Bài giảng" value={sum.lessons} note="đã giao" />
       </div>
+
+      {streak && <StreakEdit studentId={id} streak={streak} onSaved={reload} />}
 
       <ScoreChart
         points={toPoints(assignments, { linkOf: (aid) => `/tutor/assignments/${aid}?hs=${id}`, chapterOf: (r) => chapterName(r.assignment.chapter_id) })}
@@ -200,6 +206,69 @@ export default function StudentDetail() {
             ))}
           </div>
         ))}
+    </div>
+  )
+}
+
+// Chuỗi 🔥 của học sinh + sửa tay (khôi phục sau khi mất chuỗi; xem lib/streakBackup.js, tạm thời)
+/** @param {{ studentId: string, streak: { current: number, longest: number }, onSaved: () => void }} props */
+function StreakEdit({ studentId, streak, onSaved }) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const save = async (e) => {
+    e.preventDefault()
+    const n = Number(value)
+    if (value.trim() === '' || !Number.isInteger(n) || n < 0 || n > 5000) {
+      notifyError('Chuỗi không hợp lệ', 'Nhập số ngày nguyên từ 0 đến 5000.')
+      return
+    }
+    setSaving(true)
+    try {
+      await setStreak(studentId, n)
+      setEditing(false)
+      onSaved()
+      notifyDone({ title: 'Đã sửa chuỗi', message: `Chuỗi hiện tại: ${n} ngày.` })
+    } catch (err) {
+      notifyError('Chưa sửa được chuỗi', errMsg(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="card" style={{ margin: '0.75rem 0' }}>
+      <div className="row" style={{ alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ flex: 1 }}>
+          <b>🔥 Chuỗi Ôn tập: {streak.current} ngày</b>
+          <div className="small muted">Dài nhất: {streak.longest} ngày</div>
+        </div>
+        {!editing && (
+          <button
+            type="button"
+            className="btn btn-small"
+            onClick={() => {
+              setValue(String(streak.current))
+              setEditing(true)
+            }}
+          >
+            <Icon name="edit" /> Sửa chuỗi
+          </button>
+        )}
+      </div>
+      {editing && (
+        <form onSubmit={save} className="row" style={{ marginTop: '0.6rem', alignItems: 'center' }}>
+          <input type="number" min="0" max="5000" inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Số ngày chuỗi" style={{ width: '6rem' }} />
+          <span className="small muted">ngày (tính tới hết hôm qua)</span>
+          <button type="submit" className="btn btn-primary btn-small" disabled={saving}>
+            {saving ? 'Đang lưu…' : 'Lưu'}
+          </button>
+          <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing(false)} disabled={saving}>
+            Hủy
+          </button>
+        </form>
+      )}
     </div>
   )
 }

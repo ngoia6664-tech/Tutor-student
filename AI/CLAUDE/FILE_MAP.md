@@ -165,6 +165,7 @@
 - `studyLock.js` — "Đang làm bài": trang làm bài chưa nộp đang mở. Khi đó kh
 - `studyNow.js` — Chương "đang học" của học sinh: lưu trên máy chủ (profil
 - `submissions.js` — Lấy danh sách ảnh bài nộp trong thư mục <student_id>/<assig
+- `streakBackup.js` — TẠM THỜI: gia sư sao lưu (tải JSON) / khôi phục / sửa chuỗi 🔥 học sinh qua RPC `tutor_set_streak`; dùng ở StudentDetail (Sửa chuỗi) + TutorStudents (Sao lưu / Khôi phục chuỗi); có test
 - `supabase.js` — Đọc key từ biến môi trường (file .env), không hardcode
 - `flight.js` — Vật lý bay tự do (Kính thiên văn): khối lượng thiên thể, trọng lực, động cơ giới hạn, viền vùng bay, vị trí Xu, va chạm, dự đoán đường bay
 - `landscape.js` — Điện thoại khi bay tự do: toàn màn hình + khoá xoay ngang (Android), hằng số media query màn dọc

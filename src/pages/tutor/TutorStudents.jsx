@@ -7,6 +7,8 @@ import { viNum } from '../../lib/exam.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
 import { fetchStudents, GROUPS } from '../../lib/students.js'
+import { buildBackup, downloadBackup, fetchStreaks, parseBackup, restoreStreaks } from '../../lib/streakBackup.js'
+import { askConfirm, notifyDone, notifyError } from '../../lib/dialog.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -16,8 +18,12 @@ export default function TutorStudents() {
   const [editing, setEditing] = useState(null) // học sinh đang sửa
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [students, stats] = await Promise.all([fetchStudents(), fetchStudentStats()])
-    return { students, stats }
+    const [students, stats, streaks] = await Promise.all([
+      fetchStudents(),
+      fetchStudentStats(),
+      fetchStreaks().catch(() => []), // chưa chạy schema.sql / lỗi mạng: cột chuỗi hiện "—", không chặn danh sách
+    ])
+    return { students, stats, streakById: new Map(streaks.map((r) => [r.student_id, r.current_streak])) }
   }, [])
 
   const students = data?.students || []
@@ -28,6 +34,7 @@ export default function TutorStudents() {
       <div className="page-head">
         <h1>
           <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}</h1>
+        {data && <StreakBackupButtons students={students} onRestored={reload} />}
       </div>
 
       <div className="chips" style={{ marginBottom: '1rem' }}>
@@ -76,6 +83,7 @@ export default function TutorStudents() {
                 <th>Chưa nộp</th>
                 <th>Chờ chấm</th>
                 <th>Điểm TB</th>
+                <th>Chuỗi 🔥</th>
                 <th></th>
               </tr>
             </thead>
@@ -102,6 +110,7 @@ export default function TutorStudents() {
                     </td>
                     <td data-label="Chờ chấm">{st.done ? <span className="badge badge-primary">{st.done}</span> : 0}</td>
                     <td data-label="Điểm TB">{st.avg === null ? '—' : <strong>{viNum(st.avg)}</strong>}</td>
+                    <td data-label="Chuỗi 🔥">{data.streakById.has(s.id) ? `${data.streakById.get(s.id)} ngày` : '—'}</td>
                     <td>
                       <div className="row" style={{ flexWrap: 'nowrap', gap: '0.4rem' }}>
                         <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
@@ -126,6 +135,59 @@ export default function TutorStudents() {
 }
 
 // Sửa tên, nhóm, lớp, môn của học sinh
+// Sao lưu / khôi phục chuỗi 🔥 của mọi học sinh ra file JSON (tạm thời, xem lib/streakBackup.js): tải về trước khi đổi CSDL
+/** @param {{ students: { id: string, full_name?: string | null }[], onRestored: () => void }} props */
+function StreakBackupButtons({ students, onRestored }) {
+  const [busy, setBusy] = useState(false)
+
+  const backup = async () => {
+    setBusy(true)
+    try {
+      downloadBackup(buildBackup(students, await fetchStreaks()))
+      notifyDone({ title: 'Đã tải file sao lưu chuỗi', message: 'Hãy giữ file này trước khi đổi cơ sở dữ liệu.' })
+    } catch (err) {
+      notifyError('Chưa sao lưu được chuỗi', errMsg(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const restore = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // chọn lại cùng file vẫn kích hoạt
+    if (!file) return
+    setBusy(true)
+    try {
+      const rows = parseBackup(await file.text())
+      const ok = await askConfirm({
+        title: 'Khôi phục chuỗi từ file?',
+        message: `Đặt lại chuỗi của ${rows.length} học sinh theo file. Chuỗi hiện tại sẽ bị thay.`,
+        confirmText: 'Khôi phục',
+      })
+      if (!ok) return
+      const { done, failed } = await restoreStreaks(rows)
+      onRestored()
+      notifyDone({ title: 'Đã khôi phục chuỗi', message: failed ? `${done} học sinh xong, ${failed} lỗi (học sinh không còn tồn tại?).` : `${done} học sinh.` })
+    } catch (err) {
+      notifyError('Chưa khôi phục được chuỗi', errMsg(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="row" style={{ gap: '0.5rem' }}>
+      <button type="button" className="btn btn-small" onClick={backup} disabled={busy}>
+        🔥 Sao lưu chuỗi
+      </button>
+      <label className="btn btn-small" aria-disabled={busy}>
+        Khôi phục chuỗi
+        <input type="file" accept="application/json,.json" onChange={restore} disabled={busy} hidden />
+      </label>
+    </div>
+  )
+}
+
 export function EditStudent({ student, onCancel, onSaved }) {
   const [form, setForm] = useState({
     full_name: student.full_name || '',
