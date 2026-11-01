@@ -30,7 +30,7 @@ export default function TutorLessonView() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <ListLink to="/tutor/lessons">← Danh sách bài giảng</ListLink>
+        <ListLink to="/tutor/library">← Thư viện</ListLink>
       </div>
     )
 
@@ -38,8 +38,8 @@ export default function TutorLessonView() {
   return (
     <div>
       <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
-        <ListLink to="/tutor/lessons" className="small">
-          ← Danh sách bài giảng
+        <ListLink to="/tutor/library" className="small">
+          ← Thư viện
         </ListLink>
         <Link className="btn btn-small" to={`/tutor/lessons/${id}/edit`}>
           <Icon name="edit" />

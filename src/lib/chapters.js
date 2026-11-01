@@ -10,7 +10,10 @@ export const NO_SECTION = 'Chưa có chuyên đề'
 
 export const gradeLabel = (g) => (g ? `Lớp ${g}` : NO_GRADE)
 export const subjectLabel = (s) => s || NO_SUBJECT
-export const sectionLabel = (s) => s || NO_SECTION
+// Tên chuyên đề khi hiển thị: bỏ tiền tố dữ liệu "L12_" (dữ liệu giữ nguyên). Cây mục lục dùng bản giữ chữ thường cho gọn,
+// tiêu đề dùng sectionLabel (viết hoa); gáy + bìa kệ sách dùng sectionText cho dễ đọc
+export const sectionText = (s) => s?.replace(/^\s*L\d+_\s*/i, '') || NO_SECTION
+export const sectionLabel = (s) => (s ? sectionText(s).toLocaleUpperCase('vi') : NO_SECTION)
 
 // Sắp chương: lớp → môn → chuyên đề → thứ tự → tên ("Chủ đề 4" đứng trước "Chủ đề 10")
 export function sortChapters(list) {
@@ -71,10 +74,53 @@ export function libraryUrl(...keys) {
   return q ? `/tutor/library?${q}` : '/tutor/library'
 }
 export const chapterUrl = (id) => `/tutor/library/${id}`
+// Thư viện học sinh (/student/library?mon=...&cd=...): học sinh chỉ có một lớp nên bỏ "lop";
+// cùng thứ tự tham số với libraryUrl để dùng chung GradeShelf / libraryCrumbs
+export const studentLibraryUrl = (_lop, mon, cd) => libraryUrl(undefined, mon, cd).replace('/tutor/', '/student/')
+// Mục "Chưa xếp chương" của Thư viện gia sư (/tutor/library/chua-xep): bài có chapter_id trống
+export const UNSORTED = 'chua-xep'
 
 // Giá trị thật từ key trên URL ('-' → null)
 export const fromKey = (k) => (k === undefined || k === null || k === '-' ? null : k)
 export const gradeFromKey = (k) => (fromKey(k) === null ? null : Number(k))
+
+// Đường dẫn Thư viện có menu chọn nhanh: mỗi đoạn (lớp / môn / chuyên đề) kèm các lựa chọn cùng cấp.
+// Danh sách lớp có thêm lớp 6–12 chưa có chương (empty) để mở lớp mới. Nhận key (đã qua keyOf).
+const ALL_GRADES = ['6', '7', '8', '9', '10', '11', '12']
+/**
+ * @param {any[]} tree kết quả buildTree
+ * @param {{ lop?: string, mon?: string, cd?: string }} keys
+ * @param {(...keys: string[]) => string} [url] link của từng lựa chọn (học sinh: studentLibraryUrl)
+ * @returns {{ name: 'lop' | 'mon' | 'cd', label: string, options: { key: string, label: string, to: string, current: boolean, empty?: boolean }[] }[]}
+ */
+export function libraryCrumbs(tree, { lop, mon, cd }, url = libraryUrl) {
+  if (lop === undefined) return []
+  const has = tree.map((g) => g.key)
+  const grades = [...new Set([...has, ...ALL_GRADES, lop])].sort((a, b) => (gradeFromKey(a) ?? 99) - (gradeFromKey(b) ?? 99))
+  /** @type {ReturnType<typeof libraryCrumbs>} */
+  const segs = [
+    {
+      name: 'lop',
+      label: gradeLabel(gradeFromKey(lop)),
+      options: grades.map((k) => ({ key: k, label: gradeLabel(gradeFromKey(k)), to: url(k), current: k === lop, empty: !has.includes(k) })),
+    },
+  ]
+  if (mon === undefined) return segs
+  const subjects = tree.find((g) => g.key === lop)?.subjects || []
+  segs.push({
+    name: 'mon',
+    label: subjectLabel(fromKey(mon)),
+    options: subjects.map((s) => ({ key: s.key, label: subjectLabel(s.subject), to: url(lop, s.key), current: s.key === mon })),
+  })
+  if (cd === undefined) return segs
+  const sections = subjects.find((s) => s.key === mon)?.sections || []
+  segs.push({
+    name: 'cd',
+    label: sectionText(fromKey(cd)),
+    options: sections.map((x) => ({ key: x.key, label: sectionText(x.section), to: url(lop, mon, x.key), current: x.key === cd })),
+  })
+  return segs
+}
 
 // Gom bài (bài giảng / bài tập) theo chương, giữ thứ tự chương; bài chưa xếp chương để cuối.
 // items cần có chapter_id. Trả về [{ chapter | null, items }]

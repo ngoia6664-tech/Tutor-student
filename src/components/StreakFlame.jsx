@@ -23,29 +23,13 @@ const TIERS = [
 ]
 const NEXT = [...TIERS].reverse()
 
-// Đặt cụm lửa ngay dưới thanh trên cùng (chiều cao đổi khi xoay máy / menu xuống dòng)
-function useTopbarHeight() {
-  const [h, setH] = useState(0)
-  useEffect(() => {
-    const topbar = document.querySelector('.topbar')
-    if (!topbar) return
-    const update = () => setH(topbar.offsetHeight)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(topbar)
-    return () => ro.disconnect()
-  }, [])
-  return h
-}
-
-// Ngọn lửa chuỗi 🔥 nổi ở góc trên bên phải màn hình (như gấu ở góc dưới phải; chỉ học sinh). Chưa làm hôm nay:
-// lửa leo lét; chuỗi 0: lửa tắt. Ngay dưới là nút icon mở Ôn tập mỗi ngày (ẩn khi đã xong / không có câu).
+// Ngọn lửa chuỗi 🔥 nằm trên thanh trên cùng, cạnh chuông (chỉ học sinh; Layout.jsx). Chưa làm hôm nay:
+// lửa leo lét; chuỗi 0: lửa tắt. Bên cạnh là nút icon mở Ôn tập mỗi ngày (ẩn khi đã xong / không có câu).
 // Ẩn cả cụm khi đang làm bài (thanh tiến độ dính đầu trang) và trong cửa hàng (đã có bảng Xu/Sao/chuỗi ở góc phải).
 export default function StreakFlame() {
   const { data, loading, error } = usePandaShop() || {}
   const studying = useStudying()
   const { pathname } = useLocation()
-  const top = useTopbarHeight()
   const [open, setOpen] = useState(false)
   // Xong Ôn tập → tài khoản tải lại: bảng đang mở vẫn giữ nguyên
   const dialog = open && <DailyDialog onClose={() => setOpen(false)} />
@@ -65,7 +49,7 @@ export default function StreakFlame() {
     .join('\n')
 
   return (
-    <div className="streak-flame-wrap" style={{ top: `calc(${top}px + 0.6rem)` }}>
+    <div className="streak-flame-wrap">
       <span
         className={`streak-flame tier-${tier?.id || 'out'}${done_today ? ' is-lit' : ''}`}
         title={title}

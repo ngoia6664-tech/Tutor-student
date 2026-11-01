@@ -78,10 +78,10 @@
   outline-offset: 2px;
 }
 .tf-pick.is-picked {
-  background: var(--grad);
-  border-color: transparent;
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
   color: var(--on-primary);
-  box-shadow: var(--glow);
+  box-shadow: var(--btn-primary-shadow);
 }
 .tf-pick.is-key {
   border-color: var(--ok);
@@ -245,8 +245,8 @@
   border-color: var(--primary);
 }
 .exam-nav-cell.done {
-  background: var(--grad);
-  border-color: transparent;
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
   color: var(--on-primary);
 }
 

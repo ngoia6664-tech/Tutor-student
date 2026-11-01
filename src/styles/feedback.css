@@ -10,20 +10,20 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0.95rem 0.5rem 0.7rem;
-  border: 1px solid transparent;
+  border: 1px solid var(--primary);
   border-radius: 999px;
-  background: linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box, var(--grad) border-box;
+  background: var(--surface-solid);
   color: var(--text);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow), 0 0 22px -8px rgba(217, 70, 239, 0.55);
+  box-shadow: var(--shadow);
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 .feedback-fab:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow), 0 0 28px -6px rgba(217, 70, 239, 0.7);
+  box-shadow: var(--shadow), var(--btn-primary-hover-ring);
 }
 .feedback-fab:focus-visible {
   outline: 2px solid var(--focus);

@@ -61,7 +61,7 @@ vi.mock('../src/lib/assignments.js', () => ({
   }),
 }))
 
-const { deleteChapters, deleteItems, deleteWarning, itemsLabel, moveToChapter } = await import('../src/lib/bulk.js')
+const { deleteChapters, deleteItems, deleteWarning, itemsLabel, moveToChapter, moveToFolder } = await import('../src/lib/bulk.js')
 
 const L = (id, extra) => ({ kind: 'lesson', id, title: `Bài giảng ${id}`, ...extra })
 const A = (id, extra) => ({ kind: 'assignment', id, title: `Bài tập ${id}`, ...extra })
@@ -111,6 +111,17 @@ describe('chuyển chương', () => {
     const r = await moveToChapter([L('l1'), A('a1')], 'ch1')
     expect(r.moved).toBe(1)
     expect(r.failed.map((f) => f.item.id)).toEqual(['l1'])
+  })
+})
+
+describe('chuyển thư mục', () => {
+  it('chỉ cập nhật folder_id; "Chưa xếp" = null', async () => {
+    const r = await moveToFolder([L('l1'), A('a1')], 'f1')
+    expect(r).toEqual({ moved: 2, failed: [] })
+    for (const c of calls) expect(c.ops.find((o) => o[0] === 'update')[1]).toEqual({ folder_id: 'f1' })
+    calls.length = 0
+    await moveToFolder([A('a1')], '')
+    expect(calls[0].ops.find((o) => o[0] === 'update')[1]).toEqual({ folder_id: null })
   })
 })
 

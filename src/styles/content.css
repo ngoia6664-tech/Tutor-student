@@ -257,10 +257,10 @@ h2 + .question {
   background: var(--primary-soft);
 }
 .choice.is-picked .choice-label {
-  background: var(--grad);
-  border-color: transparent;
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
   color: var(--on-primary);
-  box-shadow: var(--glow);
+  box-shadow: var(--btn-primary-shadow);
 }
 .choice.is-right {
   border-color: var(--ok);

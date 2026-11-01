@@ -94,7 +94,7 @@ export default function PandaShowcase({ outfit, account, busy, onAction }) {
           </span>
           <button
             type="button"
-            className={`btn btn-primary showcase-cta${state.equipped ? ' is-equipped' : ''}`}
+            className={`btn btn-primary btn-moment showcase-cta${state.equipped ? ' is-equipped' : ''}`}
             disabled={busy || state.disabled}
             onClick={() => onAction(outfit, state.owned)}
           >

@@ -62,7 +62,7 @@ export default function LessonEditor() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <ListLink to="/tutor/lessons">← Danh sách bài giảng</ListLink>
+        <ListLink to="/tutor/library">← Thư viện</ListLink>
       </div>
     )
   return <LessonForm key={id || 'new'} initial={data} fromImport={!!draft && !id} />
@@ -153,7 +153,7 @@ function LessonForm({ initial, fromImport }) {
         <h1>
           <span className="title-icon"><Icon name="lesson" /></span>{isEdit ? 'Sửa bài giảng' : 'Soạn bài giảng'}
         </h1>
-        <ListLink to="/tutor/lessons">← Danh sách</ListLink>
+        <ListLink to="/tutor/library">← Thư viện</ListLink>
       </div>
 
       {fromImport && <div className="alert alert-info">Đã nạp nội dung từ JSON. Kiểm tra lại, chọn học sinh nhận rồi bấm Lưu.</div>}

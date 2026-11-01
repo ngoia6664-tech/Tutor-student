@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import Loading from '../../components/Loading.jsx'
@@ -10,7 +10,6 @@ import { RESTORE } from '../../components/ListLink.jsx'
 
 export default function StudentLesson() {
   const { id } = useParams()
-  const fromLessons = useLocation().state?.from === 'lessons'
 
   const { data, loading, error, reload } = useAsync(async () => {
     // RLS chỉ trả về bài giảng được giao cho học sinh này
@@ -27,14 +26,12 @@ export default function StudentLesson() {
     return (
       <div>
         <ErrorBox message={error} onRetry={reload} />
-        <Link to={listUrl(fromLessons ? '/student/lessons' : '/student/library')} state={RESTORE}>{fromLessons ? '← Bài giảng' : '← Thư viện'}</Link>
+        <Link to={listUrl('/student/library')} state={RESTORE}>← Thư viện</Link>
       </div>
     )
 
-  // Vào từ trang Bài giảng thì quay lại Bài giảng, còn lại về chương trong Thư viện
-  const back = fromLessons
-    ? { to: listUrl('/student/lessons'), label: '← Bài giảng' }
-    : { to: data.lesson.chapter_id ? `/student/library/${data.lesson.chapter_id}` : '/student/library', label: '← Thư viện' }
+  // Về chương của bài trong Thư viện; bài chưa xếp chương nằm ở mục "Các bài khác"
+  const back = { to: `/student/library/${data.lesson.chapter_id || 'khac'}`, label: '← Thư viện' }
 
   return (
     <div>

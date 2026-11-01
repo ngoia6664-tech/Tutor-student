@@ -299,7 +299,7 @@
   transition: background 0.2s, color 0.2s;
 }
 .shop-tabs button.is-active {
-  background: var(--grad);
+  background: var(--btn-moment);
   color: var(--on-primary);
 }
 .shop-tab-count {

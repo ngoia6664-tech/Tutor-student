@@ -25,7 +25,7 @@
 }
 .topbar::after {
   top: 100%;
-  height: 22px;
+  height: 8px; /* mép mờ ngắn: dài hơn thì chữ nội dung vừa trôi xuống dưới menu bị phủ nửa chừng, nhìn như chữ chồng */
   background: linear-gradient(var(--topbar-bg), transparent);
 }
 .topbar.is-scrolled::before,
@@ -96,6 +96,7 @@
   color: var(--muted);
 }
 .nav {
+  position: relative; /* làm gốc tọa độ cho .nav-pill */
   max-width: 980px;
   margin: 0 auto;
   display: flex;
@@ -120,12 +121,28 @@
   color: var(--text);
   background: var(--primary-soft);
 }
-/* Mục đang chọn: viền chuyển màu tím – hồng */
+/* Mục đang chọn: chữ trắng trên viên .nav-pill tím trượt phía sau (Layout.jsx đo vị trí) */
 .nav-link.active {
-  color: var(--text);
-  background: linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box, var(--grad) border-box;
-  border-color: transparent;
-  box-shadow: 0 0 18px -6px rgba(217, 70, 239, 0.6);
+  color: var(--on-primary);
+}
+/* Viên nền: cùng màu nút chính (token --btn-primary), bóng trung tính */
+.nav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--btn-primary-border);
+  border-radius: var(--r-chip);
+  background: var(--btn-primary);
+  box-shadow: var(--btn-primary-shadow);
+  translate: 0 1px;
+  pointer-events: none;
+  transition: transform 0.45s var(--spring), width 0.35s var(--ease), height 0.35s var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-pill {
+    transition: none;
+  }
 }
 
 .theme-toggle {
@@ -167,6 +184,12 @@
   margin: 0 auto;
   padding: 1.25rem 1rem 2.5rem;
 }
+/* Trang làm việc (Layout.jsx đặt .is-wide): menu và nội dung cùng rộng ra để cột nội dung không bị bóp */
+.is-wide .topbar-inner,
+.is-wide .topbar .nav,
+.is-wide .page {
+  max-width: 1240px;
+}
 .page.narrow {
   max-width: 560px;
   padding-top: 2rem;
@@ -199,16 +222,22 @@
   }
 }
 
-/* Mũi tên lên đầu / xuống cuối trang (components/ScrollJump.jsx), cạnh phải giữa màn hình */
+/* Mũi tên lên đầu / xuống cuối trang (components/ScrollJump.jsx): góc phải dưới, đứng ngay trên đầu gấu */
 .scroll-jump {
   position: fixed;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 1rem;
+  bottom: calc(0.6rem + 104px + 0.6rem); /* đáy gấu + cao gấu + khe */
   z-index: 8; /* ngang gấu, dưới thanh menu */
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+/* Gấu đã cất (chỉ còn nút tròn 46px) hoặc tắt: đặt theo đó */
+body:has(.mascot-restore) .scroll-jump {
+  bottom: calc(0.75rem + 46px + 0.5rem);
+}
+body:not(:has(.mascot)):not(:has(.mascot-restore)) .scroll-jump {
+  bottom: 1rem;
 }
 .scroll-jump button {
   width: 44px;
@@ -248,10 +277,13 @@
     transform: scale(0.8);
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .scroll-jump {
-    right: 6px;
+    right: 0.5rem;
+    bottom: calc(0.5rem + 76px + 0.6rem); /* gấu nhỏ 76px (mascot.css) */
   }
+}
+@media (max-width: 560px) {
   .scroll-jump button {
     width: 40px;
     height: 40px;

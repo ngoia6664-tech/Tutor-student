@@ -67,6 +67,7 @@ export function useOpenNodes(storageKey) {
 
 // Một nút nhóm trên cây: mũi tên mở/thu + tên (bấm để xem nhóm) + số đếm
 // now: nhóm chứa chương đang học (hiện 📍)
+/** @param {{ label: string, to?: string, count?: number, open: boolean, onToggle: () => void, active?: boolean, depth: number, now?: boolean, children?: import('react').ReactNode }} props */
 export function TreeGroup({ label, to, count, open, onToggle, active, depth, now, children }) {
   return (
     <li role="treeitem" aria-expanded={open} className={`tree-node depth-${depth}`}>
@@ -104,6 +105,7 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, now
 // Lá của cây: một chương (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
 // active: truyền vào khi lá phân biệt bằng ?tham số (NavLink chỉ so đường dẫn)
 // now: chương học sinh đang học (hiện nhãn 📍)
+/** @param {{ to: string, label: string, badge?: import('react').ReactNode, count?: number, active?: boolean, dim?: boolean, now?: boolean }} props */
 export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
   const body = (
     <>

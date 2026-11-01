@@ -13,7 +13,6 @@ const {
   StudentResults,
   StudentMistakes,
   StudentLibrary,
-  StudentLessons,
   StudentLesson,
   TutorStudents,
   StudentDetail,
@@ -24,7 +23,6 @@ const {
   ImportJson,
   TutorReports,
   TutorFeedback,
-  TutorLessons,
   TutorLessonView,
   LessonEditor,
 } = Pages
@@ -62,7 +60,8 @@ export default function App() {
         <Route path="assignments/new" element={<AssignmentEditor />} />
         <Route path="assignments/:id" element={<AssignmentTracking />} />
         <Route path="assignments/:id/edit" element={<AssignmentEditor />} />
-        <Route path="lessons" element={<TutorLessons />} />
+        {/* Danh sách Bài giảng đã gộp vào Thư viện (link cũ) */}
+        <Route path="lessons" element={<Navigate to="/tutor/library" replace />} />
         <Route path="lessons/new" element={<LessonEditor />} />
         <Route path="lessons/:id" element={<TutorLessonView />} />
         <Route path="lessons/:id/edit" element={<LessonEditor />} />
@@ -87,7 +86,7 @@ export default function App() {
         <Route path="results" element={<StudentResults />} />
         <Route path="mistakes" element={<StudentMistakes />} />
         <Route path="library/:id?" element={<StudentLibrary />} />
-        <Route path="lessons" element={<StudentLessons />} />
+        <Route path="lessons" element={<Navigate to="/student/library" replace />} />
         <Route path="lessons/:id" element={<StudentLesson />} />
         <Route path="*" element={<NotFound />} />
       </Route>

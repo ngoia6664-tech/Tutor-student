@@ -1,7 +1,7 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { buildTree, gradeFromKey, gradeLabel, keyOf, sectionLabel, subjectLabel } from '../lib/chapters.js'
+import { buildTree, gradeFromKey, gradeLabel, keyOf, sectionLabel, sectionText, subjectLabel } from '../lib/chapters.js'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from './TreeNav.jsx'
 import Icon from './Icon.jsx'
 
@@ -133,7 +133,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
         {s.sections.map((x) => (
           <TreeGroup
             key={x.key}
-            label={sectionLabel(x.section)}
+            label={sectionText(x.section)}
             to={url({ lop: g.key, mon: s.key, cd: x.key })}
             count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key && keyOf(c.section) === x.key)}
             open={open.has(nodeKey('c', g.key, s.key, x.key))}

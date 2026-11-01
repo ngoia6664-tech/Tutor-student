@@ -9,7 +9,6 @@ const loaders = {
     StudentResults: () => import('./student/StudentResults.jsx'),
     StudentMistakes: () => import('./student/StudentMistakes.jsx'),
     StudentLibrary: () => import('./student/StudentLibrary.jsx'),
-    StudentLessons: () => import('./student/StudentLessons.jsx'),
     StudentLesson: () => import('./student/StudentLesson.jsx'),
   },
   tutor: {
@@ -22,7 +21,6 @@ const loaders = {
     ImportJson: () => import('./tutor/ImportJson.jsx'),
     TutorReports: () => import('./tutor/TutorReports.jsx'),
     TutorFeedback: () => import('./tutor/TutorFeedback.jsx'),
-    TutorLessons: () => import('./tutor/TutorLessons.jsx'),
     TutorLessonView: () => import('./tutor/TutorLessonView.jsx'),
     LessonEditor: () => import('./tutor/LessonEditor.jsx'),
   },

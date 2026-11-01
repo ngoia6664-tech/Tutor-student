@@ -3,7 +3,7 @@ import { prefersReducedMotion } from '../lib/settings.js'
 
 const GAP = 300 // cách đầu / cuối trang bao nhiêu px thì hiện mũi tên tương ứng
 
-// Hai mũi tên nổi cạnh phải giữa màn hình: lên đầu trang / xuống cuối trang.
+// Hai mũi tên nổi góc phải dưới, ngay trên đầu gấu: lên đầu trang / xuống cuối trang.
 // Chỉ hiện khi đã cuộn vào giữa trang dài (đang ở đầu trang thì ẩn cả hai). Có trong Layout → mọi trang.
 export default function ScrollJump() {
   const [pos, setPos] = useState({ up: false, down: false })

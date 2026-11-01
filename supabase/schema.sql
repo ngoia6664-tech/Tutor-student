@@ -1047,6 +1047,58 @@ $$;
 revoke all on function public.set_study_chapter(uuid) from public;
 grant execute on function public.set_study_chapter(uuid) to authenticated;
 
+-- ---------- Thư mục trong chương ----------
+-- Gia sư gom bài giảng + bài tập của một chương vào các thư mục (một tầng, mỗi bài nằm trong tối đa một thư mục).
+-- Xóa thư mục / xóa chương thì bài quay về "Chưa xếp" (folder_id = null), không mất bài.
+-- save_lesson / save_assignment không đụng tới folder_id nên sửa bài không làm mất thư mục.
+create table if not exists public.chapter_folders (
+  id         uuid primary key default gen_random_uuid(),
+  chapter_id uuid not null references public.chapters (id) on delete cascade,
+  name       text not null check (length(trim(name)) > 0),
+  created_at timestamptz not null default now()
+);
+create index if not exists chapter_folders_chapter_idx on public.chapter_folders (chapter_id);
+
+alter table public.lessons     add column if not exists folder_id uuid references public.chapter_folders (id) on delete set null;
+alter table public.assignments add column if not exists folder_id uuid references public.chapter_folders (id) on delete set null;
+
+-- Bài chỉ nằm trong thư mục của đúng chương mình: chuyển bài sang chương khác (Sửa nhiều / sửa bài)
+-- hoặc gán nhầm thư mục của chương khác → về "Chưa xếp"
+create or replace function public.keep_folder_in_chapter()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.folder_id is not null and not exists (
+    select 1 from chapter_folders f where f.id = new.folder_id and f.chapter_id = new.chapter_id
+  ) then
+    new.folder_id := null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists lessons_keep_folder on public.lessons;
+create trigger lessons_keep_folder
+  before insert or update of folder_id, chapter_id on public.lessons
+  for each row execute function public.keep_folder_in_chapter();
+drop trigger if exists assignments_keep_folder on public.assignments;
+create trigger assignments_keep_folder
+  before insert or update of folder_id, chapter_id on public.assignments
+  for each row execute function public.keep_folder_in_chapter();
+
+alter table public.chapter_folders enable row level security;
+drop policy if exists chapter_folders_tutor_all      on public.chapter_folders;
+drop policy if exists chapter_folders_student_select on public.chapter_folders;
+create policy chapter_folders_tutor_all on public.chapter_folders
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+-- Học sinh thấy tên thư mục của những chương mình thấy (theo RLS của chapters)
+create policy chapter_folders_student_select on public.chapter_folders
+  for select to authenticated
+  using (exists (select 1 from public.chapters c where c.id = chapter_folders.chapter_id));
+
 -- ---------- Câu khó (học sinh tự đánh dấu) ----------
 -- Học sinh bấm "Câu khó" khi làm / xem lại bài; câu nằm ở mục "Câu khó" của trang Ôn tập
 -- cho tới khi học sinh bấm "Bỏ đánh dấu". Làm lại ở đó bao nhiêu lần cũng được, không tính điểm.

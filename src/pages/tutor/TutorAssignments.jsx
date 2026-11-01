@@ -5,22 +5,21 @@ import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { useRemembered } from '../../lib/navMemory.js'
 import { errMsg } from '../../lib/errors.js'
-import { formatDate } from '../../lib/format.js'
+import { formatDate, matchTitle } from '../../lib/format.js'
 import { deleteAssignment } from '../../lib/assignments.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
-import ChapterGroups from '../../components/ChapterGroups.jsx'
-import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
-import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
 import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
+// Chấm bài (gia sư): hàng đợi công việc — danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên.
+// Duyệt theo Lớp › Môn › Chương đã có ở Thư viện nên trang này không có cây.
 export default function TutorAssignments() {
-  // Lọc "Chờ chấm" nhớ trong phiên: mở bài rồi quay lại vẫn còn
+  // Lọc "Chờ chấm" + ô tìm nhớ trong phiên: mở bài rồi quay lại vẫn còn
   const [filter, setFilter] = useRemembered('tutor-assignments-filter', 'all', (v) => v === 'all' || v === 'pending')
-  const sel = useTreeSelection()
+  const [query, setQuery] = useRemembered('tutor-assignments-q', '', (v) => typeof v === 'string')
   const [actionError, setActionError] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const pick = useAssignSelection()
@@ -28,20 +27,14 @@ export default function TutorAssignments() {
   const [moving, setMoving] = useState(null)
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [rows, chapters] = await Promise.all([
-      supabase
-        .from('assignments')
-        .select('id, title, type, due_date, created_at, chapter_id, assignment_recipients(status)')
-        .order('created_at', { ascending: false })
-        .then(unwrap),
-      fetchChapters(),
-    ])
-    const list = rows.map((a) => {
+    const rows = unwrap(
+      await supabase.from('assignments').select('id, title, type, due_date, created_at, assignment_recipients(status)').order('created_at', { ascending: false })
+    )
+    return rows.map((a) => {
       const c = { todo: 0, done: 0, checked: 0 }
       a.assignment_recipients.forEach((r) => (c[r.status] += 1))
       return { ...a, counts: c, total: a.assignment_recipients.length }
     })
-    return { list, chapters }
   }, [])
 
   async function handleDelete(a) {
@@ -59,96 +52,81 @@ export default function TutorAssignments() {
     }
   }
 
-  const chapters = data?.chapters || []
-  const chapterById = new Map(chapters.map((c) => [c.id, c]))
-  const rows = (data?.list || []).filter((a) => matchItem(a, chapterById, sel)).filter((a) => (filter === 'pending' ? a.counts.done > 0 : true))
-  const where = selectionLabel(sel, chapterById, 'Chưa xếp chương')
+  const all = data || []
+  const pendingCount = all.filter((a) => a.counts.done > 0).length
+  const rows = all.filter((a) => (filter === 'pending' ? a.counts.done > 0 : true) && matchTitle(a.title, query))
 
   return (
-    <div className="library">
-      <FilterTree
-        title="Bài tập"
-        icon="assignment"
-        chapters={chapters}
-        items={data?.list || []}
-        badgeIf={(a) => a.counts.done > 0}
-        gradeTabs
-        storageKey="assignments-tree-open"
+    <section>
+      <div className="page-head">
+        <h1>
+          <span className="title-icon"><Icon name="grade" /></span>Chấm bài
+        </h1>
+        <div className="row">
+          <SelectModes sel={pick} />
+          <Link className="btn" to="/tutor/import">
+            <Icon name="import" />
+            Dán JSON
+          </Link>
+          <Link className="btn btn-primary" to="/tutor/assignments/new">
+            <Icon name="plus" />
+            Soạn bài tập
+          </Link>
+        </div>
+      </div>
+
+      <div className="chips" style={{ marginBottom: '1rem' }}>
+        <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
+          Tất cả
+        </button>
+        <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
+          Có bài chờ chấm{pendingCount > 0 ? ` (${pendingCount})` : ''}
+        </button>
+      </div>
+      <input type="search" style={{ marginBottom: '1rem' }} placeholder="Tìm bài tập theo tên…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm bài tập theo tên" />
+
+      <ErrorBox message={actionError} />
+      {loading && <Loading />}
+      <ErrorBox message={error} onRetry={reload} />
+
+      {!loading && !error && rows.length === 0 && (
+        <div className="empty">{query.trim() ? `Không có bài tập nào khớp "${query.trim()}".` : filter === 'pending' ? 'Không có bài nào chờ chấm.' : 'Chưa có bài tập nào.'}</div>
+      )}
+
+      {!loading && !error && rows.length > 0 && <div className="list">{rows.map(renderAssignment)}</div>}
+      <SelectBar
+        sel={pick}
+        visible={rows.map(itemOf)}
+        onAssign={setAssigning}
+        onMove={setMoving}
+        onDelete={async (items) => {
+          if (await deletePicked(items)) {
+            pick.stop()
+            reload()
+          }
+        }}
       />
-      <section className="library-main">
-        <div className="page-head">
-          <div>
-            <h1>
-              <span className="title-icon"><Icon name="assignment" /></span>Bài tập
-            </h1>
-            {where && <p className="muted small page-sub">{where}</p>}
-          </div>
-          <div className="row">
-            <SelectModes sel={pick} />
-            <Link className="btn" to="/tutor/import">
-              <Icon name="import" />
-              Dán JSON
-            </Link>
-            <Link className="btn btn-primary" to="/tutor/assignments/new" state={sel.ch && sel.ch !== 'none' ? { chapterId: sel.ch } : undefined}>
-              <Icon name="plus" />
-              Soạn bài tập
-            </Link>
-          </div>
-        </div>
-
-        <div className="chips" style={{ marginBottom: '1rem' }}>
-          <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
-            Tất cả
-          </button>
-          <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
-            Có bài chờ chấm
-          </button>
-        </div>
-
-        <ErrorBox message={actionError} />
-        {loading && <Loading />}
-        <ErrorBox message={error} onRetry={reload} />
-
-        {!loading && !error && rows.length === 0 && (
-          <div className="empty">{filter === 'pending' ? 'Không có bài nào chờ chấm.' : where ? 'Mục này chưa có bài tập.' : 'Chưa có bài tập nào.'}</div>
-        )}
-
-        {!loading && !error && rows.length > 0 && sel.ch && <div className="list">{rows.map(renderAssignment)}</div>}
-        {!loading && !error && rows.length > 0 && !sel.ch && <ChapterGroups items={rows} chapters={chapters} renderItem={renderAssignment} />}
-        <SelectBar
-          sel={pick}
-          visible={rows.map(itemOf)}
-          onAssign={setAssigning}
-          onMove={setMoving}
-          onDelete={async (items) => {
-            if (await deletePicked(items)) {
-              pick.stop()
-              reload()
-            }
+      {moving && (
+        <MoveDialog
+          items={moving}
+          onClose={() => setMoving(null)}
+          onSaved={(ok) => {
+            if (ok) pick.stop()
+            reload()
           }}
         />
-        {moving && (
-          <MoveDialog
-            items={moving}
-            onClose={() => setMoving(null)}
-            onSaved={(ok) => {
-              if (ok) pick.stop()
-              reload()
-            }}
-          />
-        )}
-        {assigning && (
-          <AssignDialog
-            items={assigning}
-            onClose={() => setAssigning(null)}
-            onSaved={() => {
-              if (assigning.length > 1) pick.stop()
-              reload()
-            }}
-          />
-        )}
-      </section>
-    </div>
+      )}
+      {assigning && (
+        <AssignDialog
+          items={assigning}
+          onClose={() => setAssigning(null)}
+          onSaved={() => {
+            if (assigning.length > 1) pick.stop()
+            reload()
+          }}
+        />
+      )}
+    </section>
   )
 
   // Mục dùng cho chọn nhiều; submitted = số học sinh đã nộp (cảnh báo khi xóa)

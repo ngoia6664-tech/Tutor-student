@@ -677,7 +677,7 @@ export default function ImportJson() {
               <ErrorBox message={saveError} />
               {allSaved ? (
                 <div className="alert alert-ok" style={{ width: '100%' }}>
-                  Đã lưu xong. <ListLink to="/tutor/assignments">Xem danh sách bài tập</ListLink> · <ListLink to="/tutor/lessons">Xem bài giảng</ListLink>
+                  Đã lưu xong. <ListLink to="/tutor/library">Xem trong Thư viện</ListLink> · <ListLink to="/tutor/assignments">Chấm bài</ListLink>
                 </div>
               ) : (
                 <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving || pending === 0}>

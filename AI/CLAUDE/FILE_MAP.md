@@ -19,15 +19,14 @@
 ## `src/pages/tutor/`
 - `AssignmentEditor.jsx` — Dạng dữ liệu trong form (dễ sửa hơn dạng lưu trong CSDL)
 - `AssignmentTracking.jsx` — Bảng theo dõi một bài tập: trạng thái từng học sinh, �
-- `ChapterDetail.jsx` — Nội dung một chương (cột phải của Thư viện): các bài
+- `ChapterDetail.jsx` — Nội dung một chương (cột phải của Thư viện): các bài; id `UNSORTED` = mục "Chưa xếp chương" (bài có chapter_id trống); thư mục trong chương (tạo / đổi tên / xóa, Sửa nhiều → "Vào thư mục…")
 - `ImportJson.jsx` — Chương liên kết lần dán trước (lưu trên máy này)
 - `LessonEditor.jsx` — Soạn / sửa bài giảng. Dùng cho /tutor/lessons/new, /tutor/less
-- `Library.jsx` — Trang Thư viện (gia sư): cây chương bên trái + danh sách bên phải
+- `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Chuyên đề của một lớp bên trái (đang tìm thì hiện chương khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chương" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chuyên đề, Xóa nhiều chương, Xóa chuyên đề; trang chương: Thêm chương, Nhập mục lục), cuối cây mục "Chưa xếp chương" (kèm số bài), giữa: kệ sách / băng chuyền chương / nội dung chương
 - `StudentDetail.jsx` — Trang một học sinh: tổng quan, điểm từng bài, bài giảng
-- `TutorAssignments.jsx` — Trang Bài tập (gia sư): danh sách bài đã soạn, giao, theo dõi
+- `TutorAssignments.jsx` — Chấm bài (gia sư, /tutor/assignments): danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên, giao / sửa nhiều / xóa
 - `TutorFeedback.jsx` — Trang Góp ý (gia sư): xem góp ý học sinh gửi, đánh dấu đã xem
 - `TutorLessonView.jsx` — Xem bài giảng (gia sư), như học sinh sẽ thấy
-- `TutorLessons.jsx` — Bài giảng (gia sư): cây Lớp › Môn › Chuyên đề › Chư
 - `TutorReports.jsx` — Số thứ tự câu trong bài (đề thi đánh số theo phần: I.
 - `TutorStudents.jsx` — Sửa tên, nhóm, lớp, môn của học sinh
 
@@ -35,8 +34,7 @@
 - `StudentAssignment.jsx` — Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệ
 - `StudentHome.jsx` — Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc
 - `StudentLesson.jsx` — RLS chỉ trả về bài giảng được giao cho học sinh này
-- `StudentLessons.jsx` — Bài giảng (học sinh): mọi bài giảng được giao, gom theo
-- `StudentLibrary.jsx` — Bài tập học sinh: chưa làm lên trước, rồi bài đã nộp
+- `StudentLibrary.jsx` — Thư viện học sinh (bỏ cấp Lớp): cây Môn › Chuyên đề, đường dẫn Thư viện › Môn ▾ › Chuyên đề ▾ (LibraryCrumbs), trang đầu / một môn: kệ sách (GradeShelf), một chuyên đề (`?mon=&cd=`): băng chuyền chương (ChapterCarousel, nút Mở + Đánh dấu đang học), một chương: bài chưa làm lên trước, gom theo thư mục (thư mục rỗng ẩn, bài ngoài thư mục ở "Các bài khác"); `/student/library/khac` "Các bài khác" = bài chưa thuộc chương nào của lớp mình
 - `StudentMistakes.jsx` — Ôn tập, 2 mục:
 - `StudentResults.jsx` — Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm);
 - `StudentShop.jsx` — Panda Fashion Shop (/student/shop, gia sư /tutor/shop): header gọn
@@ -47,7 +45,9 @@
 - `AnswerProgress.jsx` — Chiều cao header (thay đổi khi xoay máy / menu xuống dòng) đ
 - `Badges.jsx` — Nhãn hạn bài (DueBadge) và loại bài (TypeBadge)
 - `ChapterForms.jsx` — Thêm / sửa một chương. chapter = {} (thêm mới, có thể đi
-- `ChapterGroups.jsx` — Danh sách gom theo chương: tiêu đề chương (bấm để mở c
+- `ChapterArt.jsx` — Đầu thẻ chương (ChapterCarousel): chip tên môn + số chương nhỏ ở góc; màu ở library.css
+- `ChapterCarousel.jsx` — Chương của một chuyên đề (Thư viện gia sư + học sinh) dạng băng chuyền: thẻ giữa to + nghiêng 3D theo chuột + ánh kim loại, hai bên mờ; mũi tên, phím ←→, lưới "Tất cả chương"; nhớ vị trí theo chuyên đề; học sinh truyền `toUrl` (link chương) + `actions` (thay nút Sửa / Xóa)
+- `GradeShelf.jsx` — Trang một lớp / một môn (Thư viện gia sư) dạng kệ sách: mỗi môn một kệ, mỗi chuyên đề một cuốn (gáy dọc, cao bằng nhau); tên gáy giữ chữ như gõ (`sectionText`); máy có chuột: tiêu đề kệ nằm sát đầu sách trong khoảng trống dành cho bìa, kệ dài vừa số cuốn (`--n`), rê chuột / Tab tới thì cuốn đó nhô lên, bìa hiện ở khoảng trống trên kệ, tiêu đề mờ đi (thuần CSS, không che / không xê dịch cuốn nào); máy cảm ứng / màn ≤ 520px: ẩn gáy, mỗi chuyên đề là một thẻ ngang (chính `.shelf-cover`); bấm → vào chuyên đề. Props `{ chapters, count, url? }`, link qua `libraryUrl` (học sinh: `url={studentLibraryUrl}`)
 - `ChapterSelect.jsx` — Ô chọn chương dạng cây Lớp › Môn › Chuyên đề › Ch
 - `CoinStarBadge.jsx` — Xu (tiêu được: mua trang phục, thẻ bảo vệ chuỗi) + Sao
 - `DailyReview.jsx` — Ôn tập mỗi ngày (bảng nổi mở từ nút dưới ngọn lử
@@ -58,13 +58,16 @@
 - `ExamParts.jsx` — Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm n
 - `ExerciseBody.jsx` — Hiển thị một câu hỏi theo loại (tự luận / trắc nghi�
 - `FeedbackButton.jsx` — Nút "Góp ý" nổi ở góc trái dưới (học sinh). Bấm mở b
-- `FilterTree.jsx` — Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn
+- `FolderBox.jsx` — Một thư mục trong chương (khối gập / mở, bài giảng + bài tập chung một danh sách), dùng ở ChapterDetail + StudentLibrary
+- `FilterTree.jsx` — Lọc danh sách của học sinh (Bài cần làm, Kết quả, Ôn tập) theo cây Lớp › Môn
 - `FormulaText.jsx` — Chữ gấu nói (Mascot, SpaceExplorer): đoạn đặt trong `...` l
 - `HardNote.jsx` — Ghi chú câu khó của học sinh (lưu qua RPC)
 - `Icon.jsx` — Bộ icon nét mảnh (SVG, theo màu chữ hiện tại nên tự h�
 - `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
 - `InstallBanner.jsx` — Gợi ý cài app lên màn hình chính.
 - `Layout.jsx` — Khung chung: thanh trên cùng, menu, linh vật, cụm nổi, hộp thoại, ngắm vũ trụ
+- `LibraryCrumbs.jsx` — Đường dẫn Thư viện gia sư "Thư viện › Lớp ▾ › Môn ▾ › Chuyên đề ▾": chữ mỗi đoạn là link về cấp đó, nút ▾ riêng mở menu cùng cấp (useDropMenu); lớp chưa có chương chọn được để mở lớp mới; prop `root` (link "Thư viện"); học sinh: bỏ đoạn Lớp, link `/student/library`
+- `MoreMenu.jsx` — Nút "⋯ Thao tác khác" gom thao tác ít dùng (Thư viện gia sư) + hook `useDropMenu` dùng chung cho menu thả xuống (bàn phím ↑↓ Home End Esc Tab, bấm ra ngoài đóng, tự dịch vào trong khi tràn mép)
 - `ListLink.jsx` — Link "← Danh sách" về đúng URL lọc + vị trí cuộn lần trước của tab (RESTORE)
 - `LessonSelect.jsx` — Ô chọn bài giảng dạng cây Lớp › Môn › Chuyên đề �
 - `LessonView.jsx` — Dấu phân trang trong Markdown (một dòng riêng). Bài nhập JSO
@@ -79,18 +82,18 @@
 - `PandaDock.jsx` — Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
 - `PlanetPortrait.jsx` — Chân dung hành tinh khi gấu giải thích (SpaceExplorer, chế đ
 - `ProtectedRoute.jsx` — Chặn trang theo vai trò: sai vai trò thì chuyển về trang củ
-- `QuickAssign.jsx` — Giao bài nhanh + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Bài giảng, Bài tập, chương trong Thư viện
+- `QuickAssign.jsx` — Giao bài nhanh + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chương trong Thư viện
 - `ReportQuestion.jsx` — Trạng thái báo lỗi học sinh thấy
 - `ResultProgress.jsx` — Thanh tiến độ và chip câu đúng/sai ở trang kết quả
 - `RootRedirect.jsx` — Trang gốc "/": chuyển theo vai trò
 - `ScoreChart.jsx` — Khung SVG (viewBox), co giãn theo bề rộng thẻ
 - `ScrollMemory.jsx` — Nhớ / khôi phục vị trí cuộn (Back/Forward, mở lại tab) theo mục neo, chờ hết khung tải
-- `ScrollJump.jsx` — Hai mũi tên nổi cạnh phải giữa màn hình: lên đầu trang
+- `ScrollJump.jsx` — Hai mũi tên nổi góc phải dưới, ngay trên đầu gấu: lên đầu trang
 - `SettingsPanel.jsx` — Bảng Cài đặt (tải lười từ Layout, mở bằng nút bánh
 - `SpaceBackdrop.jsx` — Nền vũ trụ phía sau toàn app: 3 lớp sao ở 3 độ xa (trôi
 - `SpaceExplorer.jsx` — Chế độ ngắm vũ trụ (tải lười từ Layout): dùng lại
 - `SpaceMusic.jsx` — Nhạc nền chế độ ngắm vũ trụ: phát video YouTube qua IFr
-- `StreakFlame.jsx` — Ôn tập mỗi ngày (có ExerciseBody + Markdown): chỉ tải khi m
+- `StreakFlame.jsx` — Lửa chuỗi trên thanh trên cùng, cạnh chuông (chỉ học sinh; Layout.jsx). Ôn tập mỗi ngày (có ExerciseBody + Markdown): chỉ tải khi m
 - `StudentPicker.jsx` — Chọn học sinh nhận bài. Nhóm chỉ là nút chọn nhanh, bài
 - `StudyNow.jsx` — Dòng nhắc "Bạn đang học đến chuyên đề X, chương Y" (h
 - `StudyNowButton.jsx` — Nút "📍 Đánh dấu đang học" cho một chương (học sinh).
@@ -123,18 +126,20 @@
 - `PandaShopContext.jsx` — Một tài khoản dùng chung cho cụm nổi, cửa hàng và linh v
 
 ## `src/lib/`
-- `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chương (chỉ chapter_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chương kèm / không kèm bài bên trong
+- `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chương (chỉ chapter_id), chuyển thư mục (chỉ folder_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chương kèm / không kèm bài bên trong
 - `answerNotes.js` — Lời phê từng câu của gia sư ("Giáo viên chấm:"), bảng a
 - `assignments.js` — Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_
 - `celebrate.js` — Ăn mừng: pháo giấy + bé Nguyên Tử (components/Mascot.jsx) nh
-- `chapters.js` — Nhãn hiển thị cho từng cấp khi chưa điền
+- `chapterArt.js` — Đoán loại môn (Vật lý / Toán / Hóa / khác) từ tên môn cho bìa chương + `splitTitle` tách "Chương n:" thành số + tên (có test)
+- `chapters.js` — Nhãn hiển thị cho từng cấp khi chưa điền; `UNSORTED` (mục Chưa xếp chương); `sectionText` (tên chuyên đề bỏ tiền tố "L12_", dùng trong cây) / `sectionLabel` (viết hoa, tiêu đề; gáy + bìa kệ sách dùng `sectionText`); `libraryCrumbs` (lựa chọn cho menu đường dẫn Thư viện, tham số `url` cho học sinh); `studentLibraryUrl` (`/student/library?mon=&cd=`, không có lớp) (có test)
 - `dailyReview.js` — Ôn tập mỗi ngày: máy chủ chọn bộ câu theo học sinh + n
 - `dialog.js` — Hộp thoại có Gấu Trúc (components/DialogHost.jsx, đặt trong
+- `folders.js` — `groupByFolder`: gom bài của một chương theo thư mục (bảng `chapter_folders`), bài chưa xếp để cuối (có test)
 - `errors.js` — Chuyển lỗi kỹ thuật thành câu tiếng Việt dễ hiểu
 - `exam.js` — Đề thi chấm theo thang THPT (môn Vật lý):
 - `feedback.js` — Góp ý của người dùng (bảng feedback). Học sinh gửi, gia
 - `files.js` — Bỏ dấu tiếng Việt và ký tự lạ để làm key Storage an
-- `format.js` — Parse 'YYYY-MM-DD' theo giờ địa phương (tránh lệch ngày do
+- `format.js` — `matchTitle` (ô tìm theo tên, không dấu) + Parse 'YYYY-MM-DD' theo giờ địa phương (tránh lệch ngày do
 - `gradeDock.js` — "Đang chấm bài": trang theo dõi / chấm một bài tập đang m
 - `importJson.js` — Phân tích JSON bài giảng / bài tập soạn sẵn ở bên ngoà
 - `importTutorLesson.js` — Chuyển file định dạng "tutor-lesson/v1" (lý thuyết + trắc
@@ -146,7 +151,7 @@
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
 - `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
 - `pandaShop.js` — Xu / Sao / Chuỗi / trang phục: số thật ở Supabase (sổ cái
-- `pressFx.js` — Hiệu ứng chạm nút: ghi điểm chạm vào --px/--py cho vệt sáng `.btn::before` (cài ở main.jsx)
+- `pressFx.js` — Hiệu ứng theo con trỏ (cài ở main.jsx): vầng sáng theo chuột phủ trên mọi lớp (`.cursor-glow`, z-index 1000) + sóng lan khi bấm `.btn` (--px/--py, class is-rip); CSS ở components.css
 - `practice.js` — Chấm ngay trên máy khi học sinh ôn lại câu sai (không lưu
 - `recipients.js` — Giao nhanh bài giảng / bài tập cho học sinh ngay từ danh sá
 - `reports.js` — Sự kiện báo thanh menu cập nhật số câu bị báo lỗi đa
@@ -191,7 +196,7 @@
 - `mobile.css` — Điện thoại
 - `notifications.css` — Chuông thông báo (học sinh)
 - `panda-act.css` — Hoạt cảnh tương tác của trang phục (components/panda/PandaA
-- `panda-dock.css` — Cụm góc trái dưới (components/PandaDock.jsx)
+- `panda-dock.css` — Cụm góc trái dưới (components/PandaDock.jsx) + chừa chỗ cho cụm (đáy .page, đáy cây Thư viện, nâng trên thanh Lưu .sticky-actions, ẩn khi đang chọn nhiều trên màn hẹp)
 - `panda-shop.css` — Panda Fashion Shop (pages/student/StudentShop.jsx + components/shop/*,
 - `panda-skin.css` — Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tư�
 - `reports.css` — Báo lỗi đề (học sinh)
@@ -202,4 +207,4 @@
 
 
 ## `tests/`
-- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight), Sửa nhiều / Xóa nhiều (bulk, Supabase giả lập), nhớ điều hướng (navMemory)
+- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight), Sửa nhiều / Xóa nhiều (bulk, Supabase giả lập), nhớ điều hướng (navMemory), nhãn chuyên đề + menu đường dẫn Thư viện (chapters), ô tìm theo tên (format)
