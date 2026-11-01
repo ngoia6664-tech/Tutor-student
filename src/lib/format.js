@@ -43,6 +43,13 @@ export function compareDue(a, b) {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
+// Ô tìm theo tên bài: không phân biệt hoa thường, gõ không dấu vẫn khớp ("dieu hoa" ~ "điều hòa")
+const plain = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase()
+export function matchTitle(title, q) {
+  const k = plain(q).trim()
+  return !k || plain(title).includes(k)
+}
+
 export const TYPE_LABEL = { classwork: 'Làm trên lớp', homework: 'Về nhà' }
 export const STATUS_LABEL = { todo: 'Chưa nộp', done: 'Đã nộp – chờ chấm', checked: 'Đã chấm' }
 

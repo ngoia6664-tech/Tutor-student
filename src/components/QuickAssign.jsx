@@ -280,6 +280,7 @@ export function SelectCheck({ sel, item }) {
 // Thanh dưới màn hình: số mục đã chọn, Chọn tất cả (chỉ mục đang hiển thị), các thao tác của chế độ hiện tại.
 // visible: các mục đang hiển thị; onAssign / onMove / onDelete nhận danh sách mục đã chọn (trong số đang hiển thị).
 // extra: nội dung thêm (vd. ô "Xóa luôn bài bên trong" khi xóa chương). Đang xử lý thì khóa mọi nút.
+/** @param {{ sel: any, visible: any[], onAssign?: (items: any[]) => any, onMove?: (items: any[]) => any, onDelete?: (items: any[]) => any, extra?: import('react').ReactNode }} props */
 export function SelectBar({ sel, visible, onAssign, onMove, onDelete, extra }) {
   const [busy, setBusy] = useState(false)
   const visibleKey = visible.map((it) => `${it.kind}:${it.id}`).join(',')

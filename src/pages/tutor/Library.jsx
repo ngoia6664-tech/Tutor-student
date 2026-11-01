@@ -1,4 +1,3 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -12,10 +11,13 @@ import {
   gradeFromKey,
   gradeLabel,
   keyOf,
+  libraryCrumbs,
   libraryUrl,
   sectionLabel,
+  sectionText,
   sortChapters,
   subjectLabel,
+  UNSORTED,
 } from '../../lib/chapters.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
@@ -24,8 +26,12 @@ import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../comp
 import ChapterDetail from './ChapterDetail.jsx'
 import Icon from '../../components/Icon.jsx'
 import OutlineImport from '../../components/OutlineImport.jsx'
+import ChapterCarousel from '../../components/ChapterCarousel.jsx'
+import GradeShelf from '../../components/GradeShelf.jsx'
+import LibraryCrumbs from '../../components/LibraryCrumbs.jsx'
 import { confirmDelete, confirmDeleteMany, notifyDeleted, notifyDone, notifyError } from '../../lib/dialog.js'
-import { SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { SelectBar, SelectCheck, useAssignSelection } from '../../components/QuickAssign.jsx'
+import MoreMenu from '../../components/MoreMenu.jsx'
 import { chapterContent, deleteChapters, deleteWarning, itemsLabel } from '../../lib/bulk.js'
 
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
@@ -33,7 +39,7 @@ const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
 const sum = (list, field) => list.reduce((n, c) => n + countOf(c[field]), 0)
 const norm = (v) => (v || '').toLowerCase()
 
-// Lớp đang chọn ở tab (nhớ trong trình duyệt)
+// Lớp xem lần trước (nhớ trong trình duyệt): cây bên trái hiện lớp này khi chưa chọn lớp
 const GRADE_STORE = 'library-grade'
 const loadGrade = () => {
   try {
@@ -42,10 +48,9 @@ const loadGrade = () => {
     return undefined
   }
 }
-const ALL_GRADES = [6, 7, 8, 9, 10, 11, 12]
 
-// Thư viện (gia sư): mỗi lớp một cây Môn › Chuyên đề › Chương bên trái, chọn lớp bằng tab;
-// nội dung mục đang chọn bên phải
+// Thư viện (gia sư): cây Môn › Chuyên đề của một lớp bên trái (chương nằm ở băng chuyền giữa trang);
+// đổi lớp / môn / chuyên đề nhanh bằng menu trên đường dẫn (LibraryCrumbs); nội dung mục đang chọn bên phải
 export default function Library() {
   const { id } = useParams()
   const [params] = useSearchParams()
@@ -75,22 +80,24 @@ export default function Library() {
     return () => clearTimeout(t)
   }, [notice])
 
-  const { data, loading, error, reload } = useAsync(
-    async () =>
-      sortChapters(
-        unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, lessons(count), assignments(count)'))
-      ),
-    []
-  )
-  const chapters = useMemo(() => data || [], [data])
+  const { data, loading, error, reload } = useAsync(async () => {
+    // Số bài chưa xếp chương (chapter_id trống) cho mục "Chưa xếp chương" cuối cây
+    const loose = (table) => supabase.from(table).select('id', { count: 'exact', head: true }).is('chapter_id', null)
+    const [rows, l, a] = await Promise.all([
+      supabase.from('chapters').select('id, title, section, grade, subject, sort_order, lessons(count), assignments(count)').then(unwrap),
+      loose('lessons'),
+      loose('assignments'),
+    ])
+    if (l.error || a.error) throw l.error || a.error
+    return { chapters: sortChapters(rows), unsorted: (l.count || 0) + (a.count || 0) }
+  }, [])
+  const chapters = useMemo(() => data?.chapters || [], [data])
   const current = id ? chapters.find((c) => c.id === id) : null
-  const fullTree = buildTree(chapters)
+  const fullTree = useMemo(() => buildTree(chapters), [chapters])
 
-  // Tab lớp: lớp của chương đang xem → lớp trên URL → lớp chọn lần trước → lớp đầu tiên
-  const tabs = [...new Set([...fullTree.map((g) => g.key), ...(lop !== undefined ? [lop] : [])])].sort(
-    (a, b) => (gradeFromKey(a) ?? 99) - (gradeFromKey(b) ?? 99)
-  )
-  const activeGrade = current ? keyOf(current.grade) : lop ?? (tabs.includes(storedGrade) ? storedGrade : tabs[0])
+  // Lớp của cây: lớp của chương đang xem → lớp trên URL → lớp xem lần trước → lớp đầu tiên
+  const gradeKeys = fullTree.map((x) => x.key)
+  const activeGrade = current ? keyOf(current.grade) : lop ?? (gradeKeys.includes(storedGrade) ? storedGrade : gradeKeys[0])
   useEffect(() => {
     if (activeGrade === undefined) return
     setStoredGrade(activeGrade)
@@ -107,14 +114,14 @@ export default function Library() {
   const shown = q ? gradeChapters.filter((c) => norm(c.title).includes(q) || norm(c.section).includes(q)) : gradeChapters
   const subjectsTree = buildTree(shown)[0]?.subjects || []
 
-  // Mở sẵn đường dẫn tới mục đang chọn
+  // Vị trí đang xem (lớp / môn / chuyên đề): của chương đang mở, hoặc trên URL
+  const path = current ? { lop: keyOf(current.grade), mon: keyOf(current.subject), cd: keyOf(current.section) } : { lop, mon, cd }
+  const crumbs = useMemo(() => libraryCrumbs(fullTree, { lop: path.lop, mon: path.mon, cd: path.cd }), [fullTree, path.lop, path.mon, path.cd])
+
+  // Mở sẵn môn chứa mục đang chọn (chuyên đề là lá của cây, không cần mở)
   useEffect(() => {
-    const [g, s, c] = current ? [keyOf(current.grade), keyOf(current.subject), keyOf(current.section)] : [lop, mon, cd]
-    const keys = []
-    if (s !== undefined) keys.push(nodeKey('s', g, s))
-    if (c !== undefined) keys.push(nodeKey('c', g, s, c))
-    if (keys.length) ensure(keys)
-  }, [current, lop, mon, cd, ensure])
+    if (path.mon !== undefined) ensure([nodeKey('s', path.lop, path.mon)])
+  }, [path.lop, path.mon, ensure])
 
   // Chọn mục khác: đóng form đang mở, thoát Xóa nhiều, trên điện thoại thu mục lục lại
   useEffect(() => {
@@ -250,8 +257,26 @@ export default function Library() {
         section: cd !== undefined ? fromKey(cd) : null,
       }
 
+  const addChapter = () => openChapterForm({ ...preset })
+  // Menu "⋯": thao tác ít dùng. Trang chương (kể cả Chưa xếp chương): cả Thêm chương; trang nhóm: thêm sửa / xóa nhiều / xóa chuyên đề
+  const moreBase = [
+    { key: 'add', icon: 'plus', label: 'Thêm chương', onSelect: addChapter },
+    { key: 'import', icon: 'import', label: 'Nhập mục lục', onSelect: openImport },
+  ]
+  const moreGroup = [
+    moreBase[1],
+    inGroup.length > 0 && { key: 'edit', icon: 'edit', label: `Sửa ${level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}`, onSelect: openGroupForm },
+    inGroup.length > 0 &&
+      (pickCh.on
+        ? { key: 'pick', icon: 'close', label: 'Thôi xóa nhiều', onSelect: pickCh.stop }
+        : { key: 'pick', icon: 'trash', label: 'Xóa nhiều chương', onSelect: () => pickCh.start('delete') }),
+    level === 3 && inGroup.length > 0 && { key: 'del', icon: 'trash', label: 'Xóa chuyên đề', danger: true, onSelect: handleDeleteSection },
+  ]
+
   const where = current
     ? [gradeLabel(current.grade), subjectLabel(current.subject), current.title]
+    : id === UNSORTED
+    ? ['Chưa xếp chương']
     : [lop !== undefined && gradeLabel(gradeFromKey(lop)), mon !== undefined && subjectLabel(fromKey(mon)), cd !== undefined && sectionLabel(fromKey(cd))].filter(Boolean)
 
   const g = activeGrade
@@ -259,47 +284,17 @@ export default function Library() {
     <div className="library">
       <TreeSide shown={treeShown} onToggleShown={() => setTreeShown((v) => !v)} where={where.length ? where.join(' › ') : 'Chọn lớp, môn, chương'}>
         <div className="tree-head">
-          <Link to={libraryUrl()} className="tree-title">
-            Thư viện
+          {/* Tên lớp của cây (không còn tab lớp; đổi lớp ở menu "Lớp ▾" trên đường dẫn) */}
+          <Link to={libraryUrl(g)} className="tree-title">
+            {g === undefined ? 'Thư viện' : gradeLabel(gradeFromKey(g))}
           </Link>
-          <div className="row" style={{ gap: '0.35rem', flexWrap: 'nowrap' }}>
-            <button type="button" className="btn btn-small" onClick={openImport} title="Dán mục lục để tạo nhiều chương một lần">
-              <Icon name="import" />
-              Nhập
-            </button>
-            <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
-              <Icon name="plus" />
-              Chương
-            </button>
-          </div>
-        </div>
-
-        {/* Mỗi lớp một cây: chọn lớp bằng tab, "+ Lớp" để mở cây cho lớp mới */}
-        <div className="grade-tabs" role="tablist" aria-label="Chọn lớp">
-          {tabs.map((k) => (
-            <Link key={k} role="tab" aria-selected={k === g} to={libraryUrl(k)} className={k === g ? 'grade-tab active' : 'grade-tab'}>
-              {k === '-' ? 'Chưa rõ' : `Lớp ${k}`}
-            </Link>
-          ))}
-          <select
-            className="grade-add"
-            value=""
-            onChange={(e) => e.target.value && navigate(libraryUrl(e.target.value))}
-            aria-label="Thêm lớp"
-          >
-            <option value="">+ Lớp</option>
-            {ALL_GRADES.filter((n) => !tabs.includes(String(n))).map((n) => (
-              <option key={n} value={n}>
-                Lớp {n}
-              </option>
-            ))}
-          </select>
+          {/* Thêm chương / Nhập mục lục nằm ở đầu nội dung bên phải (mọi cấp), không lặp ở đây */}
         </div>
 
         <input type="search" className="tree-search" placeholder="Tìm chương…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm chương" />
         {loading && <Loading text="Đang tải…" />}
         {!loading && !error && g !== undefined && gradeChapters.length === 0 && (
-          <p className="muted small tree-empty">{gradeLabel(gradeFromKey(g))} chưa có chương nào. Bấm "+ Chương" để tạo, hoặc nhập file JSON có "grade" là lớp này.</p>
+          <p className="muted small tree-empty">{gradeLabel(gradeFromKey(g))} chưa có chương nào. Bấm "+ Thêm chương" để tạo, hoặc nhập file JSON có "grade" là lớp này.</p>
         )}
         {!loading && !error && chapters.length === 0 && g === undefined && <p className="muted small">Chưa có chương nào.</p>}
         {!loading && q && gradeChapters.length > 0 && shown.length === 0 && <p className="muted small">Không có chương nào khớp "{query}".</p>}
@@ -316,28 +311,36 @@ export default function Library() {
               active={level === 2 && lop === g && mon === s.key}
               depth={0}
             >
-              {s.sections.map((x) => (
-                <TreeGroup
-                  key={x.key}
-                  label={sectionLabel(x.section)}
-                  to={libraryUrl(g, s.key, x.key)}
-                  count={x.chapters.length}
-                  open={isOpen(nodeKey('c', g, s.key, x.key))}
-                  onToggle={() => toggle(nodeKey('c', g, s.key, x.key))}
-                  active={level === 3 && lop === g && mon === s.key && cd === x.key}
-                  depth={1}
-                >
-                  {x.chapters.map((c) => (
-                    <TreeLeaf key={c.id} to={chapterUrl(c.id)} label={c.title} />
-                  ))}
-                </TreeGroup>
-              ))}
+              {/* Cây chỉ tới chuyên đề (chương đã có băng chuyền giữa trang); đang tìm thì hiện chương khớp dưới chuyên đề */}
+              {s.sections.map((x) => {
+                const to = libraryUrl(g, s.key, x.key)
+                const active = level >= 3 && path.lop === g && path.mon === s.key && path.cd === x.key
+                return q ? (
+                  <TreeGroup
+                    key={x.key}
+                    label={sectionText(x.section)}
+                    to={to}
+                    count={x.chapters.length}
+                    open={isOpen(nodeKey('c', g, s.key, x.key))}
+                    onToggle={() => toggle(nodeKey('c', g, s.key, x.key))}
+                    active={active}
+                    depth={1}
+                  >
+                    {x.chapters.map((c) => (
+                      <TreeLeaf key={c.id} to={chapterUrl(c.id)} label={c.title} />
+                    ))}
+                  </TreeGroup>
+                ) : (
+                  <TreeLeaf key={x.key} to={to} label={sectionText(x.section)} count={x.chapters.length} active={active} />
+                )
+              })}
             </TreeGroup>
           ))}
+          {data?.unsorted > 0 && <TreeLeaf to={chapterUrl(UNSORTED)} label="Chưa xếp chương" count={data.unsorted} active={id === UNSORTED} />}
         </ul>
       </TreeSide>
 
-      <section className="library-main">
+      <section className="library-main library-panel">
         <ErrorBox message={error} onRetry={reload} />
         <ErrorBox message={actionError} />
         {notice && <div className="alert alert-ok">{notice}</div>}
@@ -396,51 +399,24 @@ export default function Library() {
             ← Về {back.backLabel || 'trang trước'}
           </Link>
         )}
+        {id && (
+          <div className="lib-bar">
+            {current ? <LibraryCrumbs segments={crumbs} /> : <span />}
+            <MoreMenu items={moreBase} />
+          </div>
+        )}
         {id && <ChapterDetail id={id} reloadKey={detailKey} onEdit={openChapterForm} onDelete={handleDelete} onChanged={reload} />}
 
-        {!id && level === 0 && !loading && <Overview tree={fullTree} onImport={openImport} />}
+        {!id && level === 0 && !loading && <Overview tree={fullTree} onImport={openImport} onAdd={addChapter} more={moreBase.slice(1)} />}
 
         {!id && level > 0 && !loading && (
           <div>
-            <nav className="crumbs" aria-label="Vị trí">
-              <Link to={libraryUrl()}>Thư viện</Link>
-              {level >= 2 && (
-                <>
-                  <span>›</span>
-                  <Link to={libraryUrl(lop)}>{gradeLabel(gradeFromKey(lop))}</Link>
-                </>
-              )}
-              {level >= 3 && (
-                <>
-                  <span>›</span>
-                  <Link to={libraryUrl(lop, mon)}>{subjectLabel(fromKey(mon))}</Link>
-                </>
-              )}
-            </nav>
+            <LibraryCrumbs segments={crumbs} />
             <div className="page-head">
               <h1>{groupTitle}</h1>
-              <div className="row">
-                {inGroup.length > 0 && (
-                  <button type="button" className="btn btn-small" onClick={openGroupForm}>
-                    <Icon name="edit" />
-                    Sửa {level === 1 ? 'lớp' : level === 2 ? 'môn' : 'chuyên đề'}
-                  </button>
-                )}
-                {inGroup.length > 0 && <SelectModes sel={pickCh} modes={['delete']} />}
-                {level === 3 && inGroup.length > 0 && (
-                  <button type="button" className="btn btn-small btn-danger" onClick={handleDeleteSection}>
-                    <Icon name="trash" />
-                    Xóa chuyên đề
-                  </button>
-                )}
-                <button type="button" className="btn btn-small" onClick={openImport}>
-                  <Icon name="import" />
-                  Nhập mục lục
-                </button>
-                <button type="button" className="btn btn-small btn-primary" onClick={() => openChapterForm({ ...preset })}>
-                  <Icon name="plus" />
-                  Thêm chương
-                </button>
+              <div className="page-head-actions">
+                <AddChapterButton onClick={addChapter} />
+                <MoreMenu items={moreGroup} />
               </div>
             </div>
             {inGroup.length === 0 ? (
@@ -462,13 +438,27 @@ export default function Library() {
                   <span className="badge">{sum(inGroup, 'lessons')} bài giảng</span>
                   <span className="badge">{sum(inGroup, 'assignments')} bài tập</span>
                 </div>
-                <GroupChapters
-                  pick={pickCh}
-                  chapters={inGroup}
-                  showSection={level < 3}
-                  onEdit={openChapterForm}
-                  onDelete={(c) => handleDelete(c, countOf(c.lessons) + countOf(c.assignments))}
-                />
+                {/* Lớp / môn: kệ sách (môn = kệ, chuyên đề = sách; xem môn thì chỉ một kệ); một chuyên đề: băng chuyền; đang Xóa nhiều (cần ô chọn): danh sách */}
+                {(level === 1 || level === 2) && !pickCh.on ? (
+                  <GradeShelf chapters={inGroup} count={countOf} />
+                ) : level === 3 && !pickCh.on ? (
+                  <ChapterCarousel
+                    key={`${lop}|${mon}|${cd}`}
+                    memoKey={`${lop}|${mon}|${cd}`}
+                    chapters={inGroup}
+                    count={countOf}
+                    onEdit={openChapterForm}
+                    onDelete={(c) => handleDelete(c, countOf(c.lessons) + countOf(c.assignments))}
+                  />
+                ) : (
+                  <GroupChapters
+                    pick={pickCh}
+                    chapters={inGroup}
+                    showSection={level < 3}
+                    onEdit={openChapterForm}
+                    onDelete={(c) => handleDelete(c, countOf(c.lessons) + countOf(c.assignments))}
+                  />
+                )}
                 <SelectBar
                   sel={pickCh}
                   visible={inGroup.map(chapterItem)}
@@ -540,8 +530,18 @@ function GroupChapters({ pick, chapters, showSection, onEdit, onDelete }) {
   ))
 }
 
+// Nút chính của đầu trang Thư viện (mỗi màn hình một nút chính)
+function AddChapterButton({ onClick }) {
+  return (
+    <button type="button" className="btn btn-small btn-primary" onClick={onClick}>
+      <Icon name="plus" />
+      Thêm chương
+    </button>
+  )
+}
+
 // Chưa chọn gì: tổng quan từng lớp
-function Overview({ tree, onImport }) {
+function Overview({ tree, onImport, onAdd, more }) {
   const all = tree.flatMap((g) => g.subjects.flatMap((s) => s.sections.flatMap((x) => x.chapters)))
   return (
     <div>
@@ -549,17 +549,23 @@ function Overview({ tree, onImport }) {
         <h1>
           <span className="title-icon"><Icon name="library" /></span>Thư viện
         </h1>
-        <button type="button" className="btn btn-small" onClick={onImport}>
-          <Icon name="import" />
-          Nhập mục lục
-        </button>
+        <div className="page-head-actions">
+          <AddChapterButton onClick={onAdd} />
+          <MoreMenu items={more} />
+        </div>
       </div>
       <p className="muted">
-        Mỗi lớp có một cây <b>Môn › Chuyên đề › Chương</b> riêng, chọn lớp bằng tab ở đầu mục lục. Học sinh chỉ thấy cây của lớp mình (theo "Lớp" trong hồ sơ
-        học sinh). Khi nhập file JSON, chương được tự xếp theo lớp, môn, chuyên đề ghi trong file.
+        Mỗi lớp có một cây <b>Môn › Chuyên đề › Chương</b> riêng: bấm một lớp bên dưới, rồi đổi lớp / môn / chuyên đề nhanh bằng nút <b>▾</b> trên đường dẫn
+        (lớp chưa có chương cũng chọn được ở đó để mở lớp mới). Học sinh chỉ thấy cây của lớp mình (theo "Lớp" trong hồ sơ học sinh). Khi nhập file JSON, chương được tự xếp theo lớp, môn, chuyên đề ghi trong file.
       </p>
       {all.length === 0 ? (
-        <div className="empty">Chưa có chương nào. Bấm "Nhập mục lục" để dán cả mục lục giáo trình, "+ Chương" để tạo từng chương, hoặc nhập một file JSON.</div>
+        <div className="empty">
+          <p>Chưa có chương nào. Dán cả mục lục giáo trình để tạo nhiều chương một lần, bấm "+ Thêm chương" để tạo từng chương, hoặc nhập một file JSON.</p>
+          <button type="button" className="btn btn-small" onClick={onImport}>
+            <Icon name="import" />
+            Nhập mục lục
+          </button>
+        </div>
       ) : (
         <div className="overview-grid">
           {tree.map((g) => {

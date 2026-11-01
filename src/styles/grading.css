@@ -28,6 +28,10 @@
 body:has(.mascot) .grade-dock {
   bottom: calc(0.6rem + 104px + 1rem);
 }
+/* Đang mở sổ: mũi tên cuộn đứng bên trái sổ, không bị sổ che */
+body:has(.grade-dock.is-open) .scroll-jump {
+  right: calc(0.75rem + 200px + 0.5rem);
+}
 /* Có gấu: bấm gấu để ẩn / hiện, nên ẩn là ẩn hẳn. Không có gấu (đã cất / tắt Linh vật): còn đầu sổ với nút "Hiện" */
 body:has(.mascot) .grade-dock:not(.is-open) {
   display: none;
@@ -181,6 +185,9 @@ body:not(:has(.mascot)):has(.grade-dock:not(.is-open)) .page {
   }
   body:has(.mascot) .grade-dock {
     bottom: calc(0.5rem + 76px + 0.8rem);
+  }
+  body:has(.grade-dock.is-open) .scroll-jump {
+    right: calc(0.5rem + 180px + 0.5rem);
   }
 }
 

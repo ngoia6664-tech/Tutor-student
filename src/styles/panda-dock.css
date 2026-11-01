@@ -15,6 +15,23 @@
 }
 .panda-dock.is-tutor { bottom: calc(1rem + env(safe-area-inset-bottom)); }
 
+/* ----- Tránh che nội dung (cụm cao ~6rem: logo 60px + bảng LED) ----- */
+/* Trang soạn của gia sư có thanh Lưu dính đáy (.sticky-actions): nâng cụm lên trên thanh như của học sinh */
+body:has(.sticky-actions) .panda-dock.is-tutor { bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
+/* Chừa chỗ cuối trang bằng chiều cao cụm để mục / nút cuối cùng không nằm dưới cụm (kể cả khi tắt gấu) */
+body:has(.panda-dock) .page { padding-bottom: 7.5rem; }
+body:has(.panda-dock:not(.is-tutor) .panda-shop-icon) .page,
+body:has(.sticky-actions):has(.panda-dock .panda-shop-icon) .page { padding-bottom: 11rem; }
+/* Cây mục lục dính bên trái (Thư viện, màn rộng): đáy cây dừng trên cụm để mục cuối ("Chưa xếp chương") không bị che */
+@media (min-width: 821px) {
+  body:has(.panda-dock .panda-shop-icon) .tree-box { max-height: calc(100vh - var(--topbar-h, 6.5rem) - 8.5rem); }
+  body:has(.panda-dock:not(.is-tutor) .panda-shop-icon) .tree-box { max-height: calc(100vh - var(--topbar-h, 6.5rem) - 12rem); }
+}
+/* Đang Sửa nhiều / Xóa nhiều trên màn hẹp: thanh chọn ở đáy giữa (assign.css) đè lên cụm → tạm ẩn cụm */
+@media (max-width: 900px) {
+  body:has(.assign-bar) .panda-dock { display: none; }
+}
+
 .panda-shop-icon {
   position: relative;
   z-index: 1;

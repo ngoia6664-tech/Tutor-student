@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
@@ -35,6 +35,7 @@ import { listUrl, rememberList } from '../lib/navMemory.js'
 
 // Tham số URL của Kính thiên văn (địa điểm đang xem)
 const PLACE_PARAM = 'vu-tru'
+const WIDE_PAGES = /^\/(?:(?:tutor|student)\/library|tutor\/students\/?$|tutor\/assignments\/(?!new)[^/]+\/?$)/
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -43,15 +44,13 @@ const NAV = {
   tutor: [
     { to: '/tutor', label: 'Học sinh', icon: 'users', end: true, also: /^\/tutor\/students\// },
     { to: '/tutor/library', label: 'Thư viện', icon: 'library' },
-    { to: '/tutor/assignments', label: 'Bài tập', icon: 'assignment' },
-    { to: '/tutor/lessons', label: 'Bài giảng', icon: 'lesson' },
+    { to: '/tutor/assignments', label: 'Chấm bài', icon: 'grade' },
     { to: '/tutor/import', label: 'Dán JSON', icon: 'import' },
     { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports' },
     { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback' },
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
-    { to: '/student/lessons', label: 'Bài giảng', icon: 'lesson' },
     { to: '/student/results', label: 'Kết quả', icon: 'results' },
     { to: '/student/mistakes', label: 'Ôn tập', icon: 'refresh' },
     { to: '/student/library', label: 'Thư viện', icon: 'library' },
@@ -91,6 +90,23 @@ export default function Layout() {
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Viên nền trượt sau mục menu đang chọn: đo lại khi đổi trang hoặc khi mục menu đổi cỡ (chuông báo, xoay máy...)
+  const navRef = useRef(/** @type {HTMLElement | null} */ (null))
+  const [pill, setPill] = useState(/** @type {{ x: number, y: number, w: number, h: number } | null} */ (null))
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const measure = () => {
+      const el = nav.querySelector('.nav-link.active')
+      setPill(el instanceof HTMLElement ? { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight } : null)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    nav.querySelectorAll('.nav-link').forEach((el) => ro.observe(el))
+    return () => ro.disconnect()
+  }, [pathname])
+  // Trang làm việc (nhiều cột / bảng) được rộng hơn trang đọc: Thư viện, danh sách học sinh, theo dõi một bài tập
+  const wide = WIDE_PAGES.test(pathname)
   const studying = useStudying()
   const showMascot = useSettings().mascot
   // Kính thiên văn ghi địa điểm đang xem lên URL (?vu-tru=<id>): tải lại trang thì mở lại đúng chỗ.
@@ -129,9 +145,23 @@ export default function Layout() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+  // Chiều cao thật của thanh trên cùng (menu xuống dòng, xoay máy, đổi cỡ chữ) → --topbar-h cho các khối dính bên dưới (cây Thư viện)
+  useEffect(() => {
+    const bar = document.querySelector('.topbar')
+    if (!(bar instanceof HTMLElement)) return
+    const root = document.documentElement
+    const update = () => root.style.setProperty('--topbar-h', `${bar.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(bar)
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--topbar-h')
+    }
+  }, [])
 
   const content = (
-    <div className="app">
+    <div className={wide ? 'app is-wide' : 'app'}>
       <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="topbar-inner">
           <span className="brand">
@@ -141,6 +171,7 @@ export default function Layout() {
             <span className="user-name" title={profile.full_name}>
               {profile.full_name || 'Tài khoản'}
             </span>
+            {profile.role === 'student' && <StreakFlame />}
             <NotificationBell />
             <button
               type="button"
@@ -172,7 +203,14 @@ export default function Layout() {
             </button>
           </div>
         </div>
-        <nav className="nav">
+        <nav className="nav" ref={navRef}>
+          {pill && (
+            <span
+              className="nav-pill"
+              aria-hidden="true"
+              style={{ transform: `translate(${pill.x}px, ${pill.y}px)`, width: pill.w, height: pill.h }}
+            />
+          )}
           {items.map((it) => (
             <NavLink key={it.to} to={listUrl(it.to)} state={RESTORE} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
               <Icon name={it.icon} size={17} />
@@ -206,7 +244,6 @@ export default function Layout() {
       <ScrollMemory />
       <ScrollJump />
       <PandaDock />
-      {profile.role === 'student' && <StreakFlame />}
       <DialogHost />
       {profile.role === 'student' && <FeedbackButton />}
       {exploring && (

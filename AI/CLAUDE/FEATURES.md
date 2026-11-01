@@ -18,21 +18,21 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Tốc độ tải: `vite.config.js` tách chunk `react` / `supabase` (cache lâu, không đổi khi sửa code app); `vercel.json` cache `/assets` 1 năm;
   font Google tải không chặn hiển thị; Mascot (Layout) + DialogScene (DialogHost) là `lazy`, không nằm trong gói khởi động.
   Truy vấn trong một trang: gom vào `Promise.all`, tránh `await` nối tiếp (mỗi lượt = 1 lần chờ mạng).
-- `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương),
-  `TutorAssignments`, `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: "Sổ chấm bài" `GradeDock` nổi
+- `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương; cuối cây mục "Chưa xếp chương" `/tutor/library/chua-xep` = `ChapterDetail` với id `UNSORTED`: bài có chapter_id trống, Sửa nhiều → Chuyển chương / Xóa / Giao),
+  `TutorAssignments` (menu "Chấm bài", vẫn `/tutor/assignments`: danh sách phẳng, lọc "Có bài chờ chấm", ô tìm theo tên `matchTitle` trong lib/format.js; không cây), `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: "Sổ chấm bài" `GradeDock` nổi
   góc phải ngay trên gấu, kiểu bảng đen nhỏ gọn, bấm tên là chuyển bài; `?hs=<student_id>` mở thẳng bài của bạn đó + nút "← Về <tên>" (link từ StudentDetail / chuông); bấm gấu = ẩn/hiện sổ, gấu im lặng khi chấm — `lib/gradeDock.js`; chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
-  `TutorLessons`, `TutorLessonView`, `LessonEditor`, `ImportJson` (dán JSON hoặc chọn/kéo thả nhiều file: mỗi file = 1 nguồn có chương + bài giảng liên kết riêng, file chỉ bài tập tự gắn bài giảng cùng chương trong lô; học sinh chung + "Giao riêng" từng phần; trùng tên bài có sẵn → bỏ tick), `TutorReports` (báo lỗi đề),
+  `TutorLessonView`, `LessonEditor` (danh sách Bài giảng đã bỏ: `/tutor/lessons` → Navigate về Thư viện, "← Thư viện" dùng ListLink), `ImportJson` (dán JSON hoặc chọn/kéo thả nhiều file: mỗi file = 1 nguồn có chương + bài giảng liên kết riêng, file chỉ bài tập tự gắn bài giảng cùng chương trong lô; học sinh chung + "Giao riêng" từng phần; trùng tên bài có sẵn → bỏ tick), `TutorReports` (báo lỗi đề),
   `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
 - Biểu đồ học tập: `components/ScoreChart.jsx` (SVG tự vẽ, đường điểm + TB 3 bài + mốc 5, lọc Đề thi/Bài tập + 1 tháng/3 tháng/Tất cả, chạm điểm → thẻ "Xem bài") + `lib/scoreChart.js` (điểm gia sư → điểm máy khi cả bài chấm máy `machine.allAuto` → bỏ qua; không tính làm lại) + CSS `styles/chart.css`. Gia sư có thêm cây "Điểm theo chương" (`chapterTree`: Lớp›Môn›Chuyên đề›Chương, bỏ cấp chỉ 1 nhánh, nhóm có chương TB < 6 "cần ôn" mở sẵn); bấm chương = lọc tại chỗ biểu đồ + danh sách bài (URL `?chuong=`, `none` = Bài khác), link "Mở chương trong Thư viện" gửi state `{ backTo, backLabel }` → Library hiện nút "← Về ...". Gấu nhận xét khi mở (`chartComment`, voice student/tutor, kỷ lục mới → `celebrate`; mỗi phiên 1 lần/điểm mới qua sessionStorage; Kết quả đang lọc chương thì `quiet`), học sinh chạm bài cao nhất / dưới 5 → `pointComment`. Ở StudentResults (theo cây chương đang chọn) và StudentDetail. `machineSummary` trong `lib/studentReport.js`.
 - Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.
 - Chương đang học: lưu `profiles.study_chapter_id` qua RPC `set_study_chapter`; `lib/studyNow.js` (`useStudyChapterId`, `setStudyChapter`).
   Gia sư xem ở đầu trang StudentDetail.   Tự đổi khi mở bài tập chưa nộp (AnswerView trong StudentAssignment), hoặc học sinh bấm `components/StudyNowButton.jsx`
-  (Thư viện › chương, StudentLesson, đầu trang Bài cần làm / Bài giảng khi cây đang chọn một chương); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
-  `FilterTree` prop `nowId`) ở Thư viện + Bài giảng, dòng `components/StudyNow.jsx` ở Bài cần làm / Bài giảng / Thư viện.
+  (Thư viện › chương, StudentLesson, đầu trang Bài cần làm khi cây đang chọn một chương); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
+  `FilterTree` prop `nowId`) ở Thư viện, dòng `components/StudyNow.jsx` ở Bài cần làm / Thư viện.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
   `StudentMistakes` (menu "Ôn tập": mục Câu sai = câu `is_correct=false`, mục ⭐ Câu khó = bảng `question_marks`; làm lại chấm trên máy qua `lib/practice.js`),
-  `StudentLibrary`, `StudentLessons` (/student/lessons: cây lọc FilterTree + gom theo chương, mục "Mới giao", ô tìm), `StudentLesson`
-  (vào từ Bài giảng → state `from: 'lessons'` để nút quay lại về Bài giảng). Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
+  `StudentLibrary` (giống Thư viện gia sư, bỏ cấp Lớp: kệ sách → `?mon=&cd=` băng chuyền chương → chương; bài chưa xếp chương / chương lớp khác ở mục "Các bài khác" `/student/library/khac`), `StudentLesson`
+  (nút quay lại về chương của bài trong Thư viện, chưa có chương → "Các bài khác"). Menu không còn "Bài giảng": `/student/lessons` → Navigate về Thư viện. Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
 - Làm bài (StudentAssignment): `components/AnswerProgress.jsx` thanh đã làm/chưa làm dính dưới header (thu gọn được, bấm câu chưa làm để nhảy);
   `components/MarkHard.jsx` + `lib/marks.js` nút "Câu khó" (bảng `question_marks`, chỉ mất khi học sinh bỏ đánh dấu;
   cột `note` = ghi chú riêng của học sinh, sửa ở Ôn tập › Câu khó qua `components/HardNote.jsx`; gia sư không có policy đọc).
@@ -79,9 +79,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - `src/components/` — `ExerciseBody` (hiển thị 1 câu theo loại), `ExamParts` (phần đề, phiếu trả lời, đồng hồ),
   `AnswerKey` (bảng đáp án gia sư), `TreePicker`/`ChapterSelect`/`LessonSelect` (ô chọn dạng cây),
   `TreeNav` (cây mục lục, nhớ nút mở), `FilterTree` (lọc theo cây qua URL `?lop=&mon=&cd=&ch=`),
-  `ChapterForms`, `ChapterGroups`, `OutlineImport`, `ReportQuestion`, `NotificationBell`, `Layout`,
+  `ChapterForms`, `OutlineImport`, `ReportQuestion`, `NotificationBell`, `Layout`,
   `ProtectedRoute`, `Markdown`/`MarkdownField`, `Icon`, `ThemeToggle`,
-  `QuickAssign` (nút "Giao (n)" ở TutorLessons/TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
+  `QuickAssign` (nút "Giao (n)" ở TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
   nhiều bài = chỉ giao thêm; ghi qua `lib/recipients.js`, CSS `styles/assign.css`).
   Sửa nhiều / Xóa nhiều (`SelectModes` + `SelectBar`, hai chế độ không bật cùng lúc, đổi chế độ / đổi bộ lọc là bỏ tick cũ; "Chọn tất cả" = chỉ mục đang hiển thị):
   Sửa nhiều = Chuyển chương (`MoveDialog`, chỉ đổi `chapter_id`) + Giao cho... (giao thêm, không trùng nhờ upsert ignoreDuplicates);
@@ -102,6 +102,9 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 theme qua `<html data-theme="dark|light">`. Nền trang (màu, quầng sáng, 3 lớp sao, hệ Mặt Trời 3D, sao băng) KHÔNG ở body
 mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space.css`; body trong suốt. Góc nhìn hệ Mặt Trời
 = biến `--tilt`/`--turn` trên `.solar`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
+Nút chính / mục đang chọn (`.btn-primary`, `.chip.active`, `.grade-tab.active`, `.nav-pill`, đáp án đã chọn...): token `--btn-primary` (+ `-border`, `-shadow`, `-hover-ring`), tím đậm một màu.
+Khoảnh khắc đặc biệt (Nộp bài, nút / tab cửa hàng gấu): class `.btn-moment` / `--btn-moment` (gradient ba màu bản tối). `--grad` sáng chỉ còn cho chữ chuyển màu, thanh tiến độ, trang trí không có chữ trắng.
+Mục đang chọn trên cây: `--primary-soft` + vạch trái. Màu môn (kệ sách, thẻ chương): `--hue` Toán 225 · Vật lý 285 · Hóa 335 · môn khác 260 (hệ số bão hòa `--s` 0,32); trang Thư viện có tấm nền `.library-panel`.
 Chế độ ngắm vũ trụ: `components/SpaceExplorer.jsx` + `styles/explorer.css` (lazy, mở từ nút kính viễn vọng ở header),
 thêm class `space-exploring` vào `<html>` để ẩn `.app` và cho kéo / bấm hệ Mặt Trời; gấu góc trái dưới nói trong bong bóng `.explorer-bubble`:
 bấm gấu kể lần lượt 25 câu `SPACE_FACTS` (có mục lục), bấm hành tinh thì giải thích theo `BODIES` (g, tag, stats, about) + chế độ soi: nền `.explorer-dim` (z 100),

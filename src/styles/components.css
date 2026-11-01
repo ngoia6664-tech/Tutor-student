@@ -26,14 +26,14 @@
   box-shadow: var(--shadow);
   transition: transform 0.3s var(--ease), border-color 0.2s var(--ease), box-shadow 0.3s var(--ease);
 }
-/* Viền chuyển màu tím – hồng hiện ra khi rê chuột */
+/* Viền tím hiện ra khi rê chuột */
 a.list-item::before {
   content: '';
   position: absolute;
   inset: -1px -1px -3px;
   padding: 1px 1px 3px;
   border-radius: inherit;
-  background: var(--grad);
+  background: var(--btn-primary);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -46,10 +46,30 @@ a.list-item:hover::before {
 }
 a.list-item:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow), 0 18px 36px -18px rgba(217, 70, 239, 0.55);
+  box-shadow: var(--shadow), 0 18px 36px -18px rgba(124, 58, 237, 0.5);
 }
 a.list-item:active {
   transform: translateY(0) scale(0.995);
+}
+/* Vầng sáng theo chuột: một phần tử cố định phủ trên mọi lớp (kể cả hộp thoại, z-index cao nhất app là 300),
+   không chặn thao tác. lib/pressFx.js tạo và di chuyển nó. Đổi cỡ vầng ở --glow-size (đường kính) */
+.cursor-glow {
+  --glow-size: 240px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--glow-size);
+  height: var(--glow-size);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--spot), transparent 70%);
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+.cursor-glow.is-on {
+  opacity: 1;
 }
 .list-item-title {
   font-weight: 600;
@@ -140,7 +160,26 @@ a.list-item:active {
     background-color 0.18s var(--ease), filter 0.18s;
   -webkit-tap-highlight-color: transparent;
 }
-/* Vệt sáng tại điểm chạm: lib/pressFx.js ghi --px/--py, :active bật lên rồi mờ dần khi thả tay */
+/* Sóng lan từ điểm bấm: lib/pressFx.js ghi --px/--py và gắn class is-rip; bán kính --rr chạy 0 → 240px
+   (tách easing: bán kính bung nhanh rồi chậm lại, độ sáng tắt đều) nên chạm nhanh vẫn thấy trọn sóng */
+@property --rr {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --px {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+@property --py {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+.btn {
+  --ripple: rgba(168, 85, 247, 0.34);
+}
 .btn::before {
   content: '';
   position: absolute;
@@ -148,40 +187,73 @@ a.list-item:active {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(168, 85, 247, 0.3), transparent 60%);
-  transition: opacity 0.5s var(--ease);
+  background: radial-gradient(
+    circle at var(--px, 50%) var(--py, 50%),
+    var(--ripple) 0,
+    var(--ripple) calc(var(--rr) * 0.35),
+    transparent var(--rr)
+  );
 }
-.btn:active:not(:disabled)::before {
-  opacity: 1;
-  transition: none;
+.btn.is-rip:not(:disabled)::before {
+  animation: btn-rip-r 0.65s var(--ease), btn-rip-o 0.65s linear;
+}
+@keyframes btn-rip-r {
+  from {
+    --rr: 0px;
+  }
+  to {
+    --rr: 240px;
+  }
+}
+@keyframes btn-rip-o {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 .btn:hover:not(:disabled) {
   --lift: 5px;
   border-color: var(--primary);
   transform: translateY(-1px);
 }
+/* Đang nhấn: phím lún xuống, mặt nút lõm (bóng trong) và tối đi một chút */
 .btn:active:not(:disabled) {
   --lift: 0px;
-  transform: translateY(4px);
+  transform: translateY(4px) scale(0.985);
   transition-duration: 0.08s;
+  box-shadow: 0 0 0 var(--edge-n), inset 0 3px 9px rgba(0, 0, 0, 0.3);
+  filter: brightness(0.94);
 }
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 .btn-primary {
-  background: var(--grad);
-  border-color: transparent;
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
   color: var(--on-primary);
-  box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow);
+  box-shadow: 0 var(--lift) 0 var(--btn-primary-border), var(--btn-primary-shadow);
 }
-.btn-primary::before {
-  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, 0.45), transparent 60%);
+.btn-primary {
+  --ripple: rgba(255, 255, 255, 0.5);
 }
 .btn-primary:hover:not(:disabled) {
-  border-color: transparent;
-  filter: brightness(1.08) saturate(1.05);
-  box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow-big);
+  border-color: var(--btn-primary-border);
+  filter: brightness(1.1);
+  box-shadow: 0 var(--lift) 0 var(--btn-primary-border), var(--btn-primary-hover-ring);
+}
+/* Nút chính khi nhấn: lún xuống, mặt lõm */
+.btn-primary:active:not(:disabled) {
+  filter: brightness(0.93) saturate(1.1);
+  box-shadow: 0 0 0 var(--btn-primary-border), inset 0 3px 10px rgba(30, 5, 70, 0.45);
+}
+/* Khoảnh khắc đặc biệt (Nộp bài, mua / mặc đồ ở cửa hàng gấu): giữ gradient ba màu, bản tối */
+.btn-primary.btn-moment,
+.btn-primary.btn-moment:hover:not(:disabled) {
+  background: var(--btn-moment);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 /* Vệt sáng quét ngang khi rê chuột (dịch nền thay vì dịch phần tử nên không cần overflow: hidden) */
 .btn-primary::after {
@@ -205,14 +277,21 @@ a.list-item:active {
 @keyframes btn-breathe {
   0%,
   100% {
-    box-shadow: 0 var(--lift) 0 var(--edge-p), var(--glow);
+    box-shadow: 0 var(--lift) 0 var(--btn-primary-border), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 8px 20px -10px rgba(162, 28, 175, 0.8);
   }
   50% {
-    box-shadow: 0 var(--lift) 0 var(--edge-p), 0 10px 44px -4px rgba(236, 72, 153, 0.85);
+    box-shadow: 0 var(--lift) 0 var(--btn-primary-border), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 36px -6px rgba(190, 24, 93, 0.75);
   }
+}
+/* Animation thắng khai báo thường: đang nhấn phải bỏ "thở" thì bóng lõm mới hiện */
+.btn-breathe:active:not(:disabled) {
+  animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .btn-breathe:not(:disabled) {
+    animation: none;
+  }
+  .btn.is-rip:not(:disabled)::before {
     animation: none;
   }
 }
@@ -259,13 +338,14 @@ a.list-item:active {
   border-color: var(--primary);
 }
 .chip:active {
-  transform: scale(0.96);
+  transform: translateY(2px) scale(0.96);
+  filter: brightness(0.93);
 }
 .chip.active {
-  background: var(--grad);
+  background: var(--btn-primary);
   color: var(--on-primary);
-  border-color: transparent;
-  box-shadow: 0 3px 0 var(--edge-p), var(--glow);
+  border-color: var(--btn-primary-border);
+  box-shadow: 0 3px 0 var(--btn-primary-border), var(--btn-primary-shadow);
 }
 /* Lối tắt tới cấp con trong thẻ Lớp / Môn / Chuyên đề */
 .list-item .chips {

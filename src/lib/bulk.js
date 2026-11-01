@@ -25,7 +25,13 @@ export function deleteWarning(items) {
 
 // Chuyển chương: CHỈ đổi chapter_id, mọi trường khác giữ nguyên. chapterId '' / null = "Chưa xếp chương".
 // Trả { moved, failed: [{ item, error }] } — bảng nào lỗi thì các bài của bảng đó nằm trong failed.
-export async function moveToChapter(items, chapterId) {
+// (Đổi chương thì CSDL tự đưa bài về "Chưa xếp" thư mục: trigger keep_folder_in_chapter)
+export const moveToChapter = (items, chapterId) => updateItems(items, { chapter_id: chapterId || null })
+
+// Chuyển vào thư mục trong chương: CHỈ đổi folder_id. folderId '' / null = "Chưa xếp" (ra khỏi thư mục)
+export const moveToFolder = (items, folderId) => updateItems(items, { folder_id: folderId || null })
+
+async function updateItems(items, patch) {
   let moved = 0
   const failed = []
   for (const kind of Object.keys(TABLE)) {
@@ -35,7 +41,7 @@ export async function moveToChapter(items, chapterId) {
       const rows = unwrap(
         await supabase
           .from(TABLE[kind])
-          .update({ chapter_id: chapterId || null })
+          .update(patch)
           .in('id', list.map((it) => it.id))
           .select('id'),
       )

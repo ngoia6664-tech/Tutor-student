@@ -14,7 +14,10 @@ describe('urlKey', () => {
 
 describe('tabOf', () => {
   it('chỉ trang danh sách mới thuộc tab; trang chi tiết / soạn bài thì không', () => {
-    expect(tabOf('/tutor/lessons')).toBe('/tutor/lessons')
+    // Danh sách Bài giảng đã bỏ (chuyển hướng về Thư viện): không còn là tab
+    expect(tabOf('/tutor/lessons')).toBe(null)
+    expect(tabOf('/student/lessons')).toBe(null)
+    expect(tabOf('/tutor/library/chua-xep')).toBe('/tutor/library')
     expect(tabOf('/tutor/lessons/123')).toBe(null)
     expect(tabOf('/tutor/lessons/123/edit')).toBe(null)
     expect(tabOf('/tutor/assignments/new')).toBe(null)
@@ -28,24 +31,24 @@ describe('tabOf', () => {
 
 describe('listUrl', () => {
   it('mỗi tab nhớ riêng chương của nó', () => {
-    rememberList('/tutor/lessons', '?lop=11&ch=c3')
+    rememberList('/tutor/library', '?lop=11&ch=c3')
     rememberList('/tutor/assignments', '?lop=10&ch=c2')
     rememberList('/tutor/lessons/xyz', '') // trang chi tiết: không ghi đè
-    expect(listUrl('/tutor/lessons')).toBe('/tutor/lessons?lop=11&ch=c3')
+    expect(listUrl('/tutor/library')).toBe('/tutor/library?lop=11&ch=c3')
     expect(listUrl('/tutor/assignments')).toBe('/tutor/assignments?lop=10&ch=c2')
     expect(listUrl('/tutor/reports')).toBe('/tutor/reports')
   })
 
   it('xóa chương thì tab trỏ vào chương đó về URL gốc', () => {
-    rememberList('/tutor/lessons', '?lop=11&ch=c3')
-    rememberList('/tutor/library/c3', '')
+    rememberList('/tutor/library', '?lop=11&ch=c3')
+    rememberList('/student/library/c3', '')
     rememberList('/tutor/assignments', '?ch=c9')
-    saveScroll('/tutor/lessons?lop=11&ch=c3', { y: 500 })
+    saveScroll('/tutor/library?lop=11&ch=c3', { y: 500 })
     forgetUrlsWith(['c3'])
-    expect(listUrl('/tutor/lessons')).toBe('/tutor/lessons')
     expect(listUrl('/tutor/library')).toBe('/tutor/library')
+    expect(listUrl('/student/library')).toBe('/student/library')
     expect(listUrl('/tutor/assignments')).toBe('/tutor/assignments?ch=c9')
-    expect(readScroll('/tutor/lessons?lop=11&ch=c3')).toBe(null)
+    expect(readScroll('/tutor/library?lop=11&ch=c3')).toBe(null)
   })
 })
 

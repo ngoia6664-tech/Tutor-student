@@ -3,10 +3,15 @@
    Màu đặt bằng biến; <html data-theme="dark|light"> quyết định bộ màu.
    ===================================================================== */
 :root,
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0c0a1d;
-  --surface: rgba(24, 20, 50, 0.9); /* gần đặc: không dùng backdrop-filter vì nền vũ trụ chuyển động */
+  --surface: rgba(
+    24,
+    20,
+    50,
+    0.9
+  ); /* gần đặc: không dùng backdrop-filter vì nền vũ trụ chuyển động */
   --surface-solid: #16132e;
   --surface-2: #1e1a3d;
   --border: #2a2550;
@@ -17,7 +22,11 @@
   --accent: #f472b6;
   --on-primary: #ffffff;
   --grad: linear-gradient(100deg, #a855f7 0%, #d946ef 55%, #ec4899 100%);
-  --grad-soft: linear-gradient(100deg, rgba(168, 85, 247, 0.18), rgba(236, 72, 153, 0.18));
+  --grad-soft: linear-gradient(
+    100deg,
+    rgba(168, 85, 247, 0.18),
+    rgba(236, 72, 153, 0.18)
+  );
   --glow: 0 8px 28px -6px rgba(217, 70, 239, 0.55);
   --primary-soft: rgba(192, 132, 252, 0.14);
   --ok: #4ade80;
@@ -28,20 +37,29 @@
   --warn-soft: rgba(251, 191, 36, 0.13);
   --aura-1: rgba(124, 58, 237, 0.28);
   --aura-2: rgba(219, 39, 119, 0.2);
-  --glow-big: 0 12px 40px -6px rgba(217, 70, 239, 0.8);
   --reward: #fcd34d; /* vàng sao: chỉ dùng cho thứ "kiếm được" (Xu, Sao, chuỗi) */
   --reward-2: #f59e0b;
   --reward-soft: rgba(252, 211, 77, 0.14);
   --on-reward: #3b2300;
-  --edge-p: #7e22ce; /* đáy nút chính (phím nổi) */
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px -14px rgba(0, 0, 0, 0.65);
+  /* Nút chính / mục đang chọn: tím đậm một màu (chữ trắng 5,7:1 trở lên); viền cũng là đáy "phím nổi" */
+  --btn-primary: linear-gradient(180deg, #7c3aed, #6d28d9);
+  --btn-primary-border: #5b21b6;
+  --shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25),
+    0 14px 32px -14px rgba(0, 0, 0, 0.65);
   --focus: rgba(192, 132, 252, 0.6);
+  --spot: rgba(168, 85, 247, 0.3); /* vầng sáng theo chuột (.cursor-glow) */
   --skeleton: rgba(255, 255, 255, 0.06);
-  --topbar-bg: rgba(12, 10, 29, 0.96); /* nền header khi đã cuộn (đủ che chữ phía dưới); không làm mờ nền để nhẹ máy */
+  --topbar-bg: rgba(
+    12,
+    10,
+    29,
+    0.96
+  ); /* nền header khi đã cuộn (đủ che chữ phía dưới); không làm mờ nền để nhẹ máy */
   --topbar-glass: rgba(12, 10, 29, 0.72);
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   color-scheme: light;
   --bg: #f5f3ff;
   --surface: rgba(255, 255, 255, 0.94);
@@ -55,7 +73,11 @@
   --accent: #db2777;
   --on-primary: #ffffff;
   --grad: linear-gradient(100deg, #7c3aed 0%, #c026d3 55%, #db2777 100%);
-  --grad-soft: linear-gradient(100deg, rgba(124, 58, 237, 0.1), rgba(219, 39, 119, 0.1));
+  --grad-soft: linear-gradient(
+    100deg,
+    rgba(124, 58, 237, 0.1),
+    rgba(219, 39, 119, 0.1)
+  );
   --glow: 0 8px 24px -8px rgba(192, 38, 211, 0.45);
   --primary-soft: rgba(124, 58, 237, 0.09);
   --ok: #15803d;
@@ -66,14 +88,17 @@
   --warn-soft: rgba(161, 98, 7, 0.1);
   --aura-1: rgba(124, 58, 237, 0.12);
   --aura-2: rgba(219, 39, 119, 0.08);
-  --glow-big: 0 12px 34px -8px rgba(192, 38, 211, 0.7);
   --reward: #d97706;
   --reward-2: #b45309;
   --reward-soft: rgba(217, 119, 6, 0.12);
   --on-reward: #ffffff;
-  --edge-p: #5b21b6;
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 4px rgba(60, 30, 120, 0.06), 0 14px 32px -16px rgba(60, 30, 120, 0.28);
+  --btn-primary: linear-gradient(180deg, #6d28d9, #5b21b6);
+  --btn-primary-border: #4c1d95;
+  --shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 4px rgba(60, 30, 120, 0.06),
+    0 14px 32px -16px rgba(60, 30, 120, 0.28);
   --focus: rgba(124, 58, 237, 0.45);
+  --spot: rgba(124, 58, 237, 0.12);
   --skeleton: rgba(60, 30, 120, 0.07);
   --topbar-bg: rgba(245, 243, 255, 0.96);
   --topbar-glass: rgba(245, 243, 255, 0.72);
@@ -87,13 +112,26 @@
   --r-badge: 6px;
   --lift: 4px;
   --edge-n: var(--border-strong); /* đáy nút thường */
+  /* Bóng nút chính (cả hai giao diện): trung tính; vầng tím chỉ khi rê chuột */
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 14px -8px rgba(46, 16, 101, 0.9);
+  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.35);
+  /* Khoảnh khắc đặc biệt (Nộp bài, cửa hàng gấu): gradient ba màu bản tối, chữ trắng 5,7–6,3:1.
+     --grad sáng hơn giữ cho chữ chuyển màu / thanh tiến độ / trang trí không có chữ trắng đè lên */
+  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #a21caf 55%, #be185d 100%);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Cửa hàng Panda: sân khấu thử đồ luôn tối như tủ kính trưng bày (cả 2 theme) */
   --shop-stage: #120c2a;
   --shop-stage-2: #24124a;
   --shop-gold: #fcd34d;
-  font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-family:
+    "Be Vietnam Pro",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: var(--text);

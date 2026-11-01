@@ -1,10 +1,9 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { compareDue, formatDate } from '../../lib/format.js'
-import { buildTree, gradeLabel, keyOf, sectionLabel, sortChapters, subjectLabel } from '../../lib/chapters.js'
+import { buildTree, fromKey, gradeLabel, keyOf, libraryCrumbs, sectionLabel, sectionText, sortChapters, studentLibraryUrl, subjectLabel } from '../../lib/chapters.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useNotifications } from '../../contexts/NotificationsContext.jsx'
 import Loading from '../../components/Loading.jsx'
@@ -15,47 +14,65 @@ import Icon from '../../components/Icon.jsx'
 import StudyNow from '../../components/StudyNow.jsx'
 import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import StudyNowButton from '../../components/StudyNowButton.jsx'
+import FolderBox from '../../components/FolderBox.jsx'
+import { groupByFolder } from '../../lib/folders.js'
+import GradeShelf from '../../components/GradeShelf.jsx'
+import ChapterCarousel from '../../components/ChapterCarousel.jsx'
+import LibraryCrumbs from '../../components/LibraryCrumbs.jsx'
 
-const OTHER = 'khac' // mục "Bài khác": bài chưa xếp chương hoặc thuộc lớp khác
+const OTHER = 'khac' // mục "Các bài khác": bài chưa xếp chương hoặc thuộc chương của lớp khác
+const OTHER_NAME = 'Các bài khác'
+const OTHER_HINT = 'Bài giảng, bài tập chưa thuộc chương nào trong Thư viện của bạn.'
+/** @param {string} [id] */
 const url = (id) => (id ? `/student/library/${id}` : '/student/library')
 
 // Bài tập: chưa làm lên trước (hạn gần trước), rồi tới bài đã nộp
 const byTodo = (a, b) =>
   (a.status === 'todo' ? 0 : 1) - (b.status === 'todo' ? 0 : 1) || compareDue(a.assignment.due_date, b.assignment.due_date)
 
-// Thư viện (học sinh): cây Môn › Chuyên đề › Chương của LỚP MÌNH, chỉ gồm bài được giao.
-// Bấm chương để xem bài giảng + bài tập của chương đó.
+// Thư viện (học sinh), chỉ gồm bài được giao, như Thư viện gia sư nhưng bỏ cấp Lớp:
+// /student/library: kệ sách (môn = kệ, chuyên đề = cuốn) · ?mon=: kệ của một môn · ?mon=&cd=: băng chuyền chương ·
+// /:id: một chương (gom theo thư mục) · /khac: "Các bài khác". Cây bên trái chỉ tới chuyên đề.
 export default function StudentLibrary() {
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const mon = id ? undefined : params.get('mon') ?? undefined
+  const cd = mon !== undefined ? params.get('cd') ?? undefined : undefined
   const { profile } = useAuth()
   const myGrade = profile.grade ?? null
+  const lop = keyOf(myGrade)
   const { open, toggle, ensure } = useOpenNodes('student-library-open')
-  const [treeShown, setTreeShown] = useState(!id)
+  const [treeShown, setTreeShown] = useState(!id && mon === undefined)
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [lessonRows, assignmentRows, chapters] = await Promise.all([
+    const [lessonRows, assignmentRows, chapters, folders] = await Promise.all([
       supabase
         .from('lesson_recipients')
-        .select('assigned_at, lesson:lessons(id, title, created_at, chapter_id, file_path, video_url)')
+        .select('assigned_at, lesson:lessons(id, title, created_at, chapter_id, folder_id, file_path, video_url)')
         .eq('student_id', profile.id)
         .then(unwrap),
       supabase
         .from('assignment_recipients')
-        .select('status, score, submitted_at, assigned_at, assignment:assignments(id, title, type, due_date, chapter_id)')
+        .select('status, score, submitted_at, assigned_at, assignment:assignments(id, title, type, due_date, chapter_id, folder_id)')
         .eq('student_id', profile.id)
         .then(unwrap),
       // RLS: học sinh chỉ đọc được các chương có bài được giao cho mình
       supabase.from('chapters').select('id, title, section, grade, subject, sort_order').then(unwrap),
+      // Thư mục gia sư tạo trong chương (RLS: chỉ của các chương mình thấy)
+      supabase.from('chapter_folders').select('id, name, chapter_id').order('created_at').then(unwrap),
     ])
     const lessons = lessonRows.filter((r) => r.lesson).map((r) => ({ ...r.lesson, assigned_at: r.assigned_at })).sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
     const assignments = assignmentRows.filter((r) => r.assignment)
-    // Cây chỉ gồm chương của lớp mình (chương chưa ghi lớp cũng hiện). Chưa ghi lớp cho học sinh → hiện hết.
-    const mine = sortChapters(chapters.filter((c) => myGrade === null || c.grade === null || c.grade === myGrade))
-    return { lessons, assignments, chapters: mine }
+    // Chỉ chương của lớp mình (chương chưa ghi lớp cũng hiện; học sinh chưa ghi lớp → hiện hết).
+    // Gán cùng một lớp để cây / kệ sách gom về một lớp, bắt đầu từ Môn.
+    const mine = sortChapters(chapters.filter((c) => myGrade === null || c.grade === null || c.grade === myGrade)).map((c) => ({ ...c, grade: myGrade }))
+    return { lessons, assignments, chapters: mine, folders }
   }, [profile.id, myGrade])
 
   const chapters = data?.chapters || []
   const inTree = new Set(chapters.map((c) => c.id))
+  // Chương không thuộc lớp của học sinh (link từ bài giao của lớp khác): xem như "Các bài khác", không báo "không tìm thấy"
+  const view = id && !inTree.has(id) ? OTHER : id
   const itemsOf = (chapterId) => {
     const match = (cid) => (chapterId === OTHER ? !cid || !inTree.has(cid) : cid === chapterId)
     return {
@@ -67,25 +84,44 @@ export default function StudentLibrary() {
   const other = itemsOf(OTHER)
   const hasOther = other.lessons.length + other.assignments.length > 0
 
-  // Một lớp nên bỏ cấp Lớp, cây bắt đầu từ Môn
-  const subjectsTree = buildTree(chapters.map((c) => ({ ...c, grade: myGrade })))[0]?.subjects || []
-  const current = id && id !== OTHER ? chapters.find((c) => c.id === id) : null
+  // Kệ sách / băng chuyền đếm bài của từng chương: lessons / assignments là số (count = Number)
+  const counted = chapters.map((c) => {
+    const it = itemsOf(c.id)
+    return { ...c, lessons: it.lessons.length, assignments: it.assignments.length }
+  })
+  const tree = buildTree(counted)
+  const subjectsTree = tree[0]?.subjects || []
+  const current = view && view !== OTHER ? chapters.find((c) => c.id === view) : null
   const studyId = useStudyChapterId()
   const now = findStudyChapter(chapters, studyId)
 
-  // Mở sẵn nhánh chương đang học
+  // Vị trí đang xem: của chương đang mở, hoặc trên URL. Đường dẫn bỏ đoạn "Lớp" (học sinh chỉ có một lớp)
+  const path = current ? { mon: keyOf(current.subject), cd: keyOf(current.section) } : { mon, cd }
+  const crumbs = libraryCrumbs(tree, { lop, ...path }, studentLibraryUrl).slice(1)
+  const inGroup = counted.filter((c) => keyOf(c.subject) === mon && (cd === undefined || keyOf(c.section) === cd))
+
+  // Mở sẵn môn chứa mục đang xem và môn của chương đang học (chuyên đề là lá của cây)
   useEffect(() => {
-    if (now) ensure([nodeKey('s', keyOf(now.subject)), nodeKey('c', keyOf(now.subject), keyOf(now.section))])
+    if (path.mon !== undefined) ensure([nodeKey('s', path.mon)])
+  }, [path.mon, ensure])
+  useEffect(() => {
+    if (now) ensure([nodeKey('s', keyOf(now.subject))])
   }, [now, ensure])
-
   useEffect(() => {
-    if (current) ensure([nodeKey('s', keyOf(current.subject)), nodeKey('c', keyOf(current.subject), keyOf(current.section))])
-  }, [current, ensure])
-  useEffect(() => {
-    if (id) setTreeShown(false)
-  }, [id])
+    if (id || mon !== undefined) setTreeShown(false)
+  }, [id, mon, cd])
 
-  const where = current ? [subjectLabel(current.subject), current.title].join(' › ') : id === OTHER ? 'Bài khác' : 'Chọn chương'
+  const where = current
+    ? [subjectLabel(current.subject), sectionText(current.section), current.title].join(' › ')
+    : view === OTHER
+      ? OTHER_NAME
+      : mon !== undefined
+        ? [subjectLabel(fromKey(mon)), cd !== undefined && sectionText(fromKey(cd))].filter(Boolean).join(' › ')
+        : 'Chọn chuyên đề'
+
+  // Nút trên thẻ chương ở băng chuyền (cạnh "Mở"): đánh dấu đang học
+  const chapterActions = (c) => <StudyNowButton chapterId={c.id} />
+
 
   return (
     <div className="library">
@@ -102,39 +138,60 @@ export default function StudentLibrary() {
             <TreeGroup
               key={s.key}
               label={subjectLabel(s.subject)}
+              to={studentLibraryUrl(lop, s.key)}
               open={open.has(nodeKey('s', s.key))}
               onToggle={() => toggle(nodeKey('s', s.key))}
+              active={!id && mon === s.key && cd === undefined}
               depth={0}
             >
               {s.sections.map((x) => (
-                <TreeGroup
+                <TreeLeaf
                   key={x.key}
-                  label={sectionLabel(x.section)}
-                  open={open.has(nodeKey('c', s.key, x.key))}
-                  onToggle={() => toggle(nodeKey('c', s.key, x.key))}
-                  depth={1}
+                  to={studentLibraryUrl(lop, s.key, x.key)}
+                  label={sectionText(x.section)}
+                  badge={x.chapters.reduce((n, c) => n + todoOf(c.id), 0) || null}
+                  active={path.mon === s.key && path.cd === x.key}
                   now={x.chapters.some((c) => c.id === now?.id)}
-                >
-                  {x.chapters.map((c) => (
-                    <TreeLeaf key={c.id} to={url(c.id)} label={c.title} badge={todoOf(c.id) || null} now={c.id === now?.id} />
-                  ))}
-                </TreeGroup>
+                />
               ))}
             </TreeGroup>
           ))}
-          {hasOther && <TreeLeaf to={url(OTHER)} label="Bài khác" badge={todoOf(OTHER) || null} />}
+          {hasOther && <TreeLeaf to={url(OTHER)} label={OTHER_NAME} badge={todoOf(OTHER) || null} />}
         </ul>
       </TreeSide>
 
-      <section className="library-main">
+      <section className="library-main library-panel">
         <ErrorBox message={error} onRetry={reload} />
         {loading && <Loading />}
-        {!loading && !error && !id && <Overview chapters={chapters} itemsOf={itemsOf} myGrade={myGrade} hasOther={hasOther} now={now} />}
-        {!loading && !error && id && (current || id === OTHER) && <ChapterView chapter={current} items={itemsOf(id)} />}
-        {!loading && !error && id && !current && id !== OTHER && (
-          <div className="empty">
-            Không tìm thấy chương này. <Link to={url()}>Về Thư viện</Link>
+        {!loading && !error && (id || mon !== undefined) && <LibraryCrumbs segments={crumbs} root={url()} />}
+        {!loading && !error && !id && mon === undefined && (
+          <Overview
+            shelf={counted}
+            todo={(data?.assignments || []).filter((r) => r.status === 'todo').length}
+            myGrade={myGrade}
+            hasOther={hasOther}
+            otherTodo={todoOf(OTHER)}
+            now={now}
+          />
+        )}
+        {!loading && !error && mon !== undefined && (
+          <div>
+            <div className="page-head">
+              <h1>{cd !== undefined ? sectionLabel(fromKey(cd)) : subjectLabel(fromKey(mon))}</h1>
+            </div>
+            {inGroup.length === 0 ? (
+              <div className="empty">
+                Không có chương nào ở mục này. <Link to={url()}>Về Thư viện</Link>
+              </div>
+            ) : cd === undefined ? (
+              <GradeShelf chapters={inGroup} count={Number} url={studentLibraryUrl} />
+            ) : (
+              <ChapterCarousel key={`${mon}|${cd}`} memoKey={`hs|${mon}|${cd}`} chapters={inGroup} count={Number} toUrl={url} actions={chapterActions} />
+            )}
           </div>
+        )}
+        {!loading && !error && view && (current || view === OTHER) && (
+          <ChapterView chapter={current} items={itemsOf(view)} folders={(data.folders || []).filter((f) => f.chapter_id === current?.id)} />
         )}
       </section>
     </div>
@@ -150,24 +207,51 @@ function Progress({ done, total }) {
   )
 }
 
-// Một chương: bài giảng + bài tập (bài chưa làm lên trước)
-function ChapterView({ chapter, items }) {
+// Một chương: bài giảng + bài tập (bài chưa làm lên trước). Gia sư có chia thư mục thì gom theo thư mục
+// (chỉ hiện thư mục có bài được giao cho mình), bài không thuộc thư mục nào ở mục "Các bài khác" cuối trang.
+function ChapterView({ chapter, items, folders }) {
   const { isNew } = useNotifications()
   const { lessons, assignments } = items
   const done = assignments.filter((r) => r.status !== 'todo').length
+  const grouped = groupByFolder(folders, lessons, assignments, (x) => (x.assignment || x).folder_id).filter((g) => g.lessons.length + g.assignments.length > 0)
+  const groups = grouped.some((g) => g.folder) ? grouped : null
+
+  const lessonRow = (l) => (
+    <Link key={l.id} to={`/student/lessons/${l.id}`} className="list-item">
+      <div className="list-item-title">
+        📘 {l.title} {isNew(l.assigned_at) && <span className="badge badge-new">Mới</span>}
+      </div>
+      <div className="row small">
+        {l.file_path && <span className="badge">📎 File</span>}
+        {l.video_url && <span className="badge">▶️ Video</span>}
+        <span className="muted">{formatDate(l.created_at)}</span>
+      </div>
+    </Link>
+  )
+  const assignmentRow = (r) => {
+    const a = r.assignment
+    return (
+      <Link key={a.id} to={`/student/assignments/${a.id}`} className="list-item">
+        <div className="list-item-title">
+          ✏️ {a.title} {isNew(r.assigned_at) && <span className="badge badge-new">Mới</span>}
+        </div>
+        <div className="row small">
+          <StatusBadge status={r.status} />
+          <TypeBadge type={a.type} />
+          {r.status === 'todo' && <DueBadge date={a.due_date} />}
+          {r.status === 'todo' && a.due_date && <span className="muted">Hạn: {formatDate(a.due_date)}</span>}
+          {r.status === 'checked' && r.score !== null && <span className="badge badge-ok">Điểm: {r.score}</span>}
+        </div>
+      </Link>
+    )
+  }
   return (
     <div>
-      {chapter && (
-        <nav className="crumbs" aria-label="Vị trí">
-          <span>{subjectLabel(chapter.subject)}</span>
-          <span>›</span>
-          <span>{sectionLabel(chapter.section)}</span>
-        </nav>
-      )}
       <div className="page-head">
-        <h1>{chapter ? chapter.title : 'Bài khác'}</h1>
+        <h1>{chapter ? chapter.title : OTHER_NAME}</h1>
         {chapter && <StudyNowButton chapterId={chapter.id} />}
       </div>
+      {!chapter && <p className="muted small">{OTHER_HINT}</p>}
       {assignments.length > 0 && (
         <div className="progress-row">
           <Progress done={done} total={assignments.length} />
@@ -177,114 +261,75 @@ function ChapterView({ chapter, items }) {
         </div>
       )}
 
-      <h2 className="section-title">Bài giảng ({lessons.length})</h2>
-      {lessons.length === 0 ? (
-        <div className="empty" style={{ marginBottom: '1.25rem' }}>
-          Chưa có bài giảng.
-        </div>
+      {groups ? (
+        groups.map(({ folder, lessons: ls, assignments: as }) =>
+          folder ? (
+            <FolderBox key={folder.id} name={folder.name} count={ls.length + as.length}>
+              {ls.map(lessonRow)}
+              {as.map(assignmentRow)}
+            </FolderBox>
+          ) : (
+            <section key="loose">
+              <h2 className="section-title">
+                {OTHER_NAME} ({ls.length + as.length})
+              </h2>
+              <div className="list">
+                {ls.map(lessonRow)}
+                {as.map(assignmentRow)}
+              </div>
+            </section>
+          )
+        )
       ) : (
-        <div className="list" style={{ marginBottom: '1.25rem' }}>
-          {lessons.map((l) => (
-            <Link key={l.id} to={`/student/lessons/${l.id}`} className="list-item">
-              <div className="list-item-title">
-                📘 {l.title} {isNew(l.assigned_at) && <span className="badge badge-new">Mới</span>}
-              </div>
-              <div className="row small">
-                {l.file_path && <span className="badge">📎 File</span>}
-                {l.video_url && <span className="badge">▶️ Video</span>}
-                <span className="muted">{formatDate(l.created_at)}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+        <>
+          <h2 className="section-title">Bài giảng ({lessons.length})</h2>
+          {lessons.length === 0 ? (
+            <div className="empty" style={{ marginBottom: '1.25rem' }}>
+              Chưa có bài giảng.
+            </div>
+          ) : (
+            <div className="list" style={{ marginBottom: '1.25rem' }}>
+              {lessons.map(lessonRow)}
+            </div>
+          )}
 
-      <h2 className="section-title">Bài tập ({assignments.length})</h2>
-      {assignments.length === 0 ? (
-        <div className="empty">Chưa có bài tập.</div>
-      ) : (
-        <div className="list">
-          {assignments.map((r) => {
-            const a = r.assignment
-            return (
-              <Link key={a.id} to={`/student/assignments/${a.id}`} className="list-item">
-                <div className="list-item-title">
-                  ✏️ {a.title} {isNew(r.assigned_at) && <span className="badge badge-new">Mới</span>}
-                </div>
-                <div className="row small">
-                  <StatusBadge status={r.status} />
-                  <TypeBadge type={a.type} />
-                  {r.status === 'todo' && <DueBadge date={a.due_date} />}
-                  {r.status === 'todo' && a.due_date && <span className="muted">Hạn: {formatDate(a.due_date)}</span>}
-                  {r.status === 'checked' && r.score !== null && <span className="badge badge-ok">Điểm: {r.score}</span>}
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+          <h2 className="section-title">Bài tập ({assignments.length})</h2>
+          {assignments.length === 0 ? <div className="empty">Chưa có bài tập.</div> : <div className="list">{assignments.map(assignmentRow)}</div>}
+        </>
       )}
     </div>
   )
 }
 
-// Chưa chọn chương: tiến độ từng chương của lớp mình
-function Overview({ chapters, itemsOf, myGrade, hasOther, now }) {
-  const total = chapters.reduce((n, c) => n + itemsOf(c.id).assignments.filter((r) => r.status === 'todo').length, 0) + (hasOther ? itemsOf(OTHER).assignments.filter((r) => r.status === 'todo').length : 0)
-  const sections = []
-  for (const c of chapters) {
-    const k = `${keyOf(c.subject)}|${keyOf(c.section)}`
-    let g = sections.find((x) => x.k === k)
-    if (!g) sections.push((g = { k, title: sectionLabel(c.section), sub: subjectLabel(c.subject), items: [] }))
-    g.items.push(c)
-  }
+// Trang đầu Thư viện: chương đang học, số bài chưa làm, kệ sách các môn, cuối cùng là "Các bài khác"
+function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now }) {
   return (
     <div>
       <div className="page-head">
         <h1>
-          <span className="title-icon"><Icon name="library" /></span>Thư viện {myGrade ? gradeLabel(myGrade) : ''}</h1>
+          <span className="title-icon">
+            <Icon name="library" />
+          </span>
+          Thư viện {myGrade ? gradeLabel(myGrade) : ''}
+        </h1>
       </div>
       <StudyNow chapter={now} />
       <p className="muted">
-        {total > 0 ? (
+        {todo > 0 && (
           <>
-            Bạn còn <b>{total}</b> bài tập chưa làm. Chọn một chương ở mục lục để xem bài giảng và bài tập của chương đó.
+            Bạn còn <b>{todo}</b> bài tập chưa làm.{' '}
           </>
-        ) : (
-          'Chọn một chương ở mục lục để xem bài giảng và bài tập của chương đó.'
         )}
+        Chọn một chuyên đề trên kệ để xem các chương.
       </p>
-      {chapters.length === 0 && !hasOther && <div className="empty">Chưa có bài nào được giao cho bạn.</div>}
-      {sections.map((g) => (
-        <div key={g.k} style={{ marginBottom: '1.1rem' }}>
-          <h2 className="section-title">
-            {g.title} <span className="muted small">· {g.sub}</span>
-          </h2>
-          <div className="overview-grid">
-            {g.items.map((c) => {
-              const { lessons, assignments } = itemsOf(c.id)
-              const done = assignments.filter((r) => r.status !== 'todo').length
-              const todo = assignments.length - done
-              return (
-                <Link key={c.id} to={url(c.id)} className={c.id === now?.id ? 'list-item overview-card is-now' : 'list-item overview-card'}>
-                  <div className="list-item-title">
-                    {c.title} {c.id === now?.id && <span className="badge badge-now">📍 Đang học</span>}
-                  </div>
-                  <div className="row small" style={{ margin: '0.4rem 0 0.6rem' }}>
-                    <span className="badge">{lessons.length} bài giảng</span>
-                    <span className="badge">{assignments.length} bài tập</span>
-                    {todo > 0 && <span className="badge badge-warn">{todo} chưa làm</span>}
-                  </div>
-                  {assignments.length > 0 && <Progress done={done} total={assignments.length} />}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      ))}
+      {shelf.length === 0 && !hasOther && <div className="empty">Chưa có bài nào được giao cho bạn.</div>}
+      <GradeShelf chapters={shelf} count={Number} url={studentLibraryUrl} />
       {hasOther && (
         <Link to={url(OTHER)} className="list-item overview-card" style={{ display: 'block' }}>
-          <div className="list-item-title">Bài khác</div>
-          <div className="muted small">Bài chưa xếp vào chương của lớp bạn</div>
+          <div className="list-item-title">
+            {OTHER_NAME} {otherTodo > 0 && <span className="badge badge-warn">{otherTodo} chưa làm</span>}
+          </div>
+          <div className="muted small">{OTHER_HINT}</div>
         </Link>
       )}
     </div>

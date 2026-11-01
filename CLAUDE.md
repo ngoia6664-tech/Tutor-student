@@ -19,11 +19,11 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang. Trang mới: thêm vào cả hai.
 - `src/contexts/` — `AuthContext` (phiên + profile, cache localStorage), `NotificationsContext` (chuông: học sinh = bài mới giao, gia sư = học sinh nộp bài; kèm gấu nói).
-- `src/pages/tutor/` — `TutorStudents`, `StudentDetail`, `Library`, `TutorAssignments`, `AssignmentEditor`,
-  `AssignmentTracking` (chấm bài; `?hs=<student_id>` mở bài của bạn đó), `TutorLessons`, `TutorLessonView`, `LessonEditor`,
+- `src/pages/tutor/` — `TutorStudents`, `StudentDetail`, `Library` (+ mục "Chưa xếp chương"), `TutorAssignments` (menu "Chấm bài"), `AssignmentEditor`,
+  `AssignmentTracking` (chấm bài; `?hs=<student_id>` mở bài của bạn đó), `TutorLessonView`, `LessonEditor`,
   `ImportJson`, `TutorReports`, `TutorFeedback`.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (+ `SubmitPanel`), `StudentResults`, `StudentMistakes` (Ôn tập),
-  `StudentLibrary`, `StudentLessons`, `StudentLesson`.
+  `StudentLibrary`, `StudentLesson`. (Không còn trang danh sách Bài giảng: `/tutor/lessons`, `/student/lessons` chuyển về Thư viện.)
 - `src/lib/` — truy vấn (`assignments`, `lessons`, `students`, `submissions`, `recipients`), `supabase`, `useAsync`, `errors`,
   `format`, `chapters`, `exam`, `importJson`, `importTutorLesson`, `dialog`, `celebrate` (`mascotSay`/`celebrate`), `settings`, `theme`, `svg`...
 - `src/components/` — `Layout`, `Mascot`/`PandaArt`, `DialogHost`, `ExerciseBody`, `ExamParts`, `AnswerKey`, `Markdown`, `FilterTree`, `TreePicker`, `ScoreChart`, `NotificationBell`, `QuickAssign`...
