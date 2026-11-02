@@ -35,7 +35,6 @@ import { listUrl, rememberList } from '../lib/navMemory.js'
 
 // Tham số URL của Kính thiên văn (địa điểm đang xem)
 const PLACE_PARAM = 'vu-tru'
-const WIDE_PAGES = /^\/(?:(?:tutor|student)\/library|tutor\/students\/?$|tutor\/assignments\/(?!new)[^/]+\/?$)/
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -105,8 +104,6 @@ export default function Layout() {
     nav.querySelectorAll('.nav-link').forEach((el) => ro.observe(el))
     return () => ro.disconnect()
   }, [pathname])
-  // Trang làm việc (nhiều cột / bảng) được rộng hơn trang đọc: Thư viện, danh sách học sinh, theo dõi một bài tập
-  const wide = WIDE_PAGES.test(pathname)
   const studying = useStudying()
   const showMascot = useSettings().mascot
   // Kính thiên văn ghi địa điểm đang xem lên URL (?vu-tru=<id>): tải lại trang thì mở lại đúng chỗ.
@@ -161,7 +158,7 @@ export default function Layout() {
   }, [])
 
   const content = (
-    <div className={wide ? 'app is-wide' : 'app'}>
+    <div className="app">
       <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="topbar-inner">
           <span className="brand">
