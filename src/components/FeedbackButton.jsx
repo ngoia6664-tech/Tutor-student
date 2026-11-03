@@ -11,7 +11,7 @@ import { useStudying } from '../lib/studyLock.js'
 const MAX = 2000
 
 // Nút "Góp ý" (học sinh). Bấm mở bảng gửi góp ý, không đổi trang. Đang làm bài thì ẩn để khỏi phân tâm.
-// variant 'fab' = nút nổi góc trái dưới (màn hẹp); 'side' = hàng trong thanh bên (màn rộng, Layout.jsx) để không chiếm chỗ nội dung
+// variant 'fab' = nút nổi góc trái dưới (hiện Layout không dùng); 'side' = hàng trong thanh bên / ngăn kéo (Layout.jsx) để không chiếm chỗ nội dung
 export default function FeedbackButton({ variant = 'fab' }) {
   const [open, setOpen] = useState(false)
   const studying = useStudying()

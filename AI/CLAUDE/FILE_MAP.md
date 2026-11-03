@@ -65,7 +65,7 @@
 - `ErrorBox.jsx` — Khối báo lỗi, có nút thử lại (onRetry)
 - `ExamParts.jsx` — Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm n
 - `ExerciseBody.jsx` — Hiển thị một câu hỏi theo loại (tự luận / trắc nghi�
-- `FeedbackButton.jsx` — Nút "Góp ý" (học sinh): nổi ở góc trái dưới (màn hẹp) hoặc hàng trong thanh bên (`variant="side"`, màn ≥ 1024px). Bấm mở b
+- `FeedbackButton.jsx` — Nút "Góp ý" (học sinh): hàng trong thanh bên / ngăn kéo menu (`variant="side"`, mọi cỡ màn); `variant="fab"` (nút nổi) không còn dùng trong Layout. Bấm mở b
 - `FolderBox.jsx` — Một thư mục trong chủ đề (khối gập / mở, bài giảng + bài tập chung một danh sách), dùng ở ChapterDetail + StudentLibrary
 - `FilterTree.jsx` — Lọc danh sách của học sinh (Bài cần làm, Kết quả, Ôn tập) theo cây Lớp › Môn
 - `FormulaText.jsx` — Chữ gấu nói (Mascot, SpaceExplorer): đoạn đặt trong `...` l
@@ -73,7 +73,7 @@
 - `Icon.jsx` — Bộ icon nét mảnh (SVG, theo màu chữ hiện tại nên tự h�
 - `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
 - `InstallBanner.jsx` — Gợi ý cài app lên màn hình chính.
-- `Layout.jsx` — Khung chung: thanh trên cùng (màn < 1024px chỉ còn ☰ + lửa chuỗi + chuông; ngắm vũ trụ + Bảng bên nằm trong ngăn kéo; màn ≥ 1024px không còn thanh trên: ☰ + chuông + ngắm vũ trụ + bảng bên + chuỗi 🔥 học sinh nằm trong thanh bên), thanh bên chung gia sư + học sinh (ghim / dải icon / ngăn kéo), ngăn kéo nút phụ + thanh tab dưới của học sinh (điện thoại), linh vật, cụm nổi, hộp thoại, ngắm vũ trụ; gắn `<html data-tabbar / data-side>`
+- `Layout.jsx` — Khung chung: thanh trên cùng (màn < 1024px chỉ còn ☰ + lửa chuỗi + chuông; ngắm vũ trụ + Bảng bên nằm trong ngăn kéo; màn ≥ 1024px không còn thanh trên: ☰ + chuông + ngắm vũ trụ + bảng bên + chuỗi 🔥 học sinh nằm trong thanh bên), thanh bên chung gia sư + học sinh (ghim / dải icon / ngăn kéo), ngăn kéo nút phụ (học sinh: có cả Cửa hàng gấu + Góp ý) + thanh tab dưới của học sinh (điện thoại), linh vật, cụm nổi, hộp thoại, ngắm vũ trụ; gắn `<html data-tabbar / data-side>`
 - `LibraryCrumbs.jsx` — Đường dẫn Thư viện gia sư "Thư viện › Lớp ▾ › Môn ▾ › Chương ▾": chữ mỗi đoạn là link về cấp đó, nút ▾ riêng mở menu cùng cấp (useDropMenu); lớp chưa có chủ đề chọn được để mở lớp mới; prop `root` (link "Thư viện"); học sinh: bỏ đoạn Lớp, link `/student/library`
 - `MoreMenu.jsx` — Nút "⋯ Thao tác khác" gom thao tác ít dùng (Thư viện gia sư) + hook `useDropMenu` dùng chung cho menu thả xuống (bàn phím ↑↓ Home End Esc Tab, bấm ra ngoài đóng, tự dịch vào trong khi tràn mép)
 - `ListLink.jsx` — Link "← Danh sách" về đúng URL lọc + vị trí cuộn lần trước của tab (RESTORE)
@@ -87,7 +87,7 @@
 - `NotificationBell.jsx` — "5 phút trước", "3 giờ trước", "Hôm qua", hoặc ngày
 - `OutlineImport.jsx` — Dán mục lục giáo trình → xem trước cây → tạo nhiều
 - `PandaArt.jsx` — Hình vẽ Giáo sư Gấu Trúc (SVG nét mượt): mũ tốt nghiệ
-- `PandaDock.jsx` — Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
+- `PandaDock.jsx` — (chỉ còn gia sư màn hẹp; học sinh dùng thanh bên) Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
 - `PlanetPortrait.jsx` — Chân dung hành tinh khi gấu giải thích (SpaceExplorer, chế đ
 - `ProtectedRoute.jsx` — Chặn trang theo vai trò: sai vai trò thì chuyển về trang củ
 - `QuickAssign.jsx` — Giao bài nhanh + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện

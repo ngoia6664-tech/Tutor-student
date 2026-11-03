@@ -336,7 +336,7 @@ export default function Layout() {
         {nav}
         <div className="side-foot">
           {/* Màn rộng không còn thanh trên cùng: chuông + ngắm vũ trụ + bảng bên + cửa hàng + góp ý nằm ở đây
-              (cửa hàng / góp ý không còn nổi góc màn hình, đỡ che nội dung; chuỗi + Xu + Sao ở cột phải) */}
+              (học sinh: cả màn hẹp; không còn nổi góc màn hình, đỡ che nội dung; chuỗi + Xu + Sao ở cột phải) */}
           <span className="side-user" title={profile.full_name}>
             {profile.full_name || 'Tài khoản'}
           </span>
@@ -359,13 +359,13 @@ export default function Layout() {
             <Icon name="panel" />
             <span className="side-label">Bảng bên</span>
           </button>
-          {docked && (
+          {(docked || !isTutor) && (
             <NavLink to={`/${profile.role === 'tutor' ? 'tutor' : 'student'}/shop`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Cửa hàng gấu">
               <Icon name="shop" />
               <span className="side-label">Cửa hàng gấu</span>
             </NavLink>
           )}
-          {docked && !isTutor && <FeedbackButton variant="side" />}
+          {!isTutor && <FeedbackButton variant="side" />}
           <ThemeToggle withLabel className="side-btn" />
           <button
             type="button"
@@ -461,10 +461,9 @@ export default function Layout() {
       {/* Đổi trang thì lên đầu; Back / Forward / mở lại tab thì về đúng chỗ cũ */}
       <ScrollMemory />
       <ScrollJump />
-      {/* Màn hẹp: cụm cửa hàng + Góp ý nổi góc trái dưới; màn rộng đã chuyển vào thanh bên */}
-      {!docked && <PandaDock />}
+      {/* Học sinh: cửa hàng + Góp ý luôn nằm trong thanh bên / ngăn kéo (Xu / Sao ở Bảng bên); chỉ gia sư màn hẹp còn cụm nổi */}
+      {!docked && isTutor && <PandaDock />}
       <DialogHost />
-      {profile.role === 'student' && !docked && <FeedbackButton />}
       {exploring && (
         <Suspense fallback={null}>
           <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />
