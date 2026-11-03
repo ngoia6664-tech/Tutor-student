@@ -34,6 +34,7 @@ import { RESTORE } from './ListLink.jsx'
 import { listUrl, rememberList } from '../lib/navMemory.js'
 import { isFocusPage } from '../lib/focusPage.js'
 import TutorTodoPanel from './TutorTodoPanel.jsx'
+import TutorRecentPanel from './TutorRecentPanel.jsx'
 import StudentTodayPanel from './StudentTodayPanel.jsx'
 
 // Tham số URL của Kính thiên văn (địa điểm đang xem)
@@ -428,7 +429,14 @@ export default function Layout() {
               <Icon name="close" />
             </button>
             {/* Khối mặc định theo vai trò; khối của trang (ContextPanel) xếp ngay sau */}
-            {isTutor ? <TutorTodoPanel /> : <StudentTodayPanel />}
+            {isTutor ? (
+              <>
+                <TutorTodoPanel />
+                <TutorRecentPanel />
+              </>
+            ) : (
+              <StudentTodayPanel />
+            )}
           </aside>
         </main>
         {ctxOpen && <div className="side-backdrop ctx-backdrop" onClick={() => setCtxOpen(false)} aria-hidden="true" />}

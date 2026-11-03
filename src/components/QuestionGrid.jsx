@@ -13,7 +13,7 @@ export default function QuestionGrid({ exercises, answers, labels }) {
   const jump = (/** @type {string} */ id) => document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
-    <ContextPanel title="Các câu trong bài" replace>
+    <ContextPanel title="Các câu trong bài" icon="grid" replace>
       <p className="small ctx-qstat">
         Đã làm <strong>{done}</strong>/{exercises.length} câu
       </p>

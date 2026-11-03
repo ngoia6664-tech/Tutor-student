@@ -510,9 +510,37 @@ body:has(.ctx-card) .ctx-panel {
 .ctx-default .ctx-title {
   margin-bottom: 0.45rem;
 }
-/* "Hôm nay" (.ctx-top) luôn nằm trên cùng, trên các khối riêng của trang */
+/* "Hôm nay" / dải việc cần xử lý / "Vừa giao" (.ctx-top) luôn nằm trên cùng, trên các khối riêng của trang */
 .ctx-top {
   order: -1;
+}
+/* Dải "Việc cần xử lý" của gia sư (TutorTodoPanel): một dòng, viên thuốc, bấm từng số */
+.ctx-card.ctx-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.85rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+}
+.ctx-strip-icon {
+  flex: none;
+  color: var(--primary);
+}
+.ctx-strip-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  text-decoration: none;
+}
+.ctx-strip-item:hover {
+  text-decoration: underline;
+}
+.ctx-strip .ctx-num {
+  font-size: 1.05rem;
 }
 .ctx-stats {
   display: grid;

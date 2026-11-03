@@ -21,7 +21,7 @@ export default function GradeQueuePanel() {
   }, [])
 
   return (
-    <ContextPanel title="Hàng đợi chấm" replace>
+    <ContextPanel title="Hàng đợi chấm" icon="grade" replace>
       {loading ? (
         <p className="muted small ctx-empty">Đang tải…</p>
       ) : error ? (

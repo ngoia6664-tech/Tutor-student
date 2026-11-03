@@ -56,7 +56,7 @@ export default function StudentHome() {
   return (
     <div className="library">
       {inProgress.length > 0 && (
-        <ContextPanel title="Đang làm dở">
+        <ContextPanel title="Đang làm dở" icon="resume">
           <ul className="ctx-feed">
             {inProgress.map(({ a, n }) => (
               <li key={a.id}>
@@ -73,7 +73,7 @@ export default function StudentHome() {
         </ContextPanel>
       )}
       {data && (
-        <ContextPanel title="Sắp đến hạn">
+        <ContextPanel title="Sắp đến hạn" icon="clock">
           {soon.length ? (
             <ul className="ctx-feed">
               {soon.map(({ assignment: a }) => (
