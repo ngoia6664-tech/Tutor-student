@@ -27,27 +27,13 @@ import SubmitPanel from './SubmitPanel.jsx'
 import ReportQuestion from '../../components/ReportQuestion.jsx'
 import MarkHard from '../../components/MarkHard.jsx'
 import AnswerProgress from '../../components/AnswerProgress.jsx'
+import QuestionGrid from '../../components/QuestionGrid.jsx'
+import { scrollToY } from '../../lib/scroller.js'
 import ResultProgress from '../../components/ResultProgress.jsx'
 import { loadAnswerNotes, NOTE_LABEL } from '../../lib/answerNotes.js'
 import ListLink from '../../components/ListLink.jsx'
-
-// Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài)
-const draftKey = (assignmentId, studentId, retry = false) => `${retry ? 'draft-retry' : 'draft-answers'}:${studentId}:${assignmentId}`
-function readDraft(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || 'null')
-  } catch {
-    return null
-  }
-}
-function writeDraft(key, value) {
-  try {
-    if (value) localStorage.setItem(key, JSON.stringify(value))
-    else localStorage.removeItem(key)
-  } catch {
-    // Trình duyệt chặn lưu trữ: bỏ qua, chỉ mất tính năng lưu nháp
-  }
-}
+// Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài); trang Bài cần làm đọc lại để hiện "Đang làm dở"
+import { draftKey, readDraft, writeDraft } from '../../lib/drafts.js'
 
 export default function StudentAssignment() {
   const { id } = useParams()
@@ -154,7 +140,7 @@ export default function StudentAssignment() {
           setView={setView}
           onRetry={() => {
             setRetrying(true)
-            window.scrollTo({ top: 0, behavior: 'smooth' })
+            scrollToY(0, 'smooth')
           }}
         />
       ) : (
@@ -234,7 +220,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
   // Đang làm bài: khóa chế độ ngắm vũ trụ, gấu ngồi đợi. Nộp xong (sang ReviewView) tự mở khóa
   useStudyLock()
   const { rec, assignment: a, exercises } = data
-  // Mở bài chưa nộp để làm = đang học chương của bài này (lưu làm chương đang học, lỗi thì bỏ qua)
+  // Mở bài chưa nộp để làm = đang học chủ đề của bài này (lưu làm chủ đề đang học, lỗi thì bỏ qua)
   const studyId = useStudyChapterId()
   useEffect(() => {
     if (a.chapter_id) setStudyChapter(studentId, a.chapter_id, studyId).catch(() => {})
@@ -264,6 +250,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
   return (
     <>
       <AnswerProgress exercises={exercises} answers={answers} labels={labels} />
+      <QuestionGrid exercises={exercises} answers={answers} labels={labels} />
       {reopened && (
         <div className="alert alert-info">
           ↻ <strong>Gia sư đã cho bạn nộp lại bài này.</strong> Câu trả lời lần trước vẫn giữ nguyên, hãy sửa rồi bấm "Nộp bài".
@@ -326,7 +313,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
         retry={retry ? (payload) => submitRetry(a.id, payload) : null}
         onSubmitted={(row) => {
           writeDraft(key, null)
-          window.scrollTo({ top: 0, behavior: 'smooth' })
+          scrollToY(0, 'smooth')
           notifyDone({
             title: retry ? 'Nộp lần làm lại thành công!' : 'Nộp bài thành công!',
             say: retry ? 'So với lần đầu xem tiến bộ chưa nào 🚀' : UNLOCK_PRAISE,

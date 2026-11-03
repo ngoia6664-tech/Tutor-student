@@ -5,8 +5,9 @@ import { useNotifications } from '../contexts/NotificationsContext.jsx'
 import { formatDate } from '../lib/format.js'
 import Icon from './Icon.jsx'
 
-// "5 phút trước", "3 giờ trước", "Hôm qua", hoặc ngày
-function timeAgo(at) {
+// "5 phút trước", "3 giờ trước", "Hôm qua", hoặc ngày (dùng cả ở TutorTodoPanel)
+/** @param {string} at */
+export function timeAgo(at) {
   const diff = (Date.now() - new Date(at).getTime()) / 1000
   if (diff < 60) return 'Vừa xong'
   if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
@@ -15,8 +16,11 @@ function timeAgo(at) {
   return formatDate(at)
 }
 
-// Chuông thông báo trên thanh trên cùng: học sinh = bài giao gần đây, gia sư = học sinh nộp bài gần đây
-export default function NotificationBell() {
+// Chuông thông báo: học sinh = bài giao gần đây, gia sư = học sinh nộp bài gần đây.
+// variant 'top' = nút tròn trên thanh trên cùng; 'side' = hàng có chữ trong thanh bên (bảng mở bên phải nút, không chạy ra ngoài mép trái)
+/** @param {{ variant?: 'top' | 'side' }} props */
+export default function NotificationBell({ variant = 'top' }) {
+  const side = variant === 'side'
   const { enabled, isTutor, items, unread, isUnread, markSeen } = useNotifications()
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(() => new Set()) // bài còn tô "mới" trong lần mở này
@@ -54,7 +58,8 @@ export default function NotificationBell() {
     if (!open) {
       const r = box.current.getBoundingClientRect()
       // Điện thoại: bảng trải ngang màn hình (CSS lo); máy tính: canh mép phải với nút chuông
-      setPos(window.innerWidth <= 560 ? { top: r.bottom + 8 } : { top: r.bottom + 8, right: window.innerWidth - r.right })
+      if (side && window.innerWidth > 560) setPos({ left: r.right + 8, bottom: Math.max(8, window.innerHeight - r.bottom) })
+      else setPos(window.innerWidth <= 560 ? { top: r.bottom + 8 } : { top: r.bottom + 8, right: window.innerWidth - r.right })
       // Mở chuông = đã xem: số trên chuông về 0, nhưng bài mới vẫn được tô trong lần mở này
       setHighlight(new Set(items.filter(isUnread).map((it) => it.key)))
       if (unread > 0) markSeen()
@@ -71,15 +76,16 @@ export default function NotificationBell() {
   }
 
   return (
-    <div className="bell" ref={box}>
+    <div className={side ? 'bell bell-side' : 'bell'} ref={box}>
       <button
         type="button"
-        className={unread > 0 ? 'bell-btn has-new' : 'bell-btn'}
+        className={`${side ? 'side-btn' : 'bell-btn'}${unread > 0 ? ' has-new' : ''}`}
         onClick={toggle}
         aria-label={unread > 0 ? `Thông báo: ${unread} bài mới` : 'Thông báo'}
         aria-expanded={open}
+        title="Thông báo"
       >
-        <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+        <svg className="icon" viewBox="0 0 24 24" width={side ? 18 : 19} height={side ? 18 : 19} aria-hidden="true">
           <path
             d="M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2h15L18 16Zm-8 4a2 2 0 0 0 4 0"
             fill="none"
@@ -89,6 +95,7 @@ export default function NotificationBell() {
             strokeLinejoin="round"
           />
         </svg>
+        {side && <span className="side-label">Thông báo</span>}
         {unread > 0 && <span className="bell-count">{unread > 9 ? '9+' : unread}</span>}
       </button>
 

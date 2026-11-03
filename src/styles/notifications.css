@@ -45,6 +45,12 @@
   line-height: 1.1rem;
   text-align: center;
 }
+/* Dạng hàng trong thanh bên (shell.css .side-btn): số đếm nằm cuối hàng thay vì góc nút tròn */
+.bell-side .bell-count {
+  top: 50%;
+  right: 0.6rem;
+  translate: 0 -50%;
+}
 .bell-panel {
   position: fixed;
   width: min(360px, calc(100vw - 2rem));

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from './Loading.jsx'
@@ -32,9 +32,39 @@ import StreakFlame from './StreakFlame.jsx'
 import ScrollMemory from './ScrollMemory.jsx'
 import { RESTORE } from './ListLink.jsx'
 import { listUrl, rememberList } from '../lib/navMemory.js'
+import { isFocusPage } from '../lib/focusPage.js'
+import TutorTodoPanel from './TutorTodoPanel.jsx'
+import StudentTodayPanel from './StudentTodayPanel.jsx'
 
 // Tham số URL của Kính thiên văn (địa điểm đang xem)
 const PLACE_PARAM = 'vu-tru'
+
+// Khung điều hướng (styles/shell.css): gia sư màn rộng = thanh bên ghim (☰ thu gọn thành dải icon), màn hẹp = ngăn kéo;
+// học sinh điện thoại = thanh tab dưới + ngăn kéo cho các nút phụ, máy rộng = menu ngang như cũ
+const SIDE_DOCKED = '(min-width: 1024px)'
+const PHONE = '(max-width: 640px)'
+const RAIL_KEY = 'side-rail'
+
+/** @param {string} query */
+function useMedia(query) {
+  const subscribe = useCallback(
+    /** @param {() => void} cb */ (cb) => {
+      const m = window.matchMedia(query)
+      m.addEventListener('change', cb)
+      return () => m.removeEventListener('change', cb)
+    },
+    [query]
+  )
+  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches)
+}
+
+function loadRail() {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
@@ -60,9 +90,9 @@ export default function Layout() {
   const { profile, signOut } = useAuth()
   const items = NAV[profile.role] || []
   const { pathname, search } = useLocation()
-  // Trang danh sách: nhớ URL (chương, bộ lọc) cho tab menu của nó — bấm lại tab là về đúng chỗ cũ
+  // Trang danh sách: nhớ URL (chủ đề, bộ lọc) cho tab menu của nó — bấm lại tab là về đúng chỗ cũ
   rememberList(pathname, search)
-  // Trong Thư viện, đổi chương chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
+  // Trong Thư viện, đổi chủ đề chỉ đổi cột phải: giữ nguyên trang (không chạy lại hiệu ứng, không mất mục lục)
   const pageKey = pathname.match(/^\/(tutor|student)\/library/)?.[0] ?? pathname
 
   const isTutor = profile.role === 'tutor'
@@ -85,6 +115,67 @@ export default function Layout() {
   useEffect(() => {
     prefetchPages(profile.role)
   }, [profile.role])
+  // Thanh bên / ngăn kéo menu: mở bằng nút ☰; đổi trang hoặc đổi cỡ màn hình thì đóng ngăn kéo
+  const docked = useMedia(SIDE_DOCKED)
+  const phone = useMedia(PHONE)
+  const [drawer, setDrawer] = useState(false)
+  const [rail, setRail] = useState(loadRail)
+  const menuBtn = useRef(/** @type {HTMLButtonElement | null} */ (null))
+  const sideRef = useRef(/** @type {HTMLElement | null} */ (null))
+  const railMode = docked // màn rộng: ☰ thu gọn / mở rộng thanh bên (cả gia sư lẫn học sinh) thay vì mở ngăn kéo
+  // Cột phải (ContextPanel): màn < 1360px là ngăn kéo bên phải, mở bằng nút "Bảng bên" trong thanh bên / ngăn kéo menu
+  const [ctxOpen, setCtxOpen] = useState(false)
+  useEffect(() => {
+    setDrawer(false)
+    setCtxOpen(false)
+  }, [pathname, docked, phone])
+  useEffect(() => {
+    if (!ctxOpen) return
+    // Ngăn kéo phải vừa mở: đưa focus vào nút Đóng (≥ 1360px nút này ẩn nên không có tác dụng)
+    /** @type {HTMLElement | null} */ (document.querySelector('#ctx-panel .ctx-close'))?.focus()
+    /** @param {KeyboardEvent} e */
+    const onKey = (e) => e.key === 'Escape' && setCtxOpen(false)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [ctxOpen])
+  function toggleMenu() {
+    if (!railMode) return setDrawer((v) => !v)
+    const next = !rail
+    setRail(next)
+    try {
+      localStorage.setItem(RAIL_KEY, next ? '1' : '0')
+    } catch {
+      // không lưu được: chỉ nhớ trong lần mở này
+    }
+  }
+  // Ngăn kéo vừa mở: focus vào nút đầu tiên; Esc đóng và trả focus về nút ☰
+  useEffect(() => {
+    if (!drawer) return
+    sideRef.current?.querySelector('button')?.focus()
+    /** @param {KeyboardEvent} e */
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      setDrawer(false)
+      menuBtn.current?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [drawer])
+
+  // data-tabbar / data-side: các nút nổi (gấu, cụm cửa hàng, góp ý...) né thanh tab dưới / thanh bên (shell.css)
+  const tabbar = !isTutor && !isFocusPage(pathname)
+  useEffect(() => {
+    const root = document.documentElement
+    root.toggleAttribute('data-tabbar', tabbar)
+    // Khung cố định (shell.css, lib/scroller.js): màn rộng — trang không cuộn, nội dung và cột phải tự cuộn
+    root.toggleAttribute('data-shell', docked)
+    root.dataset.side = rail ? 'rail' : 'open'
+    return () => {
+      delete root.dataset.side
+      root.removeAttribute('data-tabbar')
+      root.removeAttribute('data-shell')
+    }
+  }, [tabbar, rail, docked])
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
@@ -157,81 +248,211 @@ export default function Layout() {
     }
   }, [])
 
-  const content = (
-    <div className="app">
-      <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
-        <div className="topbar-inner">
-          <span className="brand">
-            <img className="brand-mark" src="/app-icon.svg" alt="" /> <span className="brand-text">Study with Duy Anh</span>
-          </span>
-          <div className="topbar-user">
-            <span className="user-name" title={profile.full_name}>
-              {profile.full_name || 'Tài khoản'}
+  /** Nút ngắm vũ trụ: tròn trên thanh trên cùng, hoặc hàng có chữ trong ngăn kéo (`labeled`) @param {boolean} labeled @param {string} [extra] */
+  const telescopeBtn = (labeled, extra = '') => (
+    <button
+      type="button"
+      className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${studying ? 'is-locked' : ''} ${extra}`}
+      onClick={() => {
+        if (studying) return mascotSay(TELESCOPE_LOCKED)
+        setDrawer(false)
+        // Đã chọn bật nhạc trong phiên này: phát ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ).
+        // Lần đầu chưa chọn: SpaceExplorer hỏi người dùng
+        openExplorerSound()
+        setExploring(true)
+      }}
+      aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
+      title={studying ? 'Nộp bài xong để mở khóa' : 'Ngắm vũ trụ'}
+    >
+      <Icon name="telescope" />
+      {labeled && <span className="side-label">Ngắm vũ trụ</span>}
+      {studying && (
+        <span className="telescope-lock">
+          <Icon name="lock" size={11} />
+        </span>
+      )}
+    </button>
+  )
+
+  const brand = (
+    <span className="brand">
+      <img className="brand-mark" src="/app-icon.svg" alt="" /> <span className="brand-text">Study with Duy Anh</span>
+    </span>
+  )
+
+  const nav = (
+    <nav className="nav nav-side" ref={navRef} aria-label="Menu chính">
+      {pill && (
+        <span
+          className="nav-pill"
+          aria-hidden="true"
+          style={{ transform: `translate(${pill.x}px, ${pill.y}px)`, width: pill.w, height: pill.h }}
+        />
+      )}
+      {items.map((it) => (
+        <NavLink
+          key={it.to}
+          to={listUrl(it.to)}
+          state={RESTORE}
+          end={it.end}
+          title={it.label}
+          className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}
+        >
+          <Icon name={it.icon} size={19} />
+          <span className="side-label">{it.label}</span>
+          {it.badge && badges[it.badge] > 0 && (
+            // key theo số: số đổi thì nhãn nảy lên một lần (reports.css)
+            <span key={badges[it.badge]} className="nav-badge" aria-label={`${badges[it.badge]} ${it.badge === 'reports' ? 'câu chờ xem' : 'góp ý chưa xem'}`}>
+              {badges[it.badge]}
             </span>
-            {profile.role === 'student' && <StreakFlame />}
-            <NotificationBell />
-            <button
-              type="button"
-              className={`btn btn-ghost theme-toggle telescope-btn ${studying ? 'is-locked' : ''}`}
-              onClick={() => {
-                if (studying) return mascotSay(TELESCOPE_LOCKED)
-                // Đã chọn bật nhạc trong phiên này: phát ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ).
-                // Lần đầu chưa chọn: SpaceExplorer hỏi người dùng
-                openExplorerSound()
-                setExploring(true)
-              }}
-              aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
-              title={studying ? 'Nộp bài xong để mở khóa' : 'Ngắm vũ trụ'}
-            >
-              <Icon name="telescope" />
-              {studying && (
-                <span className="telescope-lock">
-                  <Icon name="lock" size={11} />
-                </span>
-              )}
-            </button>
-            <ThemeToggle />
-            <button type="button" className="btn btn-ghost theme-toggle" onClick={() => setSettingsOpen(true)} aria-label="Cài đặt" title="Cài đặt">
-              <Icon name="settings" />
-            </button>
-            <button type="button" className="btn btn-small btn-ghost btn-logout" onClick={confirmSignOut} aria-label="Đăng xuất" title="Đăng xuất">
-              <Icon name="logout" />
-              <span className="btn-text">Đăng xuất</span>
-            </button>
-          </div>
-        </div>
-        <nav className="nav" ref={navRef}>
-          {pill && (
-            <span
-              className="nav-pill"
-              aria-hidden="true"
-              style={{ transform: `translate(${pill.x}px, ${pill.y}px)`, width: pill.w, height: pill.h }}
-            />
           )}
+        </NavLink>
+      ))}
+    </nav>
+  )
+
+  const content = (
+    <div className={`app ${isTutor ? 'is-tutor' : 'is-student'}`}>
+      {/* Thanh bên chung cho gia sư và học sinh: màn rộng ghim / thu gọn thành dải icon, màn hẹp là ngăn kéo */}
+      <aside id="app-side" ref={sideRef} className={`side ${drawer ? 'is-open' : ''}`} aria-label="Menu">
+        <div className="side-head">
+          {brand}
+          {/* Thanh bên ghim (màn rộng): nút ☰ thu gọn / mở rộng nằm ngay trong thanh bên, không trôi theo nội dung */}
+          <button
+            type="button"
+            className="side-toggle"
+            onClick={toggleMenu}
+            aria-controls="app-side"
+            aria-expanded={!rail}
+            aria-label={rail ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}
+            title={rail ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}
+          >
+            <Icon name="menu" />
+          </button>
+          <button type="button" className="side-close" onClick={() => setDrawer(false)} aria-label="Đóng menu" title="Đóng menu">
+            <Icon name="close" />
+          </button>
+        </div>
+        {nav}
+        <div className="side-foot">
+          {/* Màn rộng không còn thanh trên cùng: chuông + ngắm vũ trụ + bảng bên + cửa hàng + góp ý nằm ở đây
+              (cửa hàng / góp ý không còn nổi góc màn hình, đỡ che nội dung; chuỗi + Xu + Sao ở cột phải) */}
+          <span className="side-user" title={profile.full_name}>
+            {profile.full_name || 'Tài khoản'}
+          </span>
+          {docked && <NotificationBell variant="side" />}
+          {telescopeBtn(true)}
+          {/* Màn hẹp: thanh trên chỉ còn ☰ / chuỗi / chuông → bảng bên nằm ở đây; bấm thì đóng menu rồi mở ngăn kéo phải */}
+          <button
+            type="button"
+            className="side-btn ctx-btn-side"
+            onClick={() => {
+              if (docked) return setCtxOpen((v) => !v)
+              setDrawer(false)
+              setCtxOpen(true)
+            }}
+            aria-controls="ctx-panel"
+            aria-expanded={ctxOpen}
+            aria-label="Bảng bên"
+            title="Bảng bên"
+          >
+            <Icon name="panel" />
+            <span className="side-label">Bảng bên</span>
+          </button>
+          {docked && (
+            <NavLink to={`/${profile.role === 'tutor' ? 'tutor' : 'student'}/shop`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Cửa hàng gấu">
+              <Icon name="shop" />
+              <span className="side-label">Cửa hàng gấu</span>
+            </NavLink>
+          )}
+          {docked && !isTutor && <FeedbackButton variant="side" />}
+          <ThemeToggle withLabel className="side-btn" />
+          <button
+            type="button"
+            className="side-btn"
+            onClick={() => {
+              setDrawer(false)
+              setSettingsOpen(true)
+            }}
+            title="Cài đặt"
+          >
+            <Icon name="settings" />
+            <span className="side-label">Cài đặt</span>
+          </button>
+          <button type="button" className="side-btn is-danger" onClick={confirmSignOut} title="Đăng xuất">
+            <Icon name="logout" />
+            <span className="side-label">Đăng xuất</span>
+          </button>
+        </div>
+      </aside>
+      {drawer && <div className="side-backdrop" onClick={() => setDrawer(false)} aria-hidden="true" />}
+
+      <div className="app-main">
+        {/* Màn rộng: bỏ thanh trên cùng (CSS shell.css), các nút của nó đã vào thanh bên */}
+        <header className={`topbar ${scrolled ? 'is-scrolled' : ''}`}>
+          <div className="topbar-inner">
+            <button
+              ref={menuBtn}
+              type="button"
+              className="btn btn-ghost theme-toggle menu-btn"
+              onClick={toggleMenu}
+              aria-controls="app-side"
+              aria-expanded={railMode ? !rail : drawer}
+              aria-label={railMode ? (rail ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên') : 'Mở menu'}
+              title={railMode ? (rail ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên') : 'Menu'}
+            >
+              <Icon name="menu" />
+            </button>
+            {brand}
+            <div className="topbar-user">
+              {!isTutor && !docked && <StreakFlame />}
+              {!docked && <NotificationBell />}
+            </div>
+          </div>
+        </header>
+        <main className="page">
+          <div className="page-body">
+            <InstallBanner />
+            {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
+            <div key={pageKey} className="page-enter">
+              <ErrorBoundary>
+                <Suspense fallback={<Loading />}>
+                  <Outlet />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          </div>
+          {/* Cột phải (shell.css): khối mặc định + khối của trang gửi vào qua ContextPanel (portal) */}
+          <aside id="ctx-panel" className={`ctx-panel ${ctxOpen ? 'is-open' : ''}`} aria-label="Bảng bên">
+            <button type="button" className="side-close ctx-close" onClick={() => setCtxOpen(false)} aria-label="Đóng bảng bên" title="Đóng">
+              <Icon name="close" />
+            </button>
+            {/* Khối mặc định theo vai trò; khối của trang (ContextPanel) xếp ngay sau */}
+            {isTutor ? <TutorTodoPanel /> : <StudentTodayPanel />}
+          </aside>
+        </main>
+        {ctxOpen && <div className="side-backdrop ctx-backdrop" onClick={() => setCtxOpen(false)} aria-hidden="true" />}
+      </div>
+
+      {/* Học sinh trên điện thoại: viên thuốc nổi 4 mục ở đáy màn hình, mục đang chọn mở rộng hiện chữ
+          (ẩn khi đang làm bài / đọc bài giảng). Lớp .dock-* (không dùng .tab: trùng kiểu tab của bài giảng ở content.css) */}
+      {tabbar && (
+        <nav className="tabbar" aria-label="Menu chính">
           {items.map((it) => (
-            <NavLink key={it.to} to={listUrl(it.to)} state={RESTORE} end={it.end} className={({ isActive }) => (isActive || it.also?.test(pathname) ? 'nav-link active' : 'nav-link')}>
-              <Icon name={it.icon} size={17} />
-              <span>{it.label}</span>
-              {it.badge && badges[it.badge] > 0 && (
-                <span className="nav-badge" aria-label={`${badges[it.badge]} ${it.badge === 'reports' ? 'câu chờ xem' : 'góp ý chưa xem'}`}>
-                  {badges[it.badge]}
-                </span>
-              )}
+            <NavLink
+              key={it.to}
+              to={listUrl(it.to)}
+              state={RESTORE}
+              end={it.end}
+              aria-label={it.label}
+              className={({ isActive }) => (isActive ? 'dock-tab is-active' : 'dock-tab')}
+            >
+              <Icon name={it.icon} size={21} />
+              <span className="dock-text">{it.label}</span>
             </NavLink>
           ))}
         </nav>
-      </header>
-      <main className="page">
-        <InstallBanner />
-        {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
-        <div key={pageKey} className="page-enter">
-          <ErrorBoundary>
-            <Suspense fallback={<Loading />}>
-              <Outlet />
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-      </main>
+      )}
       {showMascot && (
         <Suspense fallback={null}>
           <Mascot />
@@ -240,9 +461,10 @@ export default function Layout() {
       {/* Đổi trang thì lên đầu; Back / Forward / mở lại tab thì về đúng chỗ cũ */}
       <ScrollMemory />
       <ScrollJump />
-      <PandaDock />
+      {/* Màn hẹp: cụm cửa hàng + Góp ý nổi góc trái dưới; màn rộng đã chuyển vào thanh bên */}
+      {!docked && <PandaDock />}
       <DialogHost />
-      {profile.role === 'student' && <FeedbackButton />}
+      {profile.role === 'student' && !docked && <FeedbackButton />}
       {exploring && (
         <Suspense fallback={null}>
           <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />

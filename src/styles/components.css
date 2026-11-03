@@ -347,7 +347,7 @@ a.list-item:active {
   border-color: var(--btn-primary-border);
   box-shadow: 0 3px 0 var(--btn-primary-border), var(--btn-primary-shadow);
 }
-/* Lối tắt tới cấp con trong thẻ Lớp / Môn / Chuyên đề */
+/* Lối tắt tới cấp con trong thẻ Lớp / Môn / Chương */
 .list-item .chips {
   margin-bottom: 0.65rem;
 }
@@ -406,7 +406,7 @@ a.chip {
   }
 }
 
-/* Ô lọc theo chương (cạnh các nút lọc dạng viên thuốc) */
+/* Ô lọc theo chủ đề (cạnh các nút lọc dạng viên thuốc) */
 select.chapter-filter {
   width: auto;
   max-width: 100%;
@@ -416,7 +416,7 @@ select.chapter-filter {
   border-color: var(--border-strong);
 }
 
-/* Tiêu đề nhóm (chuyên đề / chương) trong danh sách */
+/* Tiêu đề nhóm (chương / chủ đề) trong danh sách */
 .section-title {
   display: flex;
   align-items: center;

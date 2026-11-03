@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
 // ----- Nhớ nút nào trên cây đang mở (lưu trong trình duyệt) -----
-// Khóa của một nút = các phần nối bằng ký tự điều khiển \u0001 (tên chuyên đề có thể chứa mọi ký tự thường)
+// Khóa của một nút = các phần nối bằng ký tự điều khiển \u0001 (tên chương có thể chứa mọi ký tự thường)
 const SEP = '\u0001'
 export const nodeKey = (...parts) => parts.join(SEP)
 
@@ -66,7 +66,7 @@ export function useOpenNodes(storageKey) {
 }
 
 // Một nút nhóm trên cây: mũi tên mở/thu + tên (bấm để xem nhóm) + số đếm
-// now: nhóm chứa chương đang học (hiện 📍)
+// now: nhóm chứa chủ đề đang học (hiện 📍)
 /** @param {{ label: string, to?: string, count?: number, open: boolean, onToggle: () => void, active?: boolean, depth: number, now?: boolean, children?: import('react').ReactNode }} props */
 export function TreeGroup({ label, to, count, open, onToggle, active, depth, now, children }) {
   return (
@@ -87,7 +87,7 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, now
           </button>
         )}
         {now && (
-          <span className="tree-now" title="Chuyên đề đang học">
+          <span className="tree-now" title="Chương đang học">
             📍
           </span>
         )}
@@ -102,9 +102,9 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, now
   )
 }
 
-// Lá của cây: một chương (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
+// Lá của cây: một chủ đề (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
 // active: truyền vào khi lá phân biệt bằng ?tham số (NavLink chỉ so đường dẫn)
-// now: chương học sinh đang học (hiện nhãn 📍)
+// now: chủ đề học sinh đang học (hiện nhãn 📍)
 /** @param {{ to: string, label: string, badge?: import('react').ReactNode, count?: number, active?: boolean, dim?: boolean, now?: boolean }} props */
 export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
   const body = (

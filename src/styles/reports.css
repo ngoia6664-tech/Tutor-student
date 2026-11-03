@@ -48,6 +48,16 @@
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1;
+  animation: badge-pop 0.4s var(--spring); /* Layout đặt key theo số: số tăng / giảm thì nảy lại */
+}
+@keyframes badge-pop {
+  0% { transform: scale(0.4); }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-badge {
+    animation: none;
+  }
 }
 
 /* ===== Trang Báo lỗi đề (gia sư) ===== */

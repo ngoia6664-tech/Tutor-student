@@ -1,6 +1,7 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useRef } from 'react'
 import { prefersReducedMotion, useSettings } from '../lib/settings.js'
+import { maxScroll, onScroll as onContentScroll, scrollY } from '../lib/scroller.js'
 
 // Nền vũ trụ phía sau toàn app: 3 lớp sao ở 3 độ xa (trôi chậm, lớp gần trôi nhanh hơn → có chiều sâu),
 // vài sao lấp lánh, hệ Mặt Trời mờ ở giữa (cuộn trang thì đổi góc nhìn), thỉnh thoảng một sao băng.
@@ -68,8 +69,8 @@ export default function SpaceBackdrop() {
     let frame = 0
     const update = () => {
       frame = 0
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+      const max = maxScroll()
+      const p = max > 0 ? Math.min(1, Math.max(0, scrollY() / max)) : 0
       el.style.setProperty('--tilt', `${TILT_TOP + (TILT_BOTTOM - TILT_TOP) * p}deg`)
       el.style.setProperty('--turn', `${TURN_TOP + (TURN_BOTTOM - TURN_TOP) * p}deg`)
     }
@@ -77,10 +78,10 @@ export default function SpaceBackdrop() {
       if (!frame) frame = requestAnimationFrame(update)
     }
     update()
-    window.addEventListener('scroll', onScroll, { passive: true })
+    const offScroll = onContentScroll(onScroll)
     window.addEventListener('resize', onScroll)
     return () => {
-      window.removeEventListener('scroll', onScroll)
+      offScroll()
       window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(frame)
     }

@@ -23,12 +23,12 @@ export function deleteWarning(items) {
   return parts.join(' ')
 }
 
-// Chuyển chương: CHỈ đổi chapter_id, mọi trường khác giữ nguyên. chapterId '' / null = "Chưa xếp chương".
+// Chuyển chủ đề: CHỈ đổi chapter_id, mọi trường khác giữ nguyên. chapterId '' / null = "Chưa xếp chủ đề".
 // Trả { moved, failed: [{ item, error }] } — bảng nào lỗi thì các bài của bảng đó nằm trong failed.
-// (Đổi chương thì CSDL tự đưa bài về "Chưa xếp" thư mục: trigger keep_folder_in_chapter)
+// (Đổi chủ đề thì CSDL tự đưa bài về "Chưa xếp" thư mục: trigger keep_folder_in_chapter)
 export const moveToChapter = (items, chapterId) => updateItems(items, { chapter_id: chapterId || null })
 
-// Chuyển vào thư mục trong chương: CHỈ đổi folder_id. folderId '' / null = "Chưa xếp" (ra khỏi thư mục)
+// Chuyển vào thư mục trong chủ đề: CHỈ đổi folder_id. folderId '' / null = "Chưa xếp" (ra khỏi thư mục)
 export const moveToFolder = (items, folderId) => updateItems(items, { folder_id: folderId || null })
 
 async function updateItems(items, patch) {
@@ -74,7 +74,7 @@ export async function deleteItems(items) {
   return { done, failed }
 }
 
-// Bài giảng, bài tập nằm trong các chương (để xóa kèm khi xóa chương)
+// Bài giảng, bài tập nằm trong các chủ đề (để xóa kèm khi xóa chủ đề)
 export async function chapterContent(chapterIds) {
   const [lessons, assignments] = await Promise.all([
     supabase.from('lessons').select('id, title, file_path, chapter_id').in('chapter_id', chapterIds).then(unwrap),
@@ -92,9 +92,9 @@ export async function chapterContent(chapterIds) {
   ]
 }
 
-// Xóa nhiều chương. content = null: bài bên trong giữ lại (về "Chưa xếp chương", như xóa một chương);
-// content = danh sách từ chapterContent: xóa các bài đó trước. Chương còn bài xóa lỗi thì GIỮ chương.
-// Trả { chapters: số chương đã xóa, kept: số chương giữ lại, done, failed, chapterError }
+// Xóa nhiều chủ đề. content = null: bài bên trong giữ lại (về "Chưa xếp chủ đề", như xóa một chủ đề);
+// content = danh sách từ chapterContent: xóa các bài đó trước. Chủ đề còn bài xóa lỗi thì GIỮ chủ đề.
+// Trả { chapters: số chủ đề đã xóa, kept: số chủ đề giữ lại, done, failed, chapterError }
 export async function deleteChapters(chapterIds, content = null) {
   const r = content?.length ? await deleteItems(content) : { done: 0, failed: [] }
   const blocked = new Set(r.failed.map((f) => f.item.chapter_id))

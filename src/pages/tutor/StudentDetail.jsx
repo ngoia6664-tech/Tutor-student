@@ -15,6 +15,7 @@ import { EditStudent } from './TutorStudents.jsx'
 import { fetchStreak, setStreak } from '../../lib/streakBackup.js'
 import { notifyDone, notifyError } from '../../lib/dialog.js'
 import { errMsg } from '../../lib/errors.js'
+import { groupLabel } from '../../lib/studentGroups.js'
 
 const FILTERS = [
   { key: 'all', label: 'Tất cả' },
@@ -30,7 +31,7 @@ export default function StudentDetail() {
   const [tab, setTab] = useState('assignments')
   const [filter, setFilter] = useState('all')
   const [editing, setEditing] = useState(false)
-  // Chương đang lọc (bấm ở "Điểm theo chương"): giữ trên URL ?chuong= để quay về từ Thư viện vẫn còn
+  // Chủ đề đang lọc (bấm ở "Điểm theo chủ đề"): giữ trên URL ?chuong= để quay về từ Thư viện vẫn còn
   const [params, setParams] = useSearchParams()
   const chapter = params.get('chuong')
   const setChapter = (cid) => setParams(cid ? { chuong: cid } : {}, { replace: true })
@@ -40,7 +41,7 @@ export default function StudentDetail() {
       fetchStudentReport(id),
       fetchChapters(),
       fetchStreak(id).catch(() => null), // chưa chạy schema.sql / lỗi mạng: ẩn khối chuỗi, không chặn trang
-      // Chương đang học (học sinh tự đánh dấu / bài tập đang làm). Chưa chạy lại schema.sql thì bỏ qua
+      // Chủ đề đang học (học sinh tự đánh dấu / bài tập đang làm). Chưa chạy lại schema.sql thì bỏ qua
       supabase.from('profiles').select('study_chapter_id, study_chapter_at').eq('id', id).maybeSingle().then(({ data }) => data),
     ])
     return { ...report, study, streak, chapterById: new Map(chapters.map((c) => [c.id, c])) }
@@ -61,7 +62,7 @@ export default function StudentDetail() {
   const inCh = assignments.filter((r) => inChapter(r.assignment.chapter_id, chapter))
   const rows = inCh.filter((r) => matchFilter(r, filter))
   const countOf = (f) => inCh.filter((r) => matchFilter(r, f)).length
-  const chapterLabel = chapter === NO_CHAPTER ? 'Bài khác' : chapterName(chapter) || 'Chương'
+  const chapterLabel = chapter === NO_CHAPTER ? 'Bài khác' : chapterName(chapter) || 'Chủ đề'
 
   return (
     <div>
@@ -75,7 +76,7 @@ export default function StudentDetail() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0 }}>{s.full_name || '(chưa đặt tên)'}</h1>
           <div className="row" style={{ marginTop: '0.35rem' }}>
-            <span className="badge">{s.group_name ? `Nhóm ${s.group_name}` : 'Chưa có nhóm'}</span>
+            <span className="badge">{s.group_name ? groupLabel(s.group_name) : 'Chưa có nhóm'}</span>
             <span className="badge">{s.grade ? `Lớp ${s.grade}` : 'Chưa rõ lớp'}</span>
             {s.subjects?.length > 0 && <span className="badge">{s.subjects.join(', ')}</span>}
           </div>
@@ -90,7 +91,7 @@ export default function StudentDetail() {
                 {study.study_chapter_at && <span className="muted"> · cập nhật {formatDateTime(study.study_chapter_at)}</span>}
               </>
             ) : (
-              <span className="muted">Chưa đánh dấu chương đang học</span>
+              <span className="muted">Chưa đánh dấu chủ đề đang học</span>
             )}
           </p>
         </div>
@@ -150,8 +151,8 @@ export default function StudentDetail() {
           {chapter && (
             <div className="score-chart-filter" style={{ marginBottom: '0.6rem' }}>
               <span className="score-chart-filter-chip">
-                Chương: <b>{chapterLabel}</b>
-                <button type="button" onClick={() => setChapter(null)} aria-label="Bỏ lọc chương" title="Xem tất cả">
+                Chủ đề: <b>{chapterLabel}</b>
+                <button type="button" onClick={() => setChapter(null)} aria-label="Bỏ lọc chủ đề" title="Xem tất cả">
                   ✕
                 </button>
               </span>

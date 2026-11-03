@@ -64,7 +64,7 @@
   white-space: nowrap;
 }
 
-/* ===== Ô chọn dạng cây (chương / bài giảng) ===== */
+/* ===== Ô chọn dạng cây (chủ đề / bài giảng) ===== */
 .tp-anchor {
   position: relative;
   display: flex;

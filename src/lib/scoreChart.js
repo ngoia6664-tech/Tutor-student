@@ -66,9 +66,9 @@ export function chartStats(points) {
   }
 }
 
-export const WEAK = 6 // TB chương dưới mức này → "cần ôn"
+export const WEAK = 6 // TB chủ đề dưới mức này → "cần ôn"
 
-// Điểm TB theo chương, cao → thấp: [{ id, title, avg, count, weak }]
+// Điểm TB theo chủ đề, cao → thấp: [{ id, title, avg, count, weak }]
 export function chapterStats(points) {
   const groups = new Map()
   for (const p of points) {
@@ -85,7 +85,7 @@ export function chapterStats(points) {
     .sort((a, b) => b.avg - a.avg)
 }
 
-// Lọc theo chương đang xem: 'none' = bài chưa gắn chương
+// Lọc theo chủ đề đang xem: 'none' = bài chưa gắn chủ đề
 export const NO_CHAPTER = 'none'
 export const inChapter = (chapterId, filter) => !filter || (filter === NO_CHAPTER ? !chapterId : chapterId === filter)
 
@@ -95,9 +95,9 @@ const LEVELS = [
   { field: 'section', label: sectionLabel },
 ]
 
-// Cây Lớp › Môn › Chuyên đề › Chương cho điểm theo chương. Cấp chỉ có một nhánh thì bỏ qua cho gọn.
+// Cây Lớp › Môn › Chương › Chủ đề cho điểm theo chủ đề. Cấp chỉ có một nhánh thì bỏ qua cho gọn.
 // Trả về [{ type: 'group', key, label, avg, count, weak, children } | { type: 'chapter', id, title, avg, count, weak }]
-// "Bài khác" (chưa gắn chương) đứng cuối, ở cấp ngoài cùng.
+// "Bài khác" (chưa gắn chủ đề) đứng cuối, ở cấp ngoài cùng.
 export function chapterTree(points, chapterById) {
   const stats = chapterStats(points)
   const order = new Map(sortChapters([...chapterById.values()]).map((c, i) => [c.id, i]))
@@ -131,7 +131,7 @@ export function chapterTree(points, chapterById) {
   return tree
 }
 
-// Các nhóm có chương "cần ôn" (để mở sẵn)
+// Các nhóm có chủ đề "cần ôn" (để mở sẵn)
 export function weakGroupKeys(tree, out = []) {
   for (const n of tree) if (n.type === 'group') {
     if (n.weak) out.push(n.key)
@@ -156,8 +156,8 @@ export function chartComment(points, voice) {
     if (best) return { text: `Bài mới nhất đạt ${vi(last.score)} điểm — cao nhất từ trước tới giờ của bạn này! 🏆` }
     if (st.trend !== null && st.trend >= 0.5) return { text: `Đang tiến bộ: TB 3 bài gần nhất tăng ${vi(st.trend)} điểm 📈` }
     if (st.trend !== null && st.trend <= -0.5)
-      return { text: `3 bài gần nhất giảm ${vi(-st.trend)} điểm${weakest ? `, chương "${weakest.title}" đang yếu nhất` : ''} — nên kèm thêm nhé.` }
-    if (weakest) return { text: `Điểm khá ổn định. Chương "${weakest.title}" TB ${vi(weakest.avg)}, nên giao thêm bài ôn.` }
+      return { text: `3 bài gần nhất giảm ${vi(-st.trend)} điểm${weakest ? `, chủ đề "${weakest.title}" đang yếu nhất` : ''} — nên kèm thêm nhé.` }
+    if (weakest) return { text: `Điểm khá ổn định. Chủ đề "${weakest.title}" TB ${vi(weakest.avg)}, nên giao thêm bài ôn.` }
     return { text: `Điểm ổn định, TB ${vi(st.avg)}/10 qua ${st.count} bài.` }
   }
 

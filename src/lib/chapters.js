@@ -6,16 +6,16 @@ const LAST = '￿' // giá trị trống xếp cuối
 // Nhãn hiển thị cho từng cấp khi chưa điền
 export const NO_GRADE = 'Chưa rõ lớp'
 export const NO_SUBJECT = 'Chưa rõ môn'
-export const NO_SECTION = 'Chưa có chuyên đề'
+export const NO_SECTION = 'Chưa có chương'
 
 export const gradeLabel = (g) => (g ? `Lớp ${g}` : NO_GRADE)
 export const subjectLabel = (s) => s || NO_SUBJECT
-// Tên chuyên đề khi hiển thị: bỏ tiền tố dữ liệu "L12_" (dữ liệu giữ nguyên). Cây mục lục dùng bản giữ chữ thường cho gọn,
+// Tên chương khi hiển thị: bỏ tiền tố dữ liệu "L12_" (dữ liệu giữ nguyên). Cây mục lục dùng bản giữ chữ thường cho gọn,
 // tiêu đề dùng sectionLabel (viết hoa); gáy + bìa kệ sách dùng sectionText cho dễ đọc
 export const sectionText = (s) => s?.replace(/^\s*L\d+_\s*/i, '') || NO_SECTION
 export const sectionLabel = (s) => (s ? sectionText(s).toLocaleUpperCase('vi') : NO_SECTION)
 
-// Sắp chương: lớp → môn → chuyên đề → thứ tự → tên ("Chủ đề 4" đứng trước "Chủ đề 10")
+// Sắp chủ đề: lớp → môn → chương → thứ tự → tên ("Chủ đề 4" đứng trước "Chủ đề 10")
 export function sortChapters(list) {
   return [...list].sort(
     (a, b) =>
@@ -27,8 +27,8 @@ export function sortChapters(list) {
   )
 }
 
-// Học sinh: các chương thuộc lớp của mình (RLS chỉ trả chương có bài được giao).
-// Chương chưa ghi lớp cũng tính; học sinh chưa ghi lớp thì lấy hết.
+// Học sinh: các chủ đề thuộc lớp của mình (RLS chỉ trả chủ đề có bài được giao).
+// Chủ đề chưa ghi lớp cũng tính; học sinh chưa ghi lớp thì lấy hết.
 // Đặt grade = lớp của học sinh để cây gom về một lớp, bắt đầu từ Môn.
 export async function fetchStudentChapters(myGrade) {
   const rows = unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order'))
@@ -40,12 +40,12 @@ export async function fetchChapters() {
   return sortChapters(unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, created_at')))
 }
 
-// Nhãn nhóm ngắn gọn cho ô chọn: "Lớp 11 · Vật lý · Chuyên đề 2: Sóng"
+// Nhãn nhóm ngắn gọn cho ô chọn: "Lớp 11 · Vật lý · Chương 2: Sóng"
 export function chapterGroupLabel(c) {
   return [c.grade ? `Lớp ${c.grade}` : '', c.subject || '', c.section || ''].filter(Boolean).join(' · ') || 'Khác'
 }
 
-// ----- Cây Lớp › Môn › Chuyên đề › Chương -----
+// ----- Cây Lớp › Môn › Chương › Chủ đề -----
 // Mỗi cấp có "key" để đưa lên URL; giá trị trống dùng key '-'
 export const keyOf = (v) => (v === null || v === undefined || v === '' ? '-' : String(v))
 const same = (v, key) => keyOf(v) === key
@@ -65,7 +65,7 @@ export function buildTree(chapters) {
   return tree
 }
 
-// Link tới một nhóm trong Thư viện: libraryUrl('11', 'Vật lý', 'Chuyên đề 2') → /tutor/library?lop=11&mon=...&cd=...
+// Link tới một nhóm trong Thư viện: libraryUrl('11', 'Vật lý', 'Chương 2') → /tutor/library?lop=11&mon=...&cd=...
 // Nhận key (đã qua keyOf); không truyền gì → trang Thư viện
 export function libraryUrl(...keys) {
   const p = new URLSearchParams()
@@ -77,15 +77,15 @@ export const chapterUrl = (id) => `/tutor/library/${id}`
 // Thư viện học sinh (/student/library?mon=...&cd=...): học sinh chỉ có một lớp nên bỏ "lop";
 // cùng thứ tự tham số với libraryUrl để dùng chung GradeShelf / libraryCrumbs
 export const studentLibraryUrl = (_lop, mon, cd) => libraryUrl(undefined, mon, cd).replace('/tutor/', '/student/')
-// Mục "Chưa xếp chương" của Thư viện gia sư (/tutor/library/chua-xep): bài có chapter_id trống
+// Mục "Chưa xếp chủ đề" của Thư viện gia sư (/tutor/library/chua-xep): bài có chapter_id trống
 export const UNSORTED = 'chua-xep'
 
 // Giá trị thật từ key trên URL ('-' → null)
 export const fromKey = (k) => (k === undefined || k === null || k === '-' ? null : k)
 export const gradeFromKey = (k) => (fromKey(k) === null ? null : Number(k))
 
-// Đường dẫn Thư viện có menu chọn nhanh: mỗi đoạn (lớp / môn / chuyên đề) kèm các lựa chọn cùng cấp.
-// Danh sách lớp có thêm lớp 6–12 chưa có chương (empty) để mở lớp mới. Nhận key (đã qua keyOf).
+// Đường dẫn Thư viện có menu chọn nhanh: mỗi đoạn (lớp / môn / chương) kèm các lựa chọn cùng cấp.
+// Danh sách lớp có thêm lớp 6–12 chưa có chủ đề (empty) để mở lớp mới. Nhận key (đã qua keyOf).
 const ALL_GRADES = ['6', '7', '8', '9', '10', '11', '12']
 /**
  * @param {any[]} tree kết quả buildTree
@@ -122,7 +122,7 @@ export function libraryCrumbs(tree, { lop, mon, cd }, url = libraryUrl) {
   return segs
 }
 
-// Gom bài (bài giảng / bài tập) theo chương, giữ thứ tự chương; bài chưa xếp chương để cuối.
+// Gom bài (bài giảng / bài tập) theo chủ đề, giữ thứ tự chủ đề; bài chưa xếp chủ đề để cuối.
 // items cần có chapter_id. Trả về [{ chapter | null, items }]
 export function groupByChapter(items, chapters) {
   const ordered = sortChapters(chapters)
@@ -134,7 +134,7 @@ export function groupByChapter(items, chapters) {
 
 const norm = (v) => (v || '').toString().trim().toLowerCase()
 
-// Tìm chương khớp file nhập: đúng tên + lớp + môn; không có thì chương cũ cùng tên chưa ghi lớp/môn
+// Tìm chủ đề khớp file nhập: đúng tên + lớp + môn; không có thì chủ đề cũ cùng tên chưa ghi lớp/môn
 // (giống hàm ensure_chapter trên CSDL)
 /** @param {any[]} chapters @param {{ title?: string, grade?: number | null, subject?: string | null }} [opts] */
 export function findChapter(chapters, { title, grade = null, subject = null } = {}) {

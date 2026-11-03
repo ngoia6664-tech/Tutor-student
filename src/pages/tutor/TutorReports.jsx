@@ -44,7 +44,7 @@ async function fetchReports() {
   return { reports: reports.filter((r) => r.exercise), chapters, labels }
 }
 
-// Gom báo lỗi: câu → bài tập → chương, rồi dựng cây Lớp › Môn › Chuyên đề › Chương
+// Gom báo lỗi: câu → bài tập → chủ đề, rồi dựng cây Lớp › Môn › Chương › Chủ đề
 function groupReports(reports, chapters, labels) {
   const byEx = new Map()
   for (const r of reports) {
@@ -98,7 +98,7 @@ export default function TutorReports() {
         </h1>
       </div>
       <p className="muted small" style={{ marginTop: 0 }}>
-        Các câu học sinh báo lỗi, xếp theo Lớp › Môn › Chuyên đề › Chương › Bài tập. Sửa câu rồi bấm "Đã sửa xong", hoặc bấm "Câu không lỗi" nếu đề đúng.
+        Các câu học sinh báo lỗi, xếp theo Lớp › Môn › Chương › Chủ đề › Bài tập. Sửa câu rồi bấm "Đã sửa xong", hoặc bấm "Câu không lỗi" nếu đề đúng.
       </p>
 
       <div className="tabs" style={{ margin: '0.5rem 0 1rem' }}>
@@ -142,7 +142,7 @@ export default function TutorReports() {
           )
         })}
         {loose.length > 0 && (
-          <Branch icon="inbox" label="Bài tập chưa xếp chương" count={countIn(loose)} level={0}>
+          <Branch icon="inbox" label="Bài tập chưa xếp chủ đề" count={countIn(loose)} level={0}>
             {loose.map((ag) => (
               <AssignmentGroup key={ag.assignment.id} group={ag} tab={tab} onChanged={changed} />
             ))}

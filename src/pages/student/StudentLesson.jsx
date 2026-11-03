@@ -30,7 +30,7 @@ export default function StudentLesson() {
       </div>
     )
 
-  // Về chương của bài trong Thư viện; bài chưa xếp chương nằm ở mục "Các bài khác"
+  // Về chủ đề của bài trong Thư viện; bài chưa xếp chủ đề nằm ở mục "Các bài khác"
   const back = { to: `/student/library/${data.lesson.chapter_id || 'khac'}`, label: '← Thư viện' }
 
   return (

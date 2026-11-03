@@ -322,7 +322,7 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
   const warnings = []
   const drafts = []
 
-  // Tên chương (topic) đã hiện ở nhóm/nhãn chương, nên tên bài chỉ cần "part"
+  // Tên chủ đề (topic) đã hiện ở nhóm/nhãn chủ đề, nên tên bài chỉ cần "part"
   // (vd. "Ngày 1 - Bài giảng Dạng 1"); không có part thì dùng topic
   const part = str(lesson.part)
   const baseTitle = part || topic
@@ -365,7 +365,7 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
     drafts,
     warnings,
     flags: arr(lesson.review_flags).map(str).filter(Boolean),
-    // Chương = topic (vd. Chủ đề 4), chuyên đề = chapter (vd. Chuyên đề 2: Sóng), kèm lớp + môn
+    // Chủ đề = topic (vd. Chủ đề 4), chương = chapter (vd. Chuyên đề 2: Sóng), kèm lớp + môn
     chapter: { title: topic, section: str(lesson.chapter), grade: toGrade(lesson.grade), subject: str(lesson.subject) },
     dang: lesson.dang ?? null,
   }

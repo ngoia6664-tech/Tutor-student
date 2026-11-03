@@ -24,6 +24,9 @@ const PATHS = {
   grade: 'M9 4h6M9 4a1 1 0 0 0-1 1v1h8V5a1 1 0 0 0-1-1M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M8.5 15.5 11 13l2 2 3-4',
   save: 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2ZM17 21v-8H7v8M7 3v5h8',
   close: 'M18 6 6 18M6 6l12 12',
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  shop: 'M6 7h12l1 13H5L6 7ZM9 7a3 3 0 0 1 6 0',
+  panel: 'M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1ZM15 4v16',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   send: 'M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z',
   camera: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2v11ZM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
@@ -51,12 +54,16 @@ const PATHS = {
   // Nút nhạc nền ▶ / ‖ (chế độ ngắm vũ trụ)
   resume: 'M8 5v14l11-7L8 5Z',
   pause: 'M9 5v14M15 5v14',
+  trend: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  calendar: 'M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1ZM4 10h16M8 3v4M16 3v4',
   telescope:'m3 13.5 12.5-6 2 4.2-12.5 6-2-4.2ZM15.5 7.5l3.6-1.7 2 4.2-3.6 1.7M11 15.7 8 21M11 15.7l3 5.3M11 15.7V14',
   settings:
     'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
 }
 
-/** @param {{ name: keyof typeof PATHS, size?: number, className?: string, title?: string }} props */
+/** @typedef {keyof typeof PATHS} IconName */
+
+/** @param {{ name: IconName, size?: number, className?: string, title?: string }} props */
 export default function Icon({ name, size = 18, className = '', title }) {
   const d = PATHS[name]
   if (!d) return null

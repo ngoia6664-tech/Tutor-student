@@ -16,6 +16,7 @@ import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../c
 import MarkHard from '../../components/MarkHard.jsx'
 import HardNote from '../../components/HardNote.jsx'
 import Icon from '../../components/Icon.jsx'
+import MistakesPanel from '../../components/MistakesPanel.jsx'
 
 const EXERCISE_FIELDS = 'id, sort_order, kind, question_md, options, assignment:assignments(id, title, chapter_id, chapter:chapters(title))'
 
@@ -119,6 +120,15 @@ export default function StudentMistakes() {
 
   return (
     <div className="library">
+      {data && (
+        <MistakesPanel
+          wrong={wrongAll.filter((r) => !mastered.has(r.exercise_id))}
+          chapterById={chapterById}
+          hardCount={hardAll.length}
+          onShowHard={() => setTab('hard')}
+          onShowWrong={() => setTab('wrong')}
+        />
+      )}
       <FilterTree
         title="Ôn tập"
         icon="refresh"
@@ -129,7 +139,7 @@ export default function StudentMistakes() {
         noneLabel="Bài khác"
         storageKey="mistakes-tree-open"
       />
-      <section className="library-main">
+      <section className="library-main library-panel">
         <div className="page-head">
           <div>
             <h1>

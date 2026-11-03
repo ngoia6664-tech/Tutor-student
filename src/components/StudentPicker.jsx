@@ -1,5 +1,6 @@
 import { useAsync } from '../lib/useAsync.js'
-import { fetchStudents, GROUPS } from '../lib/students.js'
+import { fetchStudents } from '../lib/students.js'
+import { buildGroups, groupLabel } from '../lib/studentGroups.js'
 import Loading from './Loading.jsx'
 import ErrorBox from './ErrorBox.jsx'
 
@@ -28,7 +29,8 @@ export default function StudentPicker({ value, onChange }) {
     onChange([...next])
   }
 
-  const groupsPresent = GROUPS.filter((g) => students.some((s) => s.group_name === g))
+  // Nhóm thật từ dữ liệu; nhóm rỗng không có ai để chọn nên bỏ qua
+  const groupsPresent = buildGroups(students, []).groups.map((g) => g.name)
 
   return (
     <div>
@@ -38,7 +40,7 @@ export default function StudentPicker({ value, onChange }) {
           const allIn = ids.every((id) => selected.has(id))
           return (
             <button key={g} type="button" className={allIn ? 'chip active' : 'chip'} onClick={() => toggleGroup(g)}>
-              Nhóm {g}
+              {groupLabel(g)}
             </button>
           )
         })}
@@ -55,7 +57,7 @@ export default function StudentPicker({ value, onChange }) {
           <span>
             {s.full_name || '(chưa đặt tên)'}{' '}
             <span className="muted small">
-              {s.group_name ? `· Nhóm ${s.group_name}` : '· chưa có nhóm'}
+              {s.group_name ? `· ${groupLabel(s.group_name)}` : '· chưa có nhóm'}
               {s.grade ? ` · Lớp ${s.grade}` : ''}
             </span>
           </span>

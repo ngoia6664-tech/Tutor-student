@@ -5,8 +5,8 @@ import { buildTree, gradeFromKey, gradeLabel, keyOf, sectionLabel, sectionText, 
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from './TreeNav.jsx'
 import Icon from './Icon.jsx'
 
-// ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › Chuyên đề › Chương -----
-// Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&cd=Chuyên đề 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
+// ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › Chương › Chủ đề -----
+// Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&cd=Chương 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
 export const NONE = 'none'
 
 export function useTreeSelection() {
@@ -18,7 +18,7 @@ export function useTreeSelection() {
   return { lop, mon, cd, ch }
 }
 
-// Bài (có chapter_id) có thuộc mục đang chọn không. chapterById: chỉ gồm chương hiện trên cây.
+// Bài (có chapter_id) có thuộc mục đang chọn không. chapterById: chỉ gồm chủ đề hiện trên cây.
 export function matchItem(item, chapterById, sel) {
   const c = item.chapter_id ? chapterById.get(item.chapter_id) : null
   if (sel.ch === NONE) return !c
@@ -32,7 +32,7 @@ export function matchItem(item, chapterById, sel) {
   )
 }
 
-// Mô tả ngắn mục đang chọn, vd. "Lớp 11 › Vật lý › Chương 4"
+// Mô tả ngắn mục đang chọn, vd. "Lớp 11 › Vật lý › Chủ đề 4"
 export function selectionLabel(sel, chapterById, noneLabel) {
   if (sel.ch === NONE) return noneLabel
   if (sel.ch) {
@@ -60,15 +60,15 @@ function makeUrl(pathname, { lop, mon, cd, ch }) {
 
 /**
  * Cây lọc bên trái.
- * - chapters: các chương hiện trên cây (đã lọc theo quyền / lớp)
+ * - chapters: các chủ đề hiện trên cây (đã lọc theo quyền / lớp)
  * - items: các bài có chapter_id; countIf: bài nào được đếm (mặc định: tất cả)
  * - gradeTabs: có tab chọn lớp (gia sư). Không có tab → cây bắt đầu từ Môn (học sinh, một lớp)
- * - hideEmpty: ẩn chương không có bài nào (học sinh)
- * - badgeIf: bài nào hiện thành số vàng cạnh chương (vd. bài chưa làm, bài chờ chấm)
- * - showCount: hiện số bài (xám) cạnh mỗi chương
- * - nowId: chương học sinh đang học → 📍 trên lá + chuyên đề chứa nó, chưa chọn gì thì mở sẵn nhánh đó
+ * - hideEmpty: ẩn chủ đề không có bài nào (học sinh)
+ * - badgeIf: bài nào hiện thành số vàng cạnh chủ đề (vd. bài chưa làm, bài chờ chấm)
+ * - showCount: hiện số bài (xám) cạnh mỗi chủ đề
+ * - nowId: chủ đề học sinh đang học → 📍 trên lá + chương chứa nó, chưa chọn gì thì mở sẵn nhánh đó
  */
-export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chương', storageKey }) {
+export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chủ đề', storageKey }) {
   const { pathname } = useLocation()
   const sel = useTreeSelection()
   const { open, toggle, ensure } = useOpenNodes(storageKey)
@@ -87,7 +87,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
   const visible = hideEmpty ? chapters.filter((c) => perChapter.get(c.id) || badges.get(c.id)) : chapters
   const tree = buildTree(visible)
   const tabs = tree.map((g) => g.key)
-  // Lớp của chương đang chọn quyết định tab đang mở
+  // Lớp của chủ đề đang chọn quyết định tab đang mở
   const selChapter = sel.ch && sel.ch !== NONE ? chapterById.get(sel.ch) : null
   const tab = gradeTabs ? (selChapter ? keyOf(selChapter.grade) : sel.lop) : undefined
   const roots = gradeTabs && tab !== undefined ? tree.filter((g) => g.key === tab) : tree
@@ -101,7 +101,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
     if (c !== undefined) keys.push(nodeKey('c', g, s, c))
     if (keys.length) ensure(keys)
   }, [selChapter, sel.lop, sel.mon, sel.cd, ensure])
-  // Chưa chọn gì: mở sẵn nhánh chương đang học
+  // Chưa chọn gì: mở sẵn nhánh chủ đề đang học
   const nowChapter = nowId ? chapterById.get(nowId) : null
   const nothingSelected = sel.lop === undefined && sel.ch === undefined
   useEffect(() => {

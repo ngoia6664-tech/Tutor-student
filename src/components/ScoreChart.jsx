@@ -32,10 +32,10 @@ const ddmm = (d) => {
 // Biểu đồ đường điểm theo thời gian: lọc loại bài + khoảng thời gian, 4 ô số liệu, chạm điểm → thẻ bài.
 // points: từ lib/scoreChart.js toPoints (cũ → mới). Không có điểm nào thì không hiện.
 // voice: 'student' | 'tutor' — gấu nhận xét khi mở (mỗi phiên chỉ một lần cho mỗi lần có điểm mới).
-// quiet: không nhận xét khi mở (vd. Kết quả đang lọc một chương trên cây).
-// Trang gia sư truyền thêm chapterById + chapter/onChapter (chương đang lọc, giữ ở trang cha để lọc cả danh sách bài)
+// quiet: không nhận xét khi mở (vd. Kết quả đang lọc một chủ đề trên cây).
+// Trang gia sư truyền thêm chapterById + chapter/onChapter (chủ đề đang lọc, giữ ở trang cha để lọc cả danh sách bài)
 // + chapterLink(id) + backState ({ backTo, backLabel } cho nút quay về trong Thư viện)
-// → hiện cây "Điểm theo chương" theo bộ lọc loại bài / thời gian; bấm chương = lọc tại chỗ.
+// → hiện cây "Điểm theo chủ đề" theo bộ lọc loại bài / thời gian; bấm chủ đề = lọc tại chỗ.
 export default function ScoreChart({ points, voice = 'student', quiet = false, chapterById, chapter = null, onChapter, chapterLink, backState }) {
   const [kind, setKind] = useState('all')
   const [range, setRange] = useState('90')
@@ -119,14 +119,14 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
       {withTree && chapter && (
         <div className="score-chart-filter">
           <span className="score-chart-filter-chip">
-            Đang xem: <b>{chapterTitle || 'Chương'}</b>
-            <button type="button" onClick={() => onChapter(null)} aria-label="Bỏ lọc chương" title="Xem tất cả">
+            Đang xem: <b>{chapterTitle || 'Chủ đề'}</b>
+            <button type="button" onClick={() => onChapter(null)} aria-label="Bỏ lọc chủ đề" title="Xem tất cả">
               ✕
             </button>
           </span>
           {chapter !== NO_CHAPTER && chapterLink && (
             <Link to={chapterLink(chapter)} state={backState} className="small">
-              Mở chương trong Thư viện ›
+              Mở chủ đề trong Thư viện ›
             </Link>
           )}
         </div>
@@ -235,8 +235,8 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
   )
 }
 
-// Điểm TB theo cây Lớp › Môn › Chuyên đề › Chương; chương dưới WEAK tô vàng + "cần ôn".
-// Nhóm có chương cần ôn mở sẵn; bấm chương = lọc biểu đồ + danh sách bài (bấm lại = bỏ lọc)
+// Điểm TB theo cây Lớp › Môn › Chương › Chủ đề; chủ đề dưới WEAK tô vàng + "cần ôn".
+// Nhóm có chủ đề cần ôn mở sẵn; bấm chủ đề = lọc biểu đồ + danh sách bài (bấm lại = bỏ lọc)
 function ChapterScores({ points, chapterById, chapter, onChapter }) {
   const tree = chapterTree(points, chapterById)
   const [open, setOpen] = useState(() => new Set(weakGroupKeys(tree)))
@@ -252,7 +252,7 @@ function ChapterScores({ points, chapterById, chapter, onChapter }) {
   return (
     <div className="chapter-scores">
       <div className="row row-between">
-        <h3>Điểm theo chương</h3>
+        <h3>Điểm theo chủ đề</h3>
         {allKeys.length > 0 && (
           <button type="button" className="btn btn-small" onClick={() => setOpen(new Set(allOpen ? [] : allKeys))}>
             {allOpen ? 'Gập hết' : 'Mở hết'}
@@ -265,7 +265,7 @@ function ChapterScores({ points, chapterById, chapter, onChapter }) {
         ))}
       </ul>
       <p className="muted small" style={{ margin: 0 }}>
-        Bấm vào một chương để lọc biểu đồ và danh sách bài tập.
+        Bấm vào một chủ đề để lọc biểu đồ và danh sách bài tập.
       </p>
     </div>
   )
@@ -292,7 +292,7 @@ function ChapterNode({ node: n, open, toggle, chapter, onChapter }) {
           <span className="cs-group-name">
             {n.label}
             {n.weak && !isOpen && (
-              <span className="chapter-score-tag" title="Có chương cần ôn">
+              <span className="chapter-score-tag" title="Có chủ đề cần ôn">
                 ⚠ cần ôn
               </span>
             )}

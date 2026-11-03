@@ -188,7 +188,7 @@
   }
 }
 
-/* Điểm theo chương (trang gia sư) */
+/* Điểm theo chủ đề (trang gia sư) */
 .chapter-scores {
   display: flex;
   flex-direction: column;
@@ -248,7 +248,7 @@
   background: var(--warn);
 }
 
-/* Cây điểm theo chương: nhóm gập/mở, chương là nút lọc */
+/* Cây điểm theo chủ đề: nhóm gập/mở, chủ đề là nút lọc */
 .cs-tree {
   list-style: none;
   margin: 0;
@@ -317,7 +317,7 @@ button.chapter-score.on {
   display: block;
 }
 
-/* Nhãn "Đang xem: chương ✕" */
+/* Nhãn "Đang xem: chủ đề ✕" */
 .score-chart-filter {
   display: flex;
   align-items: center;
@@ -348,7 +348,7 @@ button.chapter-score.on {
   background: var(--surface-2);
 }
 
-/* Thư viện: nút quay về trang đã mở chương này */
+/* Thư viện: nút quay về trang đã mở chủ đề này */
 .back-to {
   margin-bottom: 0.8rem;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 // Bộ nhớ điều hướng trong phiên (sessionStorage: tải lại trang vẫn còn, đóng tab là quên).
-// - Mỗi tab menu nhớ URL danh sách mở gần nhất (chương / bộ lọc nằm trên ?query của URL)
+// - Mỗi tab menu nhớ URL danh sách mở gần nhất (chủ đề / bộ lọc nằm trên ?query của URL)
 // - Mỗi URL danh sách nhớ vị trí cuộn: mục neo (link đầu tiên đang thấy) + độ lệch, y dự phòng, mục vừa mở
 // - Bộ lọc nhỏ không nằm trên URL (ô tìm, nhóm, trạng thái): useRemembered
 // KHÔNG nhớ: chọn nhiều (Sửa / Xóa nhiều), hộp thoại, đang tải, thông báo — để trong state của trang, mất khi rời trang.
@@ -71,12 +71,12 @@ export function rememberList(pathname, search) {
   flushNav()
 }
 
-// URL để mở lại tab / "← Danh sách": đúng chương + bộ lọc lần trước, chưa có thì URL gốc
+// URL để mở lại tab / "← Danh sách": đúng chủ đề + bộ lọc lần trước, chưa có thì URL gốc
 export function listUrl(tab) {
   return load().tabs[tab] || tab
 }
 
-// Chương / chuyên đề vừa bị xóa: quên các URL đang trỏ vào nó (tab mở lại về chỗ hợp lệ)
+// Chủ đề / chương vừa bị xóa: quên các URL đang trỏ vào nó (tab mở lại về chỗ hợp lệ)
 export function forgetUrlsWith(ids) {
   const m = load()
   const hit = (url) => ids.some((id) => id && url.includes(id))

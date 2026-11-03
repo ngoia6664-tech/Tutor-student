@@ -79,8 +79,8 @@ function FlameSvg() {
   )
 }
 
-// Bảng nổi (giống bảng Cài đặt): không đổi trang
-function DailyDialog({ onClose }) {
+// Bảng nổi (giống bảng Cài đặt): không đổi trang. Dùng cả ở cột phải học sinh (StudentTodayPanel)
+export function DailyDialog({ onClose }) {
   const panel = useRef(null)
   const closeRef = useRef(onClose)
   closeRef.current = onClose

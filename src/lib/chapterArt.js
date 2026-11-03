@@ -14,7 +14,7 @@ export function subjectKind(subject) {
 }
 
 /**
- * "Chương 3: Định luật Charles" → số 3 to + "Định luật Charles"; chuyên đề cũng vậy ("L11_Chuyên đề 2: Dãy số" → 2 + "Dãy số").
+ * "Chương 3: Định luật Charles" → số 3 to + "Định luật Charles"; tên chương cũng vậy ("L11_Chuyên đề 2: Dãy số" → 2 + "Dãy số").
  * Tên khác giữ nguyên, số = thứ tự
  * @param {string} title
  * @param {number} i

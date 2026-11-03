@@ -36,7 +36,7 @@ function TextWithList({ label, id, value, onChange, options, placeholder }) {
   )
 }
 
-const dupMessage = (err) => (/duplicate|unique/i.test(err.message || '') ? 'Đã có chương trùng tên trong cùng lớp và môn.' : errMsg(err))
+const dupMessage = (err) => (/duplicate|unique/i.test(err.message || '') ? 'Đã có chủ đề trùng tên trong cùng lớp và môn.' : errMsg(err))
 
 function FormButtons({ saving, onCancel }) {
   return (
@@ -53,7 +53,7 @@ function FormButtons({ saving, onCancel }) {
   )
 }
 
-// Thêm / sửa một chương. chapter = {} (thêm mới, có thể điền sẵn grade/subject/section) hoặc chương đang sửa
+// Thêm / sửa một chủ đề. chapter = {} (thêm mới, có thể điền sẵn grade/subject/section) hoặc chủ đề đang sửa
 export function ChapterForm({ chapter, subjects, sections, nextOrder, onCancel, onSaved }) {
   const isEdit = !!chapter.id
   const [form, setForm] = useState({
@@ -69,7 +69,7 @@ export function ChapterForm({ chapter, subjects, sections, nextOrder, onCancel, 
 
   async function save(e) {
     e.preventDefault()
-    if (!form.title.trim()) return setError('Hãy nhập tên chương.')
+    if (!form.title.trim()) return setError('Hãy nhập tên chủ đề.')
     setSaving(true)
     setError(null)
     const row = {
@@ -92,10 +92,10 @@ export function ChapterForm({ chapter, subjects, sections, nextOrder, onCancel, 
 
   return (
     <form className="card" onSubmit={save}>
-      <h2>{isEdit ? 'Sửa chương' : 'Thêm chương'}</h2>
+      <h2>{isEdit ? 'Sửa chủ đề' : 'Thêm chủ đề'}</h2>
       <ErrorBox message={error} />
       <label className="field">
-        <span>Tên chương *</span>
+        <span>Tên chủ đề *</span>
         <input type="text" value={form.title} onChange={(e) => set('title')(e.target.value)} placeholder="Chủ đề 4: Giao thoa sóng cơ" required autoFocus />
       </label>
       <div className="grid-2">
@@ -103,9 +103,9 @@ export function ChapterForm({ chapter, subjects, sections, nextOrder, onCancel, 
         <TextWithList label="Môn" id="chapter-subjects" value={form.subject} onChange={set('subject')} options={subjects} placeholder="Vật lý" />
       </div>
       <div className="grid-2">
-        <TextWithList label="Chuyên đề" id="chapter-sections" value={form.section} onChange={set('section')} options={sections} placeholder="Chuyên đề 2: Sóng" />
+        <TextWithList label="Chương" id="chapter-sections" value={form.section} onChange={set('section')} options={sections} placeholder="Chương 2: Sóng" />
         <label className="field">
-          <span>Thứ tự trong chuyên đề</span>
+          <span>Thứ tự trong chương</span>
           <input type="number" value={form.sort_order} onChange={(e) => set('sort_order')(e.target.value)} />
         </label>
       </div>
@@ -114,8 +114,8 @@ export function ChapterForm({ chapter, subjects, sections, nextOrder, onCancel, 
   )
 }
 
-// Sửa cả nhóm cùng lúc: đổi lớp / tên môn / tên chuyên đề cho mọi chương trong nhóm.
-// group = { level: 1 lớp | 2 môn | 3 chuyên đề, title, chapters, values: { grade, subject, section } }
+// Sửa cả nhóm cùng lúc: đổi lớp / tên môn / tên chương cho mọi chủ đề trong nhóm.
+// group = { level: 1 lớp | 2 môn | 3 chương, title, chapters, values: { grade, subject, section } }
 export function GroupForm({ group, subjects, sections, onCancel, onSaved }) {
   const [form, setForm] = useState({
     grade: group.values.grade ?? null,
@@ -153,7 +153,7 @@ export function GroupForm({ group, subjects, sections, onCancel, onSaved }) {
   return (
     <form className="card" onSubmit={save}>
       <h2>{group.title}</h2>
-      <p className="muted small">Áp dụng cho {group.chapters.length} chương trong nhóm này. Bài giảng, bài tập bên trong giữ nguyên.</p>
+      <p className="muted small">Áp dụng cho {group.chapters.length} chủ đề trong nhóm này. Bài giảng, bài tập bên trong giữ nguyên.</p>
       <ErrorBox message={error} />
       <div className="grid-2">
         <GradeSelect value={form.grade} onChange={set('grade')} />
@@ -162,7 +162,7 @@ export function GroupForm({ group, subjects, sections, onCancel, onSaved }) {
         )}
       </div>
       {group.level >= 3 && (
-        <TextWithList label="Tên chuyên đề" id="group-sections" value={form.section} onChange={set('section')} options={sections} placeholder="Chuyên đề 2: Sóng" />
+        <TextWithList label="Tên chương" id="group-sections" value={form.section} onChange={set('section')} options={sections} placeholder="Chương 2: Sóng" />
       )}
       <FormButtons saving={saving} onCancel={onCancel} />
     </form>

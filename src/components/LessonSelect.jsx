@@ -2,9 +2,9 @@
 import { useMemo } from 'react'
 import TreePicker, { lessonNodes } from './TreePicker.jsx'
 
-// Ô chọn bài giảng dạng cây Lớp › Môn › Chuyên đề › Chương › Bài giảng.
+// Ô chọn bài giảng dạng cây Lớp › Môn › Chương › Chủ đề › Bài giảng.
 // lessons cần có chapter_id; value = lesson_id hoặc ''.
-// focusChapterId: chương đang chọn cho bài → mở sẵn nhánh chương đó khi bấm chọn.
+// focusChapterId: chủ đề đang chọn cho bài → mở sẵn nhánh chủ đề đó khi bấm chọn.
 export default function LessonSelect({ lessons, chapters, value, onChange, label = 'Bài giảng liên quan (không bắt buộc)', emptyLabel = '— Không liên kết —', disabled, hint, focusChapterId }) {
   const nodes = useMemo(() => lessonNodes(lessons || [], chapters || []), [lessons, chapters])
   return (

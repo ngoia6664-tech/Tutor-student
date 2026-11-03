@@ -281,6 +281,46 @@ create policy profiles_self_select on public.profiles
   for select to authenticated
   using (id = auth.uid());
 
+-- ---------- student_groups ----------
+-- Nhóm học sinh: tên tự do (profiles.group_name), ghi chú + thứ tự lưu ở đây. Chỉ gia sư đọc / ghi.
+alter table public.profiles drop constraint if exists profiles_group_name_check;
+
+create table if not exists public.student_groups (
+  name        text primary key,
+  note        text,
+  sort_order  int not null default 0
+);
+alter table public.student_groups enable row level security;
+drop policy if exists student_groups_tutor_all on public.student_groups;
+create policy student_groups_tutor_all on public.student_groups
+  for all to authenticated
+  using (public.is_tutor()) with check (public.is_tutor());
+
+-- Đổi tên nhóm: cập nhật hồ sơ các em + dòng nhóm trong một transaction (tên mới đã có thì gộp vào nhóm đó)
+create or replace function public.rename_student_group(p_old text, p_new text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_tutor() then
+    raise exception 'Chỉ gia sư được đổi tên nhóm';
+  end if;
+  p_new := btrim(coalesce(p_new, ''));
+  if p_new = '' then
+    raise exception 'Tên nhóm không được trống';
+  end if;
+  update profiles set group_name = p_new where group_name = p_old;
+  insert into student_groups (name, note, sort_order)
+    select p_new, note, sort_order from student_groups where name = p_old
+    on conflict (name) do nothing;
+  delete from student_groups where name = p_old and name <> p_new;
+end;
+$$;
+revoke all on function public.rename_student_group(text, text) from public, anon;
+grant execute on function public.rename_student_group(text, text) to authenticated;
+
 -- ---------- lessons ----------
 drop policy if exists lessons_tutor_all      on public.lessons;
 drop policy if exists lessons_student_select on public.lessons;

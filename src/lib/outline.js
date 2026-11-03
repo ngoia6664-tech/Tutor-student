@@ -1,9 +1,9 @@
-// Đọc mục lục dán vào (chép từ giáo trình / Word) thành danh sách chương:
+// Đọc mục lục dán vào (chép từ giáo trình / Word) thành danh sách chủ đề:
 //   Lớp 12 · Vật lý                      → lớp + môn (môn có thể bỏ, mặc định giữ môn trước đó)
-//   Chương 2: Khí lí tưởng               → chuyên đề (dòng bắt đầu "Chương", "Chuyên đề", "Phần", hoặc "##")
-//   - Chủ đề 1: Mô hình động học phân tử → chương (dòng có gạch đầu dòng, thụt vào, hoặc bắt đầu "Chủ đề", "Bài")
-// Trong app: Lớp › Môn › Chuyên đề › Chương, nên "Chương 2" của giáo trình là chuyên đề,
-// "Chủ đề 3" là chương (giống cách nhập file JSON: "chapter" → chuyên đề, "topic" → chương).
+//   Chương 2: Khí lí tưởng               → chương (dòng bắt đầu "Chương", "Chuyên đề", "Phần", hoặc "##")
+//   - Chủ đề 1: Mô hình động học phân tử → chủ đề (dòng có gạch đầu dòng, thụt vào, hoặc bắt đầu "Chủ đề", "Bài")
+// Trong app: Lớp › Môn › Chương › Chủ đề, nên "Chương 2" của giáo trình là chương,
+// "Chủ đề 3" là chủ đề (cột trong CSDL / khóa JSON giữ tên cũ: section = chương, "chapter" / "topic" như trước).
 
 const BULLET = /^\s*(?:[-*+•–—▪◦]|\d+[.)]|[a-zđ][.)])\s+/i
 const GRADE_LINE = /^\s*#?\s*l(?:ớp|op)\s*(1[0-2]|[1-9])\b\s*[·:\-–—|,/]?\s*(.*)$/i
@@ -52,7 +52,7 @@ export function parseOutline(text, defaults = {}) {
         section = clean(line)
         return
       }
-      // Dòng thường không có chuyên đề phía trên và không có dấu hiệu chương → coi là chuyên đề
+      // Dòng thường không có chương phía trên và không có dấu hiệu chủ đề → coi là chương
       if (!indented && !bulleted && !CHAPTER_WORD.test(line) && !section) {
         section = clean(line)
         return
@@ -72,7 +72,7 @@ export function parseOutline(text, defaults = {}) {
       items.push({ grade, subject, section, title, line: n })
     })
 
-  if (items.some((x) => !x.grade)) warnings.push('Có chương chưa rõ lớp. Thêm một dòng "Lớp 12" (hoặc lớp phù hợp) ở đầu đoạn dán.')
+  if (items.some((x) => !x.grade)) warnings.push('Có chủ đề chưa rõ lớp. Thêm một dòng "Lớp 12" (hoặc lớp phù hợp) ở đầu đoạn dán.')
   return { items, warnings }
 }
 

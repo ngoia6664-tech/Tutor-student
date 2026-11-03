@@ -1,6 +1,5 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { useRemembered } from '../../lib/navMemory.js'
@@ -11,12 +10,35 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import Icon from '../../components/Icon.jsx'
+import GradeQueuePanel from '../../components/GradeQueuePanel.jsx'
+import MoreMenu from '../../components/MoreMenu.jsx'
 import { confirmDelete, notifyDeleted } from '../../lib/dialog.js'
-import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 // Chấm bài (gia sư): hàng đợi công việc — danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên.
-// Duyệt theo Lớp › Môn › Chương đã có ở Thư viện nên trang này không có cây.
+// Duyệt theo Lớp › Môn › Chủ đề đã có ở Thư viện nên trang này không có cây.
+// Thao tác phụ (Sửa nhiều, Xóa nhiều, Dán JSON) nằm trong menu "⋯"; nút chính là "Soạn bài tập".
+
+// Mục menu "⋯" bật / tắt chế độ chọn nhiều (cùng hành vi với SelectModes trong QuickAssign.jsx)
+function selectModeItems(sel) {
+  const modes = [
+    { key: 'edit', label: 'Sửa nhiều', off: 'Thôi sửa', icon: 'edit' },
+    { key: 'delete', label: 'Xóa nhiều', off: 'Thôi xóa', icon: 'trash' },
+  ]
+  return modes.map((m) => {
+    const active = sel.mode === m.key
+    return {
+      key: `mode-${m.key}`,
+      label: active ? m.off : m.label,
+      icon: active ? 'close' : m.icon,
+      danger: m.key === 'delete' && !active,
+      onSelect: active ? sel.stop : () => sel.start(m.key),
+    }
+  })
+}
+
 export default function TutorAssignments() {
+  const navigate = useNavigate()
   // Lọc "Chờ chấm" + ô tìm nhớ trong phiên: mở bài rồi quay lại vẫn còn
   const [filter, setFilter] = useRemembered('tutor-assignments-filter', 'all', (v) => v === 'all' || v === 'pending')
   const [query, setQuery] = useRemembered('tutor-assignments-q', '', (v) => typeof v === 'string')
@@ -58,32 +80,46 @@ export default function TutorAssignments() {
 
   return (
     <section>
+      <GradeQueuePanel />
       <div className="page-head">
         <h1>
           <span className="title-icon"><Icon name="grade" /></span>Chấm bài
         </h1>
-        <div className="row">
-          <SelectModes sel={pick} />
-          <Link className="btn" to="/tutor/import">
-            <Icon name="import" />
-            Dán JSON
-          </Link>
+      </div>
+
+      <div className="assign-toolbar">
+        <div className="assign-filters">
+          <div className="chips">
+            <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
+              Tất cả
+            </button>
+            <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
+              Có bài chờ chấm{pendingCount > 0 ? ` (${pendingCount})` : ''}
+            </button>
+          </div>
+          <input
+            type="search"
+            className="assign-search"
+            placeholder="Tìm bài tập theo tên…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Tìm bài tập theo tên"
+          />
+        </div>
+        <div className="assign-top-actions">
           <Link className="btn btn-primary" to="/tutor/assignments/new">
             <Icon name="plus" />
             Soạn bài tập
           </Link>
+          <MoreMenu
+            label="Thao tác khác"
+            items={[
+              ...selectModeItems(pick),
+              { key: 'import', label: 'Dán JSON', icon: 'import', onSelect: () => navigate('/tutor/import') },
+            ]}
+          />
         </div>
       </div>
-
-      <div className="chips" style={{ marginBottom: '1rem' }}>
-        <button type="button" className={filter === 'all' ? 'chip active' : 'chip'} onClick={() => setFilter('all')}>
-          Tất cả
-        </button>
-        <button type="button" className={filter === 'pending' ? 'chip active' : 'chip'} onClick={() => setFilter('pending')}>
-          Có bài chờ chấm{pendingCount > 0 ? ` (${pendingCount})` : ''}
-        </button>
-      </div>
-      <input type="search" style={{ marginBottom: '1rem' }} placeholder="Tìm bài tập theo tên…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm bài tập theo tên" />
 
       <ErrorBox message={actionError} />
       {loading && <Loading />}
@@ -136,6 +172,12 @@ export default function TutorAssignments() {
 
   function renderAssignment(a) {
     const item = itemOf(a)
+    // Chỉ hiện trạng thái có số > 0; cả ba bằng 0 thì ghi một dòng nhạt
+    const stats = [
+      [a.counts.todo, 'chưa nộp', 'badge-warn'],
+      [a.counts.done, 'chờ chấm', 'badge-primary'],
+      [a.counts.checked, 'đã chấm', 'badge-ok'],
+    ].filter(([n]) => n > 0)
     return (
       <div key={a.id} className={pick.has('assignment', a.id) ? 'list-item is-picked' : 'list-item'}>
         <div className="list-item-title assign-title">
@@ -150,25 +192,33 @@ export default function TutorAssignments() {
           <span className="muted small">Hạn: {formatDate(a.due_date)}</span>
         </div>
         <div className="row small" style={{ marginBottom: '0.5rem' }}>
-          <span>{a.total} học sinh:</span>
-          <span className="badge badge-warn">{a.counts.todo} chưa nộp</span>
-          <span className="badge badge-primary">{a.counts.done} chờ chấm</span>
-          <span className="badge badge-ok">{a.counts.checked} đã chấm</span>
+          {stats.length > 0 ? (
+            <>
+              {a.total > 0 && <span>{a.total} học sinh</span>}
+              {stats.map(([n, text, cls]) => (
+                <span key={text} className={`badge ${cls}`}>
+                  {n} {text}
+                </span>
+              ))}
+            </>
+          ) : (
+            <span className="muted">Chưa có học sinh nào làm</span>
+          )}
         </div>
-        <div className="row">
-          <Link className="btn btn-small btn-primary" to={`/tutor/assignments/${a.id}`}>
+        <div className="assign-actions">
+          <Link className="btn btn-primary assign-main" to={`/tutor/assignments/${a.id}`}>
             <Icon name="grade" />
             Theo dõi & chấm
           </Link>
-          <button type="button" className="btn btn-small" onClick={() => setAssigning([item])}>
+          <button type="button" className="btn" onClick={() => setAssigning([item])}>
             <Icon name="users" />
             Giao ({a.total})
           </button>
-          <Link className="btn btn-small" to={`/tutor/assignments/${a.id}/edit`}>
+          <Link className="btn" to={`/tutor/assignments/${a.id}/edit`}>
             <Icon name="edit" />
             Sửa
           </Link>
-          <button type="button" className="btn btn-small btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
+          <button type="button" className="btn btn-danger" disabled={deleting === a.id} onClick={() => handleDelete(a)}>
             <Icon name="trash" />
             {deleting === a.id ? 'Đang xóa...' : 'Xóa'}
           </button>

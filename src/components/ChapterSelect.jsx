@@ -3,9 +3,9 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import TreePicker, { chapterNodes } from './TreePicker.jsx'
 
-// Ô chọn chương dạng cây Lớp › Môn › Chuyên đề › Chương. value = chapter_id hoặc ''.
-// extraTop: lựa chọn thêm ở đầu danh sách, vd. [{ value: 'new', label: '+ Tạo chương mới…' }]
-export default function ChapterSelect({ chapters, value, onChange, label = 'Chương', extraTop = [], hint, defaultOpen }) {
+// Ô chọn chủ đề dạng cây Lớp › Môn › Chương › Chủ đề. value = chapter_id hoặc ''.
+// extraTop: lựa chọn thêm ở đầu danh sách, vd. [{ value: 'new', label: '+ Tạo chủ đề mới…' }]
+export default function ChapterSelect({ chapters, value, onChange, label = 'Chủ đề', extraTop = [], hint, defaultOpen }) {
   const nodes = useMemo(() => chapterNodes(chapters || []), [chapters])
   return (
     <TreePicker
@@ -18,9 +18,9 @@ export default function ChapterSelect({ chapters, value, onChange, label = 'Chư
       nodes={nodes}
       value={value || ''}
       onChange={onChange}
-      top={[{ value: '', label: '— Chưa xếp chương —' }, ...extraTop]}
-      placeholder="— Chưa xếp chương —"
-      searchPlaceholder="Tìm chương, chuyên đề…"
+      top={[{ value: '', label: '— Chưa xếp chủ đề —' }, ...extraTop]}
+      placeholder="— Chưa xếp chủ đề —"
+      searchPlaceholder="Tìm chủ đề, chương…"
       hint={hint}
       defaultOpen={defaultOpen}
     />

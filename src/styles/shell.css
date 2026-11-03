@@ -1,0 +1,978 @@
+﻿/* ===== Khung điều hướng (components/Layout.jsx) =====
+   Gia sư: màn ≥ 1024px thanh bên ghim bên trái (☰ thu gọn thành dải icon, nhớ trên máy); màn hẹp hơn: ngăn kéo trượt từ trái.
+   Học sinh: điện thoại (≤ 640px) thanh tab dưới + ngăn kéo chứa các nút phụ (kính thiên văn, sáng/tối, cài đặt, đăng xuất);
+   máy rộng giữ menu ngang trên thanh trên cùng.
+   Các nút nổi (gấu, cụm cửa hàng, góp ý, mũi tên cuộn, thông báo) né thanh tab / thanh bên bằng thuộc tính `translate`
+   (không đụng `bottom` / `transform` riêng của từng khối). */
+:root {
+  --side-w: 0px; /* bề rộng thanh bên đang chiếm chỗ (chỉ gia sư, màn rộng) */
+  --tabbar-h: 0px; /* chiều cao thanh tab dưới (chỉ học sinh, điện thoại) */
+}
+
+/* ---- Thanh trên cùng: nút ☰ đứng đầu, cụm nút đẩy sang phải ---- */
+.topbar-inner {
+  justify-content: flex-start;
+}
+.topbar-user {
+  margin-left: auto;
+}
+.menu-btn {
+  display: none;
+  flex: none;
+}
+.app .menu-btn {
+  display: inline-flex;
+}
+
+/* ---- Thanh bên / ngăn kéo ---- */
+.side {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  width: min(84vw, 288px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 0.65rem calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.65rem, env(safe-area-inset-left, 0px));
+  background: var(--surface-solid);
+  border-right: 1px solid var(--border);
+  border-radius: 0 18px 18px 0; /* ngăn kéo: như tờ giấy trượt ra, không phải khối vuông dính mép */
+  overflow: hidden auto;
+  white-space: nowrap;
+  /* Ngăn kéo đóng: nằm ngoài mép trái, ẩn khỏi Tab / trình đọc màn hình */
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.32s var(--ease), visibility 0s 0.32s, width 0.28s var(--ease);
+}
+.side.is-open {
+  transform: none;
+  visibility: visible;
+  box-shadow: 0 0 48px rgba(0, 0, 0, 0.45);
+  transition: transform 0.32s var(--ease), visibility 0s, width 0.28s var(--ease);
+}
+.side-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  background: rgba(6, 4, 18, 0.55);
+  animation: shell-fade 0.25s var(--ease);
+}
+body:has(.side.is-open) {
+  overflow: hidden; /* ngăn kéo mở: trang phía sau không cuộn theo */
+}
+@keyframes shell-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.15rem 0.2rem 0.85rem 0.35rem;
+}
+.side-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.side-close:hover,
+.side-toggle:hover {
+  background: var(--primary-soft);
+  color: var(--text);
+}
+/* ☰ thu gọn / mở rộng thanh bên: chỉ khi thanh bên ghim (màn rộng, gia sư) */
+.side-toggle {
+  display: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.side-toggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.ctx-btn-side {
+  display: none;
+}
+
+/* Màn hẹp: thanh trên cùng chỉ còn nút (☰, chuỗi 🔥 của học sinh, chuông; ngắm vũ trụ + bảng bên nằm trong ngăn kéo menu). Bỏ dải nền đặc + tên app,
+   mỗi nút tự có nền riêng, nội dung cuộn qua phía sau không bị che nửa chừng */
+.app .topbar {
+  background: none;
+}
+.app .topbar::before,
+.app .topbar::after,
+.app .topbar .brand {
+  display: none;
+}
+.app .topbar .btn-ghost {
+  background: var(--surface-solid);
+  border-color: var(--border);
+}
+
+/* Menu dọc trong thanh bên: viên tím (.nav-pill) vẫn trượt theo mục đang chọn, giờ là trượt dọc */
+.nav-side {
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+.nav-side .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-color: transparent;
+  overflow: hidden;
+}
+.nav-side .nav-badge {
+  margin-left: auto;
+}
+
+.side-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.side-user {
+  padding: 0.35rem 0.75rem 0.45rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.side-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+a.side-btn {
+  text-decoration: none;
+}
+.side-btn:hover,
+.side-btn.is-current {
+  background: var(--primary-soft);
+}
+.side-btn.is-current .icon {
+  opacity: 1;
+  color: var(--primary);
+}
+.side-btn:focus-visible,
+.side-close:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.side-btn .icon {
+  flex: none;
+  opacity: 0.75;
+}
+.side-btn.is-danger:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.side-ico {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+.side-btn .telescope-lock {
+  position: static;
+  margin-left: auto;
+}
+.side-label {
+  transition: opacity 0.2s var(--ease);
+}
+
+/* ---- Gia sư, màn rộng: thanh bên ghim, nội dung chừa chỗ ---- */
+@media (min-width: 1024px) {
+  :root[data-side='open'] {
+    --side-w: 248px;
+  }
+  :root[data-side='rail'] {
+    --side-w: 72px;
+  }
+  /* Ghim cạnh nội dung: không phải khối đặc đè lên nền vũ trụ. Mép trái đậm (chữ menu dễ đọc),
+     nhạt dần sang phải để sao vẫn hiện qua; không viền, không bóng, không bo góc */
+  .app .side {
+    width: var(--side-w);
+    transform: none;
+    visibility: visible;
+    box-shadow: none;
+    border-radius: 0;
+    /* Không dùng border: nền gradient lặp lại (repeat) vào vùng viền, tạo vạch đen mỏng ở mép phải */
+    border-right: 0;
+    background: linear-gradient(to right, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 62%, transparent) 70%, transparent 100%);
+    transition: width 0.28s var(--ease), background-color 0.28s var(--ease);
+  }
+  .app .side-foot {
+    border-top-color: color-mix(in srgb, var(--border) 55%, transparent);
+  }
+  /* Dải icon: bỏ hẳn nền, icon nằm thẳng trên sao; rê / chọn mới hiện viên nền */
+  :root[data-side='rail'] .app .side {
+    background: transparent;
+  }
+  .app .app-main {
+    margin-left: var(--side-w);
+    transition: margin-left 0.28s var(--ease);
+  }
+  /* Không còn thanh trên cùng: nội dung bắt đầu ngay từ mép trên; ☰ + chuông + ngắm vũ trụ nằm trong thanh bên */
+  .app .topbar,
+  .app .side-close {
+    display: none;
+  }
+  .app .side-toggle {
+    display: grid;
+  }
+  /* Dải icon: logo ở trên, ☰ ngay dưới logo; ẩn chữ, số đếm thành chấm nhỏ ở góc icon */
+  :root[data-side='rail'] .side-head {
+    flex-direction: column;
+    align-items: center;
+    padding: 0.15rem 0 0.7rem;
+  }
+  :root[data-side='rail'] .side .brand-text {
+    display: none;
+  }
+  :root[data-side='rail'] .side .side-label {
+    opacity: 0;
+  }
+  :root[data-side='rail'] .side .bell-count {
+    top: 3px;
+    right: 6px;
+    translate: none;
+  }
+  :root[data-side='rail'] .side-user {
+    display: none;
+  }
+  :root[data-side='rail'] .nav-side .nav-badge {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    margin: 0;
+  }
+  /* Cụm cửa hàng góc trái dưới + thanh chọn nhiều ở giữa đáy: dời theo thanh bên */
+  .assign-bar {
+    translate: calc(var(--side-w) / 2) 0;
+  }
+}
+
+/* ---- Khung cố định (gia sư, màn ≥ 1024px; Layout gắn <html data-shell>, lib/scroller.js lo phần cuộn) ----
+   Cả trang không cuộn: thanh bên đứng yên, nội dung (.page-body) và cột phải (.ctx-panel) mỗi bên tự cuộn bên trong. */
+@media (min-width: 1024px) {
+  :root[data-shell],
+  :root[data-shell] body {
+    height: 100%;
+    overflow: hidden;
+  }
+  :root[data-shell] .app,
+  :root[data-shell] .app-main {
+    height: 100dvh;
+  }
+  :root[data-shell] .app-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  /* padding-block: vùng cuộn cách mép trên / dưới cửa sổ một khoảng, nội dung không chạy sát viền */
+  :root[data-shell] .page {
+    flex: 1;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0.85rem 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0;
+  }
+  /* Nội dung: tự cuộn; chữ không kéo dài vô hạn trên màn lớn (tối đa 1280px, căn giữa trong vùng này) */
+  /* Không dùng mask làm mờ mép: mask cắt cả các khối position: fixed nằm trong trang (thanh chọn nhiều, hộp thoại) */
+  :root[data-shell] .page-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem max(1rem, calc((100% - 1280px) / 2)) 7rem; /* đáy chừa chỗ cho gấu góc phải dưới */
+  }
+}
+@media (min-width: 1360px) {
+  :root[data-shell] .page {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  /* Cột phải: đứng yên cạnh nội dung, tự cuộn bên trong (không còn sticky theo trang) */
+  :root[data-shell] .ctx-panel {
+    position: static;
+    top: auto;
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem 1rem 7rem 0.25rem;
+    animation: none;
+  }
+}
+/* Thư viện (gia sư): mỗi cột cao bằng khung nhìn và tự cuộn, đáy các cột thẳng hàng thay vì dài ngắn lệch nhau */
+@media (min-width: 1024px) {
+  :root[data-shell] .page-body:has(.library) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 1.25rem;
+  }
+  :root[data-shell] .page-body:has(.library) > .page-enter {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  :root[data-shell] .library {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  :root[data-shell] .library-side {
+    position: static;
+    min-height: 0;
+  }
+  :root[data-shell] .library-side .tree-box {
+    max-height: none;
+    height: 100%;
+  }
+  :root[data-shell] .library-main {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+  }
+  :root[data-shell] .library-main > .library-panel {
+    flex: 1 0 auto; /* thẻ nội dung luôn kéo xuống tới đáy khung, kể cả khi ít nội dung */
+  }
+}
+
+/* ---- Học sinh: thanh tab dưới chỉ trên điện thoại ---- */
+.tabbar {
+  display: none;
+}
+@media (max-width: 640px) {
+  /* Thanh tab full chiều ngang nhưng nền bán trong suốt (không phải khối đặc): sao và nội dung hiện mờ phía sau.
+     Mục đang chọn mở rộng hiện chữ (cùng viên tím như mục menu thanh bên), mục còn lại chỉ là icon chia đều chỗ còn lại. */
+  :root[data-tabbar] {
+    --tabbar-h: calc(58px + env(safe-area-inset-bottom, 0px)); /* 44px mục + 7px trên / dưới */
+  }
+  .app-main {
+    padding-bottom: var(--tabbar-h);
+  }
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px max(8px, env(safe-area-inset-right, 0px)) calc(7px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    border-top: 1px solid color-mix(in srgb, var(--border-strong) 55%, transparent);
+    background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
+  }
+  .dock-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 0.8rem;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.25s var(--ease), color 0.25s var(--ease), transform 0.3s var(--spring);
+  }
+  .dock-tab .icon {
+    flex: none;
+  }
+  /* Chữ ẩn bằng max-width + mờ: mục vừa chọn trượt mở ra, mục vừa bỏ chọn thu lại */
+  .dock-text {
+    max-width: 0;
+    margin-left: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 0.32s var(--ease), margin-left 0.32s var(--ease), opacity 0.2s var(--ease);
+  }
+  .dock-tab.is-active {
+    flex: 0 0 auto; /* mục đang chọn vừa đủ icon + chữ, các mục còn lại chia đều phần dư */
+    background: var(--btn-primary);
+    color: var(--on-primary);
+    box-shadow: var(--btn-primary-shadow);
+  }
+  .dock-tab.is-active .dock-text {
+    max-width: 8rem;
+    margin-left: 0.45rem;
+    opacity: 1;
+  }
+  .dock-tab:active {
+    transform: scale(0.94);
+  }
+  .dock-tab:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+  /* Nút nổi nâng lên trên viên thuốc */
+  :root[data-tabbar] :is(.mascot, .mascot-restore, .scroll-jump, .panda-dock, .feedback-fab, .toast) {
+    translate: 0 calc(-1 * var(--tabbar-h));
+  }
+}
+
+/* ---- Cột bổ trợ bên phải (components/ContextPanel.jsx → #ctx-panel trong Layout) ----
+   Chỉ hiện khi trang có gửi nội dung (.ctx-card). Màn ≥ 1360px: cột 320px dính bên phải nội dung,
+   trang rộng tối đa 1440px; hẹp hơn: ngăn kéo bên phải, mở bằng nút "Bảng bên" trên thanh trên cùng. */
+.ctx-panel {
+  display: none;
+}
+body:has(.ctx-card) .ctx-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.ctx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem 1rem;
+}
+.ctx-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+.ctx-title-icon {
+  flex: none;
+  color: var(--primary);
+}
+.ctx-empty {
+  margin: 0;
+}
+/* Trang chọn `replace` (vd. làm bài): ẩn khối mặc định */
+.ctx-panel:has(.ctx-card[data-replace]) .ctx-default {
+  display: none;
+}
+
+/* Hôm nay (StudentTodayPanel): chuỗi / Xu / Sao, gọn một hàng */
+.ctx-default {
+  padding: 0.6rem 0.75rem 0.7rem;
+}
+.ctx-default .ctx-title {
+  margin-bottom: 0.45rem;
+}
+/* "Hôm nay" (.ctx-top) luôn nằm trên cùng, trên các khối riêng của trang */
+.ctx-top {
+  order: -1;
+}
+.ctx-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+.ctx-stat {
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  text-align: center;
+}
+.ctx-stat dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.ctx-stat dd {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ctx-stat.is-reward dd {
+  color: var(--reward);
+}
+.ctx-stat:not(.is-lit):first-child dd {
+  opacity: 0.6; /* chưa giữ chuỗi hôm nay: lửa leo lét như ngọn lửa trên thanh trên cùng */
+}
+.ctx-note {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+}
+
+/* Danh sách chọn (Nhóm học sinh): hàng bấm được, hàng đang chọn tô như mục menu */
+.ctx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.ctx-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.ctx-row:hover {
+  background: var(--primary-soft);
+}
+.ctx-row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.ctx-row[aria-pressed='true'] {
+  background: var(--btn-primary);
+  color: var(--on-primary);
+}
+.ctx-row-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ctx-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+@media (max-width: 1359px) {
+  /* Mọi màn < 1360px: nút mở bảng bên nằm trong thanh bên / ngăn kéo menu (thanh trên không còn nút này) */
+  body:has(.ctx-card) .ctx-btn-side {
+    display: flex;
+  }
+}
+@media (max-width: 1359px) {
+  .ctx-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 30;
+    width: min(88vw, 340px);
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) max(0.85rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) 0.85rem;
+    background: var(--surface-solid);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.32s var(--ease), visibility 0s 0.32s;
+  }
+  .ctx-panel.is-open {
+    transform: none;
+    visibility: visible;
+    box-shadow: 0 0 48px rgba(0, 0, 0, 0.45);
+    transition: transform 0.32s var(--ease), visibility 0s;
+  }
+  .ctx-close {
+    align-self: flex-end;
+  }
+  body:has(.ctx-panel.is-open) {
+    overflow: hidden;
+  }
+}
+@media (min-width: 1360px) {
+  body:has(.ctx-card) .page {
+    max-width: 1440px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .ctx-panel {
+    position: sticky;
+    top: calc(var(--topbar-h, 4rem) + 1rem);
+    max-height: calc(100vh - var(--topbar-h, 4rem) - 2rem);
+    overflow-y: auto;
+    animation: ctx-in 0.35s var(--ease) both;
+  }
+  .ctx-close,
+  .ctx-backdrop,
+  body:has(.ctx-card) .ctx-btn-side {
+    display: none;
+  }
+  /* Trang làm bài: ô số câu ở cột phải thay cho thanh tiến độ dính trên */
+  body:has(.ctx-card .qgrid) .answer-progress {
+    display: none;
+  }
+}
+@keyframes ctx-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+
+/* Việc cần xử lý (TutorTodoPanel) */
+.ctx-todo,
+.ctx-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+/* Khối "Việc cần xử lý" nhẹ: phụ trợ, không tranh với nội dung chính */
+.ctx-card.ctx-quiet {
+  padding: 0.6rem 0.75rem 0.7rem;
+  background: transparent;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.ctx-quiet .ctx-title {
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.ctx-todo-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-chip);
+  font-size: 0.88rem;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.ctx-todo-row:hover {
+  border-color: currentColor;
+  background: var(--primary-soft);
+}
+.ctx-todo .ctx-num {
+  font-size: 1.15rem;
+}
+.ctx-num {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.tone-warn .ctx-num {
+  color: var(--warn);
+}
+.tone-bad .ctx-num {
+  color: var(--danger);
+}
+.tone-info .ctx-num {
+  color: var(--primary);
+}
+.ctx-feed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.45rem 0.2rem;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.ctx-feed li:first-child .ctx-feed-row {
+  border-top: 0;
+}
+.ctx-feed-row:hover b {
+  color: var(--primary);
+}
+.ctx-feed-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ctx-feed-main .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.ctx-feed-time {
+  flex: none;
+  white-space: nowrap;
+}
+/* Nút hành động cuối dòng (Làm tiếp, Chấm): viên nhạt, rê vào dòng thì tô tím */
+.ctx-go {
+  flex: none;
+  align-self: center;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.ctx-feed-row:hover .ctx-go,
+.ctx-feed-row:focus-visible .ctx-go {
+  background: var(--btn-primary);
+  color: var(--on-primary);
+}
+.ctx-queue-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+.ctx-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.9rem 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.ctx-split {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.ctx-shield {
+  margin: 0.5rem 0 0;
+}
+
+/* Xu hướng điểm (ResultsTrendPanel): một chuỗi, nét 2px, vùng nhạt dưới đường, chấm cuối 8px; nhãn bằng chữ, không chỉ bằng màu */
+.ctx-trend-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.ctx-avg {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.ctx-avg .muted {
+  font-size: 0.85rem;
+}
+/* Điểm TB: số lớn, xanh như điểm ở nội dung chính (.score) */
+.ctx-bignum {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
+}
+.ctx-score {
+  color: var(--ok);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+/* "câu sai" trong khối Nên ôn trước */
+.ctx-wrong {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ctx-trend {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.ctx-trend.is-up {
+  color: var(--ok);
+}
+.ctx-trend.is-down {
+  color: var(--danger);
+}
+.ctx-trend .muted {
+  font-weight: 400;
+}
+.ctx-spark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.ctx-spark-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.ctx-spark-area {
+  fill: var(--primary-soft);
+  stroke: none;
+}
+.ctx-spark-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ctx-spark-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: default;
+}
+.ctx-spark-hit:hover {
+  fill: var(--primary-soft);
+}
+.ctx-spark-end {
+  fill: var(--primary);
+  stroke: var(--surface-solid);
+  stroke-width: 2;
+}
+
+/* Ô số câu (QuestionGrid) */
+.ctx-qstat {
+  margin: 0 0 0.4rem;
+}
+.ctx-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+.ctx-fill {
+  height: 100%;
+  background: var(--btn-primary);
+  transition: width 0.4s var(--ease);
+}
+.qgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+}
+.qcell {
+  height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.25s var(--spring);
+}
+.qcell:hover {
+  border-color: var(--primary);
+}
+.qcell:active {
+  transform: scale(0.92);
+}
+.qcell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.qcell.is-done {
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
+  color: var(--on-primary);
+}
+.ctx-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+}
+.qdot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+}
+.qdot.is-done {
+  background: var(--btn-primary);
+  border-color: var(--btn-primary-border);
+}
+.ctx-legend .qdot:not(:first-child) {
+  margin-left: 0.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctx-panel,
+  .ctx-panel.is-open,
+  .ctx-fill,
+  .qcell {
+    transition: none;
+  }
+  .ctx-panel {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side,
+  .side.is-open,
+  .app .side,
+  .app .app-main,
+  .panda-dock,
+  .dock-tab,
+  .dock-text {
+    transition: none;
+  }
+  .side-backdrop {
+    animation: none;
+  }
+}

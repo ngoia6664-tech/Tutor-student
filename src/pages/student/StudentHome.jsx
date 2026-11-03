@@ -11,9 +11,11 @@ import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import StudyNow from '../../components/StudyNow.jsx'
 import StudyNowButton from '../../components/StudyNowButton.jsx'
+import ContextPanel from '../../components/ContextPanel.jsx'
+import { draftCount, draftKey, readDraft } from '../../lib/drafts.js'
 import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 
-// Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc theo chương của lớp mình
+// Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc theo chủ đề của lớp mình
 export default function StudentHome() {
   const { profile } = useAuth()
   const { isNew } = useNotifications()
@@ -43,8 +45,54 @@ export default function StudentHome() {
   const where = selectionLabel(sel, chapterById, 'Bài khác')
   const now = findStudyChapter(chapters, studyId)
 
+  // Cột phải: 3 bài có hạn gần nhất (không theo bộ lọc cây, để luôn thấy bài gấp)
+  const soon = (data?.list || []).filter((r) => r.assignment.due_date).slice(0, 3)
+  // Đang làm dở: bài chưa nộp có bản nháp trên máy này (đã trả lời ít nhất 1 câu), làm tiếp đúng chỗ cũ
+  const inProgress = (data?.list || [])
+    .map((r) => ({ a: r.assignment, n: draftCount(readDraft(draftKey(r.assignment.id, profile.id))) }))
+    .filter((d) => d.n > 0)
+    .slice(0, 4)
+
   return (
     <div className="library">
+      {inProgress.length > 0 && (
+        <ContextPanel title="Đang làm dở">
+          <ul className="ctx-feed">
+            {inProgress.map(({ a, n }) => (
+              <li key={a.id}>
+                <Link to={`/student/assignments/${a.id}`} className="ctx-feed-row">
+                  <span className="ctx-feed-main">
+                    <b>{a.title}</b>
+                    <span className="muted">Đã trả lời {n} câu, lưu trên máy này</span>
+                  </span>
+                  <span className="ctx-go">Làm tiếp</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </ContextPanel>
+      )}
+      {data && (
+        <ContextPanel title="Sắp đến hạn">
+          {soon.length ? (
+            <ul className="ctx-feed">
+              {soon.map(({ assignment: a }) => (
+                <li key={a.id}>
+                  <Link to={`/student/assignments/${a.id}`} className="ctx-feed-row">
+                    <span className="ctx-feed-main">
+                      <b>{a.title}</b>
+                      <span className="muted">Hạn {formatDate(a.due_date)}</span>
+                    </span>
+                    <DueBadge date={a.due_date} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted small ctx-empty">Không có bài nào có hạn nộp. Bài mới giao sẽ hiện ở đây.</p>
+          )}
+        </ContextPanel>
+      )}
       <FilterTree
         title="Bài cần làm"
         icon="todo"

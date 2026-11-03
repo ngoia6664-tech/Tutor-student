@@ -3,14 +3,14 @@ import { buildTree, libraryUrl, sectionText, subjectLabel } from '../lib/chapter
 import { splitTitle, subjectKind } from '../lib/chapterArt.js'
 import Icon from './Icon.jsx'
 
-// Trang một lớp / một môn (Thư viện gia sư; học sinh truyền url = studentLibraryUrl) dạng kệ sách: mỗi môn một kệ, mỗi chuyên đề một cuốn. Bấm cuốn nào → vào chuyên đề đó.
+// Trang một lớp / một môn (Thư viện gia sư; học sinh truyền url = studentLibraryUrl) dạng kệ sách: mỗi môn một kệ, mỗi chương một cuốn. Bấm cuốn nào → vào chương đó.
 // Máy có chuột: chỉ thấy gáy; rê chuột (hoặc Tab tới) thì cuốn đó nhô lên và bìa hiện ở khoảng trống phía trên kệ,
 // không che cuốn nào. Máy cảm ứng / màn hẹp: bìa thành thẻ ngang trong danh sách, ẩn gáy.
 // Mỗi cuốn vẽ sẵn cả gáy lẫn bìa, hiệu ứng hoàn toàn bằng CSS (library.css), không cần state.
 
 /** @typedef {{ id: string, grade?: unknown, subject?: string | null, section?: string | null, lessons?: unknown, assignments?: unknown }} Chapter */
 
-/** @typedef {(...keys: string[]) => string} UrlOf link tới lớp / môn / chuyên đề (mặc định libraryUrl của gia sư) */
+/** @typedef {(...keys: string[]) => string} UrlOf link tới lớp / môn / chương (mặc định libraryUrl của gia sư) */
 
 /** @param {{ chapters: Chapter[], count: (v: unknown) => number, url?: UrlOf }} props */
 export default function GradeShelf({ chapters, count, url = libraryUrl }) {
@@ -38,7 +38,7 @@ function Shelf({ grade, subject, count, url }) {
     <section className={`shelf is-${kind}`} style={/** @type {import('react').CSSProperties} */ ({ '--n': Math.min(sections.length, 5) })}>
       <h2 className="section-title shelf-head">
         <Link to={url(grade, subject.key)}>{subjectLabel(subject.subject)}</Link>
-        <span>{sections.length} chuyên đề</span>
+        <span>{sections.length} chương</span>
       </h2>
       <div className="shelf-board">
         <ul className="shelf-row">
@@ -48,7 +48,7 @@ function Shelf({ grade, subject, count, url }) {
             const { num, name } = splitTitle(label, i)
             return (
               <li key={x.key} className="shelf-book">
-                <Link className="shelf-link" to={url(grade, subject.key, x.key)} aria-label={`${label}: ${x.chapters.length} chương`}>
+                <Link className="shelf-link" to={url(grade, subject.key, x.key)} aria-label={`${label}: ${x.chapters.length} chủ đề`}>
                   <span className="shelf-spine" aria-hidden="true">
                     <b>{num}</b>
                     <span className="shelf-spine-name">{name}</span>
@@ -56,13 +56,13 @@ function Shelf({ grade, subject, count, url }) {
                   <span className="shelf-cover" aria-hidden="true">
                     <span className="shelf-cover-top">
                       <span className="subject-chip">{subjectLabel(subject.subject)}</span>
-                      <span className="shelf-num">Chuyên đề {num}</span>
+                      <span className="shelf-num">Chương {num}</span>
                     </span>
                     <span className="shelf-title">{name}</span>
                     <span className="shelf-stats">
                       <span>
                         <Icon name="book" size={15} />
-                        <b>{x.chapters.length}</b> chương
+                        <b>{x.chapters.length}</b> chủ đề
                       </span>
                       <span>
                         <Icon name="lesson" size={15} />

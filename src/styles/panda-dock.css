@@ -22,7 +22,7 @@ body:has(.sticky-actions) .panda-dock.is-tutor { bottom: calc(4.6rem + env(safe-
 body:has(.panda-dock) .page { padding-bottom: 7.5rem; }
 body:has(.panda-dock:not(.is-tutor) .panda-shop-icon) .page,
 body:has(.sticky-actions):has(.panda-dock .panda-shop-icon) .page { padding-bottom: 11rem; }
-/* Cây mục lục dính bên trái (Thư viện, màn rộng): đáy cây dừng trên cụm để mục cuối ("Chưa xếp chương") không bị che */
+/* Cây mục lục dính bên trái (Thư viện, màn rộng): đáy cây dừng trên cụm để mục cuối ("Chưa xếp chủ đề") không bị che */
 @media (min-width: 821px) {
   body:has(.panda-dock .panda-shop-icon) .tree-box { max-height: calc(100vh - var(--topbar-h, 6.5rem) - 8.5rem); }
   body:has(.panda-dock:not(.is-tutor) .panda-shop-icon) .tree-box { max-height: calc(100vh - var(--topbar-h, 6.5rem) - 12rem); }
@@ -95,23 +95,21 @@ body:has(.sticky-actions):has(.panda-dock .panda-shop-icon) .page { padding-bott
 .coin-star-compact { font-size: 0.82rem; }
 .coin-star-compact .coin-star-unit { display: none; }
 
-/* Nút ‹ / ›: thu gọn hoặc mở lại cả cụm; khi thu gọn chỉ còn nút này (mờ, rê chuột thì rõ) */
+/* Nút ‹ / ›: thu gọn hoặc mở lại cả cụm; khi thu gọn chỉ còn nút này (viền màu nhấn, luôn rõ) */
 .dock-toggle {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   display: grid;
   place-items: center;
-  border: 1px solid var(--border-strong);
+  border: 2px solid var(--accent); /* viền màu nhấn: không chìm vào nền tối */
   border-radius: 50%;
   background: var(--surface-solid);
-  color: var(--muted);
+  color: var(--text);
   cursor: pointer;
-  opacity: 0.75;
-  transition: opacity 0.2s var(--ease), color 0.2s var(--ease);
+  transition: color 0.2s var(--ease), background-color 0.2s var(--ease);
 }
-.dock-toggle[aria-expanded='false'] { opacity: 0.55; }
-.dock-toggle:hover { opacity: 1; color: var(--text); }
+.dock-toggle:hover { color: var(--accent); }
 .dock-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {

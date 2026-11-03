@@ -14,8 +14,9 @@ import Icon from '../../components/Icon.jsx'
 import ScoreChart from '../../components/ScoreChart.jsx'
 import { machineSummary } from '../../lib/studentReport.js'
 import { toPoints } from '../../lib/scoreChart.js'
+import ResultsTrendPanel from '../../components/ResultsTrendPanel.jsx'
 
-// Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chương.
+// Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm); cây bên trái lọc theo chủ đề.
 // Điểm TB chỉ tính điểm chính thức (lần nộp đầu); điểm các lần tự làm lại hiện nhỏ, nhạt bên dưới.
 export default function StudentResults() {
   const { profile } = useAuth()
@@ -61,10 +62,14 @@ export default function StudentResults() {
   const scored = rows.filter((r) => r.status === 'checked' && r.score !== null)
   const avg = scored.length ? scored.reduce((n, r) => n + Number(r.score), 0) / scored.length : null
 
+  const points = toPoints(rows, { linkOf: (aid) => `/student/assignments/${aid}`, chapterOf: (r) => r.assignment.chapter?.title })
+
   return (
     <div className="library">
+      {/* Cột phải: xu hướng + 3 bài gần đây, theo đúng mục đang chọn trên cây */}
+      {data && <ResultsTrendPanel points={points} recent={rows.slice(0, 3)} />}
       <FilterTree title="Kết quả" icon="results" chapters={chapters} items={data?.list || []} hideEmpty noneLabel="Bài khác" storageKey="results-tree-open" />
-      <section className="library-main">
+      <section className="library-main library-panel">
         <div className="page-head">
           <div>
             <h1>
@@ -86,7 +91,7 @@ export default function StudentResults() {
         {!loading && !error && rows.length === 0 && <div className="empty">{where ? 'Mục này chưa có bài đã nộp.' : 'Bạn chưa nộp bài nào.'}</div>}
 
         {!loading && !error && (
-          <ScoreChart points={toPoints(rows, { linkOf: (aid) => `/student/assignments/${aid}`, chapterOf: (r) => r.assignment.chapter?.title })} quiet={!!where} />
+          <ScoreChart points={points} quiet={!!where} />
         )}
 
         {!loading && !error && rows.length > 0 && (

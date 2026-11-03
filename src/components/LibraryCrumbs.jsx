@@ -4,13 +4,13 @@ import { libraryUrl } from '../lib/chapters.js'
 import Icon from './Icon.jsx'
 import { useDropMenu } from './MoreMenu.jsx'
 
-// Đường dẫn Thư viện gia sư: "Thư viện › Lớp 11 ▾ › Toán ▾ › Chuyên đề ▾". Chữ của mỗi đoạn là link về trang cấp đó (1 lần bấm);
-// mũi tên ▾ riêng mở danh sách cùng cấp để chuyển nhanh (mục đang xem có dấu ✓; lớp chưa có chương: chọn để mở lớp mới).
+// Đường dẫn Thư viện gia sư: "Thư viện › Lớp 11 ▾ › Toán ▾ › Chương ▾". Chữ của mỗi đoạn là link về trang cấp đó (1 lần bấm);
+// mũi tên ▾ riêng mở danh sách cùng cấp để chuyển nhanh (mục đang xem có dấu ✓; lớp chưa có chủ đề: chọn để mở lớp mới).
 // Dữ liệu từ libraryCrumbs (lib/chapters.js); menu dùng chung useDropMenu (MoreMenu.jsx); CSS ở library.css.
 
 /** @typedef {ReturnType<typeof import('../lib/chapters.js').libraryCrumbs>[number]} Segment */
 
-const WHAT = { lop: 'lớp', mon: 'môn', cd: 'chuyên đề' }
+const WHAT = { lop: 'lớp', mon: 'môn', cd: 'chương' }
 
 /** @param {{ segments: Segment[], root?: string }} props root: link "Thư viện" (học sinh: /student/library) */
 function LibraryCrumbs({ segments, root = libraryUrl() }) {
@@ -70,7 +70,7 @@ function CrumbMenu({ seg }) {
                 onClick={() => setOpen(false)}
               >
                 <span className="crumb-item-text">{o.label}</span>
-                {o.empty && <span className="crumb-item-note">chưa có chương</span>}
+                {o.empty && <span className="crumb-item-note">chưa có chủ đề</span>}
                 {o.current && <Icon name="check" size={16} />}
               </Link>
             </li>

@@ -57,7 +57,7 @@ export function confirmDelete(kind, name, message) {
   })
 }
 
-// Xóa nhiều mục một lần (Xóa nhiều): what = "3 bài giảng + 2 bài tập", "4 chương"...
+// Xóa nhiều mục một lần (Xóa nhiều): what = "3 bài giảng + 2 bài tập", "4 chủ đề"...
 export function confirmDeleteMany(what, message) {
   return askConfirm({
     title: `Xóa ${what}?`,

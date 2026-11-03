@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { prefersReducedMotion } from '../lib/settings.js'
+import { maxScroll, onScroll as onContentScroll, scrollToY, scrollY } from '../lib/scroller.js'
 
 const GAP = 300 // cách đầu / cuối trang bao nhiêu px thì hiện mũi tên tương ứng
 
@@ -12,8 +13,8 @@ export default function ScrollJump() {
     let frame = 0
     const check = () => {
       frame = 0
-      const y = window.scrollY
-      const left = document.documentElement.scrollHeight - window.innerHeight - y
+      const y = scrollY()
+      const left = maxScroll() - y
       const up = y > GAP
       const down = up && left > GAP
       setPos((p) => (p.up === up && p.down === down ? p : { up, down }))
@@ -22,17 +23,17 @@ export default function ScrollJump() {
       if (!frame) frame = requestAnimationFrame(check)
     }
     check()
-    window.addEventListener('scroll', onScroll, { passive: true })
+    const offScroll = onContentScroll(onScroll)
     window.addEventListener('resize', onScroll)
     return () => {
       cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', onScroll)
+      offScroll()
       window.removeEventListener('resize', onScroll)
     }
   }, [])
 
   if (!pos.up && !pos.down) return null
-  const go = (top) => window.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  const go = (top) => scrollToY(top, prefersReducedMotion() ? 'auto' : 'smooth')
 
   return (
     <div className="scroll-jump">
@@ -44,7 +45,7 @@ export default function ScrollJump() {
         </button>
       )}
       {pos.down && (
-        <button type="button" onClick={() => go(document.documentElement.scrollHeight)} aria-label="Xuống cuối trang" title="Xuống cuối trang">
+        <button type="button" onClick={() => go(maxScroll())} aria-label="Xuống cuối trang" title="Xuống cuối trang">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 9l6 6 6-6" />
           </svg>

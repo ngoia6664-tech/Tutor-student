@@ -1,4 +1,4 @@
-# Gia sư Vật lý — bản đồ dự án cho Claude
+﻿# Gia sư Vật lý — bản đồ dự án cho Claude
 
 React 19 + Vite 8 + react-router 7, backend Supabase (Postgres + RLS + Storage), deploy Vercel (SPA).
 Markdown + KaTeX cho nội dung. Không có linter. Kiểm tra: `npm run build` + `npm test` (Vitest, `tests/*.test.js`: logic thuần trong `src/lib`) + `npm run typecheck` (tsc, `checkJs`: kiểm tra kiểu cả file .js/.jsx).
@@ -16,10 +16,13 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Chi tiết từng tính năng (gấu, vũ trụ, nhạc, chấm bài, biểu đồ, ôn tập, làm lại...): **`AI/CLAUDE/FEATURES.md`** — grep đúng mục, không đọc hết.
 - Đã biết file cần sửa thì mở thẳng. Bản đồ sai/thiếu thì sửa file này (ngắn) hoặc FEATURES.md (chi tiết).
 
+## Tên gọi các cấp (chữ hiển thị ≠ tên cột CSDL)
+Lớp › Môn › **Chương** › **Chủ đề** › bài giảng / bài tập. Trong CSDL / JSON nhập tên cũ vẫn giữ: cột `chapters.section` (= Chương; khóa JSON `chapter`), một dòng bảng `chapters` + `chapter_id` (= Chủ đề; khóa JSON `topic`). Chỉ đổi chữ hiển thị, đừng đổi tên cột.
+
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang. Trang mới: thêm vào cả hai.
 - `src/contexts/` — `AuthContext` (phiên + profile, cache localStorage), `NotificationsContext` (chuông: học sinh = bài mới giao, gia sư = học sinh nộp bài; kèm gấu nói).
-- `src/pages/tutor/` — `TutorStudents`, `StudentDetail`, `Library` (+ mục "Chưa xếp chương"), `TutorAssignments` (menu "Chấm bài"), `AssignmentEditor`,
+- `src/pages/tutor/` — `TutorStudents`, `StudentDetail`, `Library` (+ mục "Chưa xếp chủ đề"), `TutorAssignments` (menu "Chấm bài"), `AssignmentEditor`,
   `AssignmentTracking` (chấm bài; `?hs=<student_id>` mở bài của bạn đó), `TutorLessonView`, `LessonEditor`,
   `ImportJson`, `TutorReports`, `TutorFeedback`.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (+ `SubmitPanel`), `StudentResults`, `StudentMistakes` (Ôn tập),
@@ -35,6 +38,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Kính thiên văn nhiều địa điểm: cấu hình + luật mở khóa `lib/telescope.js` (ngưỡng Sao, `ready`), nội dung `lib/starSystems.js`, UI `components/telescope/*` trong `SpaceExplorer`. Chi tiết: FEATURES.md.
 - Nhớ điều hướng (URL lọc của từng tab, vị trí cuộn khi Back / mở lại tab): `lib/navMemory.js` + `components/ScrollMemory.jsx` (trong Layout) + `ListLink`.
   Trang danh sách mới: thêm vào `LIST_ROUTES`; link về danh sách dùng `ListLink`. Chi tiết: FEATURES.md.
+- Khung điều hướng (`styles/shell.css`): thanh bên chung gia sư + học sinh (màn ≥ 1024px: khung cố định, nội dung + cột phải tự cuộn, dùng `lib/scroller.js` thay window.scrollTo), học sinh điện thoại: viên thuốc nổi `.dock-tab`, cột phải luôn có khối mặc định theo vai trò (TutorTodoPanel / StudentTodayPanel); trang thêm khối riêng bằng `<ContextPanel title>` (`replace` để thay khối mặc định, xem QuestionGrid). Khối cột phải chỉ tóm tắt + lối tắt (≤ 3–5 dòng), danh sách đầy đủ để ở trang chính.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
 ## Quy ước

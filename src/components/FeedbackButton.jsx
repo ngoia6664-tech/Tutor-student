@@ -10,18 +10,25 @@ import { useStudying } from '../lib/studyLock.js'
 
 const MAX = 2000
 
-// Nút "Góp ý" nổi ở góc trái dưới (học sinh). Bấm mở bảng gửi góp ý, không đổi trang.
-// Đang làm bài thì ẩn để khỏi phân tâm.
-export default function FeedbackButton() {
+// Nút "Góp ý" (học sinh). Bấm mở bảng gửi góp ý, không đổi trang. Đang làm bài thì ẩn để khỏi phân tâm.
+// variant 'fab' = nút nổi góc trái dưới (màn hẹp); 'side' = hàng trong thanh bên (màn rộng, Layout.jsx) để không chiếm chỗ nội dung
+export default function FeedbackButton({ variant = 'fab' }) {
   const [open, setOpen] = useState(false)
   const studying = useStudying()
   if (studying && !open) return null
   return (
     <>
-      <button type="button" className="feedback-fab" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
-        <span className="feedback-fab-emoji" aria-hidden="true">💬</span>
-        <span className="feedback-fab-text">Góp ý</span>
-      </button>
+      {variant === 'side' ? (
+        <button type="button" className="side-btn" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
+          <Icon name="chat" />
+          <span className="side-label">Góp ý</span>
+        </button>
+      ) : (
+        <button type="button" className="feedback-fab" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
+          <span className="feedback-fab-emoji" aria-hidden="true">💬</span>
+          <span className="feedback-fab-text">Góp ý</span>
+        </button>
+      )}
       {open && <FeedbackPanel onClose={() => setOpen(false)} />}
     </>
   )

@@ -18,21 +18,21 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Tốc độ tải: `vite.config.js` tách chunk `react` / `supabase` (cache lâu, không đổi khi sửa code app); `vercel.json` cache `/assets` 1 năm;
   font Google tải không chặn hiển thị; Mascot (Layout) + DialogScene (DialogHost) là `lazy`, không nằm trong gói khởi động.
   Truy vấn trong một trang: gom vào `Promise.all`, tránh `await` nối tiếp (mỗi lượt = 1 lần chờ mạng).
-- `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chuyên đề›Chương; cuối cây mục "Chưa xếp chương" `/tutor/library/chua-xep` = `ChapterDetail` với id `UNSORTED`: bài có chapter_id trống, Sửa nhiều → Chuyển chương / Xóa / Giao),
+- `src/pages/tutor/` — `TutorStudents` (/tutor), `StudentDetail`, `Library` (cây Lớp›Môn›Chương›Chủ đề; cuối cây mục "Chưa xếp chủ đề" `/tutor/library/chua-xep` = `ChapterDetail` với id `UNSORTED`: bài có chapter_id trống, Sửa nhiều → Chuyển chủ đề / Xóa / Giao),
   `TutorAssignments` (menu "Chấm bài", vẫn `/tutor/assignments`: danh sách phẳng, lọc "Có bài chờ chấm", ô tìm theo tên `matchTitle` trong lib/format.js; không cây), `AssignmentEditor` (soạn/sửa bài tập), `AssignmentTracking` (theo dõi/chấm: "Sổ chấm bài" `GradeDock` nổi
   góc phải ngay trên gấu, kiểu bảng đen nhỏ gọn, bấm tên là chuyển bài; `?hs=<student_id>` mở thẳng bài của bạn đó + nút "← Về <tên>" (link từ StudentDetail / chuông); bấm gấu = ẩn/hiện sổ, gấu im lặng khi chấm — `lib/gradeDock.js`; chỉ hiện thẻ chấm của 1 bạn, bảng đáp án ở cuối; CSS `styles/grading.css`),
-  `TutorLessonView`, `LessonEditor` (danh sách Bài giảng đã bỏ: `/tutor/lessons` → Navigate về Thư viện, "← Thư viện" dùng ListLink), `ImportJson` (dán JSON hoặc chọn/kéo thả nhiều file: mỗi file = 1 nguồn có chương + bài giảng liên kết riêng, file chỉ bài tập tự gắn bài giảng cùng chương trong lô; học sinh chung + "Giao riêng" từng phần; trùng tên bài có sẵn → bỏ tick), `TutorReports` (báo lỗi đề),
+  `TutorLessonView`, `LessonEditor` (danh sách Bài giảng đã bỏ: `/tutor/lessons` → Navigate về Thư viện, "← Thư viện" dùng ListLink), `ImportJson` (dán JSON hoặc chọn/kéo thả nhiều file: mỗi file = 1 nguồn có chủ đề + bài giảng liên kết riêng, file chỉ bài tập tự gắn bài giảng cùng chủ đề trong lô; học sinh chung + "Giao riêng" từng phần; trùng tên bài có sẵn → bỏ tick), `TutorReports` (báo lỗi đề),
   `TutorFeedback` (/tutor/feedback: góp ý học sinh, số chưa xem trên menu qua `useLiveCount` trong Layout).
-- Biểu đồ học tập: `components/ScoreChart.jsx` (SVG tự vẽ, đường điểm + TB 3 bài + mốc 5, lọc Đề thi/Bài tập + 1 tháng/3 tháng/Tất cả, chạm điểm → thẻ "Xem bài") + `lib/scoreChart.js` (điểm gia sư → điểm máy khi cả bài chấm máy `machine.allAuto` → bỏ qua; không tính làm lại) + CSS `styles/chart.css`. Gia sư có thêm cây "Điểm theo chương" (`chapterTree`: Lớp›Môn›Chuyên đề›Chương, bỏ cấp chỉ 1 nhánh, nhóm có chương TB < 6 "cần ôn" mở sẵn); bấm chương = lọc tại chỗ biểu đồ + danh sách bài (URL `?chuong=`, `none` = Bài khác), link "Mở chương trong Thư viện" gửi state `{ backTo, backLabel }` → Library hiện nút "← Về ...". Gấu nhận xét khi mở (`chartComment`, voice student/tutor, kỷ lục mới → `celebrate`; mỗi phiên 1 lần/điểm mới qua sessionStorage; Kết quả đang lọc chương thì `quiet`), học sinh chạm bài cao nhất / dưới 5 → `pointComment`. Ở StudentResults (theo cây chương đang chọn) và StudentDetail. `machineSummary` trong `lib/studentReport.js`.
+- Biểu đồ học tập: `components/ScoreChart.jsx` (SVG tự vẽ, đường điểm + TB 3 bài + mốc 5, lọc Đề thi/Bài tập + 1 tháng/3 tháng/Tất cả, chạm điểm → thẻ "Xem bài") + `lib/scoreChart.js` (điểm gia sư → điểm máy khi cả bài chấm máy `machine.allAuto` → bỏ qua; không tính làm lại) + CSS `styles/chart.css`. Gia sư có thêm cây "Điểm theo chủ đề" (`chapterTree`: Lớp›Môn›Chương›Chủ đề, bỏ cấp chỉ 1 nhánh, nhóm có chủ đề TB < 6 "cần ôn" mở sẵn); bấm chủ đề = lọc tại chỗ biểu đồ + danh sách bài (URL `?chuong=`, `none` = Bài khác), link "Mở chủ đề trong Thư viện" gửi state `{ backTo, backLabel }` → Library hiện nút "← Về ...". Gấu nhận xét khi mở (`chartComment`, voice student/tutor, kỷ lục mới → `celebrate`; mỗi phiên 1 lần/điểm mới qua sessionStorage; Kết quả đang lọc chủ đề thì `quiet`), học sinh chạm bài cao nhất / dưới 5 → `pointComment`. Ở StudentResults (theo cây chủ đề đang chọn) và StudentDetail. `machineSummary` trong `lib/studentReport.js`.
 - Góp ý: `components/FeedbackButton.jsx` nút nổi góc trái dưới (chỉ học sinh, ẩn khi làm bài) → bảng gửi; `lib/feedback.js`; bảng `feedback`; CSS `styles/feedback.css`.
-- Chương đang học: lưu `profiles.study_chapter_id` qua RPC `set_study_chapter`; `lib/studyNow.js` (`useStudyChapterId`, `setStudyChapter`).
+- Chủ đề đang học: lưu `profiles.study_chapter_id` qua RPC `set_study_chapter`; `lib/studyNow.js` (`useStudyChapterId`, `setStudyChapter`).
   Gia sư xem ở đầu trang StudentDetail.   Tự đổi khi mở bài tập chưa nộp (AnswerView trong StudentAssignment), hoặc học sinh bấm `components/StudyNowButton.jsx`
-  (Thư viện › chương, StudentLesson, đầu trang Bài cần làm khi cây đang chọn một chương); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
+  (Thư viện › chủ đề, StudentLesson, đầu trang Bài cần làm khi cây đang chọn một chủ đề); không làm gì thì giữ nguyên. Hiện 📍 trên cây (`TreeLeaf`/`TreeGroup` prop `now`,
   `FilterTree` prop `nowId`) ở Thư viện, dòng `components/StudyNow.jsx` ở Bài cần làm / Thư viện.
 - `src/pages/student/` — `StudentHome`, `StudentAssignment` (làm/nộp bài) + `SubmitPanel`, `StudentResults`,
   `StudentMistakes` (menu "Ôn tập": mục Câu sai = câu `is_correct=false`, mục ⭐ Câu khó = bảng `question_marks`; làm lại chấm trên máy qua `lib/practice.js`),
-  `StudentLibrary` (giống Thư viện gia sư, bỏ cấp Lớp: kệ sách → `?mon=&cd=` băng chuyền chương → chương; bài chưa xếp chương / chương lớp khác ở mục "Các bài khác" `/student/library/khac`), `StudentLesson`
-  (nút quay lại về chương của bài trong Thư viện, chưa có chương → "Các bài khác"). Menu không còn "Bài giảng": `/student/lessons` → Navigate về Thư viện. Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
+  `StudentLibrary` (giống Thư viện gia sư, bỏ cấp Lớp: kệ sách → `?mon=&cd=` băng chuyền chủ đề → chủ đề; bài chưa xếp chủ đề / chủ đề lớp khác ở mục "Các bài khác" `/student/library/khac`), `StudentLesson`
+  (nút quay lại về chủ đề của bài trong Thư viện, chưa có chủ đề → "Các bài khác"). Menu không còn "Bài giảng": `/student/lessons` → Navigate về Thư viện. Bài giảng hiện icon 📘, bài tập ✏️ (cả gia sư).
 - Làm bài (StudentAssignment): `components/AnswerProgress.jsx` thanh đã làm/chưa làm dính dưới header (thu gọn được, bấm câu chưa làm để nhảy);
   `components/MarkHard.jsx` + `lib/marks.js` nút "Câu khó" (bảng `question_marks`, chỉ mất khi học sinh bỏ đánh dấu;
   cột `note` = ghi chú riêng của học sinh, sửa ở Ôn tập › Câu khó qua `components/HardNote.jsx`; gia sư không có policy đọc).
@@ -62,7 +62,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   Công thức trong lời gấu viết trong dấu `` `...` `` → `components/FormulaText.jsx` tô vàng `.formula` (mascot.css), dùng ở Mascot + SpaceExplorer.
 - Hình SVG nhúng: `lib/svg.js` `themedSvg` — app tối: dùng khối @media dark nếu có, không thì tự đảo màu trung tính (`lightenInk`).
 - `src/lib/` — `supabase` client · `useAsync` hook tải dữ liệu · `errors` lỗi→tiếng Việt · `format` ngày/nhãn ·
-  `files` tên file, nén ảnh · `chapters` cây chương, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
+  `files` tên file, nén ảnh · `chapters` cây chủ đề, sắp xếp, URL thư viện · `exam` đề THPT (điểm, phần, giờ) ·
   `importJson` đọc/kiểm tra JSON · `importTutorLesson` định dạng `tutor-lesson/v1` → bài giảng + bài tập (mục có `page` → dòng `<!-- trang -->` trong `content_md`;
   `components/LessonView.jsx` tách trang, `?xem=trang|ca-bai&trang=n`; bài không có dấu xem cả bài, nút "Xem theo trang" chia theo `##`) ·
   `outline` đọc mục lục dán vào · `studentReport` thống kê học sinh · `svg` đổi màu SVG theo theme, gói ảnh ·
@@ -84,10 +84,10 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   `QuickAssign` (nút "Giao (n)" ở TutorAssignments/ChapterDetail; 1 bài = sửa danh sách nhận,
   nhiều bài = chỉ giao thêm; ghi qua `lib/recipients.js`, CSS `styles/assign.css`).
   Sửa nhiều / Xóa nhiều (`SelectModes` + `SelectBar`, hai chế độ không bật cùng lúc, đổi chế độ / đổi bộ lọc là bỏ tick cũ; "Chọn tất cả" = chỉ mục đang hiển thị):
-  Sửa nhiều = Chuyển chương (`MoveDialog`, chỉ đổi `chapter_id`) + Giao cho... (giao thêm, không trùng nhờ upsert ignoreDuplicates);
+  Sửa nhiều = Chuyển chủ đề (`MoveDialog`, chỉ đổi `chapter_id`) + Giao cho... (giao thêm, không trùng nhờ upsert ignoreDuplicates);
   Xóa nhiều = hỏi xác nhận (số lượng + bài tập đã có học sinh nộp) → xóa lần lượt bằng `deleteLesson`/`deleteAssignment`, báo thành công một phần.
-  Thư viện (lớp / môn / chuyên đề): Xóa nhiều chương; mặc định bài bên trong về "Chưa xếp chương", tick "Xóa luôn bài bên trong" thì xóa hết
-  (chương còn bài xóa lỗi thì giữ). Logic ở `lib/bulk.js` (test `tests/bulk.test.js`).
+  Thư viện (lớp / môn / chương): Xóa nhiều chủ đề; mặc định bài bên trong về "Chưa xếp chủ đề", tick "Xóa luôn bài bên trong" thì xóa hết
+  (chủ đề còn bài xóa lỗi thì giữ). Logic ở `lib/bulk.js` (test `tests/bulk.test.js`).
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 - Nhớ điều hướng (`lib/navMemory.js`, sessionStorage `nav-memory-v1`, test `tests/navMemory.test.js`):
   tab menu (`Layout` NavLink `listUrl(tab)`) và link "← Danh sách" (`components/ListLink.jsx`) mở lại đúng URL lọc lần trước của tab
@@ -95,7 +95,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   (Chờ chấm, Nhóm học sinh, ô tìm, tab Ôn tập). Cuộn: `components/ScrollMemory.jsx` trong Layout (thay `scrollTo(0)` cũ):
   link thường → lên đầu; chỉ đổi ?query → giữ chỗ; Back/Forward hoặc `state.restore` → về mục neo (link đầu tiên đang thấy + độ lệch),
   mất neo → mục vừa mở → y kẹp. Chờ hết `Loading` (`[role=status]`) bằng MutationObserver, người dùng cuộn/chạm thì bỏ.
-  Không nhớ tick Sửa/Xóa nhiều, hộp thoại. Xóa chương → `forgetUrlsWith(ids)`.
+  Không nhớ tick Sửa/Xóa nhiều, hộp thoại. Xóa chủ đề → `forgetUrlsWith(ids)`.
 
 ## CSS
 `src/index.css` chỉ `@import` các file trong `src/styles/` (thứ tự = thứ tự cascade). Màu dùng biến trong `base.css`;
@@ -104,7 +104,7 @@ mà ở `components/SpaceBackdrop.jsx` (render trong `main.jsx`) + `styles/space
 = biến `--tilt`/`--turn` trên `.solar`, JS cập nhật theo vị trí cuộn (TILT_TOP/BOTTOM, TURN_TOP/BOTTOM).
 Nút chính / mục đang chọn (`.btn-primary`, `.chip.active`, `.grade-tab.active`, `.nav-pill`, đáp án đã chọn...): token `--btn-primary` (+ `-border`, `-shadow`, `-hover-ring`), tím đậm một màu.
 Khoảnh khắc đặc biệt (Nộp bài, nút / tab cửa hàng gấu): class `.btn-moment` / `--btn-moment` (gradient ba màu bản tối). `--grad` sáng chỉ còn cho chữ chuyển màu, thanh tiến độ, trang trí không có chữ trắng.
-Mục đang chọn trên cây: `--primary-soft` + vạch trái. Màu môn (kệ sách, thẻ chương): `--hue` Toán 225 · Vật lý 285 · Hóa 335 · môn khác 260 (hệ số bão hòa `--s` 0,32); trang Thư viện có tấm nền `.library-panel`.
+Mục đang chọn trên cây: `--primary-soft` + vạch trái. Màu môn (kệ sách, thẻ chủ đề): `--hue` Toán 225 · Vật lý 285 · Hóa 335 · môn khác 260 (hệ số bão hòa `--s` 0,32); trang Thư viện có tấm nền `.library-panel`.
 Chế độ ngắm vũ trụ: `components/SpaceExplorer.jsx` + `styles/explorer.css` (lazy, mở từ nút kính viễn vọng ở header),
 thêm class `space-exploring` vào `<html>` để ẩn `.app` và cho kéo / bấm hệ Mặt Trời; gấu góc trái dưới nói trong bong bóng `.explorer-bubble`:
 bấm gấu kể lần lượt 25 câu `SPACE_FACTS` (có mục lục), bấm hành tinh thì giải thích theo `BODIES` (g, tag, stats, about) + chế độ soi: nền `.explorer-dim` (z 100),
@@ -138,7 +138,7 @@ Tìm bằng `grep -n "<tên bảng hoặc hàm>"`. Các phần (số dòng xấp
 5. RLS ~262–420: policy theo từng bảng (comment `-- ---------- <bảng> ----------`)
 6. Hàm ~424–980: `save_lesson`, `save_assignment`, `ensure_chapter`, chấm điểm (`normalize_answer`, `short_match`,
    `tf_count`, `grade_answer`, `answer_points`), `submit_assignment`, `start_assignment`, `mark_notifications_seen`,
-   bảng `feedback` (góp ý), `set_study_chapter` (chương đang học),
+   bảng `feedback` (góp ý), `set_study_chapter` (chủ đề đang học),
    bảng `question_reports` + `report_exercise`, bảng `question_marks` (câu khó), `assignment_retries` + `submit_retry` (làm lại), bảng `answer_comments` (lời phê từng câu)
 7. Storage ~984–cuối: bucket riêng tư + policy
 Đổi schema: thêm khối idempotent (`if not exists`, `create or replace`) để người dùng chạy lại cả file trong SQL Editor.
@@ -214,3 +214,6 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
   Mốc trọn đời ở `student_achievements` (đạt lại sau khi đứt không nhận lại). Mọi RPC gọi `econ_lock` (khoá ví) trước → các yêu cầu cùng học sinh chạy lần lượt.
 - Báo thưởng: `get_economy.unseen` → PandaShopContext cho gấu nói (`rewardMessage`) rồi `mark_rewards_seen`. Sau nộp bài / xong Ôn tập gọi `economyChanged()` để HUD đọc lại.
 - Dữ liệu cũ: chạy schema tự tạo ví (+300 Xu) và xét lại thưởng điểm + mốc số bài theo lần nộp hiện tại (idempotent). Không suy ra được chuỗi / Ôn tập quá khứ.
+
+## Nhóm học sinh
+Tên nhóm tự do (`profiles.group_name`, hết ràng buộc A–E); ghi chú + thứ tự ở bảng `student_groups` (chỉ gia sư); đổi tên qua RPC `rename_student_group`. Gom nhóm: `lib/studentGroups.js`; trang Học sinh chia khối theo nhóm, `StudentPicker` lấy nhóm từ dữ liệu.

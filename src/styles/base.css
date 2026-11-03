@@ -31,8 +31,9 @@
   --primary-soft: rgba(192, 132, 252, 0.14);
   --ok: #4ade80;
   --ok-soft: rgba(74, 222, 128, 0.12);
-  --danger: #fb7185;
-  --danger-soft: rgba(251, 113, 133, 0.13);
+  /* Đỏ cam: cách xa hồng nhấn (--accent) để "sai / lỗi" không bị nhầm với trang trí */
+  --danger: #ff6b4a;
+  --danger-soft: rgba(255, 107, 74, 0.13);
   --warn: #fbbf24;
   --warn-soft: rgba(251, 191, 36, 0.13);
   --aura-1: rgba(124, 58, 237, 0.28);
@@ -41,8 +42,9 @@
   --reward-2: #f59e0b;
   --reward-soft: rgba(252, 211, 77, 0.14);
   --on-reward: #3b2300;
-  /* Nút chính / mục đang chọn: tím đậm một màu (chữ trắng 5,7:1 trở lên); viền cũng là đáy "phím nổi" */
-  --btn-primary: linear-gradient(180deg, #7c3aed, #6d28d9);
+  /* Nút chính / mục đang chọn: tím đậm một màu #6d28d9 (chữ trắng 7:1), cả hai giao diện; viền cũng là đáy "phím nổi".
+     Viết dạng gradient một màu để dùng được cả làm lớp nền (library.css: `var(--btn-primary) border-box`) */
+  --btn-primary: linear-gradient(#6d28d9, #6d28d9);
   --btn-primary-border: #5b21b6;
   --shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25),
@@ -50,6 +52,8 @@
   --focus: rgba(192, 132, 252, 0.6);
   --spot: rgba(168, 85, 247, 0.3); /* vầng sáng theo chuột (.cursor-glow) */
   --skeleton: rgba(255, 255, 255, 0.06);
+  --scroll-thumb: rgba(192, 132, 252, 0.3); /* thanh cuộn: tím nhạt bán trong suốt, đậm lên khi rê vào */
+  --scroll-thumb-hover: rgba(192, 132, 252, 0.62);
   --topbar-bg: rgba(
     12,
     10,
@@ -82,8 +86,8 @@
   --primary-soft: rgba(124, 58, 237, 0.09);
   --ok: #15803d;
   --ok-soft: rgba(21, 128, 61, 0.09);
-  --danger: #be123c;
-  --danger-soft: rgba(190, 18, 60, 0.08);
+  --danger: #b91c1c;
+  --danger-soft: rgba(185, 28, 28, 0.08);
   --warn: #a16207;
   --warn-soft: rgba(161, 98, 7, 0.1);
   --aura-1: rgba(124, 58, 237, 0.12);
@@ -92,7 +96,7 @@
   --reward-2: #b45309;
   --reward-soft: rgba(217, 119, 6, 0.12);
   --on-reward: #ffffff;
-  --btn-primary: linear-gradient(180deg, #6d28d9, #5b21b6);
+  --btn-primary: linear-gradient(#6d28d9, #6d28d9);
   --btn-primary-border: #4c1d95;
   --shadow:
     0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 4px rgba(60, 30, 120, 0.06),
@@ -100,6 +104,8 @@
   --focus: rgba(124, 58, 237, 0.45);
   --spot: rgba(124, 58, 237, 0.12);
   --skeleton: rgba(60, 30, 120, 0.07);
+  --scroll-thumb: rgba(109, 40, 217, 0.28);
+  --scroll-thumb-hover: rgba(109, 40, 217, 0.6);
   --topbar-bg: rgba(245, 243, 255, 0.96);
   --topbar-glass: rgba(245, 243, 255, 0.72);
 }
@@ -142,6 +148,41 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Thanh cuộn: mảnh, nền trong suốt, nút cuộn bo tròn màu tím nhạt theo giao diện (không dùng thanh mặc định của trình duyệt).
+   Firefox dùng thuộc tính chuẩn; Chrome / Edge / Safari dùng ::-webkit-scrollbar để có viên bo tròn cách mép */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+@supports selector(::-webkit-scrollbar) {
+  * {
+    /* Thuộc tính chuẩn khác "auto" làm Chrome bỏ qua ::-webkit-scrollbar → trả về auto */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    min-height: 40px;
+    border: 3px solid transparent; /* viền trong suốt + background-clip: viên thanh cuộn mảnh 6px, cách mép 3px */
+    border-radius: 999px;
+    background: var(--scroll-thumb);
+    background-clip: padding-box;
+    transition: background-color 0.2s;
+  }
+  ::-webkit-scrollbar-thumb:hover,
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--scroll-thumb-hover);
+    background-clip: padding-box;
+  }
 }
 
 /* Nền (màu, hai quầng sáng tím – hồng, sao, hệ Mặt Trời) vẽ ở lớp .space trong space.css; body để trong suốt để lớp đó hiện ra */

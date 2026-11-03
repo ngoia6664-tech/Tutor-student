@@ -12,35 +12,37 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import FolderBox from '../../components/FolderBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import { libraryUrl, UNSORTED } from '../../lib/chapters.js'
+import { clearRecent } from '../../lib/recentChapters.js'
 import Icon from '../../components/Icon.jsx'
 import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 const OUT = 'none' // ô chọn thư mục: "Chưa xếp" (ra khỏi thư mục)
 
-// Nội dung một chương (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài.
+// Nội dung một chủ đề (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài.
 // Có thư mục thì bài gom theo từng thư mục (khối gập / mở), bài chưa xếp để cuối. Chuyển bài vào thư mục: Sửa nhiều → thanh dưới.
-// onChanged: báo Thư viện tải lại số bài của từng chương sau khi Sửa nhiều / Xóa nhiều
-// id = UNSORTED: mục "Chưa xếp chương" (bài có chapter_id trống): không thư mục, không sửa / xóa chương
+// onChanged: báo Thư viện tải lại số bài của từng chủ đề sau khi Sửa nhiều / Xóa nhiều
+// id = UNSORTED: mục "Chưa xếp chủ đề" (bài có chapter_id trống): không thư mục, không sửa / xóa chủ đề
 export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onChanged }) {
   const unsorted = id === UNSORTED
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
   const [moving, setMoving] = useState(null)
   const [naming, setNaming] = useState(null) // { id?, name }: đang tạo / đổi tên thư mục
-  // Sang chương khác: thoát chế độ chọn, không mang tick cũ theo
+  // Sang chủ đề khác: thoát chế độ chọn, không mang tick cũ theo
   useEffect(() => {
     pick.stop()
     setNaming(null)
+    clearRecent(id) // đã mở thì tắt nhãn "Mới"
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
   const { data, loading, error, reload } = useAsync(async () => {
     const inChapter = (q) => (unsorted ? q.is('chapter_id', null) : q.eq('chapter_id', id))
     const [chapter, lessons, assignments, folders] = await Promise.all([
-      unsorted ? { id: null, title: 'Chưa xếp chương' } : supabase.from('chapters').select('*').eq('id', id).maybeSingle().then(unwrap),
+      unsorted ? { id: null, title: 'Chưa xếp chủ đề' } : supabase.from('chapters').select('*').eq('id', id).maybeSingle().then(unwrap),
       inChapter(supabase.from('lessons').select('id, title, file_path, created_at, folder_id, lesson_recipients(student_id)')).order('created_at').then(unwrap),
       inChapter(supabase.from('assignments').select('id, title, type, due_date, created_at, folder_id, assignment_recipients(status)')).order('created_at').then(unwrap),
       unsorted ? [] : supabase.from('chapter_folders').select('id, name').eq('chapter_id', id).order('created_at').then(unwrap),
     ])
-    if (!chapter) throw new Error('Không tìm thấy chương (có thể đã bị xóa).')
+    if (!chapter) throw new Error('Không tìm thấy chủ đề (có thể đã bị xóa).')
     return { chapter, lessons, assignments, folders }
   }, [id, reloadKey])
 
@@ -55,7 +57,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
 
   const { chapter, lessons, assignments, folders } = data
   const newState = unsorted ? {} : { state: { chapterId: chapter.id } }
-  const here = unsorted ? 'nào chưa xếp chương' : 'trong chương này'
+  const here = unsorted ? 'nào chưa xếp chủ đề' : 'trong chủ đề này'
   const lessonItem = (l) => ({ kind: 'lesson', id: l.id, title: l.title, file_path: l.file_path })
   const assignmentItem = (a) => ({ kind: 'assignment', id: a.id, title: a.title, submitted: a.assignment_recipients.filter((r) => r.status !== 'todo').length })
   const changed = () => {
@@ -149,7 +151,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
 
   return (
     <div className="assign-space">
-      {/* Đường dẫn Lớp › Môn › Chuyên đề (có menu chọn nhanh) do Library.jsx vẽ ngay phía trên */}
+      {/* Đường dẫn Lớp › Môn › Chương (có menu chọn nhanh) do Library.jsx vẽ ngay phía trên */}
       <header className="lesson-head" style={{ marginTop: 0 }}>
         <h1>{chapter.title}</h1>
         <div className="row">
@@ -171,7 +173,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           {onEdit && !unsorted && (
             <button type="button" className="btn btn-small" onClick={() => onEdit(chapter)}>
               <Icon name="edit" />
-              Sửa chương
+              Sửa chủ đề
             </button>
           )}
           {onDelete && !unsorted && (
@@ -182,7 +184,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           )}
         </div>
       </header>
-      {unsorted && <p className="muted small">Bài chưa thuộc chương nào (chưa chọn chương, hoặc chương đã bị xóa). Bấm Sửa nhiều → chọn bài → Chuyển chương để xếp vào chương.</p>}
+      {unsorted && <p className="muted small">Bài chưa thuộc chủ đề nào (chưa chọn chủ đề, hoặc chủ đề đã bị xóa). Bấm Sửa nhiều → chọn bài → Chuyển chủ đề để xếp vào chủ đề.</p>}
 
       {naming && (
         <form className="folder-form" onSubmit={saveFolder}>

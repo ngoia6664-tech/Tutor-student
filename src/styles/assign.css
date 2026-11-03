@@ -76,7 +76,7 @@ body:has(.assign-bar) .assign-space {
   accent-color: var(--danger);
 }
 
-/* Bảng Chuyển chương: rộng + cao, cây chương nằm thẳng trong bảng (không nổi) để chỉ cuộn một lớp */
+/* Bảng Chuyển chủ đề: rộng + cao, cây chủ đề nằm thẳng trong bảng (không nổi) để chỉ cuộn một lớp */
 .settings-panel.move-panel {
   width: min(780px, 100%);
   max-height: 94dvh;
@@ -87,4 +87,61 @@ body:has(.assign-bar) .assign-space {
   max-height: none;
   height: min(64dvh, 680px);
   box-shadow: none;
+}
+
+/* Trang Chấm bài: một hàng — bộ lọc + ô tìm bên trái, nút chính + "⋯" bên phải; hẹp thì xuống dòng */
+.assign-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.assign-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+.assign-filters .chips {
+  margin: 0;
+}
+.assign-search {
+  flex: 1 1 12rem;
+  width: auto;
+  min-width: 0;
+  max-width: 22rem;
+  margin: 0;
+}
+.assign-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+/* Hàng nút dưới mỗi thẻ bài: "Theo dõi & chấm" là nút chính, các nút còn lại cùng bề rộng */
+.assign-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.assign-actions .btn {
+  justify-content: center;
+  width: 100%;
+}
+.assign-actions .assign-main {
+  grid-column: 1 / -1;
+}
+@media (min-width: 640px) {
+  .assign-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .assign-actions .assign-main {
+    grid-column: auto;
+  }
 }

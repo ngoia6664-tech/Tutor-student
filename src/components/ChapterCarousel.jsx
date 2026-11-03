@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { recentIds } from '../lib/recentChapters.js'
 import { Link, useNavigate } from 'react-router-dom'
 import { chapterUrl } from '../lib/chapters.js'
 import { splitTitle, subjectKind } from '../lib/chapterArt.js'
@@ -6,10 +7,10 @@ import { useRemembered } from '../lib/navMemory.js'
 import ChapterArt from './ChapterArt.jsx'
 import Icon from './Icon.jsx'
 
-// Chương của một chuyên đề dạng băng chuyền (Thư viện gia sư + học sinh): chương đang chọn to ở giữa, hai bên nhỏ và mờ.
-// Vuốt / mũi tên / phím ← → để lướt; "Tất cả chương" mở lưới để nhảy thẳng, khỏi lướt từng chương.
-// Bấm chương bên cạnh: máy tính mở luôn, điện thoại chỉ đưa ra giữa (tránh mở nhầm khi đang vuốt).
-// Vị trí nhớ trong phiên theo chuyên đề: mở chương rồi quay lại vẫn đứng đúng chương đó.
+// Chủ đề của một chương dạng băng chuyền (Thư viện gia sư + học sinh): chủ đề đang chọn to ở giữa, hai bên nhỏ và mờ.
+// Vuốt / mũi tên / phím ← → để lướt; "Tất cả chủ đề" mở lưới để nhảy thẳng, khỏi lướt từng chủ đề.
+// Bấm chủ đề bên cạnh: máy tính mở luôn, điện thoại chỉ đưa ra giữa (tránh mở nhầm khi đang vuốt).
+// Vị trí nhớ trong phiên theo chương: mở chủ đề rồi quay lại vẫn đứng đúng chủ đề đó.
 
 // Thẻ đang chọn nghiêng theo chuột, lớp ánh kim loại (foil) trượt theo: chỉ ghi biến CSS (--tx/--ty từ -1 đến 1, --gx/--gy %),
 // phần vẽ ở library.css. Chỉ chuột thật; bật "giảm chuyển động" thì không nghiêng.
@@ -47,17 +48,18 @@ const smooth = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? '
  *   toUrl?: (id: string) => string,
  *   actions?: (c: any) => import('react').ReactNode,
  * }} props
- * toUrl: link mở chương (mặc định chapterUrl của gia sư); actions: nút thay cho Sửa / Xóa (học sinh)
+ * toUrl: link mở chủ đề (mặc định chapterUrl của gia sư); actions: nút thay cho Sửa / Xóa (học sinh)
  */
 export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDelete, toUrl = chapterUrl, actions }) {
   const navigate = useNavigate()
+  const recent = useMemo(() => recentIds(), [chapters]) // nhãn "Mới" chỉ cho gia sư (học sinh có `actions`)
   const trackRef = useRef(/** @type {HTMLDivElement | null} */ (null))
   const frame = useRef(0)
   const [saved, setSaved] = useRemembered(`ccar:${memoKey}`, 0, (/** @type {unknown} */ v) => Number.isInteger(v))
   const index = Math.max(0, Math.min(saved, chapters.length - 1))
   const [gridOpen, setGridOpen] = useState(false)
 
-  // Chỉ cuộn; chương ở giữa do onScroll tính (số đếm chạy theo khi lướt qua)
+  // Chỉ cuộn; chủ đề ở giữa do onScroll tính (số đếm chạy theo khi lướt qua)
   /** @param {number} i @param {ScrollBehavior} [behavior] */
   const go = (i, behavior = smooth()) => {
     const track = trackRef.current
@@ -84,7 +86,7 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
     })
   }
 
-  // Mở trang: đứng ngay chương nhớ lần trước, không trượt
+  // Mở trang: đứng ngay chủ đề nhớ lần trước, không trượt
   useLayoutEffect(() => {
     go(index, 'auto')
   }, [])
@@ -106,7 +108,7 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
         onScroll={onScroll}
         onKeyDown={onKey}
         tabIndex={0}
-        aria-label="Các chương. Dùng phím mũi tên trái, phải để chuyển chương"
+        aria-label="Các chủ đề. Dùng phím mũi tên trái, phải để chuyển chủ đề"
       >
         {chapters.map((c, i) => {
           const { num, name } = splitTitle(c.title, i)
@@ -124,6 +126,7 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
                 <Link className="ccar-title" to={toUrl(c.id)} tabIndex={center ? undefined : -1}>
                   {name}
                 </Link>
+                {!actions && recent.has(c.id) && <span className="ccar-new">Mới</span>}
                 <div className="ccar-stats">
                   <span>
                     <Icon name="lesson" size={17} />
@@ -160,7 +163,7 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
                   type="button"
                   className="ccar-hit"
                   tabIndex={-1}
-                  aria-label={`Chương ${num}: ${name}`}
+                  aria-label={`Chủ đề ${num}: ${name}`}
                   onClick={() => (finePointer() ? navigate(toUrl(c.id)) : go(i))}
                 />
               )}
@@ -170,7 +173,7 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
       </div>
 
       <div className="ccar-nav">
-        <button type="button" className="btn btn-small ccar-arrow" disabled={index <= 0} onClick={() => go(index - 1)} aria-label="Chương trước">
+        <button type="button" className="btn btn-small ccar-arrow" disabled={index <= 0} onClick={() => go(index - 1)} aria-label="Chủ đề trước">
           <Icon name="left" />
         </button>
         <span className="ccar-count" aria-live="polite">
@@ -181,13 +184,13 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
           className="btn btn-small ccar-arrow"
           disabled={index >= chapters.length - 1}
           onClick={() => go(index + 1)}
-          aria-label="Chương sau"
+          aria-label="Chủ đề sau"
         >
           <Icon name="right" />
         </button>
         <button type="button" className="btn btn-small ccar-all" aria-expanded={gridOpen} onClick={() => setGridOpen((o) => !o)}>
           <Icon name="grid" />
-          Tất cả chương
+          Tất cả chủ đề
         </button>
       </div>
 

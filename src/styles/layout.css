@@ -109,9 +109,9 @@
   position: relative;
   padding: 0.38rem 0.95rem;
   border-radius: var(--r-chip);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-strong); /* viền nhìn rõ trên nền vũ trụ: tab chưa chọn không chìm vào nền */
   text-decoration: none;
-  color: var(--muted);
+  color: var(--text);
   white-space: nowrap;
   font-size: 0.95rem;
   font-weight: 500;
@@ -124,6 +124,7 @@
 /* Mục đang chọn: chữ trắng trên viên .nav-pill tím trượt phía sau (Layout.jsx đo vị trí) */
 .nav-link.active {
   color: var(--on-primary);
+  border-color: transparent;
 }
 /* Viên nền: cùng màu nút chính (token --btn-primary), bóng trung tính */
 .nav-pill {
@@ -199,6 +200,13 @@
 .page-head h1,
 .page-head h2 {
   margin: 0;
+}
+
+/* Đổi sáng / tối (ThemeToggle, View Transitions): cả trang mờ chéo thay vì đổi màu phụt */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: var(--ease);
 }
 
 /* Trang mới hiện ra mờ dần + trượt nhẹ khi chuyển trang */

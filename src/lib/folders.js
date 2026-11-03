@@ -1,4 +1,4 @@
-// Thư mục trong chương (bảng chapter_folders, cột folder_id của bài giảng / bài tập): gom bài của một chương theo thư mục.
+// Thư mục trong chủ đề (bảng chapter_folders, cột folder_id của bài giảng / bài tập): gom bài của một chủ đề theo thư mục.
 
 /**
  * [{ folder, lessons, assignments }] theo thứ tự thư mục, cuối cùng là nhóm "Chưa xếp" (folder: null).

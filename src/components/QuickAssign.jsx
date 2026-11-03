@@ -12,7 +12,7 @@ import { fetchChapters } from '../lib/chapters.js'
 import { addRecipients, fetchRecipients, setRecipients } from '../lib/recipients.js'
 import { deleteItems, deleteWarning, itemsLabel, moveToChapter } from '../lib/bulk.js'
 
-// Khung bảng nổi dùng chung (Giao cho học sinh, Chuyển chương): bấm nền / Esc để đóng
+// Khung bảng nổi dùng chung (Giao cho học sinh, Chuyển chủ đề): bấm nền / Esc để đóng
 function DialogFrame({ id, icon, title, onClose, children, className = '' }) {
   const panel = useRef(null)
   const closeRef = useRef(onClose)
@@ -41,7 +41,7 @@ function DialogFrame({ id, icon, title, onClose, children, className = '' }) {
   )
 }
 
-// Giao bài nhanh từ danh sách (Bài giảng, Bài tập, chương trong Thư viện).
+// Giao bài nhanh từ danh sách (Bài giảng, Bài tập, chủ đề trong Thư viện).
 // items = [{ kind: 'lesson'|'assignment', id, title }]
 //  - 1 bài: sửa đúng danh sách học sinh nhận (bỏ học sinh đã nộp thì hỏi lại)
 //  - nhiều bài: chỉ GIAO THÊM học sinh đã chọn, ai đã có bài thì giữ nguyên
@@ -121,7 +121,7 @@ export function AssignDialog({ items, onClose, onSaved }) {
   )
 }
 
-// Sửa nhiều → Chuyển chương: chỉ đổi chương, nội dung / câu hỏi / học sinh nhận giữ nguyên
+// Sửa nhiều → Chuyển chủ đề: chỉ đổi chủ đề, nội dung / câu hỏi / học sinh nhận giữ nguyên
 export function MoveDialog({ items, onClose, onSaved }) {
   const [chapters, setChapters] = useState(null)
   const [target, setTarget] = useState('')
@@ -150,7 +150,7 @@ export function MoveDialog({ items, onClose, onSaved }) {
         return
       }
       const name = chapters.find((c) => c.id === target)?.title
-      notifyDone({ title: `Đã chuyển ${itemsLabel(items)}`, say: name ? `Đã xếp vào chương "${name}" rồi nhé 📂` : 'Đã chuyển sang "Chưa xếp chương" 📂' })
+      notifyDone({ title: `Đã chuyển ${itemsLabel(items)}`, say: name ? `Đã xếp vào chủ đề "${name}" rồi nhé 📂` : 'Đã chuyển sang "Chưa xếp chủ đề" 📂' })
       onSaved?.(true)
       onClose()
     } catch (e) {
@@ -160,12 +160,12 @@ export function MoveDialog({ items, onClose, onSaved }) {
   }
 
   return (
-    <DialogFrame id="move-title" icon="folder" title="Chuyển chương" onClose={onClose} className="move-panel">
+    <DialogFrame id="move-title" icon="folder" title="Chuyển chủ đề" onClose={onClose} className="move-panel">
       <p className="muted small" style={{ margin: '0 0 0.75rem' }}>
-        Chuyển {itemsLabel(items)} đã chọn sang chương mới. Nội dung, câu hỏi, đáp án và học sinh nhận giữ nguyên.
+        Chuyển {itemsLabel(items)} đã chọn sang chủ đề mới. Nội dung, câu hỏi, đáp án và học sinh nhận giữ nguyên.
       </p>
       <ErrorBox message={error} />
-      {chapters === null ? !error && <Loading text="Đang tải danh sách chương..." /> : <ChapterSelect chapters={chapters} value={target} onChange={setTarget} label="Chương đích" defaultOpen />}
+      {chapters === null ? !error && <Loading text="Đang tải danh sách chủ đề..." /> : <ChapterSelect chapters={chapters} value={target} onChange={setTarget} label="Chủ đề đích" defaultOpen />}
       <div className="row" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
         <button type="button" className="btn" onClick={onClose}>
           Hủy
@@ -198,7 +198,7 @@ export async function deletePicked(items) {
   return true
 }
 
-// Chế độ chọn nhiều: mode = 'edit' (Sửa nhiều: chuyển chương, giao) | 'delete' (Xóa nhiều) | null. key = `${kind}:${id}`
+// Chế độ chọn nhiều: mode = 'edit' (Sửa nhiều: chuyển chủ đề, giao) | 'delete' (Xóa nhiều) | null. key = `${kind}:${id}`
 export function useAssignSelection() {
   const [mode, setMode] = useState(null)
   const [picked, setPicked] = useState(() => new Map())
@@ -279,7 +279,7 @@ export function SelectCheck({ sel, item }) {
 
 // Thanh dưới màn hình: số mục đã chọn, Chọn tất cả (chỉ mục đang hiển thị), các thao tác của chế độ hiện tại.
 // visible: các mục đang hiển thị; onAssign / onMove / onDelete nhận danh sách mục đã chọn (trong số đang hiển thị).
-// extra: nội dung thêm (vd. ô "Xóa luôn bài bên trong" khi xóa chương). Đang xử lý thì khóa mọi nút.
+// extra: nội dung thêm (vd. ô "Xóa luôn bài bên trong" khi xóa chủ đề). Đang xử lý thì khóa mọi nút.
 /** @param {{ sel: any, visible: any[], onAssign?: (items: any[]) => any, onMove?: (items: any[]) => any, onDelete?: (items: any[]) => any, extra?: import('react').ReactNode }} props */
 export function SelectBar({ sel, visible, onAssign, onMove, onDelete, extra }) {
   const [busy, setBusy] = useState(false)
@@ -329,7 +329,7 @@ export function SelectBar({ sel, visible, onAssign, onMove, onDelete, extra }) {
             {onMove && (
               <button type="button" className="btn btn-small" disabled={busy || !n} onClick={() => onMove(chosen)}>
                 <Icon name="folder" />
-                Chuyển chương
+                Chuyển chủ đề
               </button>
             )}
             {onAssign && (

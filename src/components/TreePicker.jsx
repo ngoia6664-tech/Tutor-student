@@ -5,7 +5,7 @@ import Icon from './Icon.jsx'
 // ----- Dựng cây cho ô chọn -----
 // Nút: { key, label, icon?, children: [...] } (nhóm) hoặc { key, value, label, hint? } (lá chọn được)
 
-// Lớp › Môn › Chuyên đề › Chương (lá = chương)
+// Lớp › Môn › Chương › Chủ đề (lá = chủ đề)
 export function chapterNodes(chapters) {
   return buildTree(chapters).map((g) => ({
     key: `g:${g.key}`,
@@ -25,7 +25,7 @@ export function chapterNodes(chapters) {
   }))
 }
 
-// Lớp › Môn › Chuyên đề › Chương › Bài giảng (lá = bài giảng); bài chưa xếp chương để nhóm riêng
+// Lớp › Môn › Chương › Chủ đề › Bài giảng (lá = bài giảng); bài chưa xếp chủ đề để nhóm riêng
 export function lessonNodes(lessons, chapters) {
   const groups = groupByChapter(lessons, chapters)
   const used = groups.filter((g) => g.chapter).map((g) => g.chapter)
@@ -39,7 +39,7 @@ export function lessonNodes(lessons, chapters) {
     )
   const out = walk(tree)
   const loose = groups.find((g) => !g.chapter)
-  if (loose) out.push({ key: 'loose', label: 'Chưa xếp chương', icon: 'inbox', children: loose.items.map((l) => ({ key: l.id, value: l.id, label: l.title })) })
+  if (loose) out.push({ key: 'loose', label: 'Chưa xếp chủ đề', icon: 'inbox', children: loose.items.map((l) => ({ key: l.id, value: l.id, label: l.title })) })
   return out
 }
 
@@ -92,9 +92,9 @@ const countLeaves = (nodes) => nodes.reduce((s, n) => s + (n.children ? countLea
 /**
  * Ô chọn dạng cây (thay cho <select> dài): bấm mở bảng, có ô tìm, nhóm mở/đóng được.
  * - nodes: cây (xem chapterNodes / lessonNodes)
- * - focusKey: nhóm cần mở sẵn + cuộn tới khi mở bảng (vd. chương đang chọn ở trên)
+ * - focusKey: nhóm cần mở sẵn + cuộn tới khi mở bảng (vd. chủ đề đang chọn ở trên)
  * - clearLabel: đã chọn thì hiện gọn tên + nút "Đổi" và nút xoá (chọn lại value '')
- * - top: lựa chọn đặc biệt hiện trên cùng, vd. [{ value:'', label:'— Chưa xếp chương —' }, { value:'new', label:'+ Tạo chương mới…' }]
+ * - top: lựa chọn đặc biệt hiện trên cùng, vd. [{ value:'', label:'— Chưa xếp chủ đề —' }, { value:'new', label:'+ Tạo chủ đề mới…' }]
  */
 export default function TreePicker({ label, labelExtra, nodes, value, onChange, top = [], placeholder = 'Chọn…', disabled = false, hint, searchPlaceholder = 'Tìm theo tên…', focusKey, clearLabel, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)

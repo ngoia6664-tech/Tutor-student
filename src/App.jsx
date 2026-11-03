@@ -53,7 +53,7 @@ export default function App() {
         <Route path="shop" element={<StudentShop />} />
         <Route path="students/:id" element={<StudentDetail />} />
         <Route path="library/:id?" element={<Library />} />
-        {/* Link cũ của mục Chương */}
+        {/* Link cũ của mục Chủ đề */}
         <Route path="chapters" element={<OldChaptersRedirect />} />
         <Route path="chapters/:id" element={<OldChaptersRedirect />} />
         <Route path="assignments" element={<TutorAssignments />} />

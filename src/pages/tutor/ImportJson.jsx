@@ -3,7 +3,8 @@ import { memo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
-import { chapterGroupLabel, fetchChapters, findChapter } from '../../lib/chapters.js'
+import { chapterGroupLabel, chapterUrl, fetchChapters, findChapter, UNSORTED } from '../../lib/chapters.js'
+import { markRecent } from '../../lib/recentChapters.js'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import { LessonBody, LessonHead } from '../../components/LessonView.jsx'
 import { errMsg } from '../../lib/errors.js'
@@ -23,7 +24,7 @@ import { EXAM_MINUTES } from '../../lib/exam.js'
 import LessonSelect from '../../components/LessonSelect.jsx'
 import ListLink from '../../components/ListLink.jsx'
 
-// Chương liên kết lần dán trước (lưu trên máy này)
+// Chủ đề liên kết lần dán trước (lưu trên máy này)
 const LAST_CHAPTER_KEY = 'import.lastChapterId'
 function readLastChapter() {
   try {
@@ -50,7 +51,7 @@ function timeLimitOf(o) {
 const normTitle = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ')
 // Sắp tên file theo số tự nhiên: dang2 đứng trước dang10
 const byName = (a, b) => a.name.localeCompare(b.name, 'vi', { numeric: true })
-// Khóa chương của một file, để nhận ra các file cùng chương trong một lần nhập
+// Khóa chủ đề của một file, để nhận ra các file cùng chủ đề trong một lần nhập
 function chapterKey(s) {
   if (!s.chapterChoice) return ''
   return s.chapterChoice === 'new' ? `new:${normTitle(s.result?.chapter?.title)}` : s.chapterChoice
@@ -58,7 +59,7 @@ function chapterKey(s) {
 const lessonDraftOf = (s) => s?.result?.drafts.find((d) => d.kind === 'lesson')
 
 // Dán JSON hoặc chọn một / nhiều file .json → kiểm tra → xem trước → chọn học sinh → lưu.
-// Mỗi file (hoặc một lần dán) là một "nguồn": có chương + bài giảng liên kết riêng; mỗi phần trong nguồn có hạn nộp,
+// Mỗi file (hoặc một lần dán) là một "nguồn": có chủ đề + bài giảng liên kết riêng; mỗi phần trong nguồn có hạn nộp,
 // đề thi và danh sách học sinh riêng (mặc định theo danh sách chung).
 export default function ImportJson() {
   const navigate = useNavigate()
@@ -67,6 +68,7 @@ export default function ImportJson() {
   const [text, setText] = useState('')
   const [batch, setBatch] = useState(false) // đang nhập nhiều file cùng lúc
   const [includeNotes, setIncludeNotes] = useState(true)
+  const [touched, setTouched] = useState([]) // id các chủ đề vừa lưu vào (UNSORTED = chưa xếp chủ đề), để link thẳng tới đó
   const [sources, setSources] = useState([]) // [{ id, name, text, result, error, chapterChoice, fromLast, linkLessonId }]
   const [opts, setOpts] = useState({}) // "idNguồn-sốPhần" → { include, due_date, is_exam, timed, time_limit, studentIds (null = danh sách chung) }
   const [studentIds, setStudentIds] = useState([])
@@ -77,7 +79,7 @@ export default function ImportJson() {
   const [allChapter, setAllChapter] = useState('')
   const [allDue, setAllDue] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
-  // Danh sách bài giảng, bài tập (để báo trùng tên) + chương có sẵn (tải lại sau mỗi lần lưu để chương mới xuất hiện)
+  // Danh sách bài giảng, bài tập (để báo trùng tên) + chủ đề có sẵn (tải lại sau mỗi lần lưu để chủ đề mới xuất hiện)
   const lists = useAsync(async () => {
     const [lessons, chapters, assignments] = await Promise.all([
       supabase.from('lessons').select('id, title, chapter_id').order('created_at', { ascending: false }).then(unwrap),
@@ -99,7 +101,7 @@ export default function ImportJson() {
     setSaved({})
   }
 
-  // Đọc một nguồn + chọn sẵn chương: trùng tên thì dùng; không thì lấy chương đã liên kết lần trước; không có nữa mới đề xuất tạo mới
+  // Đọc một nguồn + chọn sẵn chủ đề: trùng tên thì dùng; không thì lấy chủ đề đã liên kết lần trước; không có nữa mới đề xuất tạo mới
   function prepare(src, withNotes) {
     const s = { id: src.id, name: src.name, text: src.text, result: null, error: null, chapterChoice: '', fromLast: false, linkLessonId: '' }
     try {
@@ -116,7 +118,7 @@ export default function ImportJson() {
     return s
   }
 
-  // File chỉ có bài tập: gợi ý bài giảng cùng chương trong lần nhập này, rồi tới bài giảng có sẵn (ưu tiên cùng "Dạng")
+  // File chỉ có bài tập: gợi ý bài giảng cùng chủ đề trong lần nhập này, rồi tới bài giảng có sẵn (ưu tiên cùng "Dạng")
   function suggestLesson(s, all) {
     const drafts = s.result?.drafts || []
     if (!drafts.some((d) => d.kind === 'assignment') || drafts.some((d) => d.kind === 'lesson')) return ''
@@ -214,7 +216,7 @@ export default function ImportJson() {
     )
   }
 
-  // Đặt cùng một chương cho mọi file, rồi gợi ý lại bài giảng liên kết theo chương mới
+  // Đặt cùng một chủ đề cho mọi file, rồi gợi ý lại bài giảng liên kết theo chủ đề mới
   function applyChapterToAll() {
     const next = sources.map((s) => (s.result ? { ...s, chapterChoice: allChapter, fromLast: false } : s))
     next.forEach((s) => (s.linkLessonId = suggestLesson(s, next)))
@@ -257,10 +259,10 @@ export default function ImportJson() {
     setSaveError(null)
     const done = { ...saved }
     let lastChapter = null
+    const chapterOf = {}
     try {
-      // Chương của từng file: tạo mới (nếu chọn) hoặc chương tự khớp (để bổ sung lớp/môn nếu chương cũ còn thiếu)
-      const chapterOf = {}
-      const made = {} // nhiều file cùng chương mới chỉ tạo một lần
+      // Chủ đề của từng file: tạo mới (nếu chọn) hoặc chủ đề tự khớp (để bổ sung lớp/môn nếu chủ đề cũ còn thiếu)
+      const made = {} // nhiều file cùng chủ đề mới chỉ tạo một lần
       for (const s of new Set(chosen.map((r) => r.s))) {
         let id = s.chapterChoice && s.chapterChoice !== 'new' ? s.chapterChoice : null
         const c = s.result.chapter
@@ -312,8 +314,12 @@ export default function ImportJson() {
     } catch (e) {
       setSaveError(`${errMsg(e)}. Những phần đã lưu được đánh dấu ✅; bấm lưu lại sẽ chỉ lưu phần còn thiếu.`)
     } finally {
-      // Nhớ chương vừa liên kết cho lần dán sau
+      // Nhớ chủ đề vừa liên kết cho lần dán sau
       if (lastChapter) writeLastChapter(lastChapter)
+      // Chủ đề vừa thay đổi (kể cả phần đã lưu trước khi lỗi): link thẳng vào đó + nhãn "Mới" trong Thư viện
+      const ids = [...new Set(chosen.filter((r) => done[r.key]).map((r) => chapterOf[r.s.id] || UNSORTED))]
+      markRecent(ids.filter((x) => x !== UNSORTED))
+      setTouched((t) => [...new Set([...t, ...ids])])
       setSaving(false)
       setReloadKey((k) => k + 1)
     }
@@ -329,9 +335,9 @@ export default function ImportJson() {
   }
 
   function chapterLabel(s) {
-    if (!s.chapterChoice) return 'Chưa xếp chương'
-    if (s.chapterChoice === 'new') return `Tạo chương mới: ${s.result.chapter?.title}`
-    return chapters.find((c) => c.id === s.chapterChoice)?.title || 'Chương đã chọn'
+    if (!s.chapterChoice) return 'Chưa xếp chủ đề'
+    if (s.chapterChoice === 'new') return `Tạo chủ đề mới: ${s.result.chapter?.title}`
+    return chapters.find((c) => c.id === s.chapterChoice)?.title || 'Chủ đề đã chọn'
   }
   function linkLabel(s) {
     const link = s.linkLessonId
@@ -363,7 +369,7 @@ export default function ImportJson() {
     )
   }
 
-  // Chương + bài giảng liên kết của một nguồn
+  // Chủ đề + bài giảng liên kết của một nguồn
   function renderSettings(s) {
     const drafts = s.result.drafts
     const needLink = drafts.some((d) => d.kind === 'assignment') && !drafts.some((d) => d.kind === 'lesson')
@@ -374,18 +380,18 @@ export default function ImportJson() {
           chapters={chapters}
           value={s.chapterChoice}
           onChange={(v) => setSource(s.id, { chapterChoice: v, fromLast: false })}
-          label="Xếp vào chương"
+          label="Xếp vào chủ đề"
           extraTop={
             s.result.chapter?.title && !findChapter(chapters, s.result.chapter)
               ? [
                   {
                     value: 'new',
-                    label: `+ Tạo chương mới: ${s.result.chapter.title}${chapterGroupLabel(s.result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(s.result.chapter)})` : ''}`,
+                    label: `+ Tạo chủ đề mới: ${s.result.chapter.title}${chapterGroupLabel(s.result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(s.result.chapter)})` : ''}`,
                   },
                 ]
               : []
           }
-          hint={s.fromLast && s.chapterChoice !== 'new' ? 'Đã chọn sẵn chương bạn liên kết ở lần dán trước.' : null}
+          hint={s.fromLast && s.chapterChoice !== 'new' ? 'Đã chọn sẵn chủ đề bạn liên kết ở lần dán trước.' : null}
         />
         {needLink &&
           (batchLesson ? (
@@ -592,12 +598,12 @@ export default function ImportJson() {
               {single && <div style={{ marginTop: '1rem' }}>{renderSettings(single)}</div>}
               {batch && (
                 <div style={{ marginTop: '1rem' }}>
-                  <ChapterSelect chapters={chapters} value={allChapter} onChange={setAllChapter} label="Đặt cùng một chương cho mọi file (không bắt buộc)" />
+                  <ChapterSelect chapters={chapters} value={allChapter} onChange={setAllChapter} label="Đặt cùng một chủ đề cho mọi file (không bắt buộc)" />
                   <div className="row" style={{ marginTop: '-0.25rem', marginBottom: '0.75rem' }}>
                     <button type="button" className="btn btn-small" onClick={applyChapterToAll}>
-                      Áp chương này cho mọi file
+                      Áp chủ đề này cho mọi file
                     </button>
-                    <span className="muted small">Mặc định mỗi file tự khớp chương ghi trong file.</span>
+                    <span className="muted small">Mặc định mỗi file tự khớp chủ đề ghi trong file.</span>
                   </div>
                   {rows.some((r) => r.d.kind === 'assignment') && (
                     <div className="row" style={{ alignItems: 'flex-end' }}>
@@ -677,7 +683,14 @@ export default function ImportJson() {
               <ErrorBox message={saveError} />
               {allSaved ? (
                 <div className="alert alert-ok" style={{ width: '100%' }}>
-                  Đã lưu xong. <ListLink to="/tutor/library">Xem trong Thư viện</ListLink> · <ListLink to="/tutor/assignments">Chấm bài</ListLink>
+                  Đã lưu xong. Xem:{' '}
+                  {touched.map((cid) => (
+                    <span key={cid}>
+                      <Link to={chapterUrl(cid)}>{cid === UNSORTED ? 'Chưa xếp chủ đề' : chapters.find((c) => c.id === cid)?.title || 'chủ đề vừa lưu'}</Link>
+                      {' · '}
+                    </span>
+                  ))}
+                  <ListLink to="/tutor/assignments">Chấm bài</ListLink>
                 </div>
               ) : (
                 <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving || pending === 0}>

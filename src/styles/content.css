@@ -212,6 +212,23 @@ h2 + .question {
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   cursor: pointer;
+  transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.choice-label {
+  transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+/* Bấm chọn một phương án (khi còn làm được): vòng chữ cái nảy nhẹ một lần */
+.choice:has(input:not(:disabled)).is-picked .choice-label {
+  animation: choice-pop 0.32s var(--spring);
+}
+@keyframes choice-pop {
+  0% { transform: scale(0.82); }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .choice:has(input:not(:disabled)).is-picked .choice-label {
+    animation: none;
+  }
 }
 .choice input {
   position: absolute;

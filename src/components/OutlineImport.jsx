@@ -6,8 +6,8 @@ import { OUTLINE_SAMPLE, parseOutline } from '../lib/outline.js'
 import ErrorBox from './ErrorBox.jsx'
 import Icon from './Icon.jsx'
 
-// Dán mục lục giáo trình → xem trước cây → tạo nhiều chương một lần.
-// Chương đã có (cùng tên, lớp, môn) thì giữ nguyên, không tạo trùng (hàm ensure_chapter).
+// Dán mục lục giáo trình → xem trước cây → tạo nhiều chủ đề một lần.
+// Chủ đề đã có (cùng tên, lớp, môn) thì giữ nguyên, không tạo trùng (hàm ensure_chapter).
 export default function OutlineImport({ chapters, defaults, onCancel, onDone }) {
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
@@ -19,7 +19,7 @@ export default function OutlineImport({ chapters, defaults, onCancel, onDone }) 
   const fresh = rows.filter((r) => !r.existing && r.grade)
   const skipped = rows.filter((r) => !r.grade).length
 
-  // Gom để xem trước: Lớp · Môn → Chuyên đề → chương
+  // Gom để xem trước: Lớp · Môn → Chương → chủ đề
   const groups = []
   for (const r of rows) {
     const head = `${gradeLabel(r.grade)} · ${subjectLabel(r.subject)}`
@@ -46,7 +46,7 @@ export default function OutlineImport({ chapters, defaults, onCancel, onDone }) 
       }
       onDone(created.length, fresh[0])
     } catch (e) {
-      setError(`${errMsg(e)}${created.length ? ` (đã tạo được ${created.length} chương trước khi lỗi)` : ''}`)
+      setError(`${errMsg(e)}${created.length ? ` (đã tạo được ${created.length} chủ đề trước khi lỗi)` : ''}`)
       if (created.length) onDone(created.length, null, true)
     } finally {
       setSaving(false)
@@ -66,8 +66,8 @@ export default function OutlineImport({ chapters, defaults, onCancel, onDone }) 
         </button>
       </div>
       <p className="muted small">
-        Dán mục lục chép từ giáo trình hoặc Word. Mỗi dòng một mục: dòng <b>"Lớp 12 · Vật lý"</b> chọn lớp và môn; dòng bắt đầu bằng <b>"Chương", "Chuyên đề", "Phần"</b> là
-        chuyên đề; các dòng có gạch đầu dòng, thụt vào, hoặc bắt đầu bằng <b>"Chủ đề", "Bài"</b> là chương bên trong. Không ghi lớp thì dùng{' '}
+        Dán mục lục chép từ giáo trình hoặc Word. Mỗi dòng một mục: dòng <b>"Lớp 12 · Vật lý"</b> chọn lớp và môn; dòng bắt đầu bằng <b>"Chủ đề", "Chương", "Phần"</b> là
+        chương; các dòng có gạch đầu dòng, thụt vào, hoặc bắt đầu bằng <b>"Chủ đề", "Bài"</b> là chủ đề bên trong. Không ghi lớp thì dùng{' '}
         {gradeLabel(defaults.grade)}, môn {subjectLabel(defaults.subject)}.
       </p>
       <div className="outline-grid">
@@ -94,7 +94,7 @@ export default function OutlineImport({ chapters, defaults, onCancel, onDone }) 
 
         <div className="outline-preview" aria-live="polite">
           <div className="box-label">Xem trước</div>
-          {!rows.length && <p className="muted small">Dán mục lục bên trái để xem cây chương sẽ tạo.</p>}
+          {!rows.length && <p className="muted small">Dán mục lục bên trái để xem cây chủ đề sẽ tạo.</p>}
           {groups.map((g) => (
             <div key={g.head} className="outline-group">
               <div className="outline-head">{g.head}</div>
@@ -131,12 +131,12 @@ export default function OutlineImport({ chapters, defaults, onCancel, onDone }) 
       <div className="row" style={{ marginTop: '0.8rem' }}>
         <button type="button" className="btn btn-primary" onClick={save} disabled={saving || !fresh.length}>
           <Icon name="plus" />
-          {saving ? 'Đang tạo...' : fresh.length ? `Tạo ${fresh.length} chương` : 'Không có chương mới'}
+          {saving ? 'Đang tạo...' : fresh.length ? `Tạo ${fresh.length} chủ đề` : 'Không có chủ đề mới'}
         </button>
         {rows.length > fresh.length && (
           <span className="muted small">
-            {rows.length - fresh.length - skipped > 0 && `${rows.length - fresh.length - skipped} chương đã có sẵn, giữ nguyên. `}
-            {skipped > 0 && `${skipped} chương thiếu lớp, sẽ không tạo.`}
+            {rows.length - fresh.length - skipped > 0 && `${rows.length - fresh.length - skipped} chủ đề đã có sẵn, giữ nguyên. `}
+            {skipped > 0 && `${skipped} chủ đề thiếu lớp, sẽ không tạo.`}
           </span>
         )}
       </div>
