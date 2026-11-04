@@ -70,7 +70,22 @@ export default function AnswerProgress({ exercises, answers, labels }) {
   if (!exercises.length) return null
 
   return (
-    <div ref={selfRef} className={open ? 'answer-progress' : 'answer-progress is-closed'} style={{ top }}>
+    <>
+      <button
+        type="button"
+        className="exam-hint-pill"
+        onClick={() => window.dispatchEvent(new CustomEvent('open-ctx-panel'))}
+        title="Chạm để mở bảng danh sách câu hỏi"
+      >
+        <span className="hint-pill-text">
+          ⚡ Đã làm <strong>{done}</strong>/{exercises.length} câu ({Math.round(pct)}%)
+        </span>
+        <span className="hint-pill-action">
+          Bảng câu hỏi <Icon name="grid" size={13} />
+        </span>
+      </button>
+
+      <div ref={selfRef} className={open ? 'answer-progress' : 'answer-progress is-closed'} style={{ top }}>
       <div className="ap-head">
         <span className="ap-stat ap-done">
           <Icon name="check" size={15} /> Đã làm <strong>{done}</strong>
@@ -103,5 +118,6 @@ export default function AnswerProgress({ exercises, answers, labels }) {
           </p>
         ))}
     </div>
+    </>
   )
 }

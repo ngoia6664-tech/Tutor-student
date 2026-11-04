@@ -131,6 +131,11 @@ export default function Layout() {
     setCtxOpen(false)
   }, [pathname, docked, phone])
   useEffect(() => {
+    const handleOpen = () => setCtxOpen(true)
+    window.addEventListener('open-ctx-panel', handleOpen)
+    return () => window.removeEventListener('open-ctx-panel', handleOpen)
+  }, [])
+  useEffect(() => {
     if (!ctxOpen) return
     // Ngăn kéo phải vừa mở: đưa focus vào nút Đóng (≥ 1360px nút này ẩn nên không có tác dụng)
     /** @type {HTMLElement | null} */ (document.querySelector('#ctx-panel .ctx-close'))?.focus()
@@ -408,6 +413,17 @@ export default function Layout() {
             <div className="topbar-user">
               {!isTutor && !docked && <StreakFlame />}
               {!docked && <NotificationBell />}
+              <button
+                type="button"
+                className="btn btn-ghost theme-toggle ctx-btn-topbar"
+                onClick={() => setCtxOpen((v) => !v)}
+                aria-controls="ctx-panel"
+                aria-expanded={ctxOpen}
+                aria-label="Mở Bảng bên"
+                title="Bảng bên"
+              >
+                <Icon name="grid" size={17} />
+              </button>
             </div>
           </div>
         </header>

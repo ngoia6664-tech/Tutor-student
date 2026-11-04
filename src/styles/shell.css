@@ -745,7 +745,11 @@ body:has(.ctx-card) .ctx-panel {
   body:has(.ctx-card) .ctx-btn-side {
     display: none;
   }
-  /* Trang làm bài: giữ thanh tiến độ hiển thị đồng bộ cả trên màn rộng */
+  /* Trang làm bài: màn rộng có ô số câu ở cột phải cố định nên ẩn cả sticky lẫn dòng mờ */
+  body:has(.ctx-card .qgrid) .answer-progress,
+  body:has(.ctx-card .qgrid) .exam-hint-pill {
+    display: none !important;
+  }
 }
 @keyframes ctx-in {
   from {
@@ -1091,4 +1095,83 @@ body:has(.ctx-card) .ctx-panel {
   .side-backdrop {
     animation: none;
   }
+}
+
+/* Nút mở Bảng bên trên thanh trên cùng (màn < 1360px, cạnh chuông thông báo) */
+.ctx-btn-topbar {
+  display: none;
+}
+@media (max-width: 1359px) {
+  body:has(.ctx-card) .ctx-btn-topbar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+  }
+}
+@media (min-width: 1360px) {
+  .ctx-btn-topbar {
+    display: none !important;
+  }
+}
+
+/* Trang làm bài: ẩn thanh dính cồng kềnh .answer-progress trên mọi màn hình khi có QuestionGrid */
+body:has(.ctx-card .qgrid) .answer-progress {
+  display: none !important;
+}
+
+/* Dòng mờ thông minh (Hint Capsule) ở đầu bài làm thay thế thanh sticky trên màn hẹp */
+.exam-hint-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  margin: 0 0 1rem;
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+.exam-hint-pill:hover {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.22);
+}
+.hint-pill-text {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.hint-pill-text strong {
+  color: var(--primary);
+}
+.hint-pill-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+.exam-hint-pill:hover .hint-pill-action {
+  color: #fff;
+  border-color: var(--primary);
+  background: rgba(168, 85, 247, 0.25);
 }
