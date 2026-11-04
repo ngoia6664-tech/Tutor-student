@@ -5,16 +5,19 @@
   scroll-margin-top: calc(var(--answer-offset, 64px) + 0.75rem);
 }
 
-/* Thanh tiến độ dính dưới header (top do JS đặt = chiều cao header) */
+/* Thanh tiến độ dính dưới header: Luminous Energy Progress & Astral Glass */
 .answer-progress {
   position: sticky;
   z-index: 9;
   margin: 0 0 1rem;
-  padding: 0.55rem 0.8rem 0.6rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-solid);
-  box-shadow: var(--shadow, 0 6px 20px rgba(0, 0, 0, 0.18));
+  padding: 0.65rem 0.9rem 0.7rem;
+  border: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(168, 85, 247, 0.08);
 }
 .ap-head {
   display: flex;
@@ -42,36 +45,83 @@
   min-height: 0;
 }
 .ap-track {
-  height: 4px;
-  margin-top: 0.45rem;
+  position: relative;
+  height: 8px;
+  margin-top: 0.55rem;
   border-radius: 999px;
-  background: var(--surface-2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 .ap-fill {
+  position: relative;
   height: 100%;
-  background: var(--grad);
-  transition: width 0.3s var(--ease);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ec4899 0%, #a855f7 50%, #6366f1 100%);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.6);
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ap-fill.is-ok {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+}
+.ap-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: energy-sweep 2.2s infinite ease-in-out;
+}
+@keyframes energy-sweep {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(200%); }
 }
 .ap-list {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.5rem;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
   max-height: 6.5rem;
   overflow-y: auto;
 }
 .ap-chip {
   min-width: 2.2rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  border: 1px solid var(--warn);
-  background: var(--warn-soft);
-  color: var(--text);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
   font: inherit;
   font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.18s ease;
+}
+.ap-chip:hover {
+  background: rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+.ap-chip.is-wrong {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+.ap-chip.is-wrong:hover {
+  background: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+}
+.ap-chip.is-noted {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+}
+.ap-chip.is-noted:hover {
+  background: rgba(168, 85, 247, 0.25);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
 }
 .ap-chip:hover {
   border-color: var(--primary);
