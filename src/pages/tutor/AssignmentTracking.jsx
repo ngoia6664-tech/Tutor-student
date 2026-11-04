@@ -8,7 +8,7 @@ import { errMsg } from '../../lib/errors.js'
 import { formatDate, formatDateTime, formatScore } from '../../lib/format.js'
 import { autoSummary, deleteAssignment, fetchAssignmentFull, removeSubmissionFiles } from '../../lib/assignments.js'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
-import { loadSubmissionImages } from '../../lib/submissions.js'
+import { loadSubmissionImages, SUBMISSIONS_CHANGED } from '../../lib/submissions.js'
 import { studentLabel } from '../../lib/students.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
@@ -23,7 +23,7 @@ import { NOTE_LABEL, saveAnswerNotes } from '../../lib/answerNotes.js'
 import { PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
 import { examStructure, examSummary, groupExercises, minutesUsed, questionLabels, viNum } from '../../lib/exam.js'
 import { retryScore } from '../../lib/retries.js'
-import { toggleGradeDock, useGradeDockOpen, useGradingMode } from '../../lib/gradeDock.js'
+import ContextPanel from '../../components/ContextPanel.jsx'
 import ListLink, { RESTORE } from '../../components/ListLink.jsx'
 import { listUrl } from '../../lib/navMemory.js'
 
@@ -44,8 +44,6 @@ export default function AssignmentTracking() {
   const cardRef = useRef(null)
 
   const { data, loading, error, reload } = useAsync(() => fetchAssignmentFull(id), [id])
-  // Có học sinh để chấm: bấm gấu = ẩn / hiện Sổ chấm bài, gấu im lặng (lib/gradeDock.js)
-  useGradingMode(!!data?.recipients.length)
 
   // Khi tải lại sau lúc chấm, giữ dữ liệu cũ trên màn hình thay vì hiện loading
   if (loading && !data) return <Loading />
@@ -136,7 +134,7 @@ export default function AssignmentTracking() {
         </div>
       ) : (
         <>
-          <GradeDock list={sorted} currentId={current.student_id} onPick={pick} />
+          <StudentListPanel list={sorted} currentId={current.student_id} onPick={pick} />
           <div ref={cardRef} className="grade-card">
             <GradeCard
               key={current.student_id}
@@ -163,59 +161,46 @@ export default function AssignmentTracking() {
   )
 }
 
-// ----- Sổ chấm bài: bảng đen nhỏ nổi ở góc phải, ngay trên gấu (cùng kiểu bảng đen gấu giảng bài) -----
+// ----- Cột phải: danh sách học sinh của bài (thay Sổ chấm bài nổi cạnh gấu) -----
 const STATUS_TEXT = { todo: 'chưa nộp', done: 'chờ chấm', checked: 'đã chấm' }
 
-// Sổ gọn: mỗi dòng = chấm màu trạng thái + tên + điểm (nếu đã chấm); bấm tên là chuyển sang bài bạn đó.
-// Ẩn / hiện bằng cách bấm gấu (Mascot) hoặc nút ở đầu sổ; trạng thái mở dùng chung qua lib/gradeDock.js
-function GradeDock({ list, currentId, onPick }) {
-  const open = useGradeDockOpen()
+// Mỗi dòng = chấm màu trạng thái + tên + điểm (nếu đã chấm); bấm tên là chuyển sang bài bạn đó.
+function StudentListPanel({ list, currentId, onPick }) {
   const listRef = useRef(null)
   const waiting = list.filter((r) => r.status === 'done').length
 
-  // Bạn đang chấm luôn nằm giữa danh sách (chỉ cuộn trong sổ, không kéo cả trang)
+  // Bạn đang chấm luôn nằm giữa danh sách (chỉ cuộn trong thẻ, không kéo cả trang)
   useEffect(() => {
     const box = listRef.current
     const row = box?.querySelector('.gd-row.active')
     if (row) box.scrollTop = row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2
-  }, [open, currentId])
+  }, [currentId])
 
-  // Portal ra <body>: khung trang có animation transform làm position: fixed neo theo khung thay vì màn hình
-  return createPortal(
-    <aside className={open ? 'grade-dock is-open' : 'grade-dock'} aria-label="Sổ chấm bài: chọn học sinh">
-      <div className="gd-head">
-        <span className="gd-title">Sổ chấm bài</span>
-        <span className="gd-count">{waiting ? `${waiting} chờ chấm` : 'hết bài chờ'}</span>
-        <button type="button" className="gd-toggle" onClick={toggleGradeDock} aria-expanded={open} title="Bấm gấu cũng ẩn / hiện sổ được">
-          {open ? 'Ẩn' : 'Hiện'}
-        </button>
-      </div>
-
-      {open && (
-        <ul ref={listRef} className="gd-list">
-          {list.map((r) => {
-            const active = r.student_id === currentId
-            return (
-              <li key={r.student_id}>
-                <button
-                  type="button"
-                  className={active ? 'gd-row active' : 'gd-row'}
-                  aria-current={active || undefined}
-                  title={`${studentLabel(r.student)} · ${STATUS_TEXT[r.status]}`}
-                  onClick={() => onPick(r)}
-                >
-                  <span className={`gd-dot is-${r.status}`} aria-hidden="true" />
-                  <span className="gd-name">{r.student?.full_name || '(đã xóa)'}</span>
-                  <span className="sr-only">, {STATUS_TEXT[r.status]}</span>
-                  {r.status === 'checked' && r.score != null && <span className="gd-score">{formatScore(r.score)}</span>}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </aside>,
-    document.body
+  return (
+    <ContextPanel title="Học sinh của bài" icon="users">
+      <p className="small ctx-note">{waiting ? `${waiting} chờ chấm` : 'Hết bài chờ chấm'} · {list.length} học sinh</p>
+      <ul ref={listRef} className="gd-list">
+        {list.map((r) => {
+          const active = r.student_id === currentId
+          return (
+            <li key={r.student_id}>
+              <button
+                type="button"
+                className={active ? 'gd-row active' : 'gd-row'}
+                aria-current={active || undefined}
+                title={`${studentLabel(r.student)} · ${STATUS_TEXT[r.status]}`}
+                onClick={() => onPick(r)}
+              >
+                <span className={`gd-dot is-${r.status}`} aria-hidden="true" />
+                <span className="gd-name">{r.student?.full_name || '(đã xóa)'}</span>
+                <span className="sr-only">, {STATUS_TEXT[r.status]}</span>
+                {r.status === 'checked' && r.score != null && <span className="gd-score">{formatScore(r.score)}</span>}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </ContextPanel>
   )
 }
 
@@ -229,7 +214,7 @@ const AnswerSheet = memo(function AnswerSheet({ exercises, answers, studentId, i
   const groups = useMemo(() => groupExercises(exercises, isExam), [exercises, isExam])
   return (
     <div className="answer-sheet">
-      {submitted && <ResultProgress exercises={exercises} answers={answers} labels={labels} notes={notes} idPrefix="g-" />}
+      {submitted && <ResultProgress exercises={exercises} answers={answers} labels={labels} notes={notes} idPrefix="g-" panel />}
       <div className="row" style={{ marginBottom: '0.5rem' }}>
         <button type="button" className="btn btn-small btn-ghost" onClick={() => setShowKey((v) => !v)} aria-pressed={showKey}>
           <Icon name="eye" />
@@ -371,6 +356,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, notes: sav
           .eq('student_id', rec.student_id)
       )
       setSaved(true)
+      window.dispatchEvent(new Event(SUBMISSIONS_CHANGED))
       onChanged()
     } catch (err) {
       setError(errMsg(err))
@@ -403,6 +389,7 @@ function GradeCard({ rec, exercises, isExam, limit, answers, retries, notes: sav
           .eq('student_id', rec.student_id)
       )
       notifyDone({ title: 'Đã mở lại bài', say: 'Học sinh đã có thể sửa và nộp lại bài rồi ✍️' })
+      window.dispatchEvent(new Event(SUBMISSIONS_CHANGED))
       onChanged()
     } catch (err) {
       setError(errMsg(err))

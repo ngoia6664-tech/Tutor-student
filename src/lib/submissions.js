@@ -16,3 +16,6 @@ export async function loadSubmissionImages(folder) {
   const signed = unwrap(await supabase.storage.from(SUBMISSION_BUCKET).createSignedUrls(paths, 3600))
   return signed.filter((s) => s.signedUrl).map((s) => ({ path: s.path, url: s.signedUrl }))
 }
+
+// Sự kiện báo bài nộp vừa đổi trạng thái (chấm xong / cho nộp lại): chuông + cột phải gia sư tải lại
+export const SUBMISSIONS_CHANGED = 'submissions-changed'

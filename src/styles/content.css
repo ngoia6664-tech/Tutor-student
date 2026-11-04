@@ -509,11 +509,23 @@ table.table {
 .sticky-actions {
   position: sticky;
   bottom: 0;
-  background: linear-gradient(to top, var(--bg) 70%, transparent);
-  padding: 0.75rem 0 0.5rem;
+  z-index: 5;
+  /* Viên thuốc nổi: không còn dải nền tối ngang trang đè lên nội dung; chỉ nút / thông báo bên trong nhận bấm */
+  padding: 0.5rem 0 0.75rem;
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  pointer-events: none;
+}
+.sticky-actions > * {
+  pointer-events: auto;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+/* Khung cố định (≥ 1024px): .page-body chừa 7rem đáy nên sticky dừng cao hơn đáy; kéo xuống sát đáy khung nhìn */
+@media (min-width: 1024px) {
+  :root[data-shell] .sticky-actions {
+    bottom: -6.25rem;
+  }
 }
 details > summary {
   cursor: pointer;

@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
-import { useAsync } from '../lib/useAsync.js'
+import { useAsync, useReloadOn } from '../lib/useAsync.js'
+import { SUBMISSIONS_CHANGED } from '../lib/submissions.js'
 import ContextPanel from './ContextPanel.jsx'
 import { timeAgo } from './NotificationBell.jsx'
 
 const LIMIT = 8
+const EVENTS = [SUBMISSIONS_CHANGED]
 
 // Cột phải trang Chấm bài (gia sư): mọi bài học sinh đã nộp mà chưa chấm (status 'done'), nộp sớm nhất lên trước
 // để chấm theo thứ tự đến. Bấm một dòng mở thẳng bài của bạn đó ở trang chấm (?hs=). Thay khối mặc định (`replace`).
 export default function GradeQueuePanel() {
-  const { data, loading, error } = useAsync(async () => {
+  const { data, loading, error, reload } = useAsync(async () => {
     const { data: rows, count, error } = await supabase
       .from('assignment_recipients')
       .select('student_id, submitted_at, student:profiles(full_name), assignment:assignments(id, title)', { count: 'exact' })
@@ -19,6 +21,7 @@ export default function GradeQueuePanel() {
     if (error) throw error
     return { rows: (rows || []).filter((r) => r.assignment), total: count ?? rows?.length ?? 0 }
   }, [])
+  useReloadOn(reload, EVENTS)
 
   return (
     <ContextPanel title="Hàng đợi chấm" icon="grade" replace>

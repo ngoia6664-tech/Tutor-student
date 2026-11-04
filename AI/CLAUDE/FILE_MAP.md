@@ -152,7 +152,6 @@
 - `feedback.js` — Góp ý của người dùng (bảng feedback). Học sinh gửi, gia
 - `files.js` — Bỏ dấu tiếng Việt và ký tự lạ để làm key Storage an
 - `format.js` — `matchTitle` (ô tìm theo tên, không dấu) + Parse 'YYYY-MM-DD' theo giờ địa phương (tránh lệch ngày do
-- `gradeDock.js` — "Đang chấm bài": trang theo dõi / chấm một bài tập đang m
 - `importJson.js` — Phân tích JSON bài giảng / bài tập soạn sẵn ở bên ngoà
 - `importTutorLesson.js` — Chuyển file định dạng "tutor-lesson/v1" (lý thuyết + trắc
 - `lessons.js` — Tải file đính kèm lên Storage, trả về đường dẫn
