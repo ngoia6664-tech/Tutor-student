@@ -258,37 +258,6 @@
   color: var(--on-primary);
 }
 
-/* --- Điểm máy chấm theo thang THPT --- */
-.exam-score-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-weight: 700;
-}
-.exam-score-total {
-  font-size: 2rem;
-  font-weight: 800;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.exam-score-total .muted {
-  -webkit-text-fill-color: var(--muted);
-  font-size: 1rem;
-}
-.exam-score-parts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.6rem;
-}
-.exam-score-part {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
 .exam-mini {
   display: flex;
   flex-wrap: wrap;

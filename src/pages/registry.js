@@ -2,6 +2,10 @@ import { lazy } from 'react'
 
 // Mỗi trang là một file JS riêng, chỉ tải khi cần (mở app nhanh trên điện thoại).
 const loaders = {
+  // Dùng chung cho cả hai vai trò; ít mở nên không tải sẵn
+  shared: {
+    Help: () => import('./Help.jsx'),
+  },
   student: {
     StudentHome: () => import('./student/StudentHome.jsx'),
     StudentShop: () => import('./student/StudentShop.jsx'),

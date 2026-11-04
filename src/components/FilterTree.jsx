@@ -68,6 +68,7 @@ function makeUrl(pathname, { lop, mon, cd, ch }) {
  * - showCount: hiện số bài (xám) cạnh mỗi chủ đề
  * - nowId: chủ đề học sinh đang học → 📍 trên lá + chương chứa nó, chưa chọn gì thì mở sẵn nhánh đó
  */
+/** @param {{ chapters: any[], items: any[], countIf?: any, badgeIf?: any, showCount?: boolean, nowId?: any, icon?: any, gradeTabs?: boolean, hideEmpty?: boolean, title: string, noneLabel?: string, storageKey: string }} props */
 export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chủ đề', storageKey }) {
   const { pathname } = useLocation()
   const sel = useTreeSelection()

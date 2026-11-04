@@ -18,6 +18,7 @@ export async function submitRetry(assignmentId, answers) {
 }
 
 // Điểm ngắn gọn của một lần làm lại: đề thi "7,5/10", bài thường "7/10 câu đúng"
+// Phía học sinh luôn truyền isExam = false: chỉ hiện số câu đúng, không hiện điểm máy
 export function retryScore(r, isExam) {
   const max = Number(r.max_points)
   if (isExam && max > 0) return `${viNum(max === 10 ? r.points : (Number(r.points) / max) * 10)}/10`

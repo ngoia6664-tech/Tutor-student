@@ -11,6 +11,7 @@
 - `src/` — mã ứng dụng (danh sách dưới)
 
 ## `src/pages/`
+- `Help.jsx` — Trang Hỏi đáp (/student/help, /tutor/help; nút trong thanh bên / ngăn kéo): ô tìm + nhóm câu hỏi gập mở, theo vai trò; CSS `styles/help.css`
 - `ConfigError.jsx` — Hiện khi thiếu biến môi trường Supabase (thay vì trang tr�
 - `Login.jsx` — Đã đăng nhập: chuyển thẳng tới trang theo vai trò
 - `NotFound.jsx` — Trang 404 (đường dẫn không tồn tại)
@@ -151,6 +152,7 @@
 - `exam.js` — Đề thi chấm theo thang THPT (môn Vật lý):
 - `feedback.js` — Góp ý của người dùng (bảng feedback). Học sinh gửi, gia
 - `files.js` — Bỏ dấu tiếng Việt và ký tự lạ để làm key Storage an
+- `help/student.js`, `help/tutor.js` — Nội dung Hỏi đáp từng vai trò (Markdown); luồng trong app đổi thì sửa theo. `help/filter.js` — `filterHelp` lọc theo từ khóa (có test)
 - `format.js` — `matchTitle` (ô tìm theo tên, không dấu) + Parse 'YYYY-MM-DD' theo giờ địa phương (tránh lệch ngày do
 - `importJson.js` — Phân tích JSON bài giảng / bài tập soạn sẵn ở bên ngoà
 - `importTutorLesson.js` — Chuyển file định dạng "tutor-lesson/v1" (lý thuyết + trắc
@@ -202,6 +204,7 @@
 - `flight.css` — Giao diện bay tự do (components/telescope/FreeFlight.jsx)
 - `warp.css` — Hiệu ứng du hành giữa các địa điểm (components/telescope/WarpTravel.jsx)
 - `feedback.css` — Góp ý (components/FeedbackButton.jsx, trang gia sư pages/tutor/Tuto
+- `help.css` — Hỏi đáp (pages/Help.jsx)
 - `grading.css` — Chấm bài (pages/tutor/AssignmentTracking.jsx)
 - `icons.css` — Icon
 - `layout.css` — Khung trang

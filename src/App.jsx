@@ -25,6 +25,7 @@ const {
   TutorFeedback,
   TutorLessonView,
   LessonEditor,
+  Help,
 } = Pages
 
 // /tutor/chapters(/:id) → /tutor/library(/:id), giữ nguyên ?lop=&mon=&cd=
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="import" element={<ImportJson />} />
         <Route path="reports" element={<TutorReports />} />
         <Route path="feedback" element={<TutorFeedback />} />
+        <Route path="help" element={<Help />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 
@@ -88,6 +90,7 @@ export default function App() {
         <Route path="library/:id?" element={<StudentLibrary />} />
         <Route path="lessons" element={<Navigate to="/student/library" replace />} />
         <Route path="lessons/:id" element={<StudentLesson />} />
+        <Route path="help" element={<Help />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

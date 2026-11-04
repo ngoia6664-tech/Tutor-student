@@ -1,4 +1,3 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -14,7 +13,6 @@ import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../c
 import Icon from '../../components/Icon.jsx'
 import CustomSelect from '../../components/CustomSelect.jsx'
 import ScoreChart from '../../components/ScoreChart.jsx'
-import { machineSummary } from '../../lib/studentReport.js'
 import { toPoints } from '../../lib/scoreChart.js'
 import ResultsTrendPanel from '../../components/ResultsTrendPanel.jsx'
 
@@ -29,11 +27,11 @@ export default function StudentResults() {
   const [sortBy, setSortBy] = useState('recent') // 'recent' | 'score_desc' | 'score_asc'
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [rows, chapters, retries, answers] = await Promise.all([
+    const [rows, chapters, retries] = await Promise.all([
       supabase
         .from('assignment_recipients')
         .select(
-          'status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title), exercises(id, kind))',
+          'status, submitted_at, score, feedback, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title))',
         )
         .eq('student_id', profile.id)
         .in('status', ['done', 'checked'])
@@ -41,12 +39,10 @@ export default function StudentResults() {
         .then(unwrap),
       fetchStudentChapters(profile.grade ?? null),
       loadRetries({ student_id: profile.id }),
-      // Điểm máy chấm từng câu: để biểu đồ có điểm cho bài chấm máy hoàn toàn khi gia sư chưa chấm
-      supabase.from('submission_answers').select('exercise_id, is_correct, points').eq('student_id', profile.id).then(unwrap),
     ])
     const retriesOf = {}
     for (const r of retries) (retriesOf[r.assignment_id] ??= []).push(r)
-    const ansByExercise = Object.fromEntries(answers.map((a) => [a.exercise_id, a]))
+    // Không có điểm máy: xu hướng điểm của học sinh chỉ tính bài gia sư đã lưu chấm
     return {
       list: rows
         .filter((r) => r.assignment)
@@ -54,7 +50,6 @@ export default function StudentResults() {
           ...r,
           chapter_id: r.assignment.chapter_id,
           retries: retriesOf[r.assignment.id] || [],
-          machine: machineSummary(r.assignment, r.assignment.exercises || [], ansByExercise),
         })),
       chapters,
     }
@@ -259,7 +254,7 @@ export default function StudentResults() {
                   </p>
                 )}
                 {r.retries.length > 0 && (
-                  <p className="retry-line">↻ Làm lại: {r.retries.map((t) => `lần ${t.attempt_no} ${retryScore(t, r.assignment.is_exam)}`).join(' · ')}</p>
+                  <p className="retry-line">↻ Làm lại: {r.retries.map((t) => `lần ${t.attempt_no} ${retryScore(t, false)}`).join(' · ')}</p>
                 )}
               </Link>
             ))}

@@ -1602,8 +1602,8 @@ begin
 end;
 $$;
 
--- Điểm chính thức (thang 10) của bài: điểm gia sư chấm → điểm máy khi cả bài chấm máy → null (chờ chấm).
--- Giống pointScore() ở lib/scoreChart.js. Lúc "done" bỏ qua cột score (có thể là điểm của lần nộp trước khi được mở lại).
+-- Điểm chính thức (thang 10) của bài: CHỈ điểm gia sư đã Lưu chấm (status 'checked' có score); còn lại null (chưa thưởng).
+-- Điểm máy không bao giờ được thưởng, kể cả bài chấm máy hoàn toàn. Lúc "done" bỏ qua cột score (có thể là điểm của lần nộp trước khi được mở lại).
 create or replace function public.econ_official_score(p_aid uuid, p_sid uuid)
 returns numeric
 language plpgsql
@@ -1614,42 +1614,13 @@ as $$
 declare
   v_status text;
   v_score numeric;
-  v_exam boolean;
-  v_total int;
-  v_auto int;
-  v_max numeric;
-  v_got numeric;
-  v_correct int;
 begin
   select status, score into v_status, v_score
     from assignment_recipients where assignment_id = p_aid and student_id = p_sid;
-  if v_status is null or v_status not in ('done', 'checked') then
-    return null;
-  end if;
-  if v_status = 'checked' and v_score is not null then
+  if v_status = 'checked' then
     return v_score;
   end if;
-  select is_exam into v_exam from assignments where id = p_aid;
-  select count(*),
-         count(*) filter (where kind in ('mcq', 'fill_blank', 'true_false', 'short')),
-         coalesce(sum(case when kind in ('mcq', 'short') then 0.25 when kind = 'true_false' then 1 else 0 end), 0)
-    into v_total, v_auto, v_max
-    from exercises where assignment_id = p_aid;
-  if v_total = 0 or v_auto < v_total then
-    return null;   -- có câu tự luận: chờ gia sư chấm
-  end if;
-  if v_exam then
-    if v_max = 0 then
-      return null;
-    end if;
-    select coalesce(sum(sa.points), 0) into v_got
-      from submission_answers sa join exercises e on e.id = sa.exercise_id
-     where sa.assignment_id = p_aid and sa.student_id = p_sid and e.kind in ('mcq', 'short', 'true_false');
-    return round(v_got / v_max * 10, 2);
-  end if;
-  select count(*) into v_correct
-    from submission_answers where assignment_id = p_aid and student_id = p_sid and is_correct = true;
-  return round(v_correct::numeric / v_auto * 10, 2);
+  return null;
 end;
 $$;
 

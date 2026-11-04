@@ -1,4 +1,3 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { Fragment, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useParams } from 'react-router-dom'
@@ -7,7 +6,7 @@ import { useAsync } from '../../lib/useAsync.js'
 import { formatDate, formatDateTime, formatScore } from '../../lib/format.js'
 import { loadSubmissionImages } from '../../lib/submissions.js'
 import { autoSummary } from '../../lib/assignments.js'
-import { clockText, examSummary, groupExercises, minutesUsed, questionLabels, viNum } from '../../lib/exam.js'
+import { clockText, groupExercises, minutesUsed, questionLabels } from '../../lib/exam.js'
 import { loadMarks } from '../../lib/marks.js'
 import { loadRetries, MAX_RETRIES, retryScore, submitRetry } from '../../lib/retries.js'
 import { errMsg } from '../../lib/errors.js'
@@ -22,7 +21,7 @@ import { notifyDone } from '../../lib/dialog.js'
 import { UNLOCK_PRAISE, useStudyLock } from '../../lib/studyLock.js'
 import { setStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
-import { ExamNav, ExamScoreCard, PartHeading, PointsBadge } from '../../components/ExamParts.jsx'
+import { ExamNav, PartHeading } from '../../components/ExamParts.jsx'
 import SubmitPanel from './SubmitPanel.jsx'
 import ReportQuestion from '../../components/ReportQuestion.jsx'
 import MarkHard from '../../components/MarkHard.jsx'
@@ -380,7 +379,7 @@ function TimerBar({ remaining, total }) {
 }
 
 // Đã nộp: kết quả tự chấm, đáp án, phương pháp giải, điểm của gia sư
-// view: 0 = lần nộp chính thức, n = lần làm lại thứ n (chỉ đổi câu trả lời / điểm máy chấm đang hiện)
+// view: 0 = lần nộp chính thức, n = lần làm lại thứ n (chỉ đổi câu trả lời / số câu đúng đang hiện)
 function ReviewView({ data, studentId, view, setView, onRetry }) {
   const { rec, assignment: a, exercises, keys, images, retries } = data
   const isExam = !!a.is_exam
@@ -425,26 +424,17 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
           Đang xem <strong>lần làm lại {attempt.attempt_no}</strong> (nộp lúc {formatDateTime(attempt.submitted_at)}). Điểm chính thức vẫn là lần nộp đầu.
         </div>
       )}
-      {isExam ? (
-        <ExamScoreCard exercises={exercises} answers={answers} title={attempt ? `Lần làm lại ${attempt.attempt_no} – máy chấm (thang THPT)` : undefined}>
-          {!attempt && rec.status === 'done' && (
-            <p className="muted small" style={{ margin: '0.5rem 0 0' }}>
-              Đây là điểm máy chấm. Điểm chính thức do gia sư xác nhận.
-            </p>
-          )}
-        </ExamScoreCard>
-      ) : (
-        sum.autoTotal > 0 && (
-          <div className="card auto-score">
-            <span className="auto-score-num">
-              {sum.correct}/{sum.autoTotal}
-            </span>
-            <span>câu đúng, máy chấm phần trắc nghiệm và điền khuyết</span>
-            <span className="muted small" style={{ flexBasis: '100%' }}>
-              Ý điền khuyết viết khác đáp án nhưng vẫn đúng nghĩa sẽ được gia sư xem lại.
-            </span>
-          </div>
-        )
+      {/* Học sinh chỉ thấy số câu đúng, không thấy điểm máy cả bài: điểm chỉ hiện khi gia sư đã lưu chấm */}
+      {sum.autoTotal > 0 && (
+        <div className="card auto-score">
+          <span className="auto-score-num">
+            {sum.correct}/{sum.autoTotal}
+          </span>
+          <span>câu đúng, máy chấm phần trắc nghiệm và điền khuyết</span>
+          <span className="muted small" style={{ flexBasis: '100%' }}>
+            Ý điền khuyết viết khác đáp án nhưng vẫn đúng nghĩa sẽ được gia sư xem lại.
+          </span>
+        </div>
       )}
 
       <div className="card">
@@ -459,14 +449,8 @@ function ReviewView({ data, studentId, view, setView, onRetry }) {
                 <div key={ex.id} className="question" id={`q-${ex.id}`}>
                   <div className="question-label">
                     Câu {no} {!isExam && <span className="badge">{KIND_LABEL[ex.kind]}</span>}
-                    {isExam ? (
-                      <PointsBadge ex={ex} answer={mine} />
-                    ) : (
-                      <>
-                        {mine?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
-                        {mine?.is_correct === false && <span className="badge badge-danger">Sai</span>}
-                      </>
-                    )}
+                    {mine?.is_correct === true && <span className="badge badge-ok">Đúng</span>}
+                    {mine?.is_correct === false && <span className="badge badge-danger">Sai</span>}
                     <MarkHard exerciseId={ex.id} studentId={studentId} marked={data.marks.has(ex.id)} hasNote={!!data.marks.get(ex.id)} onChange={(on) => syncMark(data.marks, ex.id, on)} />
                     <ReportQuestion exerciseId={ex.id} report={data.reports[ex.id]} />
                   </div>
@@ -515,14 +499,11 @@ function TeacherNote({ note }) {
 
 // Lần nộp chính thức (nổi bật) + các lần làm lại (nhỏ, nhạt); bấm để xem lại từng lần. Nút làm lại tối đa 3 lần.
 function RetryCard({ data, view, setView, onRetry }) {
-  const { rec, assignment: a, exercises, retries } = data
-  const isExam = !!a.is_exam
+  const { rec, exercises, retries } = data
   const left = MAX_RETRIES - retries.length
-  const exam = isExam ? examSummary(exercises, data.answers) : null
   const auto = autoSummary(exercises, data.answers)
   let official
   if (rec.status === 'checked' && rec.score !== null) official = `${formatScore(rec.score)} điểm`
-  else if (exam?.parts.length) official = `${viNum(exam.max === 10 ? exam.got : exam.score10)}/10`
   else official = auto.autoTotal ? `${auto.correct}/${auto.autoTotal} câu đúng` : 'chờ gia sư chấm'
   return (
     <div className="card">
@@ -542,7 +523,7 @@ function RetryCard({ data, view, setView, onRetry }) {
             onClick={() => setView(r.attempt_no)}
             title={`Nộp lúc ${formatDateTime(r.submitted_at)}`}
           >
-            Lần {r.attempt_no}: {retryScore(r, isExam)}
+            Lần {r.attempt_no}: {retryScore(r, false)}
           </button>
         ))}
       </div>

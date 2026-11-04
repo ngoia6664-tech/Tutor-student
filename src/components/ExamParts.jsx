@@ -1,5 +1,5 @@
 import Icon from './Icon.jsx'
-import { EXAM_MINUTES, examSummary, maxPoints, viNum } from '../lib/exam.js'
+import { EXAM_MINUTES, maxPoints, viNum } from '../lib/exam.js'
 import { isAnswered } from './ExerciseBody.jsx'
 
 // Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm nhiều phương án lựa chọn" + cách tính điểm
@@ -49,44 +49,6 @@ export function ExamNav({ groups, answers }) {
           </div>
         </div>
       ))}
-    </div>
-  )
-}
-
-// Điểm máy chấm của đề thi, chia theo phần. answers: { exercise_id: { points } }
-export function ExamScoreCard({ exercises, answers, title = 'Điểm máy chấm (thang THPT)', children }) {
-  const sum = examSummary(exercises, answers)
-  if (!sum.parts.length) return null
-  const standard = sum.max === 10
-  return (
-    <div className="card exam-score">
-      <div className="exam-score-head">
-        <span>{title}</span>
-        <span className="exam-score-total">
-          {viNum(standard ? sum.got : sum.score10)}
-          <span className="muted"> / 10</span>
-        </span>
-      </div>
-      <div className="exam-score-parts">
-        {sum.parts.map((p) => (
-          <div key={p.part.kind} className="exam-score-part">
-            <span className="muted small">Phần {p.part.roman}</span>
-            <strong>
-              {viNum(p.got)}
-              <span className="muted"> / {viNum(p.max)}</span>
-            </strong>
-            <div className="progress">
-              <div className="progress-bar" style={{ width: `${p.max ? (p.got / p.max) * 100 : 0}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      {!standard && (
-        <p className="muted small" style={{ margin: '0.5rem 0 0' }}>
-          Đề có {viNum(sum.max)} điểm máy chấm (không đúng chuẩn 18 – 4 – 6): đạt {viNum(sum.got)}/{viNum(sum.max)}, quy về thang 10 là {viNum(sum.score10)}.
-        </p>
-      )}
-      {children}
     </div>
   )
 }

@@ -41,7 +41,10 @@ Lớp › Môn › **Chương** › **Chủ đề** › bài giảng / bài tậ
 - Khung điều hướng (`styles/shell.css`): thanh bên chung gia sư + học sinh (màn ≥ 1024px: khung cố định, nội dung + cột phải tự cuộn, dùng `lib/scroller.js` thay window.scrollTo), học sinh điện thoại: viên thuốc nổi `.dock-tab`, cột phải luôn có khối mặc định theo vai trò (TutorTodoPanel / StudentTodayPanel); trang thêm khối riêng bằng `<ContextPanel title>` (`replace` để thay khối mặc định, xem QuestionGrid). Khối cột phải chỉ tóm tắt + lối tắt (≤ 3–5 dòng), danh sách đầy đủ để ở trang chính.
 - Loại câu hỏi: tự luận, trắc nghiệm, điền khuyết, đúng/sai (4 ý), trả lời ngắn.
 
+- Hỏi đáp: `pages/Help.jsx` + nội dung `lib/help/{student,tutor}.js`. Sửa luồng / nhãn nút mà FAQ có nhắc thì sửa cả nội dung.
+
 ## Quy ước
+- Học sinh không thấy điểm máy cả bài (đề thi "x/10", biểu đồ): chỉ thấy số câu đúng / sai và điểm gia sư đã lưu chấm.
 - KHÔNG dùng `window.confirm`/`alert` — dùng `lib/dialog.js` (`askConfirm`, `notifyDone`, `notifyError`, `confirmDelete`...).
 - Truy vấn trong một trang: gom `Promise.all`, tránh `await` nối tiếp.
 - Danh sách nặng: tách component `memo` + `useCallback`; `Markdown` đã `memo`.

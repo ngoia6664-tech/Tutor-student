@@ -37,6 +37,7 @@ const ddmm = (d) => {
 // Trang gia sư truyền thêm chapterById + chapter/onChapter (chủ đề đang lọc, giữ ở trang cha để lọc cả danh sách bài)
 // + chapterLink(id) + backState ({ backTo, backLabel } cho nút quay về trong Thư viện)
 // → hiện cây "Điểm theo chủ đề" theo bộ lọc loại bài / thời gian; bấm chủ đề = lọc tại chỗ.
+/** @param {{ points: any[], voice?: string, quiet?: boolean, chapterById?: any, chapter?: any, onChapter?: any, chapterLink?: any, backState?: any }} props */
 export default function ScoreChart({ points, voice = 'student', quiet = false, chapterById, chapter = null, onChapter, chapterLink, backState }) {
   const [kind, setKind] = useState('all')
   const [range, setRange] = useState('90')

@@ -8,6 +8,7 @@ import Markdown from './Markdown.jsx'
 // value: câu trả lời { choice } | { blanks: {a: ...} } | { tf: {a: true, ...} } | { text }
 // correct: đáp án máy chấm (chỉ có sau khi nộp, hoặc với gia sư)
 // photoHint: câu tự luận gợi ý "có thể chụp ảnh bài làm" (tắt ở luồng không đính ảnh: làm lại, Ôn tập)
+/** @param {{ ex: any, mode: string, value?: any, onChange?: any, correct?: any, name?: string, photoHint?: boolean }} props */
 export default function ExerciseBody({ ex, mode, value, onChange, correct, name, photoHint = true }) {
   const readOnly = mode !== 'answer'
 
