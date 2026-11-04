@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { useNotifications } from '../contexts/NotificationsContext.jsx'
@@ -32,12 +32,7 @@ export default function NotificationBell({ variant = 'top' }) {
 
   // Đổi trang thì đóng bảng
   useEffect(() => setOpen(false), [pathname])
-  useEffect(() => {
-    if (!open) return
-    const close = () => setOpen(false)
-    window.addEventListener('resize', close)
-    return () => window.removeEventListener('resize', close)
-  }, [open])
+
 
   // Bấm ra ngoài hoặc Esc thì đóng
   useEffect(() => {
@@ -54,18 +49,93 @@ export default function NotificationBell({ variant = 'top' }) {
 
   if (!enabled) return null
 
+    function getPanelPos() {
+    if (!box.current) return null
+    const r = box.current.getBoundingClientRect()
+    const margin = 16
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+
+    // Đo kích thước panel nếu đã render hoặc ước tính ban đầu
+    const panelW = panel.current?.offsetWidth || Math.min(360, vw - margin * 2)
+    const panelH = panel.current?.offsetHeight || 420
+    const maxH = Math.min(540, vh - margin * 2)
+
+    if (side && vw > 560) {
+      // Bên cạnh thanh bên (desktop)
+      let left = r.right + 10
+      if (left + panelW > vw - margin) {
+        left = Math.max(margin, vw - margin - panelW)
+      }
+
+      // Ưu tiên mở lên trên nếu nút ở nửa dưới màn hình, mở xuống dưới nếu nút ở nửa trên
+      let top = r.top > vh / 2 ? r.bottom - panelH : r.top
+      // Giới hạn an toàn tuyệt đối: không bao giờ tràn mép trên (< margin) hoặc tràn mép dưới (> vh - margin - panelH)
+      top = Math.max(margin, Math.min(top, vh - margin - panelH))
+
+      return {
+        left,
+        top,
+        bottom: 'auto',
+        right: 'auto',
+        maxHeight: maxH,
+      }
+    }
+
+    if (vw <= 560) {
+      // Màn hình hẹp điện thoại
+      const top = Math.max(margin, Math.min(r.bottom + 8, vh - margin - 200))
+      return {
+        top,
+        left: margin,
+        right: margin,
+        width: 'auto',
+        maxHeight: Math.max(180, vh - top - margin),
+      }
+    }
+
+    // Nút chuông thanh trên cùng (desktop/tablet)
+    let top = r.bottom + 8
+    let right = Math.max(margin, vw - r.right)
+    if (top + panelH > vh - margin) {
+      if (r.top - panelH > margin) {
+        top = r.top - panelH - 8
+      } else {
+        top = Math.max(margin, vh - margin - panelH)
+      }
+    }
+
+    return {
+      top,
+      right,
+      left: 'auto',
+      bottom: 'auto',
+      maxHeight: maxH,
+    }
+  }
+
   function toggle() {
     if (!open) {
-      const r = box.current.getBoundingClientRect()
-      // Điện thoại: bảng trải ngang màn hình (CSS lo); máy tính: canh mép phải với nút chuông
-      if (side && window.innerWidth > 560) setPos({ left: r.right + 8, bottom: Math.max(8, window.innerHeight - r.bottom) })
-      else setPos(window.innerWidth <= 560 ? { top: r.bottom + 8 } : { top: r.bottom + 8, right: window.innerWidth - r.right })
-      // Mở chuông = đã xem: số trên chuông về 0, nhưng bài mới vẫn được tô trong lần mở này
+      setPos(getPanelPos())
       setHighlight(new Set(items.filter(isUnread).map((it) => it.key)))
       if (unread > 0) markSeen()
+      setOpen(true)
+    } else {
+      setOpen(false)
     }
-    setOpen((v) => !v)
   }
+
+  useLayoutEffect(() => {
+    if (!open) return
+    const update = () => setPos(getPanelPos())
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, { capture: true })
+    }
+  }, [open, items.length])
 
   async function askPermission() {
     try {

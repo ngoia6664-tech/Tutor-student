@@ -49,12 +49,24 @@ const TIPS = [
   'Học một chút mỗi ngày tốt hơn học dồn một lần.',
 ]
 
+// Mẹo cho gia sư (bấm gấu sau lần nhắc việc đầu). Không có mục Góp ý: góp ý sẽ chuyển sang admin
+const TUTOR_TIPS = [
+  'Chấm xong nhớ bấm Lưu chấm để học sinh thấy điểm ngay nhé.',
+  'Lời phê ngắn từng câu giúp học sinh biết sửa đúng chỗ đó.',
+  'Cần cho học sinh sửa lại? Bấm Cho nộp lại, lời phê vẫn được giữ.',
+  'Câu bị báo lỗi nằm ở mục Báo lỗi đề, xử lý xong thì đánh dấu nhé.',
+  'Sửa nhiều hoặc Xóa nhiều ở Thư viện giúp dọn nhiều bài cùng lúc.',
+  'Giao bài cho cả nhóm: chọn nhóm học sinh trước rồi giao, khỏi tick từng em.',
+  'Đề có tính giờ: đặt thời gian khi soạn, học sinh sẽ thấy đồng hồ khi làm bài.',
+]
+
 // Bị chọc dồn dập: đếm số lần bấm trong POKE_WINDOW. 1–2 lần phản hồi bình thường, 3–4 lần trêu lại,
 // 5–6 lần nhắc làm bài, từ 7 lần thì giận: nằm cuộn giả ngủ SULK_MS (bấm trong lúc đó không phản ứng)
 const POKE_WINDOW = 4_000
 const SULK_MS = 6_000
 const TEASE = ['Bạn thích bấm tôi lắm à? 👀', 'Ơ kìa, chọc hoài vậy? 👀', 'Bấm nhẹ thôi, tôi nhột đó 😆']
 const NAG = ['Bài tập vẫn còn kia kìa…', 'Chọc tôi không ra điểm đâu, làm bài đi nào…', 'Thôi mà, bài tập đang đợi bạn kìa…']
+const TUTOR_NAG = ['Bài chờ chấm vẫn đợi thầy/cô kìa…', 'Chọc tôi không chấm được bài đâu, vào chấm nào…', 'Thôi mà, học sinh đang đợi điểm đó…']
 const SULK = 'Hừm, giận rồi! Tôi đi ngủ đây, đừng chọc nữa 😤 Zzz…'
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
@@ -83,8 +95,15 @@ function writeHidden(v) {
 // Lời nhắc quan trọng nhất lúc này, hoặc null
 async function reminder(profile) {
   if (profile.role === 'tutor') {
-    const n = await countOpenReports()
-    return n > 0 ? `Có ${n} câu bị học sinh báo lỗi đang chờ thầy/cô xem.` : null
+    // Báo lỗi + bài chờ chấm (status 'done'): có cả hai thì nói chung một dòng. Góp ý không nhắc (sẽ chuyển sang admin)
+    const [reports, pending] = await Promise.all([
+      countOpenReports(),
+      supabase.from('assignment_recipients').select('student_id', { count: 'exact', head: true }).eq('status', 'done').then((r) => r.count || 0),
+    ])
+    if (reports && pending) return `Có ${pending} bài chờ chấm và ${reports} câu báo lỗi đang chờ thầy/cô.`
+    if (pending) return `Có ${pending} bài học sinh vừa nộp đang chờ thầy/cô chấm.`
+    if (reports) return `Có ${reports} câu bị học sinh báo lỗi đang chờ thầy/cô xem.`
+    return null
   }
   const { data } = await supabase
     .from('assignment_recipients')
@@ -110,6 +129,7 @@ export default function Mascot() {
 
 function MascotBody() {
   const { profile } = useAuth()
+  const isTutor = profile.role === 'tutor'
   const [hidden, setHidden] = useState(readHidden)
   const [mood, setMoodState] = useState('idle')
   const [bubble, setBubble] = useState(null) // { kind: 'board' | 'speech', text, id }
@@ -240,7 +260,7 @@ function MascotBody() {
       }, SULK_MS)
       return true
     }
-    if (n >= 5) return say(pick(NAG)), true
+    if (n >= 5) return say(pick(isTutor ? TUTOR_NAG : NAG)), true
     if (n >= 3) return say(pick(TEASE)), true
     return false
   }
@@ -286,7 +306,7 @@ function MascotBody() {
         // lỗi mạng: giảng mẹo thay vì báo lỗi
       }
     }
-    say(pick(TIPS), 'teach')
+    say(pick(isTutor ? TUTOR_TIPS : TIPS), 'teach')
   }
 
   function hide() {
@@ -299,7 +319,11 @@ function MascotBody() {
   function show() {
     writeHidden(false)
     setHidden(false)
-    say(`Chào ${profile.full_name?.split(' ').at(-1) || 'bạn'}! Bấm vào thầy để nghe giảng nhé.`)
+    say(
+      isTutor
+        ? `Chào ${profile.full_name?.split(' ').at(-1) || 'thầy/cô'} nha! Bấm tôi để xem việc cần chấm hôm nay nhé.`
+        : `Chào ${profile.full_name?.split(' ').at(-1) || 'bạn'}! Bấm vào thầy để nghe giảng nhé.`
+    )
   }
 
   function closeBubble() {
@@ -374,7 +398,7 @@ function MascotBody() {
           onClick={onPoke}
           {...hold.handlers}
           style={actShift}
-          aria-label={`Giáo sư Gấu Trúc: bấm để nghe giảng${act.has ? ', giữ để xem hoạt cảnh' : ''}`}
+          aria-label={`Giáo sư Gấu Trúc: bấm để ${isTutor ? 'xem nhắc việc và mẹo chấm bài' : 'nghe giảng'}${act.has ? ', giữ để xem hoạt cảnh' : ''}`}
         >
           <PandaActLayer run={act.run} lite={stillMascot} part="back" stage={outfit.stage} />
           {art}

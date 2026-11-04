@@ -1,5 +1,7 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
-import { memo, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { maxScroll, onScroll, scrollY } from '../../lib/scroller.js'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
@@ -329,6 +331,62 @@ export default function ImportJson() {
   // Bỏ chọn (vd. do trùng tên) không có nghĩa là đã lưu thành công.
   const allSaved = rows.some((r) => saved[r.key]) && rows.every((r) => !opts[r.key]?.include || saved[r.key])
   const failed = sources.filter((s) => s.error).length
+
+  const chosenRows = rows.filter((r) => opts[r.key]?.include && !saved[r.key])
+  const totalExercises = chosenRows.reduce((sum, r) => sum + (r.d.kind === 'assignment' ? (r.d.exercises?.length || 0) : 0), 0)
+  const totalLessons = chosenRows.filter((r) => r.d.kind === 'lesson').length
+  const totalReceivers = new Set(chosenRows.flatMap((r) => receiversOf(r.key))).size
+  const receiversLabel = totalReceivers > 0 ? `${totalReceivers} học sinh nhận` : 'Chưa chọn học sinh'
+
+  // Thanh lưu nổi ở đáy (kính mờ + tự ẩn khi cuộn xuống để không che câu hỏi)
+  const [dockVisible, setDockVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    if (!rows.length || allSaved) return
+
+    lastScrollY.current = scrollY()
+
+    const checkScroll = () => {
+      const y = scrollY()
+      const max = maxScroll()
+      const diff = y - lastScrollY.current
+
+      // Gần đỉnh (< 60px) hoặc gần chạm đáy (cách đáy < 70px) -> luôn hiện
+      if (y < 60 || (max > 0 && max - y < 70)) {
+        setDockVisible(true)
+      } else if (diff > 10) {
+        // Cuộn xuống hơn 10px -> ẩn thanh để không che chữ câu hỏi
+        setDockVisible(false)
+      } else if (diff < -8) {
+        // Cuộn ngược lên hơn 8px -> hiện lại thanh
+        setDockVisible(true)
+      }
+
+      lastScrollY.current = y
+    }
+
+    const off = onScroll(checkScroll)
+
+    // Trên máy tính: di chuột xuống sát đáy màn hình (cách mép dưới <= 60px) -> tự hiện lại thanh
+    const onMouseMove = (e) => {
+      if (window.innerWidth >= 1024 && window.innerHeight - e.clientY <= 60) {
+        setDockVisible(true)
+      }
+    }
+    window.addEventListener('mousemove', onMouseMove, { passive: true })
+
+    return () => {
+      off()
+      window.removeEventListener('mousemove', onMouseMove)
+    }
+  }, [rows.length, allSaved])
+
+  useEffect(() => {
+    if (saveError) setDockVisible(true)
+  }, [saveError])
+
+  const isDockShown = (dockVisible || saving) && !allSaved
   const sourceDone = (s) => {
     const drafts = s.result?.drafts || []
     return drafts.some((_, i) => saved[`${s.id}-${i}`]) && drafts.every((_, i) => saved[`${s.id}-${i}`] || !opts[`${s.id}-${i}`]?.include)
@@ -621,7 +679,21 @@ export default function ImportJson() {
             </div>
           )}
 
-          <h2>{batch ? `Xem trước (${sources.length} file · ${rows.length} phần)` : `Xem trước (${rows.length} phần)`}</h2>
+          <div className="row row-between" style={{ alignItems: 'center', marginBottom: '0.85rem' }}>
+            <h2 style={{ margin: 0 }}>{batch ? `Xem trước (${sources.length} file · ${rows.length} phần)` : `Xem trước (${rows.length} phần)`}</h2>
+            {!allSaved && pending > 0 && (
+              <button
+                type="button"
+                className="btn btn-primary btn-small"
+                onClick={saveAll}
+                disabled={saving}
+                title="Lưu ngay không cần cuộn"
+              >
+                <Icon name="save" />
+                <span>{saving ? 'Đang lưu...' : `Lưu ${pending} phần`}</span>
+              </button>
+            )}
+          </div>
           {single &&
             rows.map((r) => (
               <div key={r.key} className="card">
@@ -677,31 +749,88 @@ export default function ImportJson() {
                 </div>
               )
             })}
-
-          {rows.length > 0 && (
-            <div className="sticky-actions">
+          {saveError && (
+            <div style={{ marginTop: '1rem' }}>
               <ErrorBox message={saveError} />
-              {allSaved ? (
-                <div className="alert alert-ok" style={{ width: '100%' }}>
-                  Đã lưu xong. Xem:{' '}
-                  {touched.map((cid) => (
-                    <span key={cid}>
-                      <Link to={chapterUrl(cid)}>{cid === UNSORTED ? 'Chưa xếp chủ đề' : chapters.find((c) => c.id === cid)?.title || 'chủ đề vừa lưu'}</Link>
-                      {' · '}
-                    </span>
-                  ))}
-                  <ListLink to="/tutor/assignments">Chấm bài</ListLink>
-                </div>
-              ) : (
-                <button type="button" className="btn btn-primary btn-big" onClick={saveAll} disabled={saving || pending === 0}>
-                  <Icon name="save" />
-                  {saving ? 'Đang lưu...' : `Lưu ${pending} phần đã chọn`}
-                </button>
-              )}
             </div>
           )}
+
+          {allSaved && (
+            <div className="card alert alert-ok" style={{ marginTop: '1.25rem', padding: '1.15rem' }}>
+              <div style={{ fontWeight: 600, fontSize: '1.05rem', marginBottom: '0.35rem' }}>
+                🎉 Đã lưu xong tất cả các phần!
+              </div>
+              <div>
+                Xem:{' '}
+                {touched.map((cid) => (
+                  <span key={cid}>
+                    <Link to={chapterUrl(cid)} style={{ fontWeight: 600 }}>
+                      {cid === UNSORTED ? 'Chưa xếp chủ đề' : chapters.find((c) => c.id === cid)?.title || 'chủ đề vừa lưu'}
+                    </Link>
+                    {' · '}
+                  </span>
+                ))}
+                <ListLink to="/tutor/assignments">Đi tới Chấm bài</ListLink>
+              </div>
+            </div>
+          )}
+
+          {/* Khoảng đệm đáy để nội dung câu hỏi cuối không bị dock che khi cuộn kịch sàn */}
+          <div style={{ height: '6rem' }} aria-hidden="true" />
         </>
       )}
+
+      {/* Thanh lưu nổi ở đáy (kính mờ + tự ẩn khi cuộn xuống để không che câu hỏi) */}
+      {rows.length > 0 &&
+        !allSaved &&
+        createPortal(
+          <div className={`import-dock ${!isDockShown ? 'is-hidden' : ''}`} role="region" aria-label="Thao tác lưu nhanh">
+            {saveError && (
+              <div className="import-dock-error">
+                <Icon name="warn" />
+                <span>{saveError}</span>
+              </div>
+            )}
+            <div className="import-dock-main">
+              <div className="import-dock-info">
+                <div className="import-dock-title">
+                  {pending > 0 ? (
+                    <span>
+                      Đã chọn <strong>{pending}</strong>/{rows.length} phần
+                    </span>
+                  ) : (
+                    <span className="muted">Chưa chọn phần nào</span>
+                  )}
+                </div>
+                <div className="import-dock-sub">
+                  {pending > 0 ? (
+                    <>
+                      {totalExercises > 0 && <span>{totalExercises} câu</span>}
+                      {totalExercises > 0 && totalLessons > 0 && <span> · </span>}
+                      {totalLessons > 0 && <span>{totalLessons} bài giảng</span>}
+                      <span> · </span>
+                      <span className={totalReceivers > 0 ? '' : 'import-no-receivers'}>{receiversLabel}</span>
+                    </>
+                  ) : (
+                    <span>Tick chọn phần muốn lưu ở bên trên</span>
+                  )}
+                </div>
+              </div>
+              <div className="import-dock-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-big import-dock-save-btn"
+                  onClick={saveAll}
+                  disabled={saving || pending === 0}
+                >
+                  <Icon name="save" />
+                  <span>{saving ? 'Đang lưu...' : `Lưu ${pending} phần`}</span>
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }

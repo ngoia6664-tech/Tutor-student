@@ -29,7 +29,8 @@ body:has(.sticky-actions):has(.panda-dock .panda-shop-icon) .page { padding-bott
 }
 /* Đang Sửa nhiều / Xóa nhiều trên màn hẹp: thanh chọn ở đáy giữa (assign.css) đè lên cụm → tạm ẩn cụm */
 @media (max-width: 900px) {
-  body:has(.assign-bar) .panda-dock { display: none; }
+  body:has(.assign-bar) .panda-dock,
+  body:has(.import-dock) .panda-dock { display: none; }
 }
 
 .panda-shop-icon {

@@ -1,4 +1,4 @@
-﻿/* ===== Khung điều hướng (components/Layout.jsx) =====
+/* ===== Khung điều hướng (components/Layout.jsx) =====
    Gia sư: màn ≥ 1024px thanh bên ghim bên trái (☰ thu gọn thành dải icon, nhớ trên máy); màn hẹp hơn: ngăn kéo trượt từ trái.
    Học sinh: điện thoại (≤ 640px) thanh tab dưới + ngăn kéo chứa các nút phụ (kính thiên văn, sáng/tối, cài đặt, đăng xuất);
    máy rộng giữ menu ngang trên thanh trên cùng.
@@ -309,7 +309,8 @@ a.side-btn {
     margin: 0;
   }
   /* Cụm cửa hàng góc trái dưới + thanh chọn nhiều ở giữa đáy: dời theo thanh bên */
-  .assign-bar {
+  .assign-bar,
+  .import-dock {
     translate: calc(var(--side-w) / 2) 0;
   }
 }
