@@ -32,8 +32,6 @@ const byTodo = (a, b) =>
   (a.status === 'todo' ? 0 : 1) - (b.status === 'todo' ? 0 : 1) || compareDue(a.assignment.due_date, b.assignment.due_date)
 
 // Thư viện (học sinh), chỉ gồm bài được giao, như Thư viện gia sư nhưng bỏ cấp Lớp:
-// /student/library: kệ sách (môn = kệ, chương = cuốn) · ?mon=: kệ của một môn · ?mon=&cd=: băng chuyền chủ đề ·
-// /:id: một chủ đề (gom theo thư mục) · /khac: "Các bài khác". Cây bên trái chỉ tới chương.
 export default function StudentLibrary() {
   const { id } = useParams()
   const [params] = useSearchParams()
@@ -64,15 +62,12 @@ export default function StudentLibrary() {
     ])
     const lessons = lessonRows.filter((r) => r.lesson).map((r) => ({ ...r.lesson, assigned_at: r.assigned_at })).sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
     const assignments = assignmentRows.filter((r) => r.assignment)
-    // Chỉ chủ đề của lớp mình (chủ đề chưa ghi lớp cũng hiện; học sinh chưa ghi lớp → hiện hết).
-    // Gán cùng một lớp để cây / kệ sách gom về một lớp, bắt đầu từ Môn.
     const mine = sortChapters(chapters.filter((c) => myGrade === null || c.grade === null || c.grade === myGrade)).map((c) => ({ ...c, grade: myGrade }))
     return { lessons, assignments, chapters: mine, folders }
   }, [profile.id, myGrade])
 
   const chapters = data?.chapters || []
   const inTree = new Set(chapters.map((c) => c.id))
-  // Chủ đề không thuộc lớp của học sinh (link từ bài giao của lớp khác): xem như "Các bài khác", không báo "không tìm thấy"
   const view = id && !inTree.has(id) ? OTHER : id
   const itemsOf = (chapterId) => {
     const match = (cid) => (chapterId === OTHER ? !cid || !inTree.has(cid) : cid === chapterId)
@@ -85,7 +80,6 @@ export default function StudentLibrary() {
   const other = itemsOf(OTHER)
   const hasOther = other.lessons.length + other.assignments.length > 0
 
-  // Kệ sách / băng chuyền đếm bài của từng chủ đề: lessons / assignments là số (count = Number)
   const counted = chapters.map((c) => {
     const it = itemsOf(c.id)
     return { ...c, lessons: it.lessons.length, assignments: it.assignments.length }
@@ -96,12 +90,10 @@ export default function StudentLibrary() {
   const studyId = useStudyChapterId()
   const now = findStudyChapter(chapters, studyId)
 
-  // Vị trí đang xem: của chủ đề đang mở, hoặc trên URL. Đường dẫn bỏ đoạn "Lớp" (học sinh chỉ có một lớp)
   const path = current ? { mon: keyOf(current.subject), cd: keyOf(current.section) } : { mon, cd }
   const crumbs = libraryCrumbs(tree, { lop, ...path }, studentLibraryUrl).slice(1)
   const inGroup = counted.filter((c) => keyOf(c.subject) === mon && (cd === undefined || keyOf(c.section) === cd))
 
-  // Mở sẵn môn chứa mục đang xem và môn của chủ đề đang học (chương là lá của cây)
   useEffect(() => {
     if (path.mon !== undefined) ensure([nodeKey('s', path.mon)])
   }, [path.mon, ensure])
@@ -120,9 +112,7 @@ export default function StudentLibrary() {
         ? [subjectLabel(fromKey(mon)), cd !== undefined && sectionText(fromKey(cd))].filter(Boolean).join(' › ')
         : 'Chọn chương'
 
-  // Nút trên thẻ chủ đề ở băng chuyền (cạnh "Mở"): đánh dấu đang học
   const chapterActions = (c) => <StudyNowButton chapterId={c.id} />
-
 
   return (
     <div className="library">
@@ -209,8 +199,7 @@ function Progress({ done, total }) {
   )
 }
 
-// Một chủ đề: bài giảng + bài tập (bài chưa làm lên trước). Gia sư có chia thư mục thì gom theo thư mục
-// (chỉ hiện thư mục có bài được giao cho mình), bài không thuộc thư mục nào ở mục "Các bài khác" cuối trang.
+// Một chủ đề: bài giảng + bài tập (bài chưa làm lên trước).
 function ChapterView({ chapter, items, folders }) {
   const { isNew } = useNotifications()
   const { lessons, assignments } = items
@@ -230,6 +219,7 @@ function ChapterView({ chapter, items, folders }) {
       </div>
     </Link>
   )
+
   const assignmentRow = (r) => {
     const a = r.assignment
     return (
@@ -247,6 +237,7 @@ function ChapterView({ chapter, items, folders }) {
       </Link>
     )
   }
+
   return (
     <div>
       <div className="page-head">
@@ -303,7 +294,6 @@ function ChapterView({ chapter, items, folders }) {
   )
 }
 
-// Trang đầu Thư viện: chủ đề đang học, số bài chưa làm, kệ sách các môn, cuối cùng là "Các bài khác"
 function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now }) {
   return (
     <div>
@@ -315,7 +305,9 @@ function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now }) {
           Thư viện {myGrade ? gradeLabel(myGrade) : ''}
         </h1>
       </div>
+
       <StudyNow chapter={now} />
+
       <p className="muted">
         {todo > 0 && (
           <>

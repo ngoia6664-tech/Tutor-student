@@ -1392,3 +1392,12 @@
   min-width: 0;
   margin-bottom: 0;
 }
+
+
+/* Ô chọn nhanh theo Lớp ở đầu cây Thư viện */
+.tree-grade-select {
+  width: 100%;
+  margin: 0.15rem 0 0.75rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+}

@@ -1,8 +1,9 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
+import { useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
-import { formatDateTime, formatScore } from '../../lib/format.js'
+import { formatDateTime, formatScore, matchTitle } from '../../lib/format.js'
 import { fetchStudentChapters } from '../../lib/chapters.js'
 import { loadRetries, retryScore } from '../../lib/retries.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
@@ -11,6 +12,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
 import Icon from '../../components/Icon.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 import ScoreChart from '../../components/ScoreChart.jsx'
 import { machineSummary } from '../../lib/studentReport.js'
 import { toPoints } from '../../lib/scoreChart.js'
@@ -21,6 +23,10 @@ import ResultsTrendPanel from '../../components/ResultsTrendPanel.jsx'
 export default function StudentResults() {
   const { profile } = useAuth()
   const sel = useTreeSelection()
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
+  const [filterScore, setFilterScore] = useState('all') // 'all' | 'high' | 'medium' | 'low' | 'pending'
+  const [sortBy, setSortBy] = useState('recent') // 'recent' | 'score_desc' | 'score_asc'
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [rows, chapters, retries, answers] = await Promise.all([
@@ -56,13 +62,57 @@ export default function StudentResults() {
 
   const chapters = data?.chapters || []
   const chapterById = new Map(chapters.map((c) => [c.id, c]))
-  const rows = (data?.list || []).filter((r) => matchItem(r, chapterById, sel))
+  const baseRows = (data?.list || []).filter((r) => matchItem(r, chapterById, sel))
   const where = selectionLabel(sel, chapterById, 'Bài khác')
+
+  // Lọc và sắp xếp
+  const rows = useMemo(() => {
+    let list = baseRows
+
+    // Tìm kiếm tên bài tập hoặc chương (dùng deferredQuery)
+    const q = deferredQuery.trim()
+    if (q) {
+      list = list.filter(
+        (r) =>
+          matchTitle(r.assignment.title, q) ||
+          (r.assignment.chapter && matchTitle(r.assignment.chapter.title, q))
+      )
+    }
+
+    // Lọc theo phổ điểm / trạng thái
+    if (filterScore === 'high') {
+      list = list.filter((r) => r.status === 'checked' && r.score !== null && Number(r.score) >= 8)
+    } else if (filterScore === 'medium') {
+      list = list.filter((r) => r.status === 'checked' && r.score !== null && Number(r.score) >= 5 && Number(r.score) < 8)
+    } else if (filterScore === 'low') {
+      list = list.filter((r) => r.status === 'checked' && r.score !== null && Number(r.score) < 5)
+    } else if (filterScore === 'pending') {
+      list = list.filter((r) => r.status === 'done' || r.score === null)
+    }
+
+    // Sắp xếp
+    return [...list].sort((a, b) => {
+      if (sortBy === 'score_desc') {
+        const scA = a.score !== null ? Number(a.score) : -1
+        const scB = b.score !== null ? Number(b.score) : -1
+        return scB - scA
+      }
+      if (sortBy === 'score_asc') {
+        const scA = a.score !== null ? Number(a.score) : 999
+        const scB = b.score !== null ? Number(b.score) : 999
+        return scA - scB
+      }
+      // mặc định recent
+      return (b.submitted_at || '').localeCompare(a.submitted_at || '')
+    })
+  }, [baseRows, query, filterScore, sortBy])
+
   // Điểm trung bình các bài đã chấm trong mục đang xem
   const scored = rows.filter((r) => r.status === 'checked' && r.score !== null)
   const avg = scored.length ? scored.reduce((n, r) => n + Number(r.score), 0) / scored.length : null
 
   const points = toPoints(rows, { linkOf: (aid) => `/student/assignments/${aid}`, chapterOf: (r) => r.assignment.chapter?.title })
+  const isFiltering = query.trim().length > 0 || filterScore !== 'all' || sortBy !== 'recent'
 
   return (
     <div className="library">
@@ -85,12 +135,107 @@ export default function StudentResults() {
           )}
         </div>
 
+        {/* Thanh tìm kiếm & bộ lọc kết quả */}
+        {data && baseRows.length > 1 && (
+          <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
+                <input
+                  type="search"
+                  className="assign-search"
+                  style={{ width: '100%', paddingLeft: '2.1rem' }}
+                  placeholder="Tìm theo tên bài tập..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Tìm bài đã nộp"
+                />
+                <span style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
+                  <Icon name="search" size={15} />
+                </span>
+              </div>
+
+              <CustomSelect
+                value={sortBy}
+                onChange={setSortBy}
+                options={[
+                  { value: 'recent', label: 'Mới nộp nhất', icon: 'clock' },
+                  { value: 'score_desc', label: 'Điểm cao ➔ thấp', icon: 'trend' },
+                  { value: 'score_asc', label: 'Điểm thấp ➔ cao', icon: 'trend' },
+                ]}
+                prefixLabel="Sắp xếp: "
+                icon="clock"
+                ariaLabel="Sắp xếp kết quả"
+              />
+            </div>
+
+            <div className="chips" style={{ margin: 0, flexWrap: 'wrap', gap: '0.35rem' }}>
+              <button
+                type="button"
+                className={`chip${filterScore === 'all' ? ' active' : ''}`}
+                onClick={() => setFilterScore('all')}
+              >
+                Tất cả ({baseRows.length})
+              </button>
+              <button
+                type="button"
+                className={`chip${filterScore === 'high' ? ' active' : ''}`}
+                onClick={() => setFilterScore('high')}
+              >
+                🌟 Giỏi (≥ 8.0)
+              </button>
+              <button
+                type="button"
+                className={`chip${filterScore === 'medium' ? ' active' : ''}`}
+                onClick={() => setFilterScore('medium')}
+              >
+                👍 Đạt (5.0 - 7.9)
+              </button>
+              <button
+                type="button"
+                className={`chip${filterScore === 'low' ? ' active' : ''}`}
+                onClick={() => setFilterScore('low')}
+              >
+                ⚠️ Cần ôn lại (&lt; 5.0)
+              </button>
+              <button
+                type="button"
+                className={`chip${filterScore === 'pending' ? ' active' : ''}`}
+                onClick={() => setFilterScore('pending')}
+              >
+                ⏳ Chờ chấm
+              </button>
+              {isFiltering && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-small"
+                  onClick={() => {
+                    setQuery('')
+                    setFilterScore('all')
+                    setSortBy('recent')
+                  }}
+                  style={{ padding: '0.1rem 0.4rem' }}
+                >
+                  <Icon name="close" size={13} /> Xóa lọc
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {loading && <Loading />}
         <ErrorBox message={error} onRetry={reload} />
 
-        {!loading && !error && rows.length === 0 && <div className="empty">{where ? 'Mục này chưa có bài đã nộp.' : 'Bạn chưa nộp bài nào.'}</div>}
+        {!loading && !error && rows.length === 0 && (
+          <div className="empty">
+            {isFiltering
+              ? 'Không tìm thấy bài nộp nào phù hợp với bộ lọc.'
+              : where
+                ? 'Mục này chưa có bài đã nộp.'
+                : 'Bạn chưa nộp bài nào.'}
+          </div>
+        )}
 
-        {!loading && !error && (
+        {!loading && !error && !isFiltering && (
           <ScoreChart points={points} quiet={!!where} />
         )}
 

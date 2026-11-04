@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -10,26 +10,31 @@ import { fetchGroupRows, fetchStudents, renameGroup, saveGroupNote } from '../..
 import { buildGroups, groupLabel } from '../../lib/studentGroups.js'
 import { buildBackup, downloadBackup, fetchStreaks, parseBackup, restoreStreaks } from '../../lib/streakBackup.js'
 import { askConfirm, notifyDone, notifyError } from '../../lib/dialog.js'
+import { matchTitle } from '../../lib/format.js'
 import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 
-const NONE = '__none' // khóa nhóm "Chưa xếp nhóm" (tên nhóm thật không bắt đầu bằng __)
-const PAGE_SIZE = 6 // số khối nhóm mỗi trang
-const PREVIEW = 2 // số học sinh hiện đầu mỗi khối; nhiều hơn thì ghi "+N em nữa"
+const NONE = '__none' // khóa nhóm "Chưa xếp nhóm"
 
 export default function TutorStudents() {
   const [group, setGroup] = useRemembered('tutor-students-group', 'all', (v) => typeof v === 'string')
+  const [searchQuery, setSearchQuery] = useRemembered('tutor-students-search', '', (v) => typeof v === 'string')
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const [gradeFilter, setGradeFilter] = useRemembered('tutor-students-grade', 'all', (v) => typeof v === 'string')
+  const [statusFilter, setStatusFilter] = useRemembered('tutor-students-status', 'all', (v) => typeof v === 'string')
+  const [viewMode, setViewMode] = useRemembered('tutor-students-view', 'cards', (v) => v === 'cards' || v === 'table')
+
   const [editing, setEditing] = useState(null) // học sinh đang sửa
-  const [editGroup, setEditGroup] = useState(/** @type {{ name: string, note: string } | null} */ (null)) // nhóm đang sửa; name rỗng = tạo mới
-  const [page, setPage] = useState(0) // trang của lưới khối nhóm
+  const [editGroup, setEditGroup] = useState(/** @type {{ name: string, note: string } | null} */ (null)) // nhóm đang sửa
 
   const { data, loading, error, reload } = useAsync(async () => {
     const [students, stats, streaks, rows] = await Promise.all([
       fetchStudents(),
       fetchStudentStats(),
-      fetchStreaks().catch(() => []), // chưa chạy schema.sql / lỗi mạng: cột chuỗi hiện "—", không chặn danh sách
-      fetchGroupRows().catch(() => []), // chưa chạy schema.sql: vẫn gom theo tên nhóm trong hồ sơ
+      fetchStreaks().catch(() => []),
+      fetchGroupRows().catch(() => []),
     ])
     return { students, stats, streakById: new Map(streaks.map((r) => [r.student_id, r.current_streak])), ...buildGroups(students, rows) }
   }, [])
@@ -37,41 +42,223 @@ export default function TutorStudents() {
   const students = data?.students || []
   const blocks = (data?.groups || []).map((g) => ({ key: g.name, title: groupLabel(g.name), note: g.note, name: g.name, list: g.students }))
   if (data?.ungrouped.length) blocks.push({ key: NONE, title: 'Chưa xếp nhóm', note: '', name: '', list: data.ungrouped })
-  const detail = group === 'all' ? null : blocks.find((b) => b.key === group) // nhóm đang mở xem chi tiết
-  const pages = Math.max(1, Math.ceil(blocks.length / PAGE_SIZE))
-  const cur = Math.min(page, pages - 1)
-  const pageBlocks = blocks.slice(cur * PAGE_SIZE, (cur + 1) * PAGE_SIZE)
+
+  // Danh sách các nhóm định dạng cho CustomSelect (có ô tìm kiếm nhanh nếu có 100 nhóm)
+  const groupOptions = useMemo(() => {
+    /** @type {import('../../components/CustomSelect.jsx').SelectOption[]} */
+    const opts = [
+      {
+        value: 'all',
+        label: 'Tất cả học sinh',
+        count: students.length,
+        icon: 'users',
+      },
+    ]
+    for (const b of blocks) {
+      opts.push({
+        value: b.key,
+        label: b.title,
+        count: b.list.length,
+        icon: b.key === NONE ? 'inbox' : 'users',
+      })
+    }
+    return opts
+  }, [students.length, blocks])
+
+  const activeSearch = deferredSearchQuery.trim().length > 0 || gradeFilter !== 'all' || statusFilter !== 'all'
+
+  // Lọc học sinh theo từ khóa, khối lớp và tình trạng (sử dụng deferredSearchQuery để gõ mượt mà)
+  const filteredStudents = useMemo(() => {
+    if (!data) return []
+    let list = students
+
+    if (group !== 'all') {
+      if (group === NONE) list = list.filter((s) => !s.group_name)
+      else list = list.filter((s) => s.group_name === group)
+    }
+
+    const q = deferredSearchQuery.trim()
+    if (q) {
+      list = list.filter((s) =>
+        matchTitle(s.full_name, q) ||
+        matchTitle(s.group_name, q) ||
+        (s.grade && String(s.grade).includes(q)) ||
+        (s.subjects && s.subjects.some((sub) => matchTitle(sub, q)))
+      )
+    }
+
+    if (gradeFilter !== 'all') {
+      if (gradeFilter === 'other') list = list.filter((s) => !s.grade)
+      else list = list.filter((s) => s.grade === Number(gradeFilter))
+    }
+
+    if (statusFilter !== 'all') {
+      list = list.filter((s) => {
+        const st = data.stats[s.id] || { todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
+        const streak = data.streakById.get(s.id) || 0
+        if (statusFilter === 'overdue') return st.overdue > 0
+        if (statusFilter === 'pending') return st.done > 0
+        if (statusFilter === 'streak') return streak > 0
+        if (statusFilter === 'needs_action') return st.overdue > 0 || st.done > 0
+        return true
+      })
+    }
+
+    return list
+  }, [data, students, group, deferredSearchQuery, gradeFilter, statusFilter])
+
+  // Lọc các khối nhóm: khi tìm kiếm, nhóm nào có học sinh khớp thì hiện trong lưới
+  const filteredBlocks = useMemo(() => {
+    if (!data) return []
+    const q = deferredSearchQuery.trim()
+    return blocks
+      .map((b) => {
+        const matching = b.list.filter((s) => {
+          if (q) {
+            const match =
+              matchTitle(s.full_name, q) ||
+              matchTitle(s.group_name, q) ||
+              (s.grade && String(s.grade).includes(q)) ||
+              (s.subjects && s.subjects.some((sub) => matchTitle(sub, q)))
+            if (!match) return false
+          }
+          if (gradeFilter !== 'all') {
+            if (gradeFilter === 'other' && s.grade) return false
+            if (gradeFilter !== 'other' && s.grade !== Number(gradeFilter)) return false
+          }
+          if (statusFilter !== 'all') {
+            const st = data.stats[s.id] || { todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
+            const streak = data.streakById.get(s.id) || 0
+            if (statusFilter === 'overdue' && st.overdue === 0) return false
+            if (statusFilter === 'pending' && st.done === 0) return false
+            if (statusFilter === 'streak' && streak === 0) return false
+            if (statusFilter === 'needs_action' && st.overdue === 0 && st.done === 0) return false
+          }
+          return true
+        })
+        return { ...b, matchingList: matching }
+      })
+      .filter((b) => !activeSearch || b.matchingList.length > 0)
+  }, [blocks, deferredSearchQuery, gradeFilter, statusFilter, activeSearch, data])
+
+  const detail = group === 'all' ? null : blocks.find((b) => b.key === group)
+
+  function resetFilters() {
+    setSearchQuery('')
+    setGradeFilter('all')
+    setStatusFilter('all')
+    setGroup('all')
+  }
 
   return (
     <div>
       <div className="page-head">
         <h1>
-          <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}</h1>
+          <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}
+        </h1>
         {data && <StreakBackupButtons students={students} onRestored={reload} />}
       </div>
 
       {data && (
-        <div className="row" style={{ marginBottom: '1rem' }}>
-          {group !== 'all' && (
-            <button type="button" className="btn btn-small" onClick={() => setGroup('all')}>
-              <Icon name="left" />
-              Tất cả nhóm
+        <div className="assign-toolbar" style={{ flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.8rem' }}>
+          {/* Thanh tìm kiếm */}
+          <div style={{ position: 'relative', flex: '1 1 240px', minWidth: '200px' }}>
+            <input
+              type="search"
+              className="assign-search"
+              style={{ width: '100%', paddingLeft: '2.2rem' }}
+              placeholder="Tìm theo tên học sinh, nhóm, lớp..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Tìm kiếm học sinh"
+            />
+            <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
+              <Icon name="search" size={16} />
+            </span>
+          </div>
+
+          {/* Bộ lọc Nhóm, Khối lớp, Tình trạng (CustomSelect làm đẹp đồng bộ, hỗ trợ 100 nhóm) */}
+          <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+            <CustomSelect
+              value={group}
+              onChange={setGroup}
+              options={groupOptions}
+              prefixLabel="Nhóm: "
+              icon="users"
+              searchable={true}
+              searchPlaceholder="Tìm nhanh nhóm..."
+              ariaLabel="Lọc theo nhóm học sinh"
+            />
+
+            <CustomSelect
+              value={gradeFilter}
+              onChange={setGradeFilter}
+              options={[
+                { value: 'all', label: 'Tất cả' },
+                { value: '12', label: 'Lớp 12' },
+                { value: '11', label: 'Lớp 11' },
+                { value: '10', label: 'Lớp 10' },
+                { value: 'other', label: 'Chưa đặt lớp' },
+              ]}
+              prefixLabel="Khối: "
+              icon="filter"
+              ariaLabel="Lọc theo khối lớp"
+            />
+
+            <CustomSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: 'Tất cả' },
+                { value: 'needs_action', label: '⚠️ Cần chú ý (Quá hạn / Chờ chấm)' },
+                { value: 'overdue', label: '🔴 Có bài quá hạn' },
+                { value: 'pending', label: '🟡 Có bài chờ chấm' },
+                { value: 'streak', label: '🔥 Đang có chuỗi' },
+              ]}
+              prefixLabel="Tình trạng: "
+              ariaLabel="Lọc theo tình trạng học sinh"
+            />
+
+            {/* Chuyển đổi giữa 2 chế độ: Dạng Thẻ (Cards) vs Dạng Bảng (Table) */}
+            <div className="chips" role="group" aria-label="Chế độ hiển thị" style={{ margin: 0 }}>
+              <button
+                type="button"
+                className={`chip${viewMode === 'cards' ? ' active' : ''}`}
+                onClick={() => setViewMode('cards')}
+                title="Xem dạng thẻ trực quan"
+              >
+                <Icon name="grid" size={14} /> Dạng thẻ ({filteredStudents.length})
+              </button>
+              <button
+                type="button"
+                className={`chip${viewMode === 'table' ? ' active' : ''}`}
+                onClick={() => setViewMode('table')}
+                title="Xem dạng bảng tóm tắt"
+              >
+                <Icon name="table" size={14} /> Dạng bảng
+              </button>
+            </div>
+
+            <button type="button" className="btn btn-small btn-primary" onClick={() => setEditGroup({ name: '', note: '' })}>
+              <Icon name="plus" />
+              Nhóm mới
             </button>
-          )}
-          <button type="button" className="btn btn-small" onClick={() => setEditGroup({ name: '', note: '' })}>
-            <Icon name="plus" />
-            Nhóm mới
-          </button>
+          </div>
         </div>
       )}
 
-      {data && blocks.length > 1 && (
-        <div className="chips group-chips" role="group" aria-label="Lọc theo nhóm">
-          {[{ key: 'all', title: 'Tất cả học sinh', list: students }, ...blocks].map((b) => (
-            <button key={b.key} type="button" className={`chip${group === b.key ? ' active' : ''}`} aria-pressed={group === b.key} onClick={() => setGroup(b.key)}>
-              {b.title} ({b.list.length})
-            </button>
-          ))}
+      {/* Dòng trạng thái khi đang có bộ lọc / tìm kiếm */}
+      {data && activeSearch && (
+        <div className="row row-between small muted" style={{ margin: '0.3rem 0 0.8rem', padding: '0.4rem 0.6rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <span>
+            Tìm thấy <strong>{filteredStudents.length}</strong> học sinh trong <strong>{filteredBlocks.length}</strong> nhóm
+            {searchQuery && <> khớp &ldquo;{searchQuery}&rdquo;</>}
+            {gradeFilter !== 'all' && <> · Khối {gradeFilter}</>}
+            {statusFilter !== 'all' && <> · Tình trạng lọc</>}
+          </span>
+          <button type="button" className="btn btn-ghost btn-small" onClick={resetFilters} style={{ padding: '0.15rem 0.4rem' }}>
+            <Icon name="close" size={14} /> Xóa bộ lọc
+          </button>
         </div>
       )}
 
@@ -105,123 +292,167 @@ export default function TutorStudents() {
           Chưa có học sinh. Tạo tài khoản học sinh trong Supabase Dashboard &gt; Authentication &gt; Users (xem README), rồi tải lại trang.
         </div>
       )}
-      {!loading && !error && data && group !== 'all' && !detail && <div className="empty">Nhóm này không còn.</div>}
 
-      {/* Tổng quan: lưới khối nhóm, bấm một khối để xem học sinh của nhóm */}
-      {!loading && !error && data && group === 'all' && blocks.length > 0 && (
-        <>
-          <div className="group-grid">
-            {pageBlocks.map((b) => (
-              <button key={b.key} type="button" className="group-card" onClick={() => setGroup(b.key)}>
-                <span className="group-card-icon">
-                  <Icon name={b.key === NONE ? 'inbox' : 'users'} size={22} />
-                </span>
-                <strong className="group-card-title">{b.title}</strong>
-                <span className="group-card-count">{b.list.length} em</span>
-                {b.note && <span className="group-card-note">{b.note}</span>}
-                <span className="group-card-names">
-                  {b.list.length === 0 && <span className="muted">Chưa có học sinh</span>}
-                  {b.list.slice(0, PREVIEW).map((s) => (
-                    <span key={s.id}>{s.full_name || '(chưa đặt tên)'}</span>
-                  ))}
-                  {b.list.length > PREVIEW && <span className="muted">+{b.list.length - PREVIEW} em nữa</span>}
-                </span>
-              </button>
-            ))}
-          </div>
-          {pages > 1 && (
-            <nav className="group-pager" aria-label="Phân trang nhóm">
-              <button type="button" className="btn btn-small" disabled={cur === 0} onClick={() => setPage(cur - 1)}>
-                <Icon name="left" />
-                Trước
-              </button>
-              <span className="muted small">
-                Trang {cur + 1}/{pages}
-              </span>
-              <button type="button" className="btn btn-small" disabled={cur >= pages - 1} onClick={() => setPage(cur + 1)}>
-                Sau
-                <Icon name="right" />
-              </button>
-            </nav>
-          )}
-        </>
+      {!loading && !error && students.length > 0 && filteredStudents.length === 0 && (
+        <div className="empty">
+          Không tìm thấy học sinh nào phù hợp bộ lọc.{' '}
+          <button type="button" className="btn btn-ghost btn-small" onClick={resetFilters} style={{ marginTop: '0.5rem' }}>
+            Xóa bộ lọc
+          </button>
+        </div>
       )}
 
-      {/* Chi tiết một nhóm */}
-      {!loading && !error && data && detail && (
+      {/* ========================================================
+          CHẾ ĐỘ HIỂN THỊ: DẠNG THẺ (CARDS) HOẶC DẠNG BẢNG (TABLE)
+          ======================================================== */}
+      {!loading && !error && data && filteredStudents.length > 0 && (
         <section className="group-block">
-          <div className="group-head">
-            <h2 className="group-detail-title">
-              <span className="group-card-icon">
-                <Icon name={detail.key === NONE ? 'inbox' : 'users'} size={22} />
-              </span>
-              {detail.title} <span className="muted small">{detail.list.length} em</span>
-            </h2>
-            {detail.name && (
-              <button type="button" className="btn btn-small" onClick={() => setEditGroup({ name: detail.name, note: detail.note })}>
-                <Icon name="edit" />
-                Sửa nhóm
-              </button>
-            )}
-          </div>
-          {detail.note && <p className="group-note">{detail.note}</p>}
-          {detail.list.length === 0 && <div className="empty">Nhóm chưa có học sinh.</div>}
-          {detail.list.length > 0 && <StudentTable list={detail.list} data={data} onEdit={setEditing} />}
+          {detail && (
+            <div className="group-head">
+              <h2 className="group-detail-title">
+                <span className="group-card-icon">
+                  <Icon name={detail.key === NONE ? 'inbox' : 'users'} size={22} />
+                </span>
+                {detail.title} <span className="muted small">{detail.list.length} em</span>
+              </h2>
+              <div className="row">
+                <button type="button" className="btn btn-small btn-ghost" onClick={() => setGroup('all')}>
+                  ← Về tất cả nhóm
+                </button>
+                {detail.name && (
+                  <button type="button" className="btn btn-small" onClick={() => setEditGroup({ name: detail.name, note: detail.note })}>
+                    <Icon name="edit" />
+                    Sửa nhóm
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {detail?.note && <p className="group-note">{detail.note}</p>}
+
+          {viewMode === 'table' ? (
+            <StudentTable list={filteredStudents} data={data} onEdit={setEditing} />
+          ) : (
+            <div className="student-grid">
+              {filteredStudents.map((s) => {
+                const st = data.stats[s.id] || { lessons: 0, total: 0, todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
+                const streak = data.streakById.get(s.id)
+                return (
+                  <div key={s.id} className="student-card">
+                    <div>
+                      <div className="student-card-head">
+                        <div className="student-card-avatar">
+                          {(s.full_name || '?').trim().charAt(0).toUpperCase()}
+                        </div>
+                        <div className="student-card-meta">
+                          <Link to={`/tutor/students/${s.id}`} className="student-card-name" title={s.full_name}>
+                            {s.full_name || '(chưa đặt tên)'}
+                          </Link>
+                          <div className="row small muted" style={{ gap: '0.35rem', marginTop: '0.2rem' }}>
+                            <span>{s.group_name ? groupLabel(s.group_name) : 'Chưa xếp nhóm'}</span>
+                            {s.grade && <span>· Lớp {s.grade}</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="student-card-stats">
+                        <div className="student-card-stat-item">
+                          <span className="muted">Điểm TB:</span>
+                          <b>{st.avg === null ? '—' : viNum(st.avg)}</b>
+                        </div>
+                        <div className="student-card-stat-item">
+                          <span className="muted">Đã nộp:</span>
+                          <b>{st.done + st.checked}/{st.total}</b>
+                        </div>
+                        <div className="student-card-stat-item">
+                          <span className="muted">Chờ chấm:</span>
+                          <b style={st.done > 0 ? { color: 'var(--primary)' } : undefined}>{st.done}</b>
+                        </div>
+                        <div className="student-card-stat-item">
+                          <span className="muted">Quá hạn:</span>
+                          <b style={st.overdue > 0 ? { color: 'var(--danger)' } : undefined}>{st.overdue}</b>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="row row-between" style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
+                      <span className="small muted">
+                        {streak !== undefined && streak > 0 ? `🔥 ${streak} ngày` : '—'}
+                      </span>
+                      <div className="row" style={{ gap: '0.35rem' }}>
+                        <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
+                          <Icon name="open" /> Xem
+                        </Link>
+                        <button type="button" className="btn btn-small btn-ghost" onClick={() => setEditing(s)} title="Sửa thông tin">
+                          <Icon name="edit" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </section>
       )}
     </div>
   )
 }
 
-/** Bảng học sinh của một nhóm */
+/** Bảng học sinh (dạng rút gọn / bảng tổng hợp) */
 function StudentTable({ list, data, onEdit }) {
   return (
     <div className="card table-wrap">
       <table className="table table-cards">
         <thead>
           <tr>
-            <th>Tên</th>
+            <th>Học sinh</th>
             <th>Lớp</th>
             <th>Môn</th>
             <th>Bài giảng</th>
-            <th>Bài tập đã nộp</th>
+            <th>Đã nộp</th>
             <th>Chưa nộp</th>
             <th>Chờ chấm</th>
             <th>Điểm TB</th>
             <th>Chuỗi 🔥</th>
-            <th></th>
+            <th>Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {list.map((s) => {
             const st = data.stats[s.id] || { lessons: 0, total: 0, todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
+            const streak = data.streakById.get(s.id)
             return (
               <tr key={s.id}>
                 <td>
                   <Link to={`/tutor/students/${s.id}`} className="student-link">
                     <strong>{s.full_name || '(chưa đặt tên)'}</strong>
                   </Link>
+                  <div className="small muted">{s.group_name ? groupLabel(s.group_name) : 'Chưa xếp nhóm'}</div>
                 </td>
-                <td data-label="Lớp">{s.grade || '—'}</td>
+                <td data-label="Lớp">{s.grade ? `Lớp ${s.grade}` : '—'}</td>
                 <td data-label="Môn">{s.subjects?.length ? s.subjects.join(', ') : '—'}</td>
                 <td data-label="Bài giảng">{st.lessons}</td>
-                <td data-label="Bài tập đã nộp">
-                  {st.done + st.checked}/{st.total}
+                <td data-label="Đã nộp">
+                  <strong>{st.done + st.checked}</strong>/{st.total}
                 </td>
                 <td data-label="Chưa nộp">
                   {st.todo + st.overdue}
                   {st.overdue > 0 && <span className="badge badge-danger" style={{ marginLeft: '0.35rem' }}>{st.overdue} quá hạn</span>}
                 </td>
-                <td data-label="Chờ chấm">{st.done ? <span className="badge badge-primary">{st.done}</span> : 0}</td>
+                <td data-label="Chờ chấm">
+                  {st.done > 0 ? <span className="badge badge-primary">{st.done}</span> : 0}
+                </td>
                 <td data-label="Điểm TB">{st.avg === null ? '—' : <strong>{viNum(st.avg)}</strong>}</td>
-                <td data-label="Chuỗi 🔥">{data.streakById.has(s.id) ? `${data.streakById.get(s.id)} ngày` : '—'}</td>
+                <td data-label="Chuỗi 🔥">{streak !== undefined && streak > 0 ? `${streak} ngày` : '—'}</td>
                 <td>
                   <div className="row" style={{ flexWrap: 'nowrap', gap: '0.4rem' }}>
                     <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
                       <Icon name="open" />
                       Xem
                     </Link>
-                    <button type="button" className="btn btn-small" onClick={() => onEdit(s)}>
+                    <button type="button" className="btn btn-small btn-ghost" onClick={() => onEdit(s)} title="Sửa thông tin">
                       <Icon name="edit" />
                       Sửa
                     </button>
@@ -236,8 +467,6 @@ function StudentTable({ list, data, onEdit }) {
   )
 }
 
-/** Tạo nhóm mới (name rỗng) hoặc đổi tên / sửa ghi chú một nhóm
- * @param {{ group: { name: string, note: string }, onCancel: () => void, onSaved: () => void }} props */
 function GroupForm({ group, onCancel, onSaved }) {
   const isNew = !group.name
   const [name, setName] = useState(group.name)
@@ -289,9 +518,6 @@ function GroupForm({ group, onCancel, onSaved }) {
   )
 }
 
-// Sửa tên, nhóm, lớp, môn của học sinh
-// Sao lưu / khôi phục chuỗi 🔥 của mọi học sinh ra file JSON (tạm thời, xem lib/streakBackup.js): tải về trước khi đổi CSDL
-/** @param {{ students: { id: string, full_name?: string | null }[], onRestored: () => void }} props */
 function StreakBackupButtons({ students, onRestored }) {
   const [busy, setBusy] = useState(false)
 
@@ -309,7 +535,7 @@ function StreakBackupButtons({ students, onRestored }) {
 
   const restore = async (e) => {
     const file = e.target.files?.[0]
-    e.target.value = '' // chọn lại cùng file vẫn kích hoạt
+    e.target.value = ''
     if (!file) return
     setBusy(true)
     try {

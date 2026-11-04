@@ -19,21 +19,20 @@ import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectM
 const OUT = 'none' // ô chọn thư mục: "Chưa xếp" (ra khỏi thư mục)
 
 // Nội dung một chủ đề (cột phải của Thư viện): các bài giảng, bài tập bên trong, kèm tình hình nộp bài.
-// Có thư mục thì bài gom theo từng thư mục (khối gập / mở), bài chưa xếp để cuối. Chuyển bài vào thư mục: Sửa nhiều → thanh dưới.
-// onChanged: báo Thư viện tải lại số bài của từng chủ đề sau khi Sửa nhiều / Xóa nhiều
-// id = UNSORTED: mục "Chưa xếp chủ đề" (bài có chapter_id trống): không thư mục, không sửa / xóa chủ đề
 export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onChanged }) {
   const unsorted = id === UNSORTED
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
   const [moving, setMoving] = useState(null)
   const [naming, setNaming] = useState(null) // { id?, name }: đang tạo / đổi tên thư mục
+
   // Sang chủ đề khác: thoát chế độ chọn, không mang tick cũ theo
   useEffect(() => {
     pick.stop()
     setNaming(null)
     clearRecent(id) // đã mở thì tắt nhãn "Mới"
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data, loading, error, reload } = useAsync(async () => {
     const inChapter = (q) => (unsorted ? q.is('chapter_id', null) : q.eq('chapter_id', id))
     const [chapter, lessons, assignments, folders] = await Promise.all([
@@ -151,7 +150,6 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
 
   return (
     <div className="assign-space">
-      {/* Đường dẫn Lớp › Môn › Chương (có menu chọn nhanh) do Library.jsx vẽ ngay phía trên */}
       <header className="lesson-head" style={{ marginTop: 0 }}>
         <h1>{chapter.title}</h1>
         <div className="row">

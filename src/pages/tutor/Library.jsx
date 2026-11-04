@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { scrollToY } from '../../lib/scroller.js'
-import { forgetUrlsWith, useRemembered } from '../../lib/navMemory.js'
+import { forgetUrlsWith } from '../../lib/navMemory.js'
 import { errMsg } from '../../lib/errors.js'
 import {
   buildTree,
@@ -26,6 +26,7 @@ import { ChapterForm, GroupForm } from '../../components/ChapterForms.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
 import ChapterDetail from './ChapterDetail.jsx'
 import Icon from '../../components/Icon.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 import OutlineImport from '../../components/OutlineImport.jsx'
 import ChapterCarousel from '../../components/ChapterCarousel.jsx'
 import GradeShelf from '../../components/GradeShelf.jsx'
@@ -39,7 +40,6 @@ import { chapterContent, deleteChapters, deleteWarning, itemsLabel } from '../..
 // Lấy số đếm từ dạng PostgREST "lessons(count)" → [{ count: n }]
 const countOf = (v) => (Array.isArray(v) ? v[0]?.count ?? 0 : 0)
 const sum = (list, field) => list.reduce((n, c) => n + countOf(c[field]), 0)
-const norm = (v) => (v || '').toLowerCase()
 
 // Lớp xem lần trước (nhớ trong trình duyệt): cây bên trái hiện lớp này khi chưa chọn lớp
 const GRADE_STORE = 'library-grade'
@@ -66,7 +66,6 @@ export default function Library() {
 
   const { open, toggle, ensure, remap } = useOpenNodes('library-open')
   const [storedGrade, setStoredGrade] = useState(loadGrade)
-  const [query, setQuery] = useRemembered('library-query', '', (v) => typeof v === 'string')
   const [treeShown, setTreeShown] = useState(!id && lop === undefined) // điện thoại: mục lục mở khi chưa chọn gì
   const [editing, setEditing] = useState(null) // null | {} (thêm mới) | chủ đề đang sửa
   const [editingGroup, setEditingGroup] = useState(null)
@@ -110,11 +109,9 @@ export default function Library() {
     }
   }, [activeGrade])
 
-  // Cây của lớp đang chọn (lọc theo ô tìm nếu có)
-  const q = norm(query.trim())
+  // Cây của lớp đang chọn
   const gradeChapters = chapters.filter((c) => keyOf(c.grade) === activeGrade)
-  const shown = q ? gradeChapters.filter((c) => norm(c.title).includes(q) || norm(c.section).includes(q)) : gradeChapters
-  const subjectsTree = buildTree(shown)[0]?.subjects || []
+  const subjectsTree = buildTree(gradeChapters)[0]?.subjects || []
 
   // Vị trí đang xem (lớp / môn / chương): của chủ đề đang mở, hoặc trên URL
   const path = current ? { lop: keyOf(current.grade), mon: keyOf(current.subject), cd: keyOf(current.section) } : { lop, mon, cd }
@@ -145,7 +142,7 @@ export default function Library() {
     if (id || lop !== undefined) setTreeShown(false)
   }, [id, lop, mon, cd])
 
-  const isOpen = (k) => q !== '' || open.has(k) // đang lọc thì mở hết
+  const isOpen = (k) => open.has(k)
 
   const subjects = [...new Set(['Vật lý', ...chapters.map((c) => c.subject).filter(Boolean)])]
   const sections = [...new Set(chapters.map((c) => c.section).filter(Boolean))]
@@ -295,21 +292,35 @@ export default function Library() {
   return (
     <div className="library">
       <TreeSide shown={treeShown} onToggleShown={() => setTreeShown((v) => !v)} where={where.length ? where.join(' › ') : 'Chọn lớp, môn, chủ đề'}>
-        <div className="tree-head">
-          {/* Tên lớp của cây (không còn tab lớp; đổi lớp ở menu "Lớp ▾" trên đường dẫn) */}
-          <Link to={libraryUrl(g)} className="tree-title">
-            {g === undefined ? 'Thư viện' : gradeLabel(gradeFromKey(g))}
-          </Link>
-          {/* Thêm chủ đề / Nhập mục lục nằm ở đầu nội dung bên phải (mọi cấp), không lặp ở đây */}
+        <div className="tree-head" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Link to={libraryUrl(g)} className="tree-title">
+              {g === undefined ? 'Thư viện' : gradeLabel(gradeFromKey(g))}
+            </Link>
+          </div>
+          {gradeKeys.length > 0 && (
+            <CustomSelect
+              value={activeGrade ?? ''}
+              onChange={(selectedGrade) => navigate(libraryUrl(selectedGrade))}
+              options={fullTree.map((gx) => ({
+                value: gx.key,
+                label: gradeLabel(gx.grade),
+                icon: 'grade',
+              }))}
+              prefixLabel="Lớp: "
+              icon="grade"
+              className="tree-grade-select"
+              style={{ width: '100%' }}
+              ariaLabel="Chọn nhanh theo lớp"
+            />
+          )}
         </div>
 
-        <input type="search" className="tree-search" placeholder="Tìm chủ đề…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm chủ đề" />
         {loading && <Loading text="Đang tải…" />}
         {!loading && !error && g !== undefined && gradeChapters.length === 0 && (
           <p className="muted small tree-empty">{gradeLabel(gradeFromKey(g))} chưa có chủ đề nào. Bấm "+ Thêm chủ đề" để tạo, hoặc nhập file JSON có "grade" là lớp này.</p>
         )}
         {!loading && !error && chapters.length === 0 && g === undefined && <p className="muted small">Chưa có chủ đề nào.</p>}
-        {!loading && q && gradeChapters.length > 0 && shown.length === 0 && <p className="muted small">Không có chủ đề nào khớp "{query}".</p>}
 
         <ul className="tree" role="tree">
           {subjectsTree.map((s) => (
@@ -323,27 +334,18 @@ export default function Library() {
               active={level === 2 && lop === g && mon === s.key}
               depth={0}
             >
-              {/* Cây chỉ tới chương (chủ đề đã có băng chuyền giữa trang); đang tìm thì hiện chủ đề khớp dưới chương */}
               {s.sections.map((x) => {
                 const to = libraryUrl(g, s.key, x.key)
                 const active = level >= 3 && path.lop === g && path.mon === s.key && path.cd === x.key
-                return q ? (
-                  <TreeGroup
+                return (
+                  <TreeLeaf
                     key={x.key}
-                    label={sectionText(x.section)}
                     to={to}
+                    label={sectionText(x.section)}
                     count={x.chapters.length}
-                    open={isOpen(nodeKey('c', g, s.key, x.key))}
-                    onToggle={() => toggle(nodeKey('c', g, s.key, x.key))}
                     active={active}
-                    depth={1}
-                  >
-                    {x.chapters.map((c) => (
-                      <TreeLeaf key={c.id} to={chapterUrl(c.id)} label={c.title} badge={recent.has(c.id) ? 'Mới' : undefined} />
-                    ))}
-                  </TreeGroup>
-                ) : (
-                  <TreeLeaf key={x.key} to={to} label={sectionText(x.section)} count={x.chapters.length} active={active} badge={x.chapters.some((c) => recent.has(c.id)) ? 'Mới' : undefined} />
+                    badge={x.chapters.some((c) => recent.has(c.id)) ? 'Mới' : undefined}
+                  />
                 )
               })}
             </TreeGroup>

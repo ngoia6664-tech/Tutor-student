@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { viNum } from '../lib/exam.js'
 import { celebrate, mascotSay } from '../lib/celebrate.js'
+import CustomSelect from './CustomSelect.jsx'
 import {
   chapterTree,
   chartComment,
@@ -99,13 +100,14 @@ export default function ScoreChart({ points, voice = 'student', quiet = false, c
     <section className="card score-chart">
       <div className="row row-between">
         <h2 style={{ margin: 0 }}>Biểu đồ học tập</h2>
-        <select className="score-chart-range" value={range} onChange={(e) => setRange(e.target.value)} aria-label="Khoảng thời gian">
-          {RANGES.map((o) => (
-            <option key={o.key} value={o.key}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <CustomSelect
+          value={range}
+          onChange={setRange}
+          options={RANGES.map((o) => ({ value: o.key, label: o.label }))}
+          prefixLabel="Thời gian: "
+          icon="calendar"
+          ariaLabel="Khoảng thời gian"
+        />
       </div>
 
       <div className="chips">

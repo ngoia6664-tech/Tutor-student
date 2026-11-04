@@ -124,3 +124,78 @@
 .group-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.4rem; }
 .group-detail-title { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-size: 1.25rem; }
 .group-note { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.9rem; }
+
+
+/* Lưới thẻ học sinh dạng Grid Box khi tìm kiếm hoặc xem theo thẻ */
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+.student-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 3px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.student-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+.student-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.student-card-avatar {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  border: 1px solid var(--border);
+}
+.student-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+.student-card-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.student-card-name:hover {
+  color: var(--primary);
+}
+.student-card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  margin-bottom: 0.75rem;
+}
+.student-card-stat-item b {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text);
+}
