@@ -15,7 +15,8 @@ export default function QuestionGrid({ exercises, answers, labels }) {
   return (
     <ContextPanel title="Các câu trong bài" icon="grid" replace>
       <p className="small ctx-qstat">
-        Đã làm <strong>{done}</strong>/{exercises.length} câu
+        <span>Đã làm <strong>{done}</strong>/{exercises.length} câu</span>
+        <span className="badge badge-primary">{Math.round((done / exercises.length) * 100)}%</span>
       </p>
       <div className="ctx-track" aria-hidden="true">
         <div className="ctx-fill" style={{ width: `${(done / exercises.length) * 100}%` }} />
