@@ -142,8 +142,20 @@ body:has(.side.is-open) {
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
+  border-radius: var(--r-chip);
   border-color: transparent;
   overflow: hidden;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.nav-side .nav-link:hover {
+  background: var(--primary-soft);
+  transform: translateX(2px);
+}
+.nav-side .nav-link.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 .nav-side .nav-badge {
   margin-left: auto;
@@ -158,11 +170,20 @@ body:has(.side.is-open) {
   border-top: 1px solid var(--border);
 }
 .side-user {
-  padding: 0.35rem 0.75rem 0.45rem;
-  color: var(--muted);
-  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .side-btn {
   position: relative;
@@ -479,9 +500,17 @@ body:has(.ctx-card) .ctx-panel {
 }
 .ctx-card {
   background: var(--surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius);
   padding: 0.9rem 1rem 1rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.ctx-card:hover {
+  border-color: rgba(168, 85, 247, 0.25);
 }
 .ctx-title {
   display: flex;
@@ -545,19 +574,30 @@ body:has(.ctx-card) .ctx-panel {
 .ctx-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
-  margin: 0 0 0.5rem;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
 }
 .ctx-stat {
-  padding: 0.3rem 0.4rem;
+  padding: 0.4rem 0.35rem;
   border: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
+  backdrop-filter: blur(6px);
   text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.ctx-stat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 85, 247, 0.3);
 }
 .ctx-stat dt {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--muted);
+  margin-bottom: 0.1rem;
 }
 .ctx-stat dd {
   margin: 0;
@@ -566,15 +606,39 @@ body:has(.ctx-card) .ctx-panel {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
+.ctx-stat.is-lit dd {
+  color: #ffedd5;
+  text-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+  animation: hud-flame-glow 2.5s infinite ease-in-out;
+}
+@keyframes hud-flame-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.9));
+  }
+}
 .ctx-stat.is-reward dd {
-  color: var(--reward);
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
 }
 .ctx-stat:not(.is-lit):first-child dd {
-  opacity: 0.6; /* chưa giữ chuỗi hôm nay: lửa leo lét như ngọn lửa trên thanh trên cùng */
+  opacity: 0.55; /* chưa giữ chuỗi hôm nay: lửa leo lét như ngọn lửa trên thanh trên cùng */
 }
 .ctx-note {
   margin: 0 0 0.6rem;
   color: var(--muted);
+}
+.ctx-default .btn-primary {
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
+  font-weight: 600;
+}
+.ctx-default .btn-primary:hover {
+  box-shadow: 0 6px 22px rgba(168, 85, 247, 0.55);
+  transform: translateY(-1px);
 }
 
 /* Danh sách chọn (Nhóm học sinh): hàng bấm được, hàng đang chọn tô như mục menu */

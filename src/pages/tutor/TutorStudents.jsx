@@ -427,6 +427,9 @@ function StudentTable({ list, data, onEdit }) {
               <tr key={s.id}>
                 <td>
                   <Link to={`/tutor/students/${s.id}`} className="student-link">
+                    <span className="student-initial" style={{ width: '1.65rem', height: '1.65rem', fontSize: '0.78rem' }}>
+                      {s.full_name?.trim()?.charAt(0) || '?'}
+                    </span>
                     <strong>{s.full_name || '(chưa đặt tên)'}</strong>
                   </Link>
                   <div className="small muted">{s.group_name ? groupLabel(s.group_name) : 'Chưa xếp nhóm'}</div>
