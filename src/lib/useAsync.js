@@ -40,3 +40,11 @@ export function useAsync(fn, deps) {
     reload,
   }
 }
+
+// Tải lại khi có sự kiện toàn cục (vd. xóa góp ý, chấm xong bài) để khối ở cột phải không bị cũ
+export function useReloadOn(reload, events) {
+  useEffect(() => {
+    events.forEach((e) => window.addEventListener(e, reload))
+    return () => events.forEach((e) => window.removeEventListener(e, reload))
+  }, [reload, events])
+}

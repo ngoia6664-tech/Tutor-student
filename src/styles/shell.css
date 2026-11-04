@@ -1175,3 +1175,10 @@ body:has(.ctx-card .qgrid) .answer-progress {
   border-color: var(--primary);
   background: rgba(168, 85, 247, 0.25);
 }
+
+/* Chấm bài (gia sư): màn ≥ 1360px kết quả nằm ở cột phải (ResultProgress `panel`) nên ẩn thanh dính trên */
+@media (min-width: 1360px) {
+  body:has(.ctx-card .rp-panel) .answer-progress {
+    display: none !important;
+  }
+}

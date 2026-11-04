@@ -4,6 +4,7 @@ import { supabase, unwrap } from '../lib/supabase.js'
 import { useAuth } from './AuthContext.jsx'
 import Icon from '../components/Icon.jsx'
 import { mascotSay } from '../lib/celebrate.js'
+import { SUBMISSIONS_CHANGED } from '../lib/submissions.js'
 
 // Thông báo bài giảng / bài tập mới cho học sinh; gia sư: học sinh vừa nộp bài.
 // - "Mới" = được giao sau lần cuối học sinh mở chuông (profiles.notif_seen_at, lưu trên máy chủ
@@ -176,6 +177,17 @@ export function NotificationsProvider({ children }) {
       window.removeEventListener('focus', onVisible)
     }
   }, [enabled, refresh])
+
+  // Gia sư vừa chấm / mở lại bài: tải lại ngay, bỏ qua khoảng chặn 3 giây
+  useEffect(() => {
+    if (!isTutor) return
+    const onChanged = () => {
+      lastRefresh.current = 0
+      refresh()
+    }
+    window.addEventListener(SUBMISSIONS_CHANGED, onChanged)
+    return () => window.removeEventListener(SUBMISSIONS_CHANGED, onChanged)
+  }, [isTutor, refresh])
 
   // Thông báo nổi tự ẩn sau 7 giây
   useEffect(() => {

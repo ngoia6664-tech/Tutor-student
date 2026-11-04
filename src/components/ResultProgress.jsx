@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { isAnswered } from './ExerciseBody.jsx'
 import { useStickyTop } from './AnswerProgress.jsx'
 import Icon from './Icon.jsx'
+import ContextPanel from './ContextPanel.jsx'
 
 const OPEN_KEY = 'result-progress-open'
 
@@ -19,8 +20,9 @@ function readOpen() {
  * - answers: { exercise_id: { answer, is_correct } }
  * - labels: { exercise_id: "3" | "I.3" } · notes: { exercise_id: lời phê }
  * - idPrefix: id của khối câu là `${idPrefix}${exercise_id}`
+ * - panel: màn ≥ 1360px đưa khối này sang cột phải (như QuestionGrid của học sinh), thanh dính bị shell.css ẩn đi
  */
-export default function ResultProgress({ exercises, answers, labels, notes = {}, idPrefix = 'q-' }) {
+export default function ResultProgress({ exercises, answers, labels, notes = {}, idPrefix = 'q-', panel = false }) {
   const [open, setOpen] = useState(readOpen)
   const selfRef = useRef(null)
   const top = useStickyTop(selfRef)
@@ -53,46 +55,66 @@ export default function ResultProgress({ exercises, answers, labels, notes = {},
     { key: 'noted', title: 'Có lời phê:', items: noted, cls: 'ap-chip is-noted' },
   ].filter((g) => g.items.length)
 
-  return (
-    <div ref={selfRef} className={open ? 'answer-progress' : 'answer-progress is-closed'} style={{ top }}>
-      <div className="ap-head">
-        <span className="ap-stat ap-done">
-          <Icon name="check" size={15} /> Đúng <strong>{right}</strong>
+  const stats = (
+    <>
+      <span className="ap-stat ap-done">
+        <Icon name="check" size={15} /> Đúng <strong>{right}</strong>
+      </span>
+      <span className={wrong.length ? 'ap-stat ap-wrong' : 'ap-stat'}>
+        Sai <strong>{wrong.length}</strong>
+      </span>
+      {missing.length > 0 && (
+        <span className="ap-stat ap-missing">
+          Bỏ trống <strong>{missing.length}</strong>
         </span>
-        <span className={wrong.length ? 'ap-stat ap-wrong' : 'ap-stat'}>
-          Sai <strong>{wrong.length}</strong>
-        </span>
-        {missing.length > 0 && (
-          <span className="ap-stat ap-missing">
-            Bỏ trống <strong>{missing.length}</strong>
-          </span>
-        )}
-        <span className="ap-stat muted">/ {exercises.length} câu</span>
-        <button type="button" className="btn btn-small btn-ghost ap-toggle" onClick={toggle} aria-expanded={open}>
-          <Icon name={open ? 'up' : 'down'} size={15} />
-          {open ? 'Ẩn' : 'Hiện'}
-        </button>
-      </div>
-      <div className="ap-track">
-        <div className="ap-fill is-ok" style={{ width: `${pct}%` }} />
-      </div>
-      {open &&
-        (groups.length ? (
-          groups.map((g) => (
-            <div key={g.key} className="ap-list">
-              <span className="muted small">{g.title}</span>
-              {g.items.map((ex) => (
-                <button key={ex.id} type="button" className={g.cls} onClick={() => jump(ex.id)}>
-                  {label(ex)}
-                </button>
-              ))}
-            </div>
-          ))
-        ) : (
-          <p className="ap-list small" style={{ margin: 0 }}>
-            🎉 Không có câu sai nào.
-          </p>
-        ))}
+      )}
+      <span className="ap-stat muted">/ {exercises.length} câu</span>
+    </>
+  )
+  const track = (
+    <div className="ap-track">
+      <div className="ap-fill is-ok" style={{ width: `${pct}%` }} />
     </div>
+  )
+  const lists = groups.length ? (
+    groups.map((g) => (
+      <div key={g.key} className="ap-list">
+        <span className="muted small">{g.title}</span>
+        {g.items.map((ex) => (
+          <button key={ex.id} type="button" className={g.cls} onClick={() => jump(ex.id)}>
+            {label(ex)}
+          </button>
+        ))}
+      </div>
+    ))
+  ) : (
+    <p className="ap-list small" style={{ margin: 0 }}>
+      🎉 Không có câu sai nào.
+    </p>
+  )
+
+  return (
+    <>
+      <div ref={selfRef} className={open ? 'answer-progress' : 'answer-progress is-closed'} style={{ top }}>
+        <div className="ap-head">
+          {stats}
+          <button type="button" className="btn btn-small btn-ghost ap-toggle" onClick={toggle} aria-expanded={open}>
+            <Icon name={open ? 'up' : 'down'} size={15} />
+            {open ? 'Ẩn' : 'Hiện'}
+          </button>
+        </div>
+        {track}
+        {open && lists}
+      </div>
+      {panel && (
+        <ContextPanel title="Kết quả bài làm" icon="grade">
+          <div className="rp-panel">
+            <div className="ap-head">{stats}</div>
+            {track}
+            {lists}
+          </div>
+        </ContextPanel>
+      )}
+    </>
   )
 }

@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom'
 import { useNotifications } from '../contexts/NotificationsContext.jsx'
-import { countOpenReports } from '../lib/reports.js'
-import { countUnseenFeedback } from '../lib/feedback.js'
-import { useAsync } from '../lib/useAsync.js'
+import { countOpenReports, REPORTS_CHANGED } from '../lib/reports.js'
+import { countUnseenFeedback, FEEDBACK_CHANGED } from '../lib/feedback.js'
+import { useAsync, useReloadOn } from '../lib/useAsync.js'
 import Icon from './Icon.jsx'
 
 // Khối mặc định cột phải của gia sư (Layout): "Việc cần xử lý" thu thành một dải số một dòng, luôn ở đầu cột.
 // Số bài chờ chấm lấy từ chuông thông báo (NotificationsContext), số báo lỗi / góp ý đếm như menu.
+const EVENTS = [REPORTS_CHANGED, FEEDBACK_CHANGED]
+
 export default function TutorTodoPanel() {
   const { items } = useNotifications()
-  const { data } = useAsync(() => Promise.all([countOpenReports(), countUnseenFeedback()]), [])
+  const { data, reload } = useAsync(() => Promise.all([countOpenReports(), countUnseenFeedback()]), [])
+  useReloadOn(reload, EVENTS)
   const [reports = 0, feedback = 0] = data || []
   const pending = items.filter((it) => it.kind === 'submission' && it.status === 'done').length // đã nộp, chưa chấm
 
