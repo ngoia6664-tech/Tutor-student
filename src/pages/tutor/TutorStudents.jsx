@@ -113,19 +113,24 @@ export default function TutorStudents() {
           <div className="group-grid">
             {pageBlocks.map((b) => (
               <button key={b.key} type="button" className="group-card" onClick={() => setGroup(b.key)}>
-                <span className="group-card-icon">
-                  <Icon name={b.key === NONE ? 'inbox' : 'users'} size={22} />
-                </span>
+                <div className="group-card-header">
+                  <span className="group-card-icon">
+                    <Icon name={b.key === NONE ? 'inbox' : 'users'} size={20} />
+                  </span>
+                  <span className="group-badge-count">{b.list.length} em</span>
+                </div>
                 <strong className="group-card-title">{b.title}</strong>
-                <span className="group-card-count">{b.list.length} em</span>
                 {b.note && <span className="group-card-note">{b.note}</span>}
-                <span className="group-card-names">
-                  {b.list.length === 0 && <span className="muted">Chưa có học sinh</span>}
+                <div className="group-card-names">
+                  {b.list.length === 0 && <span className="muted small">Chưa có học sinh</span>}
                   {b.list.slice(0, PREVIEW).map((s) => (
-                    <span key={s.id}>{s.full_name || '(chưa đặt tên)'}</span>
+                    <span key={s.id} className="student-chip-mini">
+                      <span className="student-initial">{s.full_name?.trim()?.charAt(0) || '?'}</span>
+                      <span className="student-name-text">{s.full_name || '(chưa đặt tên)'}</span>
+                    </span>
                   ))}
-                  {b.list.length > PREVIEW && <span className="muted">+{b.list.length - PREVIEW} em nữa</span>}
-                </span>
+                  {b.list.length > PREVIEW && <span className="group-card-more">+{b.list.length - PREVIEW} em nữa</span>}
+                </div>
               </button>
             ))}
           </div>
@@ -199,6 +204,9 @@ function StudentTable({ list, data, onEdit }) {
               <tr key={s.id}>
                 <td>
                   <Link to={`/tutor/students/${s.id}`} className="student-link">
+                    <span className="student-initial" style={{ width: '1.65rem', height: '1.65rem', fontSize: '0.78rem' }}>
+                      {s.full_name?.trim()?.charAt(0) || '?'}
+                    </span>
                     <strong>{s.full_name || '(chưa đặt tên)'}</strong>
                   </Link>
                 </td>
