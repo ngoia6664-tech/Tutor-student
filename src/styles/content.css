@@ -63,18 +63,16 @@
 .lesson-pager .btn {
   flex: none;
 }
-.lesson-pager-select {
+.lesson-pager-select-wrap {
   flex: 1;
   min-width: 0;
-  min-height: 34px;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.875rem;
-  text-overflow: ellipsis;
+}
+.lesson-pager-select-wrap .custom-select-btn {
+  width: 100%;
+  min-height: 36px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.88rem;
+  border-radius: var(--r-chip, 10px);
 }
 .lesson-page-divider {
   margin: 1.25rem 0 0.6rem;
@@ -769,4 +767,35 @@ details > summary {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* Nút Xem cả bài / Xem theo trang: nổi bật rõ nét, viền mực đậm đà */
+.lesson-mode-btn {
+  background: var(--surface-solid);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.18s var(--spring),
+    border-color 0.18s var(--ease),
+    background-color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+.lesson-mode-btn:hover {
+  border-color: var(--primary);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+:root[data-theme="light"] .lesson-mode-btn {
+  border: 1.5px solid var(--wood-mid, #c28547);
+  background: linear-gradient(180deg, #fffdf8 0%, #f6ebdc 100%);
+  color: #1f1813;
+  box-shadow: 0 2px 5px rgba(74, 48, 20, 0.12);
+}
+:root[data-theme="light"] .lesson-mode-btn:hover {
+  border-color: #92400e;
+  background: #fdf5ea;
+  box-shadow: 0 3px 10px rgba(74, 48, 20, 0.18);
 }

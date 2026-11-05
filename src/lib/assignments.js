@@ -1,6 +1,7 @@
 import { supabase, unwrap, SUBMISSION_BUCKET } from './supabase.js'
 import { loadRetries } from './retries.js'
 import { loadAnswerNotes } from './answerNotes.js'
+import { SUBMISSIONS_CHANGED } from './submissions.js'
 
 // Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_id>
 export async function removeSubmissionFiles(folder) {
@@ -17,6 +18,7 @@ export async function deleteAssignment(id) {
     recs.map((r) => removeSubmissionFiles(r.submission_path).catch((e) => console.warn('Không xóa được ảnh bài nộp', r.submission_path, e)))
   )
   unwrap(await supabase.from('assignments').delete().eq('id', id))
+  window.dispatchEvent(new Event(SUBMISSIONS_CHANGED)) // bài nộp chờ chấm biến mất: chuông + cột phải tải lại
 }
 
 // Dữ liệu một câu gửi lên hàm save_assignment

@@ -17,5 +17,5 @@ export async function loadSubmissionImages(folder) {
   return signed.filter((s) => s.signedUrl).map((s) => ({ path: s.path, url: s.signedUrl }))
 }
 
-// Sự kiện báo bài nộp vừa đổi trạng thái (chấm xong / cho nộp lại): chuông + cột phải gia sư tải lại
+// Sự kiện báo bài nộp vừa đổi trạng thái (chấm xong / cho nộp lại / xóa bài tập / bỏ người nhận): chuông + cột phải gia sư tải lại
 export const SUBMISSIONS_CHANGED = 'submissions-changed'

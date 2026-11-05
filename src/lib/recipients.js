@@ -1,6 +1,7 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { supabase, unwrap } from './supabase.js'
 import { removeSubmissionFiles } from './assignments.js'
+import { SUBMISSIONS_CHANGED } from './submissions.js'
 
 // Giao nhanh bài giảng / bài tập cho học sinh ngay từ danh sách (không qua trang Sửa).
 // Gia sư được ghi thẳng bảng người nhận (RLS *_tutor_all); xóa người nhận bài tập thì bài nộp + điểm xóa theo cascade.
@@ -41,6 +42,7 @@ export async function setRecipients(kind, id, studentIds, current) {
       }
     }
   }
+  if (removed.length) window.dispatchEvent(new Event(SUBMISSIONS_CHANGED)) // bỏ người nhận kéo theo bài nộp của họ
   if (added.length) await addRecipients([{ kind, id }], added)
   return { added: added.length, removed: removed.length }
 }

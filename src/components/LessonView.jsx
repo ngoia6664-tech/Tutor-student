@@ -9,6 +9,7 @@ import Markdown from './Markdown.jsx'
 import VideoEmbed from './VideoEmbed.jsx'
 import ErrorBox from './ErrorBox.jsx'
 import Icon from './Icon.jsx'
+import CustomSelect from './CustomSelect.jsx'
 
 // Dấu phân trang trong Markdown (một dòng riêng). Bài nhập JSON có "page" ở từng mục sẽ có dấu này;
 // bài cũ không có dấu → mặc định xem cả bài, bấm "Xem theo trang" thì mỗi mục "## " là một trang.
@@ -80,21 +81,29 @@ function PageContent({ p, animKey }) {
   )
 }
 
-// Thanh chuyển trang: trước / chọn trang / sau
+// Thanh chuyển trang: trước / chọn trang (CustomSelect) / sau
 function Pager({ pages, index, onChange }) {
   const last = pages.length - 1
+  const options = pages.map((p, i) => ({
+    value: i,
+    label: `${i + 1}/${pages.length} · ${pageTitle(p, i)}`,
+  }))
+
   return (
     <nav className="lesson-pager" aria-label="Chuyển trang bài giảng">
       <button type="button" className="btn btn-small" disabled={index <= 0} onClick={() => onChange(index - 1)}>
         ← Trước
       </button>
-      <select className="lesson-pager-select" value={index} onChange={(e) => onChange(Number(e.target.value))} aria-label="Chọn trang">
-        {pages.map((p, i) => (
-          <option key={i} value={i}>
-            {i + 1}/{pages.length} · {pageTitle(p, i)}
-          </option>
-        ))}
-      </select>
+      <div className="lesson-pager-select-wrap">
+        <CustomSelect
+          value={index}
+          onChange={(val) => onChange(Number(val))}
+          options={options}
+          ariaLabel="Chọn trang bài giảng"
+          searchable={pages.length > 8}
+          searchPlaceholder="Tìm trang..."
+        />
+      </div>
       <button type="button" className="btn btn-small btn-primary" disabled={index >= last} onClick={() => onChange(index + 1)}>
         Sau →
       </button>
@@ -198,7 +207,7 @@ export default function LessonView({ lesson }) {
           {pages.length > 1 && (
             <button
               type="button"
-              className="btn btn-small btn-ghost"
+              className="btn btn-small lesson-mode-btn"
               onClick={() => update(paged ? { xem: 'ca-bai', trang: null } : { xem: 'trang', trang: null })}
             >
               <Icon name={paged ? 'file' : 'book'} />
