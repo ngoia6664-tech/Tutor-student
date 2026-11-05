@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Observatory UI - Bản mẫu Giao diện Tối Nâng Cấp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Cosmic Theme Tokens */
+      --cosmic-bg: #07050f;
+      --cosmic-surface: rgba(18, 14, 38, 0.65);
+      --cosmic-surface-solid: #110c26;
+      --cosmic-surface-hover: rgba(32, 25, 66, 0.85);
+      --cosmic-glass-border: rgba(165, 180, 252, 0.16);
+      --cosmic-glass-border-hover: rgba(56, 189, 248, 0.45);
+      
+      --neon-cyan: #38bdf8;
+      --neon-cyan-glow: rgba(56, 189, 248, 0.35);
+      --neon-purple: #a855f7;
+      --neon-purple-glow: rgba(168, 85, 247, 0.35);
+      --solar-amber: #fbbf24;
+      --solar-amber-glow: rgba(251, 191, 36, 0.35);
+      --supernova-red: #f43f5e;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--cosmic-bg);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Live Canvas Starfield */
+    #space-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Atmospheric Nebula Glows */
+    .nebula-glow-1 {
+      position: fixed;
+      top: -15%;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(124, 58, 237, 0) 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatNebula 18s ease-in-out infinite alternate;
+    }
+    .nebula-glow-2 {
+      position: fixed;
+      bottom: 5%;
+      right: 15%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.14) 0%, rgba(14, 165, 233, 0) 70%);
+      filter: blur(70px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatNebula 22s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes floatNebula {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.15); }
+    }
+
+    /* Top Control Bar */
+    .top-control-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(10, 7, 22, 0.8);
+      border-bottom: 1px solid var(--cosmic-glass-border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+    }
+    .brand-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #7c3aed, #0284c7);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+    }
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(18, 14, 38, 0.8);
+      padding: 0.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--cosmic-glass-border);
+    }
+    .toggle-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .toggle-btn.active {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(56, 189, 248, 0.2));
+      color: #fff;
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan-glow);
+    }
+
+    /* Main App Layout Grid */
+    .app-viewport {
+      position: relative;
+      z-index: 10;
+      max-width: 1440px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem 3rem;
+      display: grid;
+      grid-template-columns: 240px 1fr 320px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* Glass Panels */
+    .glass-card {
+      background: var(--cosmic-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--cosmic-glass-border);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card:hover {
+      border-color: var(--cosmic-glass-border-hover);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 20px var(--neon-cyan-glow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Sidebar / Command Console */
+    .sidebar {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 1rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--cosmic-glass-border);
+    }
+    .avatar-ring {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+    }
+    .user-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .user-info p {
+      font-size: 0.75rem;
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      position: relative;
+      transition: all 0.18s ease;
+    }
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .nav-btn.active {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(168, 85, 247, 0.22) 0%, rgba(56, 189, 248, 0.06) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      box-shadow: inset 3px 0 0 var(--neon-purple);
+    }
+
+    /* Main Stage */
+    .main-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Celestial Observatory Clock Widget */
+    .celestial-clock-card {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(23, 17, 48, 0.7) 0%, rgba(13, 10, 30, 0.8) 100%);
+      position: relative;
+    }
+    .clock-title-wrap h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .clock-title-wrap p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Celestial Clock SVG / Canvas */
+    .astronomy-clock {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .astronomy-clock:hover {
+      transform: scale(1.08);
+    }
+    .astronomy-clock svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search-input-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.4rem;
+      border-radius: 12px;
+      background: rgba(18, 14, 38, 0.7);
+      border: 1px solid var(--cosmic-glass-border);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px var(--neon-cyan-glow);
+    }
+    .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .student-card {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      position: relative;
+      cursor: pointer;
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .badge-capsule {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+    .student-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+    }
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .score-badge {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      text-shadow: 0 0 10px var(--neon-cyan-glow);
+    }
+
+    /* Constellation Tree Section */
+    .tree-showcase {
+      padding: 1.25rem;
+      margin-top: 0.5rem;
+    }
+    .tree-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .constellation-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      padding-left: 1.25rem;
+    }
+    /* Glowing Constellation laser line */
+    .constellation-tree::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 16px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple), rgba(168, 85, 247, 0.2));
+      box-shadow: 0 0 8px var(--neon-cyan-glow);
+    }
+    .tree-node {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.88rem;
+      position: relative;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .tree-node::before {
+      content: '';
+      position: absolute;
+      left: -19px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+    }
+    .tree-node:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.35);
+      transform: translateX(4px);
+    }
+    .tree-node.active-node {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.1));
+      border-color: var(--neon-cyan);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Pager & Select Showcase */
+    .pager-box {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(14, 10, 28, 0.85);
+      border: 1px solid var(--cosmic-glass-border);
+      border-radius: 14px;
+      padding: 0.6rem 0.9rem;
+    }
+    .pager-btn {
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.18s;
+    }
+    .pager-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .pager-select-mock {
+      flex: 1;
+      padding: 0.5rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(28, 22, 58, 0.9);
+      border: 1.5px solid rgba(168, 85, 247, 0.45);
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+    }
+    .pager-mode-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2));
+      border: 1px solid var(--neon-cyan);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      box-shadow: 0 0 12px var(--neon-cyan-glow);
+    }
+
+    /* Right Column: Holographic HUD Console */
+    .hud-console {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border-color: rgba(56, 189, 248, 0.25);
+      background: linear-gradient(180deg, rgba(14, 18, 38, 0.8) 0%, rgba(8, 10, 24, 0.9) 100%);
+    }
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .hud-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulseGreen 1.5s infinite;
+    }
+    @keyframes pulseGreen {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .hud-task-card {
+      padding: 0.9rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .hud-task-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .task-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+    }
+    .task-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .task-status-chip {
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+    }
+    .status-amber {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: var(--solar-amber);
+    }
+    .status-cyan {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--neon-cyan);
+    }
+
+    /* Floating Astronaut Panda Widget */
+    .mascot-card {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(56, 189, 248, 0.1));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .mascot-avatar {
+      font-size: 2rem;
+      animation: levitatePanda 3s ease-in-out infinite;
+    }
+    @keyframes levitatePanda {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .mascot-speech {
+      font-size: 0.8rem;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    /* Audio feedback notification pill */
+    #sound-pill {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 999px;
+      background: rgba(14, 10, 30, 0.9);
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 20px var(--neon-cyan-glow);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 100;
+    }
+    #sound-pill.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Space Canvas -->
+  <canvas id="space-canvas"></canvas>
+  <div class="nebula-glow-1"></div>
+  <div class="nebula-glow-2"></div>
+
+  <!-- Header Control Strip -->
+  <header class="top-control-bar">
+    <div class="brand-tag">
+      <span>🚀 Study with Duy Anh</span>
+      <span class="brand-badge">Cosmic Observatory 2.0</span>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn" onclick="switchMode('old')">Bản Cũ (Tím Phẳng)</button>
+      <button class="toggle-btn active" onclick="switchMode('new')">Bản Mới (Kính Thiên Văn & Ánh Sao)</button>
+    </div>
+    <div>
+      <button class="pager-btn" style="border-color: var(--neon-cyan); color: var(--neon-cyan);" onclick="triggerSound('warp')">
+        ⚡ Thử âm thanh Warp Jump
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="app-viewport">
+    
+    <!-- LEFT: Command Console (Sidebar) -->
+    <aside class="glass-card sidebar">
+      <div class="sidebar-user">
+        <div class="avatar-ring">DA</div>
+        <div class="user-info">
+          <h4>Ngô Duy Anh</h4>
+          <p><span class="pulse-dot" style="width: 6px; height: 6px;"></span> Gia sư trưởng</p>
+        </div>
+      </div>
+
+      <button class="nav-btn active" onclick="triggerSound('click')">
+        <span>👥</span> Học sinh
+      </button>
+      <button class="nav-btn" onclick="triggerSound('click')">
+        <span>📚</span> Thư viện bài giảng
+      </button>
+      <button class="nav-btn" onclick="triggerSound('click')">
+        <span>✍️</span> Chấm bài (2)
+      </button>
+      <button class="nav-btn" onclick="triggerSound('click')">
+        <span>🪐</span> Ngắm vũ trụ
+      </button>
+      <button class="nav-btn" onclick="triggerSound('click')">
+        <span>🧸</span> Cửa hàng gấu
+      </button>
+      <button class="nav-btn" onclick="triggerSound('click')">
+        <span>⚙️</span> Cài đặt trạm
+      </button>
+      <button class="nav-btn" style="color: var(--supernova-red); margin-top: auto;" onclick="triggerSound('alert')">
+        <span>🚪</span> Đăng xuất
+      </button>
+    </aside>
+
+    <!-- CENTER: Main Work Area -->
+    <section class="main-stage">
+      
+      <!-- Celestial Observatory Clock Bar -->
+      <div class="glass-card celestial-clock-card">
+        <div class="clock-title-wrap">
+          <h2>
+            <span>Lớp Học Vật Lý 12</span>
+            <span class="badge-capsule" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.35); color: var(--neon-cyan);">
+              7 Học sinh · 3 Chuyên đề
+            </span>
+          </h2>
+          <p>Mô phỏng trạm quỹ đạo · Đang đồng bộ hóa dữ liệu thời gian thực</p>
+        </div>
+
+        <!-- Interactive Astronomical Orbit Clock -->
+        <div class="astronomy-clock" title="Bấm để kích hoạt radar thiên văn!" onclick="clickClock()">
+          <svg viewBox="0 0 100 100">
+            <!-- Outer Orbit Ring -->
+            <circle cx="50" cy="50" r="46" fill="rgba(15, 12, 35, 0.85)" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.5" stroke-dasharray="2 3"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(168, 85, 247, 0.4)" stroke-width="1"/>
+            
+            <!-- Cardinal Celestial Marks (12, 3, 6, 9) -->
+            <text x="50" y="16" fill="#38bdf8" font-size="9" font-weight="800" text-anchor="middle" font-family="'JetBrains Mono', monospace">XII</text>
+            <text x="88" y="53" fill="#fbbf24" font-size="9" font-weight="800" text-anchor="middle" font-family="'JetBrains Mono', monospace">III</text>
+            <text x="50" y="90" fill="#38bdf8" font-size="9" font-weight="800" text-anchor="middle" font-family="'JetBrains Mono', monospace">VI</text>
+            <text x="13" y="53" fill="#fbbf24" font-size="9" font-weight="800" text-anchor="middle" font-family="'JetBrains Mono', monospace">IX</text>
+            
+            <!-- Clock Hands -->
+            <line id="clock-hour" x1="50" y1="50" x2="50" y2="28" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>
+            <line id="clock-min" x1="50" y1="50" x2="68" y2="42" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+            <line id="clock-sec" x1="50" y1="50" x2="35" y2="65" stroke="#f43f5e" stroke-width="1" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="3.5" fill="#f43f5e" stroke="#fff" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="filter-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Tìm theo tên học sinh, chuyên đề, bài tập...">
+        </div>
+        <button class="pager-btn" style="border-color: rgba(56, 189, 248, 0.4); color: #fff;">
+          ⚡ Khối 12 (Tất cả)
+        </button>
+        <button class="pager-btn" style="border-color: rgba(168, 85, 247, 0.4); color: #fff;">
+          ⭐ Điểm cao nhất ↓
+        </button>
+      </div>
+
+      <!-- Cards Grid (Student Cards) -->
+      <div class="cards-grid">
+        <!-- Card 1 -->
+        <div class="glass-card student-card" onclick="triggerSound('click')">
+          <div class="card-top">
+            <span class="badge-capsule">Lớp 11 Lý · HN</span>
+            <span style="color: var(--neon-cyan); font-size: 0.8rem;">● Online</span>
+          </div>
+          <h3>Gia sư Đức Anh – Lớp 11 Toán Lý Hà Nội</h3>
+          <div class="stat-row">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">ĐTB chuyên đề</span>
+            <span class="score-badge">⚡ 8.9 / 10</span>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="glass-card student-card" onclick="triggerSound('click')">
+          <div class="card-top">
+            <span class="badge-capsule">Lớp 12 Lý · HY</span>
+            <span style="color: var(--solar-amber); font-size: 0.8rem;">▲ Đang nộp bài</span>
+          </div>
+          <h3>Gia sư Hà Anh, Tuấn Tú – Lớp 11 Vật lý</h3>
+          <div class="stat-row">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">ĐTB chuyên đề</span>
+            <span class="score-badge">⚡ 9.2 / 10</span>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="glass-card student-card" onclick="triggerSound('click')">
+          <div class="card-top">
+            <span class="badge-capsule">Lớp 12 Ôn Thi</span>
+            <span style="color: var(--neon-cyan); font-size: 0.8rem;">● Online</span>
+          </div>
+          <h3>Gia sư Hoàng – Lớp 12 Vật lý Cấp tốc</h3>
+          <div class="stat-row">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">ĐTB chuyên đề</span>
+            <span class="score-badge">⚡ 8.0 / 10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Constellation Tree Navigation Demo (Cây thư mục chòm sao) -->
+      <div class="glass-card tree-showcase">
+        <div class="tree-title">
+          <span>✨ Mạng Lưới Thư Mục Chòm Sao (Constellation Tree)</span>
+          <span style="font-size: 0.75rem; color: var(--neon-cyan); font-weight: normal; margin-left: auto;">(Đường laser phát quang & nút sao)</span>
+        </div>
+
+        <div class="constellation-tree">
+          <div class="tree-node active-node" onclick="triggerSound('click')">
+            <span>📖</span>
+            <strong>Chủ đề 1: Cấu trúc của chất – Sự chuyển thể</strong>
+            <span class="badge-capsule" style="margin-left: auto; font-size: 0.7rem;">7 trang</span>
+          </div>
+          <div class="tree-node" onclick="triggerSound('click')">
+            <span>📄</span>
+            <span>1/7 · Mô hình động học phân tử về cấu tạo chất</span>
+          </div>
+          <div class="tree-node" onclick="triggerSound('click')">
+            <span>📄</span>
+            <span>2/7 · Cấu trúc và tính chất của rắn, lỏng, khí</span>
+          </div>
+          <div class="tree-node" onclick="triggerSound('click')">
+            <span>📄</span>
+            <span>3/7 · Sáu chiều chuyển thể và tên gọi nhiệt động</span>
+          </div>
+        </div>
+
+        <!-- Upgraded Lesson Pager Showcase -->
+        <div class="pager-box">
+          <button class="pager-btn" onclick="triggerSound('click')">← Trước</button>
+          
+          <div class="pager-select-mock" onclick="triggerSound('click')">
+            <span>🌟 1/7 · Mô hình động học phân tử</span>
+            <span style="color: var(--neon-cyan);">▾</span>
+          </div>
+
+          <button class="pager-btn" style="background: rgba(56, 189, 248, 0.2); border-color: var(--neon-cyan);" onclick="triggerSound('click')">
+            Sau →
+          </button>
+
+          <button class="pager-mode-btn" onclick="triggerSound('warp')">
+            <span>📑</span> Xem cả bài
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT: Holographic HUD Console (Context Panel) -->
+    <aside class="glass-card hud-console">
+      <div class="hud-header">
+        <span class="hud-title">
+          <span class="pulse-dot"></span> Radar Tín Hiệu
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">SYNC 240Hz</span>
+      </div>
+
+      <div style="font-size: 0.8rem; font-weight: 700; color: #fff; margin-top: 0.25rem;">
+        ⚡ Bài nộp cần duyệt
+      </div>
+
+      <div class="hud-task-card">
+        <div class="task-title">Chủ đề 7: Bài tập nhiệt học – Mục IV: Bài tập mức độ vận dụng cao</div>
+        <div class="task-meta">
+          <span>Đức Anh · 27 phút trước</span>
+          <span class="task-status-chip status-amber">Chờ chấm</span>
+        </div>
+      </div>
+
+      <div class="hud-task-card">
+        <div class="task-title">Chủ đề 5: Giao thoa ánh sáng sóng – Mục II: Khảo sát vân giao thoa</div>
+        <div class="task-meta">
+          <span>Tuấn Tú · Hôm qua</span>
+          <span class="task-status-chip status-cyan">Đã nộp lại</span>
+        </div>
+      </div>
+
+      <!-- Mascot Companion -->
+      <div class="mascot-card">
+        <div class="mascot-avatar">🐼</div>
+        <div class="mascot-speech">
+          <strong>Học giả Panda:</strong><br>
+          "Giao diện trạm vũ trụ đã kích hoạt khiên năng lượng và hệ thống định vị chòm sao!"
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Notification Pill -->
+  <div id="sound-pill">
+    <span>✨</span> <span id="sound-text">Âm thanh đã phát</span>
+  </div>
+
+  <script>
+    // Audio Context for Space ASMR Sounds
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function showPill(text) {
+      const pill = document.getElementById('sound-pill');
+      document.getElementById('sound-text').textContent = text;
+      pill.classList.add('show');
+      setTimeout(() => pill.classList.remove('show'), 1600);
+    }
+
+    function triggerSound(type) {
+      try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        if (type === 'click') {
+          // Crispy cybernetic click
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.04);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.05);
+          showPill('🔊 Cyber Click');
+        } else if (type === 'warp') {
+          // Warp jump energy sweep
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.28);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+          showPill('🌌 Warp Jump Sound Synthesized!');
+        } else if (type === 'alert') {
+          // Warning tone
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(350, ctx.currentTime);
+          osc.frequency.setValueAtTime(280, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+          showPill('⚠️ System Notice');
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function clickClock() {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.16);
+        showPill('🕰️ Astronomical Clock Ping (360° Synchronized)');
+      } catch(e) {}
+    }
+
+    // Toggle Mode
+    function switchMode(mode) {
+      document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const root = document.documentElement;
+      if (mode === 'old') {
+        // Flat purple mode (the current old look)
+        root.style.setProperty('--cosmic-bg', '#120c24');
+        root.style.setProperty('--cosmic-surface', '#1f1638');
+        root.style.setProperty('--cosmic-glass-border', 'rgba(139, 92, 246, 0.2)');
+        root.style.setProperty('--neon-cyan-glow', 'none');
+        document.querySelectorAll('.glass-card').forEach(c => {
+          c.style.backdropFilter = 'none';
+        });
+        showPill('Chế độ cũ: Tím bẹt phẳng');
+      } else {
+        // New Cosmic Observatory mode
+        root.style.setProperty('--cosmic-bg', '#07050f');
+        root.style.setProperty('--cosmic-surface', 'rgba(18, 14, 38, 0.65)');
+        root.style.setProperty('--cosmic-glass-border', 'rgba(165, 180, 252, 0.16)');
+        root.style.setProperty('--neon-cyan-glow', 'rgba(56, 189, 248, 0.35)');
+        document.querySelectorAll('.glass-card').forEach(c => {
+          c.style.backdropFilter = 'blur(20px)';
+        });
+        showPill('Chế độ mới: Kính Hun Khói & Chòm Sao');
+      }
+    }
+
+    // Live Starfield Animation on Canvas
+    const canvas = document.getElementById('space-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    const NUM_STARS = 120;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < NUM_STARS; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5 + 0.4,
+          alpha: Math.random() * 0.8 + 0.2,
+          speed: Math.random() * 0.02 + 0.005,
+          color: Math.random() > 0.3 ? '#e0e7ff' : '#38bdf8'
+        });
+      }
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let s of stars) {
+        s.alpha += s.speed;
+        if (s.alpha > 1 || s.alpha < 0.2) s.speed = -s.speed;
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = Math.max(0.1, Math.min(1, s.alpha));
+        ctx.shadowBlur = s.radius > 1.2 ? 6 : 0;
+        ctx.shadowColor = s.color;
+        ctx.fill();
+      }
+      requestAnimationFrame(animateStars);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animateStars();
+
+    // Rotate clock hands smoothly
+    function updateClockHands() {
+      const now = new Date();
+      const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+      const min = now.getMinutes() + sec / 60;
+      const hour = (now.getHours() % 12) + min / 60;
+
+      const secAngle = sec * 6 * Math.PI / 180;
+      const minAngle = min * 6 * Math.PI / 180;
+      const hourAngle = hour * 30 * Math.PI / 180;
+
+      const secEl = document.getElementById('clock-sec');
+      const minEl = document.getElementById('clock-min');
+      const hourEl = document.getElementById('clock-hour');
+
+      if (secEl) {
+        secEl.setAttribute('x2', (50 + 26 * Math.sin(secAngle)).toFixed(1));
+        secEl.setAttribute('y2', (50 - 26 * Math.cos(secAngle)).toFixed(1));
+      }
+      if (minEl) {
+        minEl.setAttribute('x2', (50 + 20 * Math.sin(minAngle)).toFixed(1));
+        minEl.setAttribute('y2', (50 - 20 * Math.cos(minAngle)).toFixed(1));
+      }
+      if (hourEl) {
+        hourEl.setAttribute('x2', (50 + 14 * Math.sin(hourAngle)).toFixed(1));
+        hourEl.setAttribute('y2', (50 - 14 * Math.cos(hourAngle)).toFixed(1));
+      }
+      requestAnimationFrame(updateClockHands);
+    }
+    updateClockHands();
+  </script>
+</body>
+</html>
+

@@ -9,62 +9,66 @@
 :root[data-theme="dark"],
 :root[data-theme="light"].space-exploring {
   color-scheme: dark;
-  --bg: #0c0a1d;
+  --bg: #070512; /* Không gian thạch anh Obsidian sâu thẳm */
   --surface: rgba(
-    24,
-    20,
-    50,
-    var(--card-opacity, 0.9)
-  ); /* gần đặc: chỉnh được bằng thanh trượt Độ đặc kính mờ trong Cài đặt */
-  --surface-solid: #16132e;
-  --surface-2: #1e1a3d;
-  --border: #2a2550;
-  --border-strong: #3b3470;
-  --text: #ece9ff;
-  --muted: #a29dc4;
+    18,
+    14,
+    38,
+    var(--card-opacity, 0.78)
+  ); /* Kính hun khói không gian Smoked Glass (chỉnh được bằng thanh trượt Độ đặc kính mờ) */
+  --surface-solid: #100c24;
+  --surface-2: rgba(28, 22, 58, 0.82);
+  --border: rgba(165, 180, 252, 0.16);
+  --border-strong: rgba(168, 85, 247, 0.35);
+  --text: #f1f5f9; /* Chữ trắng sáng ánh sao, nổi bật sắc nét */
+  --muted: #94a3b8; /* Bụi sao xám xanh dịu mắt, độ tương phản cao */
   --primary: #c084fc;
-  --accent: #f472b6;
+  --accent: #38bdf8; /* Xanh Cyan ánh sao công nghệ cao */
+  --neon-cyan: #38bdf8;
+  --neon-cyan-soft: rgba(56, 189, 248, 0.16);
+  --neon-cyan-glow: rgba(56, 189, 248, 0.35);
+  --solar-amber: #fbbf24;
+  --solar-amber-soft: rgba(251, 191, 36, 0.16);
   --on-primary: #ffffff;
-  --grad: linear-gradient(100deg, #a855f7 0%, #d946ef 55%, #ec4899 100%);
+  --grad: linear-gradient(100deg, #9333ea 0%, #a855f7 50%, #38bdf8 100%);
   --grad-soft: linear-gradient(
     100deg,
-    rgba(168, 85, 247, 0.18),
-    rgba(236, 72, 153, 0.18)
+    rgba(147, 51, 234, 0.18),
+    rgba(56, 189, 248, 0.18)
   );
-  --glow: 0 8px 28px -6px rgba(217, 70, 239, 0.55);
-  --primary-soft: rgba(192, 132, 252, 0.14);
-  --ok: #4ade80;
-  --ok-soft: rgba(74, 222, 128, 0.12);
-  /* Đỏ cam: cách xa hồng nhấn (--accent) để "sai / lỗi" không bị nhầm với trang trí */
-  --danger: #ff6b4a;
-  --danger-soft: rgba(255, 107, 74, 0.13);
+  --glow: 0 8px 28px -6px rgba(168, 85, 247, 0.55), 0 0 16px rgba(56, 189, 248, 0.25);
+  --primary-soft: rgba(192, 132, 252, 0.15);
+  --ok: #34d399;
+  --ok-soft: rgba(52, 211, 153, 0.14);
+  /* Đỏ siêu tân tinh: rực rỡ, sắc bén */
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.16);
   --warn: #fbbf24;
-  --warn-soft: rgba(251, 191, 36, 0.13);
-  --aura-1: rgba(124, 58, 237, 0.28);
-  --aura-2: rgba(219, 39, 119, 0.2);
-  --reward: #fcd34d; /* vàng sao: chỉ dùng cho thứ "kiếm được" (Xu, Sao, chuỗi) */
+  --warn-soft: rgba(251, 191, 36, 0.15);
+  --aura-1: rgba(124, 58, 237, 0.24);
+  --aura-2: rgba(14, 165, 233, 0.18);
+  --reward: #fcd34d; /* vàng sao: Xu, Sao, chuỗi ngày */
   --reward-2: #f59e0b;
-  --reward-soft: rgba(252, 211, 77, 0.14);
+  --reward-soft: rgba(252, 211, 77, 0.16);
   --on-reward: #3b2300;
-  /* Nút chính / mục đang chọn: tím đậm một màu #6d28d9 (chữ trắng 7:1); viền cũng là đáy "phím nổi".
-     Viết dạng gradient để dùng được cả làm lớp nền (library.css: `var(--btn-primary) border-box`) */
-  --btn-primary: linear-gradient(#6d28d9, #6d28d9);
-  --btn-primary-border: #5b21b6;
-  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 14px -8px rgba(46, 16, 101, 0.9);
-  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.35);
-  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #a21caf 55%, #be185d 100%);
+  /* Nút chính / mục đang chọn: tím tinh vân kết hợp ánh cyan nổi khối */
+  --btn-primary: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+  --btn-primary-border: #8b5cf6;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px -6px rgba(124, 58, 237, 0.7);
+  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 3px rgba(56, 189, 248, 0.4);
+  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #6366f1 50%, #0ea5e9 100%);
   --shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25),
-    0 14px 32px -14px rgba(0, 0, 0, 0.65);
-  --focus: rgba(192, 132, 252, 0.6);
-  --spot: rgba(168, 85, 247, 0.3); /* vầng sáng theo chuột (.cursor-glow) */
+    0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 14px rgba(0, 0, 0, 0.45),
+    0 18px 36px -10px rgba(0, 0, 0, 0.65), 0 0 20px rgba(124, 58, 237, 0.12);
+  --focus: rgba(56, 189, 248, 0.65);
+  --spot: rgba(56, 189, 248, 0.22); /* vầng sáng xanh ánh sao theo chuột */
   --skeleton: rgba(255, 255, 255, 0.06);
-  --scroll-thumb: rgba(192, 132, 252, 0.3);
-  --scroll-thumb-hover: rgba(192, 132, 252, 0.62);
-  --topbar-bg: rgba(12, 10, 29, 0.96);
-  --topbar-glass: rgba(12, 10, 29, 0.72);
-  --shop-stage: #120c2a;
-  --shop-stage-2: #24124a;
+  --scroll-thumb: rgba(165, 180, 252, 0.28);
+  --scroll-thumb-hover: rgba(56, 189, 248, 0.6);
+  --topbar-bg: rgba(7, 5, 18, 0.92);
+  --topbar-glass: rgba(7, 5, 18, 0.78);
+  --shop-stage: #0c0820;
+  --shop-stage-2: #1b123d;
   --shop-gold: #fcd34d;
   --pd-belly: #efe9fb;
   --pd-accent: #7c3aed;

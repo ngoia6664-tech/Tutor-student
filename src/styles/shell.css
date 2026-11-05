@@ -152,10 +152,11 @@ body:has(.side.is-open) {
   transform: translateX(2px);
 }
 .nav-side .nav-link.active {
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--primary);
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.25) 0%, rgba(56, 189, 248, 0.08) 100%);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  box-shadow: inset 3.5px 0 0 var(--neon-cyan, #38bdf8), 0 0 16px rgba(168, 85, 247, 0.2);
 }
 .nav-side .nav-badge {
   margin-left: auto;
@@ -501,17 +502,18 @@ body:has(.ctx-card) .ctx-panel {
 }
 .ctx-card {
   background: var(--surface);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--border);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius);
+  border-top: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: var(--radius-lg, 16px);
   padding: 0.9rem 1rem 1rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 .ctx-card:hover {
-  border-color: rgba(168, 85, 247, 0.25);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55), 0 0 18px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .ctx-title {
   display: flex;

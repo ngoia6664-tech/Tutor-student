@@ -403,6 +403,26 @@ export function playClockTick(accent = false) {
   osc.start(t)
   osc.stop(t + dur + 0.01)
 }
+
+// Tiếng chuông radar thiên văn (Cosmic Observatory Chime): tiếng ngân tinh vân trong trẻo
+export function playCosmicPing(accent = false) {
+  if (!fx() || !audio()) return
+  const t = ctx.currentTime
+  const freq = accent ? 1320 : 880
+  const dur = 0.35
+  const osc = ctx.createOscillator()
+  const g = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(freq, t)
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.5, t + dur)
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.linearRampToValueAtTime(accent ? 0.08 : 0.05, t + 0.01)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+  osc.connect(g).connect(master)
+  if (echo) g.connect(echo)
+  osc.start(t)
+  osc.stop(t + dur + 0.05)
+}
 export function stopMusic(fade = 0.8) {
   if (!music || !ctx) return
   const { el, gain } = music

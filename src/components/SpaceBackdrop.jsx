@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { prefersReducedMotion, updateSettings, useSettings } from '../lib/settings.js'
 import { maxScroll, onScroll as onContentScroll, scrollY } from '../lib/scroller.js'
 import { useTheme } from '../lib/theme.js'
-import { playClockTick } from '../lib/spaceSound.js'
+import { playClockTick, playCosmicPing } from '../lib/spaceSound.js'
 
 // Nền phía sau toàn app:
 // - Giao diện tối (Vũ trụ học): 3 lớp sao ở 3 độ xa, vài sao lấp lánh, hệ Mặt Trời 3D nghiêng theo cuộn trang, sao băng.
@@ -165,24 +165,23 @@ export default function SpaceBackdrop() {
     }
   }, [animated])
 
-  // Đồng hồ treo tường lớp học chạy giờ thực (chỉ khi đang ở Giao diện Sáng)
+  // Đồng hồ treo tường (lớp học) & Đồng hồ thiên văn (vũ trụ) chạy giờ thực
   useEffect(() => {
-    if (theme !== 'light') return
     const rootEl = ref.current
     if (!rootEl) return
-    const hourEl = rootEl.querySelector('.clock-hour')
-    const minEl = rootEl.querySelector('.clock-min')
-    const secEl = rootEl.querySelector('.clock-sec')
-    if (!hourEl || !minEl || !secEl) return
+    const hourEls = rootEl.querySelectorAll('.clock-hour, .celestial-hour')
+    const minEls = rootEl.querySelectorAll('.clock-min, .celestial-min')
+    const secEls = rootEl.querySelectorAll('.clock-sec, .celestial-sec')
+    if (!hourEls.length || !minEls.length || !secEls.length) return
 
     const tick = () => {
       const now = new Date()
       const sec = now.getSeconds()
       const min = now.getMinutes()
       const hr = now.getHours() % 12
-      secEl.style.transform = `rotate(${sec * 6}deg)`
-      minEl.style.transform = `rotate(${min * 6 + sec * 0.1}deg)`
-      hourEl.style.transform = `rotate(${hr * 30 + min * 0.5}deg)`
+      secEls.forEach((el) => (el.style.transform = `rotate(${sec * 6}deg)`))
+      minEls.forEach((el) => (el.style.transform = `rotate(${min * 6 + sec * 0.1}deg)`))
+      hourEls.forEach((el) => (el.style.transform = `rotate(${hr * 30 + min * 0.5}deg)`))
     }
     tick()
     if (!animated || prefersReducedMotion()) return
@@ -228,6 +227,26 @@ export default function SpaceBackdrop() {
         </div>
 
         <span className="space-shooting" />
+
+        {/* ĐỒNG HỒ THIÊN VĂN QUỸ ĐẠO (Bản tối - Cosmic Observatory Clock) */}
+        <div
+          className="celestial-clock"
+          role="img"
+          aria-label="Đồng hồ thiên văn vũ trụ"
+          title="Đồng hồ thiên văn vũ trụ (Bấm để kích hoạt sóng radar)"
+          onClick={() => playCosmicPing(true)}
+        >
+          <div className="celestial-clock-rings" />
+          <span className="celestial-num num-12">XII</span>
+          <span className="celestial-num num-3">III</span>
+          <span className="celestial-num num-6">VI</span>
+          <span className="celestial-num num-9">IX</span>
+          <div className="celestial-ticks" aria-hidden="true" />
+          <div className="clock-hand celestial-hour" />
+          <div className="clock-hand celestial-min" />
+          <div className="clock-hand celestial-sec" />
+          <div className="celestial-dot" />
+        </div>
 
         {/* LỚP PHÒNG HỌC CỔ ĐIỂN (Giao diện sáng) */}
         <div className="classroom-scene">

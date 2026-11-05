@@ -1653,3 +1653,42 @@
   overflow: hidden;
   min-height: 0;
 }
+
+/* =====================================================================
+   GIAO DIỆN TỐI (TRẠM THIÊN VĂN): MẠNG LƯỚI CHÒM SAO LASER CÂY THƯ MỤC
+   ===================================================================== */
+:root:not([data-theme="light"]) .tree-children {
+  margin-left: 0.95rem;
+  padding-left: 0.55rem;
+  border-left: 1.5px solid rgba(56, 189, 248, 0.35);
+  box-shadow: -1px 0 8px -1px rgba(56, 189, 248, 0.3);
+}
+
+@media (min-width: 821px) {
+  :root:not([data-theme="light"]) .library .tree-children {
+    border-left: 1.5px solid rgba(56, 189, 248, 0.35);
+  }
+}
+
+:root:not([data-theme="light"]) .tree-row:hover {
+  background: rgba(56, 189, 248, 0.08);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.12);
+}
+
+:root:not([data-theme="light"]) .tree-leaf:hover {
+  background: rgba(56, 189, 248, 0.08);
+  color: #fff;
+}
+
+:root:not([data-theme="light"]) .tree-leaf.active,
+:root:not([data-theme="light"]) .tree-row.active {
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.24) 0%, rgba(56, 189, 248, 0.08) 100%);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--neon-cyan), 0 0 16px rgba(56, 189, 248, 0.2);
+}
+
+:root:not([data-theme="light"]) .outline-section ul {
+  border-left: 1.5px solid rgba(56, 189, 248, 0.35);
+  box-shadow: -1px 0 8px -1px rgba(56, 189, 248, 0.3);
+}

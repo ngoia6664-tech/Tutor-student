@@ -82,9 +82,11 @@
 :root[data-theme='light']:not(.space-exploring) .space::before,
 :root[data-theme='light']:not(.space-exploring) .space-depth,
 :root[data-theme='light']:not(.space-exploring) .solar,
-:root[data-theme='light']:not(.space-exploring) .space-shooting {
+:root[data-theme='light']:not(.space-exploring) .space-shooting,
+:root[data-theme='light']:not(.space-exploring) .celestial-clock {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 
 /* Khi đang mở Kính thiên văn (.space-exploring) ở Giao diện Sáng: trả nền về màu đêm vũ trụ */
@@ -450,6 +452,125 @@
   border: 1px solid #7f1d1d;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   z-index: 3;
+}
+
+/* =====================================================================
+   ĐỒNG HỒ THIÊN VĂN QUỸ ĐẠO (Bản tối - Astronomical Celestial Clock)
+   ===================================================================== */
+.celestial-clock {
+  position: absolute;
+  top: 1.5%;
+  left: 42%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(20, 16, 44, 0.92) 0%, rgba(8, 6, 20, 0.98) 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(56, 189, 248, 0.28),
+    inset 0 0 14px rgba(168, 85, 247, 0.28);
+  user-select: none;
+  z-index: 5;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.2s var(--spring), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.celestial-clock:hover {
+  transform: scale(1.08);
+  border-color: #38bdf8;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(56, 189, 248, 0.45),
+    inset 0 0 16px rgba(168, 85, 247, 0.4);
+}
+.celestial-clock:active {
+  transform: scale(0.96);
+}
+.celestial-clock-rings {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(168, 85, 247, 0.35);
+  pointer-events: none;
+}
+.celestial-num {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace, sans-serif;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.5px;
+}
+.celestial-num.num-12 {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #38bdf8;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.65);
+}
+.celestial-num.num-3 {
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fbbf24;
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.65);
+}
+.celestial-num.num-6 {
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #38bdf8;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.65);
+}
+.celestial-num.num-9 {
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fbbf24;
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.65);
+}
+.celestial-ticks {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(56, 189, 248, 0.35) 0deg 1deg, transparent 1deg 30deg);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.celestial-hour {
+  width: 2.6px;
+  height: 14px;
+  margin-left: -1.3px;
+  background: linear-gradient(to top, #7c3aed, #a855f7);
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.85);
+}
+.celestial-min {
+  width: 1.8px;
+  height: 19px;
+  margin-left: -0.9px;
+  background: linear-gradient(to top, #0284c7, #38bdf8);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.85);
+}
+.celestial-sec {
+  width: 1.2px;
+  height: 22px;
+  margin-left: -0.6px;
+  background: #fb7185;
+  box-shadow: 0 0 6px rgba(251, 113, 133, 0.95);
+}
+.celestial-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fb7185;
+  border: 1px solid #fff;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.9);
 }
 
 /* Công thức phấn trắng viết trên tường bên phải */
