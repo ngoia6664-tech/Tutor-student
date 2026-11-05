@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="vi" data-v="obs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mẫu giao diện tối - Đài quan sát</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   MẪU THỬ - không nằm trong src/. Hai bộ biến:
+   - data-v="now": đúng biến tối hiện tại trong src/styles/base.css
+   - data-v="obs": đề xuất "Đài quan sát lúc nửa đêm"
+   Cùng một HTML, cùng class; chỉ khác biến và vài quy tắc riêng của obs.
+   ===================================================================== */
+:root[data-v="now"] {
+  color-scheme: dark;
+  --bg: #0c0a1d;
+  --sky: radial-gradient(60% 50% at 18% 0%, rgba(124,58,237,.28), transparent 70%),
+         radial-gradient(50% 45% at 90% 8%, rgba(219,39,119,.2), transparent 70%);
+  --s0: rgba(24,20,50,.9);
+  --s1: #1e1a3d;
+  --s2: #1e1a3d;
+  --line: #2a2550;
+  --line-2: #3b3470;
+  --rim: rgba(255,255,255,.04);
+  --text: #ece9ff;
+  --muted: #a29dc4;
+  --primary: #c084fc;
+  --primary-soft: rgba(192,132,252,.14);
+  --btn: #6d28d9;
+  --btn-edge: #5b21b6;
+  --on-btn: #fff;
+  --ok: #4ade80;
+  --danger: #ff6b4a;
+  --warn: #fbbf24;
+  --reward: #fcd34d;
+  --on-reward: #3b2300;
+  --grad: linear-gradient(100deg,#a855f7 0%,#d946ef 55%,#ec4899 100%);
+  --moment: linear-gradient(100deg,#7c3aed 0%,#a21caf 55%,#be185d 100%);
+  --on-moment: #fff;
+  --focus: rgba(192,132,252,.6);
+  --r1: 12px; --r2: 12px; --r3: 10px;
+  --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.25), 0 14px 32px -14px rgba(0,0,0,.65);
+  --shadow-card: var(--shadow);
+  --star: #ece8ff;
+}
+:root[data-v="obs"] {
+  color-scheme: dark;
+  --bg: #0b1226;
+  --sky: radial-gradient(55% 45% at 12% 0%, rgba(74,47,143,.24), transparent 70%),
+         radial-gradient(60% 40% at 88% 0%, rgba(40,64,140,.3), transparent 70%),
+         linear-gradient(180deg,#070c1d 0%,#0b1226 52%,#16244f 100%);
+  --s0: #101a33;          /* tầng 1: khung */
+  --s1: #17223f;          /* tầng 2: thẻ */
+  --s2: #1f2d52;          /* tầng 3: nhãn / nút phụ */
+  --line: #243256;
+  --line-2: #34467a;
+  --rim: rgba(170,195,255,.22);
+  --text: #efe9d9;
+  --muted: #98a3bf;
+  --primary: #5fd3c3;
+  --primary-soft: rgba(95,211,195,.13);
+  --btn: #5fd3c3;
+  --btn-edge: #1f8f82;
+  --on-btn: #04201c;
+  --ok: #5fd3c3;
+  --danger: #ff6b4a;
+  --warn: #f2c14e;
+  --reward: #f2c14e;
+  --on-reward: #2a1a00;
+  --grad: linear-gradient(90deg,#5fd3c3,#5fd3c3);
+  --moment: linear-gradient(100deg,#5fd3c3 0%,#f2c14e 100%);
+  --on-moment: #04201c;
+  --focus: rgba(95,211,195,.7);
+  --r1: 16px; --r2: 10px; --r3: 6px;
+  --shadow: inset 0 1px 0 var(--rim), 0 1px 0 rgba(0,0,0,.4), 0 22px 40px -24px rgba(0,0,0,.8);
+  --shadow-card: inset 0 1px 0 rgba(170,195,255,.14);
+  --star: #efe9d9;
+  --sc-far: #0e1736; --sc-near: #060a18; --sc-rim: #2c3d73; --sc-slit: #1a2a5e;
+}
+:root { --lift: 4px; --r-btn: 10px; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; min-height: 100vh;
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px; line-height: 1.6; color: var(--text);
+  background-color: var(--bg); background-image: var(--sky); background-attachment: fixed;
+}
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.25; }
+h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button { font: inherit; color: inherit; }
+
+/* ---------- Nền: sao ---------- */
+.stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.stars i { position: absolute; border-radius: 50%; background: var(--star); }
+.stars i.tw { animation: tw 4s ease-in-out infinite; }
+@keyframes tw { 50% { opacity: .15; } }
+
+/* ---------- Thanh công cụ của bản mẫu (cố định màu, không đổi theo chế độ) ---------- */
+.bar-tool {
+  position: sticky; top: 0; z-index: 30;
+  background: rgba(7,9,18,.94); border-bottom: 1px solid #2a3050; color: #e6e6ef;
+}
+.bar-tool .in { max-width: 1240px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; }
+.bar-tool strong { font-weight: 700; margin-right: auto; font-size: .95rem; }
+.seg { display: inline-flex; background: #12172b; border: 1px solid #2a3050; border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; color: #aab2cc; }
+.seg button[aria-pressed="true"] { background: #e6e6ef; color: #0b1020; }
+.bar-tool label { display: inline-flex; gap: 8px; align-items: center; font-size: .9rem; cursor: pointer; }
+.legend { display: none; max-width: 1240px; margin: 0 auto; padding: 0 16px 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 16px; font-size: .82rem; color: #aab2cc; line-height: 1.45; }
+html.notes .legend { display: grid; }
+.legend b { color: #f2c14e; margin-right: 4px; }
+.note {
+  display: none; position: absolute; top: -9px; right: -9px; z-index: 6;
+  width: 24px; height: 24px; border-radius: 50%; place-items: center;
+  background: #f2c14e; color: #2a1a00; font: 700 13px/1 "Be Vietnam Pro", sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5); pointer-events: none;
+}
+.note::before { content: attr(data-n); }
+html.notes .note { display: grid; }
+
+/* ---------- Khung ứng dụng ---------- */
+.app {
+  position: relative; z-index: 1;
+  max-width: 1240px; margin: 20px auto 0; padding: 0 16px 280px;
+  display: grid; gap: 16px; align-items: start;
+  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  grid-template-areas: "side main right";
+}
+.side { grid-area: side; } .main { grid-area: main; display: grid; gap: 16px; min-width: 0; } .right { grid-area: right; display: grid; gap: 16px; }
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 220px minmax(0, 1fr); grid-template-areas: "side main" "side right"; }
+}
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main" "side" "right"; }
+  .legend { grid-template-columns: 1fr 1fr; }
+}
+
+/* Tầng 1 - khung. Bản "now": mọi thứ cùng một kiểu thẻ, cùng một góc. */
+.panel { position: relative; background: var(--s0); border: 1px solid var(--line); border-radius: var(--r1); box-shadow: var(--shadow); padding: 16px; }
+/* Tầng 2 - thẻ nằm trong khung */
+.card { position: relative; background: var(--s1); border: 1px solid var(--line); border-radius: var(--r2); box-shadow: var(--shadow-card); padding: 16px; }
+[data-v="obs"] .card { border-color: transparent; }
+/* Tầng 3 - nhãn */
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: var(--r3); background: var(--s2); border: 1px solid var(--line-2); font-size: .82rem; font-weight: 600; line-height: 1.6; }
+.chip.ok { color: var(--ok); } .chip.bad { color: var(--danger); } .chip.wait { color: var(--warn); }
+.chip.reward { color: var(--reward); background: rgba(242,193,78,.1); border-color: rgba(242,193,78,.35); }
+[data-v="now"] .chip.reward { background: rgba(252,211,77,.14); border-color: rgba(252,211,77,.35); }
+
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sub { color: var(--muted); font-size: .88rem; }
+
+/* ---------- Nút "phím nổi" (cùng cơ chế ở cả hai bản) ---------- */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 18px; margin-bottom: var(--lift); cursor: pointer; font-weight: 600; font-size: .95rem;
+  background: var(--s2); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--r-btn);
+  box-shadow: 0 var(--lift) 0 var(--line-2);
+  transition: transform .08s, box-shadow .08s;
+}
+.btn:active { transform: translateY(var(--lift)); box-shadow: 0 0 0 var(--line-2); }
+.btn.ghost { background: transparent; border-color: transparent; box-shadow: none; margin-bottom: var(--lift); color: var(--muted); }
+.btn.ghost:active { transform: none; }
+.btn.primary { background: var(--btn); color: var(--on-btn); border-color: var(--btn-edge); box-shadow: 0 var(--lift) 0 var(--btn-edge); font-weight: 700; }
+.btn.primary:active { box-shadow: 0 0 0 var(--btn-edge); }
+.btn.primary.moment { background: var(--moment); color: var(--on-moment); }
+.btn.small { padding: 4px 12px; font-size: .85rem; --lift: 3px; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin-top: 16px; position: relative; }
+.row-actions .push { margin-left: auto; }
+
+/* ---------- Cây Thư viện ---------- */
+.tree .path { color: var(--muted); font-size: .85rem; margin: 2px 0 12px; }
+.tree ul { list-style: none; margin: 0; padding: 0; }
+.tree .row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--r3); font-weight: 600; font-size: .95rem; }
+.tree .row::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); flex: none; transition: transform .15s; }
+.tree .open > .row::before { transform: rotate(45deg); }
+.tree .topics { margin: 2px 0 8px 12px; }
+.tree .topic { position: relative; padding: 6px 8px 6px 26px; color: var(--muted); font-size: .9rem; border-radius: var(--r3); line-height: 1.45; }
+.tree .topic::before { content: ""; position: absolute; left: 8px; top: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); }
+.tree .topic.done::before { background: var(--ok); }
+.tree .topic.cur { color: var(--text); background: var(--primary-soft); font-weight: 600; }
+.tree .topic.cur::before { background: var(--primary); }
+/* obs: nút cây = ngôi sao, đường nối = nét nối chòm sao */
+[data-v="obs"] .tree .topic::before {
+  left: 6px; top: 8px; width: 15px; height: 15px; border-radius: 0; background: #4b5f99;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+[data-v="obs"] .tree .topic.done::before { background: var(--primary); }
+[data-v="obs"] .tree .topic.cur::before { background: var(--text); animation: pulse-s 2.6s ease-in-out infinite; }
+[data-v="obs"] .tree .topic:not(:last-child)::after {
+  content: ""; position: absolute; left: 13px; top: 24px; bottom: -8px; width: 1px; background: var(--line-2);
+}
+[data-v="obs"] .tree .topic.done:not(.cur):not(:last-child)::after { background: rgba(95,211,195,.6); }
+[data-v="obs"] .tree .topic.cur { background: transparent; }
+@keyframes pulse-s { 50% { transform: scale(1.25); } }
+
+/* ---------- Tiến độ (ý 4: gradient chỉ cho khoảnh khắc) ---------- */
+.progress { height: 10px; border-radius: 999px; background: var(--s2); overflow: hidden; position: relative; }
+.progress i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--grad); transition: width .35s cubic-bezier(.22,1,.36,1); }
+[data-v="obs"] .progress i { background: var(--primary); }
+[data-v="obs"] .done-all .progress i { background: var(--moment); }
+
+/* ---------- Bản đồ câu hỏi ---------- */
+.sky-map { position: relative; }
+.sky-map .lines { display: none; }
+.q {
+  font-weight: 700; font-size: .85rem; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+/* now: lưới ô vuông, đã làm tô tím */
+[data-v="now"] .sky-map { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+[data-v="now"] .q { aspect-ratio: 1 / .85; border-radius: 10px; background: var(--s2); border: 1px solid var(--line-2); color: var(--muted); }
+[data-v="now"] .q.done { background: var(--primary-soft); border-color: var(--primary); color: var(--text); }
+[data-v="now"] .q[aria-current] { box-shadow: 0 0 0 2px var(--focus); }
+/* obs: chòm sao sóng - đúng chủ đề Dao động */
+[data-v="obs"] .sky-map { aspect-ratio: 100 / 30; min-height: 150px; }
+[data-v="obs"] .sky-map .lines { display: block; position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+[data-v="obs"] .q {
+  position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%); transform: translate(-50%, -50%);
+  width: 34px; height: 34px; border-radius: 50%; padding: 0; isolation: isolate;
+  background: var(--s0); border: 1.5px solid #5d70a8; color: var(--muted);
+  transition: background .2s, box-shadow .2s, color .2s;
+}
+[data-v="obs"] .q.done {
+  background: var(--primary); border-color: var(--primary); color: var(--on-btn);
+  box-shadow: 0 0 0 4px rgba(95,211,195,.16), 0 0 14px rgba(95,211,195,.45);
+}
+[data-v="obs"] .q.done::before, [data-v="obs"] .q.done::after {
+  content: ""; position: absolute; left: 50%; top: 50%; z-index: -1; pointer-events: none; background: rgba(207,255,246,.7);
+}
+[data-v="obs"] .q.done::before { width: 52px; height: 1px; transform: translate(-50%, -50%); background: linear-gradient(90deg, transparent, rgba(207,255,246,.8), transparent); }
+[data-v="obs"] .q.done::after { width: 1px; height: 52px; transform: translate(-50%, -50%); background: linear-gradient(180deg, transparent, rgba(207,255,246,.8), transparent); }
+[data-v="obs"] .q[aria-current] { border-color: var(--text); color: var(--text); animation: ring 2.6s ease-in-out infinite; }
+@keyframes ring { 50% { box-shadow: 0 0 0 7px rgba(239,233,217,.12); } }
+[data-v="obs"] .complete .q.done { background: var(--reward); border-color: var(--reward); color: var(--on-reward); box-shadow: 0 0 0 4px rgba(242,193,78,.18), 0 0 16px rgba(242,193,78,.5); }
+.lines line { vector-effect: non-scaling-stroke; }
+.lines .guide { stroke: rgba(152,171,224,.28); stroke-width: 1; stroke-dasharray: 3 5; }
+.lines .live { stroke: rgba(95,211,195,.85); stroke-width: 1.6; stroke-linecap: round; }
+.complete .lines .live { stroke: rgba(242,193,78,.9); }
+.map-name { min-height: 1.5em; font-weight: 600; font-size: .92rem; color: var(--muted); }
+.complete .map-name { color: var(--reward); }
+@media (max-width: 760px) {
+  [data-v="obs"] .sky-map { aspect-ratio: 100 / 44; min-height: 0; }
+  [data-v="obs"] .q { width: 30px; height: 30px; font-size: .78rem; }
+}
+
+/* ---------- Câu hỏi ---------- */
+.qtext { margin: 8px 0 14px; }
+.opts { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 520px) { .opts { grid-template-columns: 1fr; } }
+.opt { text-align: left; cursor: pointer; padding: 10px 14px; border-radius: var(--r3); background: var(--s2); border: 1px solid var(--line-2); display: flex; gap: 10px; }
+.opt b { color: var(--muted); font-weight: 700; }
+.opt[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.opt[aria-pressed="true"] b { color: var(--primary); }
+.msg { min-height: 1.6em; margin-top: 4px; font-size: .9rem; color: var(--warn); }
+.msg.good { color: var(--reward); font-weight: 600; }
+
+/* ---------- Chòm sao chương ---------- */
+.chap-sky svg { width: 100%; height: auto; display: block; }
+.chap-sky .ln { stroke: rgba(95,211,195,.8); stroke-width: 1.4; }
+.chap-sky .ln.off { stroke: rgba(152,171,224,.3); stroke-dasharray: 3 5; }
+.chap-sky .st-on { fill: var(--primary); } .chap-sky .st-off { fill: #4b5f99; } .chap-sky .st-cur { fill: var(--text); }
+.chap-sky text { fill: var(--muted); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.chap-sky .halo { fill: none; stroke: rgba(239,233,217,.5); stroke-width: 1; animation: pulse-h 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse-h { 50% { transform: scale(1.35); opacity: .3; } }
+[data-v="now"] .only-obs, [data-v="obs"] .only-now { display: none !important; }
+
+/* ---------- Mặt kính ba tầng + bảng màu vai trò ---------- */
+.tiers .t1 { border-radius: var(--r1); background: var(--s0); border: 1px solid var(--line-2); padding: 10px; box-shadow: var(--shadow); }
+.tiers .t2 { border-radius: var(--r2); background: var(--s1); padding: 10px; margin-top: 8px; box-shadow: var(--shadow-card); border: 1px solid var(--line); }
+[data-v="obs"] .tiers .t2 { border-color: transparent; }
+.tiers .t3 { margin-top: 8px; }
+.tiers small { display: block; color: var(--muted); font-size: .8rem; line-height: 1.4; }
+.roles { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.roles li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; font-size: .88rem; line-height: 1.4; }
+.roles i { width: 26px; height: 26px; border-radius: var(--r3); display: block; }
+.roles span { color: var(--muted); display: block; font-size: .8rem; }
+.today { display: flex; gap: 8px; flex-wrap: wrap; }
+.spark-ic { width: 14px; height: 14px; fill: currentColor; }
+
+/* ---------- Cảnh đài quan sát (ý 5) ---------- */
+.scene { position: fixed; left: 0; right: 0; bottom: 0; height: min(250px, 34vh); z-index: 0; pointer-events: none; }
+[data-v="now"] .scene { display: none; }
+.scene svg { width: 100%; height: 100%; display: block; }
+.scene .far { fill: var(--sc-far); }
+.scene .near { fill: var(--sc-near); }
+.scene .bld { fill: #080e24; stroke: var(--sc-rim); stroke-width: 1; }
+.scene .slit { fill: var(--sc-slit); }
+.scene .tube { fill: #040713; stroke: var(--sc-rim); stroke-width: 1; transform-origin: 1155px 150px; animation: pan 70s ease-in-out infinite alternate; }
+.scene .lamp { fill: var(--reward); opacity: .9; }
+@keyframes pan { from { transform: rotate(-12deg); } to { transform: rotate(9deg); } }
+/* nhãn 5 nằm ngoài .scene (khung này z-index 0, bị các khung nội dung che) */
+.note.n5 { position: fixed; top: auto; right: 15%; bottom: 175px; z-index: 40; }
+[data-v="now"] .note.n5 { display: none !important; }
+@media (max-width: 700px) { [data-v="obs"] .scene, .note.n5 { display: none !important; } }
+
+/* ---------- Pháo sao khi hoàn thành ---------- */
+.spark { position: fixed; z-index: 50; width: 7px; height: 7px; border-radius: 50%; pointer-events: none; animation: fly .95s cubic-bezier(.2,.8,.3,1) forwards; }
+@keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="stars" id="stars" aria-hidden="true"></div>
+
+<header class="bar-tool">
+  <div class="in">
+    <strong>Mẫu giao diện tối - so sánh hai bản</strong>
+    <div class="seg" role="group" aria-label="Chọn giao diện">
+      <button type="button" data-v="now" aria-pressed="false">Tối hiện tại</button>
+      <button type="button" data-v="obs" aria-pressed="true">Đài quan sát (đề xuất)</button>
+    </div>
+    <label><input type="checkbox" id="notes"> Hiện chú thích ý 1-5</label>
+  </div>
+  <div class="legend" aria-label="Chú thích">
+    <div><b>1</b>Chòm sao: bản đồ câu hỏi, cây Thư viện, chòm sao của chương</div>
+    <div><b>2</b>Bề mặt ba tầng: khung, thẻ, nhãn; góc bo nhỏ dần</div>
+    <div><b>3</b>Nút phím nổi: cùng cơ chế như bản sáng, mặt lục lam có đèn nền</div>
+    <div><b>4</b>Gradient chỉ cho khoảnh khắc: thanh tiến độ đổi màu khi hoàn thành</div>
+    <div><b>5</b>Đài quan sát ở chân trang: kéo xuống cuối để thấy; ẩn trên điện thoại</div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- Thư viện (cây) -->
+  <aside class="side">
+    <nav class="panel tree" aria-label="Thư viện">
+      <span class="note" data-n="1"></span>
+      <h2>Thư viện</h2>
+      <p class="path">Lớp 12 › Vật lý</p>
+      <ul>
+        <li class="open">
+          <div class="row">Chương 1 · Dao động cơ</div>
+          <ul class="topics">
+            <li class="topic done"><a href="#">Dao động điều hòa</a></li>
+            <li class="topic done"><a href="#">Con lắc đơn</a></li>
+            <li class="topic cur"><a href="#">Con lắc lò xo</a></li>
+            <li class="topic"><a href="#">Dao động tắt dần</a></li>
+          </ul>
+        </li>
+        <li><div class="row">Chương 2 · Sóng cơ</div></li>
+        <li><div class="row">Chương 3 · Điện xoay chiều</div></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Nội dung chính -->
+  <main class="main" id="mainBlock">
+    <section class="panel">
+      <div class="head" style="margin-bottom:6px">
+        <h1>Bài tập: Con lắc lò xo</h1>
+        <span class="chip wait">Hạn nộp 20/11</span>
+      </div>
+      <p class="sub">12 câu trắc nghiệm · Chương 1, chủ đề 3</p>
+      <div style="margin-top:14px; position:relative">
+        <span class="note" data-n="4"></span>
+        <div class="progress" role="progressbar" aria-label="Số câu đã làm" aria-valuemin="0" aria-valuemax="12" id="pbar"><i id="pfill"></i></div>
+        <p class="sub" style="margin-top:6px" id="pcount">Đã làm 0/12 câu</p>
+      </div>
+    </section>
+
+    <section class="panel" id="mapPanel">
+      <span class="note" data-n="1"></span>
+      <div class="head">
+        <h2>Bản đồ câu hỏi</h2>
+        <span style="display:flex; gap:4px;">
+          <button class="btn small ghost" type="button" id="allBtn">Làm hết</button>
+          <button class="btn small ghost" type="button" id="resetBtn">Đặt lại</button>
+        </span>
+      </div>
+      <div class="sky-map" id="map">
+        <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g id="guide"></g><g id="live"></g></svg>
+      </div>
+      <p class="map-name" id="mapName" style="margin-top:10px">Bấm vào các sao để thử đánh dấu đã làm.</p>
+    </section>
+
+    <section class="panel">
+      <div class="head">
+        <h2>Câu 5</h2>
+        <span class="chip">Nhận biết</span>
+      </div>
+      <div class="card">
+        <p class="qtext">Một con lắc lò xo gồm vật nặng 100 g gắn vào lò xo có độ cứng 40 N/m. Lấy π² ≈ 10. Chu kì dao động của con lắc là</p>
+        <div class="opts" id="opts">
+          <button type="button" class="opt" aria-pressed="false"><b>A</b>0,1 s</button>
+          <button type="button" class="opt" aria-pressed="false"><b>B</b>0,2 s</button>
+          <button type="button" class="opt" aria-pressed="false"><b>C</b>0,3 s</button>
+          <button type="button" class="opt" aria-pressed="false"><b>D</b>0,4 s</button>
+        </div>
+      </div>
+      <div class="row-actions">
+        <span class="note" data-n="3" style="top:-14px"></span>
+        <button type="button" class="btn">Câu trước</button>
+        <button type="button" class="btn ghost">Lưu nháp</button>
+        <button type="button" class="btn primary push" id="submit">Nộp bài</button>
+      </div>
+      <p class="msg" id="msg" role="status"></p>
+    </section>
+  </main>
+
+  <!-- Cột phải -->
+  <aside class="right">
+    <section class="panel chap-sky">
+      <span class="note" data-n="1"></span>
+      <div class="head" style="margin-bottom:6px"><h2>Chòm sao của chương</h2><span class="sub">2/4</span></div>
+      <div class="only-obs">
+        <svg viewBox="0 0 240 118" role="img" aria-label="Bốn chủ đề của Chương 1: hai chủ đề đã xong, chủ đề 3 đang học, chủ đề 4 chưa học">
+          <defs><path id="sp" d="M0,-9 L2.4,-2.4 L9,0 L2.4,2.4 L0,9 L-2.4,2.4 L-9,0 L-2.4,-2.4Z"/></defs>
+          <line class="ln" x1="26" y1="78" x2="84" y2="34"/>
+          <line class="ln" x1="84" y1="34" x2="148" y2="68"/>
+          <line class="ln off" x1="148" y1="68" x2="212" y2="28"/>
+          <use href="#sp" class="st-on" transform="translate(26 78) scale(1.15)"/>
+          <use href="#sp" class="st-on" transform="translate(84 34) scale(1.15)"/>
+          <circle class="halo" cx="148" cy="68" r="12"/>
+          <use href="#sp" class="st-cur" transform="translate(148 68) scale(1.3)"/>
+          <use href="#sp" class="st-off" transform="translate(212 28)"/>
+          <text x="26" y="104">1</text><text x="84" y="60">2</text><text x="148" y="94">3</text><text x="212" y="54">4</text>
+        </svg>
+      </div>
+      <div class="only-now">
+        <div class="progress"><i style="width:50%"></i></div>
+      </div>
+      <p class="sub" style="margin-top:6px">Chủ đề 3 đang học. Xong chủ đề nào, sao đó sáng lên.</p>
+    </section>
+
+    <section class="panel tiers">
+      <span class="note" data-n="2"></span>
+      <h2 style="margin-bottom:10px">Ba tầng bề mặt</h2>
+      <div class="t1">
+        <small>Tầng 1 · Khung</small>
+        <div class="t2">
+          <small>Tầng 2 · Thẻ</small>
+          <div class="t3"><span class="chip">Tầng 3 · Nhãn</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-bottom:10px">Màu theo vai trò</h2>
+      <ul class="roles">
+        <li><i style="background:var(--primary)"></i><div>Hành động, đang ở đây<span class="only-now">Tím, hồng nhấn</span><span class="only-obs">Lục lam ion</span></div></li>
+        <li><i style="background:var(--reward)"></i><div>Phần thưởng<span>Vàng sao: chỉ Xu, Sao, chuỗi</span></div></li>
+        <li><i style="background:var(--danger)"></i><div>Sai, lỗi<span>Đỏ cam, như mực đỏ chấm bài</span></div></li>
+        <li><i style="background:linear-gradient(135deg,#4a2f8f,#2b3b8a)"></i><div>Tinh vân tím<span class="only-obs">Chỉ nằm trong nền trời</span><span class="only-now">Hiện đang dùng cho cả giao diện</span></div></li>
+      </ul>
+      <div class="today" style="margin-top:14px">
+        <span class="chip reward"><svg class="spark-ic" viewBox="-10 -10 20 20"><path d="M0,-9 L2.4,-2.4 L9,0 L2.4,2.4 L0,9 L-2.4,2.4 L-9,0 L-2.4,-2.4Z"/></svg>128 Sao</span>
+        <span class="chip reward">340 Xu</span>
+        <span class="chip ok">Đúng 9</span>
+        <span class="chip bad">Sai 2</span>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<!-- Cảnh nền: đài quan sát -->
+<span class="note n5" data-n="5"></span>
+<div class="scene" aria-hidden="true">
+  <svg viewBox="0 0 1440 250" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="hz" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a4290" stop-opacity="0"/>
+        <stop offset="1" stop-color="#2a4290" stop-opacity=".5"/>
+      </linearGradient>
+    </defs>
+    <rect y="40" width="1440" height="210" fill="url(#hz)"/>
+    <path class="far" d="M0 176 C160 146 300 156 460 174 S760 154 900 166 S1250 146 1440 170 V250 H0Z"/>
+    <g>
+      <rect class="bld" x="1090" y="150" width="130" height="100"/>
+      <path class="bld" d="M1090 150 A65 65 0 0 1 1220 150Z"/>
+      <rect class="slit" x="1147" y="92" width="16" height="58"/>
+      <rect class="tube" x="1150" y="82" width="10" height="68" rx="2"/>
+      <rect class="lamp" x="1106" y="188" width="10" height="14" rx="1"/>
+      <rect class="lamp" x="1194" y="188" width="10" height="14" rx="1" opacity=".5"/>
+    </g>
+    <path class="near" d="M0 212 C200 196 380 206 560 214 S900 202 1080 210 S1300 202 1440 206 V250 H0Z"/>
+    <g class="near">
+      <polygon points="120,214 134,172 148,214"/><polygon points="146,216 162,160 178,216"/><polygon points="176,216 188,184 200,216"/>
+      <polygon points="1290,208 1302,176 1314,208"/><polygon points="1316,210 1332,166 1348,210"/>
+    </g>
+  </svg>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const $ = (s, el = document) => el.querySelector(s);
+
+  /* ----- chế độ + chú thích (hash: #now / #obs, thêm ,notes / ,done) ----- */
+  const flags = location.hash.slice(1).split(",");
+  const setV = v => {
+    root.dataset.v = v;
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+  };
+  setV(flags.includes("now") ? "now" : "obs");
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setV(b.dataset.v)));
+  const notes = $("#notes");
+  const setNotes = on => { root.classList.toggle("notes", on); notes.checked = on; };
+  setNotes(flags.includes("notes"));
+  notes.addEventListener("change", () => setNotes(notes.checked));
+  document.addEventListener("click", e => { if (e.target.closest('a[href="#"]')) e.preventDefault(); });
+
+  /* ----- sao nền (xác định, không ngẫu nhiên giữa các lần mở) ----- */
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const sky = $("#stars");
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement("i");
+    const size = rnd() < .85 ? 1 : 2;
+    s.style.cssText = `left:${rnd() * 100}%;top:${rnd() * 82}%;width:${size}px;height:${size}px;opacity:${.25 + rnd() * .6}`;
+    if (i % 7 === 0) { s.className = "tw"; s.style.animationDelay = (rnd() * 4).toFixed(2) + "s"; }
+    sky.appendChild(s);
+  }
+
+  /* ----- bản đồ câu hỏi ----- */
+  const P = [[6,64],[14.5,30],[22,70],[30.5,26],[38,60],[46.5,34],[54,72],[62,24],[70.5,62],[78,32],[86.5,68],[94,28]];
+  const N = P.length, CUR = 5;
+  const done = new Set(flags.includes("done") ? P.map((_, i) => i + 1) : [1, 2, 3, 4, 6, 7]);
+  const map = $("#map"), guide = $("#guide"), live = $("#live");
+  const NS = "http://www.w3.org/2000/svg";
+  const seg = (g, a, b, cls) => {
+    const l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", P[a][0]); l.setAttribute("y1", P[a][1]);
+    l.setAttribute("x2", P[b][0]); l.setAttribute("y2", P[b][1]);
+    l.setAttribute("class", cls); g.appendChild(l);
+  };
+  for (let i = 0; i < N - 1; i++) seg(guide, i, i + 1, "guide");
+  const qs = P.map(([x, y], i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "q"; b.textContent = i + 1;
+    b.style.setProperty("--x", x); b.style.setProperty("--y", y);
+    if (i + 1 === CUR) b.setAttribute("aria-current", "step");
+    b.addEventListener("click", () => { done.has(i + 1) ? done.delete(i + 1) : done.add(i + 1); render(); });
+    map.appendChild(b); return b;
+  });
+  const msg = $("#msg");
+  function render() {
+    qs.forEach((b, i) => {
+      const d = done.has(i + 1);
+      b.classList.toggle("done", d);
+      b.setAttribute("aria-label", `Câu ${i + 1}, ${d ? "đã làm" : "chưa làm"}`);
+    });
+    live.replaceChildren();
+    for (let i = 0; i < N - 1; i++) if (done.has(i + 1) && done.has(i + 2)) seg(live, i, i + 1, "live");
+    const n = done.size, all = n === N;
+    $("#pfill").style.width = (n / N * 100) + "%";
+    $("#pbar").setAttribute("aria-valuenow", n);
+    $("#pcount").textContent = `Đã làm ${n}/12 câu`;
+    $("#mapPanel").classList.toggle("complete", all);
+    $("#mainBlock").classList.toggle("done-all", all);
+    $("#submit").classList.toggle("moment", all);
+    $("#mapName").textContent = all ? "Chòm Con Lắc đã hoàn thành. Sẵn sàng nộp bài." : "Bấm vào các sao để thử đánh dấu đã làm.";
+    msg.textContent = ""; msg.className = "msg";
+  }
+  $("#allBtn").addEventListener("click", () => { P.forEach((_, i) => done.add(i + 1)); render(); });
+  $("#resetBtn").addEventListener("click", () => { done.clear(); render(); });
+  $("#opts").addEventListener("click", e => {
+    const o = e.target.closest(".opt"); if (!o) return;
+    document.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", String(x === o)));
+    done.add(CUR); render();
+  });
+  $("#submit").addEventListener("click", e => {
+    const left = N - done.size;
+    if (left) { msg.textContent = `Còn ${left} câu chưa làm.`; msg.className = "msg"; return; }
+    msg.textContent = "Đã nộp bài. +5 Sao"; msg.className = "msg good";
+    const r = e.currentTarget.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const cols = root.dataset.v === "obs" ? ["#5fd3c3", "#f2c14e", "#efe9d9"] : ["#c084fc", "#f472b6", "#fcd34d"];
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement("span"), a = (i / 16) * Math.PI * 2, d = 50 + rnd() * 60;
+      s.className = "spark"; s.style.left = cx + "px"; s.style.top = cy + "px";
+      s.style.background = cols[i % cols.length];
+      s.style.setProperty("--dx", Math.cos(a) * d + "px"); s.style.setProperty("--dy", Math.sin(a) * d + "px");
+      document.body.appendChild(s); setTimeout(() => s.remove(), 1000);
+    }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
