@@ -137,7 +137,8 @@
 
 ## `src/lib/`
 - `scroller.js` — Khung cuộn của nội dung: cuộn cả trang (window) hoặc `.page-body` khi `<html data-shell>` (màn ≥ 1024px, cả gia sư lẫn học sinh); `scrollY` / `maxScroll` / `scrollToY` / `viewTop` / `onScroll` — ScrollMemory, ScrollJump, nền vũ trụ, Library dùng thay window.scrollY / scrollTo
-- `drafts.js` — Bản nháp câu trả lời học sinh trên máy (`draftKey` / `readDraft` / `writeDraft` / `draftCount`): trang làm bài + cột phải "Đang làm dở" ở Bài cần làm (có test)
+- `drafts.js` — Bản nháp câu trả lời học sinh trên máy (`draftKey` / `readDraft` / `writeDraft` / `draftCount`, giờ ghi `readDraftTime`) + bản sao trên máy chủ, bảng `assignment_drafts` (`fetchServerDraft` / `fetchServerDraftCounts` / `pushServerDraft` / `deleteServerDraft`): trang làm bài + cột phải "Đang làm dở" ở Bài cần làm (có test)
+- `useDraftSync.js` — Hook trang làm bài: mở bài lấy bản nháp máy chủ (mới hơn thì thay), sửa xong 2 giây đẩy lên, rời trang đẩy nốt; trả hàm xóa bản nháp máy chủ khi nộp
 - `focusPage.js` — `isFocusPage`: trang làm một bài / đọc một bài giảng của học sinh → Layout ẩn thanh tab dưới (có test)
 - `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chủ đề (chỉ chapter_id), chuyển thư mục (chỉ folder_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chủ đề kèm / không kèm bài bên trong
 - `answerNotes.js` — Lời phê từng câu của gia sư ("Giáo viên chấm:"), bảng a

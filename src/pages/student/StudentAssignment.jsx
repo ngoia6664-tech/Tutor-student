@@ -33,6 +33,7 @@ import { loadAnswerNotes, NOTE_LABEL } from '../../lib/answerNotes.js'
 import ListLink from '../../components/ListLink.jsx'
 // Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệt không mất bài); trang Bài cần làm đọc lại để hiện "Đang làm dở"
 import { draftKey, readDraft, writeDraft } from '../../lib/drafts.js'
+import { useDraftSync } from '../../lib/useDraftSync.js'
 
 export default function StudentAssignment() {
   const { id } = useParams()
@@ -234,6 +235,8 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
   const clock = useExamClock(a.id, rec.started_at, isExam && !retry ? a.time_limit_minutes : null)
 
   useEffect(() => writeDraft(key, answers), [key, answers])
+  // Bản nháp cũng lưu trên máy chủ: đổi thiết bị vẫn thấy câu đã làm
+  const clearServerDraft = useDraftSync(a.id, retry, key, answers, setAnswers)
 
   const groups = groupExercises(exercises, isExam)
   const labels = questionLabels(exercises, isExam)
@@ -312,6 +315,7 @@ function AnswerView({ data, studentId, onSubmitted, retry = false }) {
         retry={retry ? (payload) => submitRetry(a.id, payload) : null}
         onSubmitted={(row) => {
           writeDraft(key, null)
+          clearServerDraft()
           scrollToY(0, 'smooth')
           notifyDone({
             title: retry ? 'Nộp lần làm lại thành công!' : 'Nộp bài thành công!',

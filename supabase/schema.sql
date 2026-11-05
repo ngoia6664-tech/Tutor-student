@@ -2435,6 +2435,51 @@ create policy submissions_student_insert on storage.objects
     )
   );
 
+-- ---------- Bản nháp câu trả lời (đồng bộ giữa các thiết bị) ----------
+-- Học sinh đang làm dở thì đổi máy vẫn thấy câu đã trả lời. Chỉ là nháp của riêng học sinh (không phải bài nộp,
+-- không chấm, gia sư không đọc); nộp bài xong thì app xóa dòng này. retry = nháp của lần làm lại.
+-- answers: {"<exercise_id>": <câu trả lời>}; updated_at do app ghi (so với bản trên máy để lấy bản mới hơn).
+create table if not exists public.assignment_drafts (
+  assignment_id  uuid not null references public.assignments (id) on delete cascade,
+  student_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  retry          boolean not null default false,
+  answers        jsonb not null default '{}'::jsonb,
+  updated_at     timestamptz not null default now(),
+  primary key (assignment_id, student_id, retry)
+);
+alter table public.assignment_drafts drop constraint if exists assignment_drafts_size;
+alter table public.assignment_drafts add constraint assignment_drafts_size check (octet_length(answers::text) <= 300000);
+
+alter table public.assignment_drafts enable row level security;
+
+drop policy if exists assignment_drafts_own_select on public.assignment_drafts;
+drop policy if exists assignment_drafts_own_insert on public.assignment_drafts;
+drop policy if exists assignment_drafts_own_update on public.assignment_drafts;
+drop policy if exists assignment_drafts_own_delete on public.assignment_drafts;
+
+create policy assignment_drafts_own_select on public.assignment_drafts
+  for select to authenticated
+  using (student_id = auth.uid());
+
+-- Chỉ lưu nháp cho bài được giao cho mình
+create policy assignment_drafts_own_insert on public.assignment_drafts
+  for insert to authenticated
+  with check (
+    student_id = auth.uid()
+    and exists (
+      select 1 from public.assignment_recipients ar
+      where ar.assignment_id = assignment_drafts.assignment_id and ar.student_id = auth.uid()
+    )
+  );
+
+create policy assignment_drafts_own_update on public.assignment_drafts
+  for update to authenticated
+  using (student_id = auth.uid()) with check (student_id = auth.uid());
+
+create policy assignment_drafts_own_delete on public.assignment_drafts
+  for delete to authenticated
+  using (student_id = auth.uid());
+
 -- Báo API (PostgREST) đọc lại cấu trúc bảng ngay, tránh lỗi "schema cache" sau khi nâng cấp
 notify pgrst, 'reload schema';
 

@@ -13,7 +13,7 @@ import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../c
 import StudyNow from '../../components/StudyNow.jsx'
 import StudyNowButton from '../../components/StudyNowButton.jsx'
 import ContextPanel from '../../components/ContextPanel.jsx'
-import { draftCount, draftKey, readDraft } from '../../lib/drafts.js'
+import { draftCount, draftKey, fetchServerDraftCounts, readDraft } from '../../lib/drafts.js'
 import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import Icon from '../../components/Icon.jsx'
 import CustomSelect from '../../components/CustomSelect.jsx'
@@ -31,7 +31,7 @@ export default function StudentHome() {
   const [sortBy, setSortBy] = useState('due') // 'due' | 'assigned' | 'title'
 
   const { data, loading, error, reload } = useAsync(async () => {
-    const [rows, chapters] = await Promise.all([
+    const [rows, chapters, serverDrafts] = await Promise.all([
       supabase
         .from('assignment_recipients')
         .select('status, assigned_at, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title))')
@@ -39,12 +39,13 @@ export default function StudentHome() {
         .eq('status', 'todo')
         .then(unwrap),
       fetchStudentChapters(profile.grade ?? null),
+      fetchServerDraftCounts(),
     ])
     const list = rows
       .filter((r) => r.assignment)
       .map((r) => ({ ...r, chapter_id: r.assignment.chapter_id }))
       .sort((a, b) => compareDue(a.assignment.due_date, b.assignment.due_date))
-    return { list, chapters }
+    return { list, chapters, serverDrafts }
   }, [profile.id, profile.grade])
 
   const chapters = data?.chapters || []
@@ -54,16 +55,17 @@ export default function StudentHome() {
   // Cột phải: 3 bài có hạn gần nhất (không theo bộ lọc cây, để luôn thấy bài gấp)
   const soon = (data?.list || []).filter((r) => r.assignment.due_date).slice(0, 3)
 
-  // Đang làm dở: bài chưa nộp có bản nháp trên máy này (đã trả lời ít nhất 1 câu), làm tiếp đúng chỗ cũ
+  // Đang làm dở: bài chưa nộp có bản nháp (trên máy này hoặc trên máy chủ, đã trả lời ít nhất 1 câu), làm tiếp đúng chỗ cũ
   const inProgressMap = useMemo(() => {
     const map = new Map()
     if (!data?.list) return map
     for (const r of data.list) {
-      const n = draftCount(readDraft(draftKey(r.assignment.id, profile.id)))
-      if (n > 0) map.set(r.assignment.id, n)
+      const id = r.assignment.id
+      const n = Math.max(draftCount(readDraft(draftKey(id, profile.id))), data.serverDrafts.get(id) || 0)
+      if (n > 0) map.set(id, n)
     }
     return map
-  }, [data?.list, profile.id])
+  }, [data?.list, data?.serverDrafts, profile.id])
 
   const inProgress = (data?.list || [])
     .filter((r) => inProgressMap.has(r.assignment.id))
