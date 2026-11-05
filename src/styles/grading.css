@@ -84,3 +84,12 @@
 body:has(.ctx-card .gd-list) .ctx-recent {
   order: 1;
 }
+
+
+:root[data-theme="light"] .gd-row:hover {
+  background: rgba(140, 88, 40, 0.08);
+}
+:root[data-theme="light"] .gd-row.active {
+  background: rgba(254, 243, 199, 0.75);
+  box-shadow: inset 3px 0 0 var(--primary, #235340);
+}

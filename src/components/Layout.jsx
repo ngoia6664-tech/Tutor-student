@@ -103,6 +103,7 @@ export default function Layout() {
       title: 'Đăng xuất?',
       say: BYE[Math.floor(Math.random() * BYE.length)],
       scene: 'logout',
+      danger: true,
       confirmText: 'Đăng xuất',
       cancelText: 'Ở lại',
     })

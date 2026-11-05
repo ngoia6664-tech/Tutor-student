@@ -360,3 +360,71 @@ html[data-still-mascot] .dlg-scene * {
 html[data-still-mascot] .dlg-check {
   stroke-dashoffset: 0;
 }
+
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): HỘP THOẠI XÁC NHẬN (ĐĂNG XUẤT, NỘP BÀI, XÓA)
+   ===================================================================== */
+:root[data-theme="light"] .dlg-overlay {
+  background: rgba(35, 24, 14, 0.48);
+}
+:root[data-theme="light"] .dlg-card {
+  background: linear-gradient(180deg, #fffdf9 0%, #f7eee0 100%);
+  border: 1.5px solid #c9ab81;
+  border-top: 4px solid var(--wood-mid, #c28547);
+  color: var(--text);
+  box-shadow:
+    0 24px 56px rgba(45, 28, 10, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+:root[data-theme="light"] .dlg-card.is-danger {
+  border-color: var(--danger);
+  border-top: 4px solid var(--danger);
+  box-shadow:
+    0 24px 56px rgba(45, 28, 10, 0.34),
+    0 0 0 4px rgba(201, 53, 40, 0.14);
+}
+:root[data-theme="light"] .dlg-panda svg {
+  filter: drop-shadow(0 6px 14px rgba(74, 48, 20, 0.28));
+}
+:root[data-theme="light"] .dlg-card.scene-logout .dlg-say {
+  background: #f1e3cc;
+  border: 1px solid #d8c3a5;
+}
+:root[data-theme="light"] .dlg-card.scene-logout.has-panda .dlg-say::before {
+  border-bottom-color: #d8c3a5;
+}
+:root[data-theme="light"] .dlg-say {
+  background: #f3e7d3;
+  border: 1px solid #d8c3a5;
+  color: #2b231d;
+}
+:root[data-theme="light"] .dlg-card.has-panda .dlg-say::before {
+  border-bottom-color: #d8c3a5;
+}
+:root[data-theme="light"] .dlg-card.is-danger .dlg-say {
+  background: rgba(201, 53, 40, 0.1);
+  border-color: rgba(201, 53, 40, 0.28);
+}
+:root[data-theme="light"] .dlg-card.has-panda.is-danger .dlg-say::before {
+  border-bottom-color: rgba(201, 53, 40, 0.28);
+}
+
+/* Hiệu ứng đóng êm (Exit Animation) cho Hộp thoại */
+.dlg-overlay.is-closing {
+  animation: dlg-fade-out 0.18s ease-in forwards;
+}
+.dlg-card.is-closing {
+  animation: dlg-pop-out 0.18s ease-in forwards;
+}
+@keyframes dlg-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dlg-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+}

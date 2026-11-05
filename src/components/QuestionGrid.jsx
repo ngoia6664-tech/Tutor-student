@@ -1,5 +1,6 @@
 import { isAnswered } from './ExerciseBody.jsx'
 import ContextPanel from './ContextPanel.jsx'
+import { useAnimatedNumber } from '../lib/useAnimatedNumber.js'
 
 /**
  * Cột phải trang làm bài (học sinh): ô số mọi câu, câu đã làm tô tím, bấm để nhảy tới câu.
@@ -9,6 +10,8 @@ import ContextPanel from './ContextPanel.jsx'
 export default function QuestionGrid({ exercises, answers, labels }) {
   if (!exercises.length) return null
   const done = exercises.filter((ex) => isAnswered(ex, answers[ex.id])).length
+  const pctTarget = Math.round((done / exercises.length) * 100)
+  const animatedPct = useAnimatedNumber(pctTarget)
   // block 'start' + scroll-margin-top của .question: đầu câu nằm ngay dưới thanh trên cùng
   const jump = (/** @type {string} */ id) => document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -16,7 +19,7 @@ export default function QuestionGrid({ exercises, answers, labels }) {
     <ContextPanel title="Các câu trong bài" icon="grid" replace>
       <p className="small ctx-qstat">
         <span>Đã làm <strong>{done}</strong>/{exercises.length} câu</span>
-        <span className="badge badge-primary">{Math.round((done / exercises.length) * 100)}%</span>
+        <span className="badge badge-primary">{animatedPct}%</span>
       </p>
       <div className="ctx-track" aria-hidden="true">
         <div className="ctx-fill" style={{ width: `${(done / exercises.length) * 100}%` }} />

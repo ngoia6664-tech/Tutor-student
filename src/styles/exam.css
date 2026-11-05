@@ -517,3 +517,29 @@ details.method-box:not([open]) > summary {
     transition: none;
   }
 }
+
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): NÚT CHỌN ĐÚNG / SAI TRONG ĐỀ THI
+   ===================================================================== */
+:root[data-theme="light"] .tf-pick {
+  background: linear-gradient(180deg, #fffdf9 0%, #f0e2ca 100%);
+  border: 1.5px solid #cbb392;
+  border-bottom: 3px solid #b3956e;
+  color: #5c4938;
+  box-shadow: 0 2px 4px rgba(74, 48, 20, 0.08);
+}
+:root[data-theme="light"] .tf-pick:hover {
+  background: #fef3c7;
+  border-color: #b45309;
+  border-bottom-color: #92400e;
+  color: #92400e;
+  box-shadow: 0 4px 10px rgba(180, 83, 9, 0.18);
+}
+:root[data-theme="light"] .tf-pick.is-picked {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
+  border-color: #40916c;
+  border-bottom-color: #0f291e;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(27, 67, 50, 0.32);
+}

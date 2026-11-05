@@ -39,12 +39,12 @@ function Inbox() {
     <svg viewBox="0 0 80 110" aria-hidden="true">
       <g className="dlg-paper">
         <g transform="rotate(-10 40 36)">
-          <rect x="24" y="12" width="32" height="42" rx="2.5" fill="#fff" stroke="#a78bfa" strokeWidth="1.6" />
-          <path d="M29 21 h22 M29 27 h22 M29 33 h16 M29 39 h20 M29 45 h12" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" />
+          <rect x="24" y="12" width="32" height="42" rx="2.5" fill="var(--pd-page-bg, #fff)" stroke="var(--pd-accent-soft, #a78bfa)" strokeWidth="1.6" />
+          <path d="M29 21 h22 M29 27 h22 M29 33 h16 M29 39 h20 M29 45 h12" stroke="var(--pd-paper-line, #c4b5fd)" strokeWidth="1.8" strokeLinecap="round" />
         </g>
       </g>
-      <path d="M8 74 L72 74 L66 104 L14 104 Z" fill="#7c3aed" stroke="#4c1d95" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M4 70 h72 v6 h-72 z" fill="#a78bfa" stroke="#4c1d95" strokeWidth="1.4" />
+      <path d="M8 74 L72 74 L66 104 L14 104 Z" fill="var(--pd-accent, #7c3aed)" stroke="var(--pd-accent-edge, #4c1d95)" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M4 70 h72 v6 h-72 z" fill="var(--pd-accent-soft, #a78bfa)" stroke="var(--pd-accent-edge, #4c1d95)" strokeWidth="1.4" />
       <text x="40" y="93" textAnchor="middle" fontSize="9" fontWeight="800" fill="#fff" fontFamily="sans-serif">
         NỘP BÀI
       </text>
@@ -57,8 +57,8 @@ function GradedPaper() {
   return (
     <svg viewBox="0 0 80 110" aria-hidden="true">
       <g transform="rotate(6 40 60)">
-        <rect x="14" y="22" width="48" height="64" rx="3" fill="#fff" stroke="#a78bfa" strokeWidth="1.6" />
-        <path d="M21 33 h34 M21 40 h34 M21 47 h24" stroke="#ddd6fe" strokeWidth="2" strokeLinecap="round" />
+        <rect x="14" y="22" width="48" height="64" rx="3" fill="var(--pd-page-bg, #fff)" stroke="var(--pd-accent-soft, #a78bfa)" strokeWidth="1.6" />
+        <path d="M21 33 h34 M21 40 h34 M21 47 h24" stroke="var(--pd-paper-line, #ddd6fe)" strokeWidth="2" strokeLinecap="round" />
         <path className="dlg-check" d="M24 64 L34 74 L54 52" fill="none" stroke="#16a34a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
       </g>
       <path className="dlg-twinkle" transform="translate(68 18)" d={STAR} fill="#facc15" />

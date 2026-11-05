@@ -1,17 +1,21 @@
 /* =====================================================================
-   Giao diện: tông tím – hồng trên nền xanh tím than (tối) hoặc oải hương (sáng).
+   Giao diện:
+   - Tối (dark): Vũ trụ học — tông tím – hồng trên nền xanh tím than sâu.
+   - Sáng (light): Lớp học cổ điển — bảng phấn xanh đen, bàn ghế gỗ sồi mật ong, trang vở kem ấm & mực đỏ chấm bài.
+   - Khi mở Ngắm vũ trụ (.space-exploring): luôn dùng bộ biến Vũ trụ tối để chữ và nút nổi bật trên bầu trời sao.
    Màu đặt bằng biến; <html data-theme="dark|light"> quyết định bộ màu.
    ===================================================================== */
 :root,
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+:root[data-theme="light"].space-exploring {
   color-scheme: dark;
   --bg: #0c0a1d;
   --surface: rgba(
     24,
     20,
     50,
-    0.9
-  ); /* gần đặc: không dùng backdrop-filter vì nền vũ trụ chuyển động */
+    var(--card-opacity, 0.9)
+  ); /* gần đặc: chỉnh được bằng thanh trượt Độ đặc kính mờ trong Cài đặt */
   --surface-solid: #16132e;
   --surface-2: #1e1a3d;
   --border: #2a2550;
@@ -42,72 +46,114 @@
   --reward-2: #f59e0b;
   --reward-soft: rgba(252, 211, 77, 0.14);
   --on-reward: #3b2300;
-  /* Nút chính / mục đang chọn: tím đậm một màu #6d28d9 (chữ trắng 7:1), cả hai giao diện; viền cũng là đáy "phím nổi".
-     Viết dạng gradient một màu để dùng được cả làm lớp nền (library.css: `var(--btn-primary) border-box`) */
+  /* Nút chính / mục đang chọn: tím đậm một màu #6d28d9 (chữ trắng 7:1); viền cũng là đáy "phím nổi".
+     Viết dạng gradient để dùng được cả làm lớp nền (library.css: `var(--btn-primary) border-box`) */
   --btn-primary: linear-gradient(#6d28d9, #6d28d9);
   --btn-primary-border: #5b21b6;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 14px -8px rgba(46, 16, 101, 0.9);
+  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.35);
+  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #a21caf 55%, #be185d 100%);
   --shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25),
     0 14px 32px -14px rgba(0, 0, 0, 0.65);
   --focus: rgba(192, 132, 252, 0.6);
   --spot: rgba(168, 85, 247, 0.3); /* vầng sáng theo chuột (.cursor-glow) */
   --skeleton: rgba(255, 255, 255, 0.06);
-  --scroll-thumb: rgba(192, 132, 252, 0.3); /* thanh cuộn: tím nhạt bán trong suốt, đậm lên khi rê vào */
+  --scroll-thumb: rgba(192, 132, 252, 0.3);
   --scroll-thumb-hover: rgba(192, 132, 252, 0.62);
-  --topbar-bg: rgba(
-    12,
-    10,
-    29,
-    0.96
-  ); /* nền header khi đã cuộn (đủ che chữ phía dưới); không làm mờ nền để nhẹ máy */
+  --topbar-bg: rgba(12, 10, 29, 0.96);
   --topbar-glass: rgba(12, 10, 29, 0.72);
+  --shop-stage: #120c2a;
+  --shop-stage-2: #24124a;
+  --shop-gold: #fcd34d;
+  --pd-belly: #efe9fb;
+  --pd-accent: #7c3aed;
+  --pd-accent-dark: #5b21b6;
+  --pd-accent-edge: #4c1d95;
+  --pd-accent-soft: #a78bfa;
+  --pd-paper-line: #c4b5fd;
+  --pd-page-bg: #f5f3ff;
+  --shop-awning-1: #a855f7;
+  --shop-awning-2: #ec4899;
+  --shop-wall-1: #4c3a9a;
+  --shop-wall-2: #241a58;
+  --shop-trim: #7c3aed;
 }
 
-:root[data-theme="light"] {
+:root[data-theme="light"]:not(.space-exploring) {
   color-scheme: light;
-  --bg: #f5f3ff;
-  --surface: rgba(255, 255, 255, 0.94);
-  --surface-solid: #ffffff;
-  --surface-2: #f1edfd;
-  --border: #e2dcf5;
-  --border-strong: #cfc5ee;
-  --text: #1a1433;
-  --muted: #645d84;
-  --primary: #7c3aed;
-  --accent: #db2777;
+  --bg: #efe5d5;
+  --surface: rgba(253, 249, 242, var(--card-opacity, 0.92));
+  --surface-solid: #fdf9f2;
+  --surface-2: #f4ead8;
+  --border: #d8c3a5;
+  --border-strong: #c4a77d;
+  --text: #1a140e; /* Mực đen than đậm, sắc nét như viết bút máy */
+  --muted: #5e4c3d; /* Nâu trầm đậm nét hơn thay vì xỉn mờ */
+  --primary: #1c4b38; /* Xanh bảng phấn cổ điển đậm đà */
+  --accent: #b45309; /* Nâu hổ phách gỗ sồi */
   --on-primary: #ffffff;
-  --grad: linear-gradient(100deg, #7c3aed 0%, #c026d3 55%, #db2777 100%);
+  --grad: linear-gradient(100deg, #1c4b38 0%, #8c5828 55%, #b45309 100%);
   --grad-soft: linear-gradient(
     100deg,
-    rgba(124, 58, 237, 0.1),
-    rgba(219, 39, 119, 0.1)
+    rgba(28, 75, 56, 0.12),
+    rgba(194, 133, 71, 0.14)
   );
-  --glow: 0 8px 24px -8px rgba(192, 38, 211, 0.45);
-  --primary-soft: rgba(124, 58, 237, 0.09);
-  --ok: #15803d;
-  --ok-soft: rgba(21, 128, 61, 0.09);
-  --danger: #b91c1c;
-  --danger-soft: rgba(185, 28, 28, 0.08);
-  --warn: #a16207;
-  --warn-soft: rgba(161, 98, 7, 0.1);
-  --aura-1: rgba(124, 58, 237, 0.12);
-  --aura-2: rgba(219, 39, 119, 0.08);
+  --glow: 0 8px 24px -8px rgba(140, 88, 40, 0.38);
+  --primary-soft: rgba(28, 75, 56, 0.12);
+  --ok: #1b6535;
+  --ok-soft: rgba(27, 101, 53, 0.1);
+  --danger: #c93528; /* Đỏ mực chấm bài kiểm tra */
+  --danger-soft: rgba(201, 53, 40, 0.1);
+  --warn: #b45309;
+  --warn-soft: rgba(180, 83, 9, 0.12);
+  --aura-1: rgba(251, 191, 36, 0.2);
+  --aura-2: rgba(194, 133, 71, 0.14);
   --reward: #d97706;
   --reward-2: #b45309;
-  --reward-soft: rgba(217, 119, 6, 0.12);
+  --reward-soft: rgba(217, 119, 6, 0.14);
   --on-reward: #ffffff;
-  --btn-primary: linear-gradient(#6d28d9, #6d28d9);
-  --btn-primary-border: #4c1d95;
+  /* Nút chính bản Lớp học: xanh bảng phấn viền đế gỗ/đá đậm */
+  --btn-primary: linear-gradient(180deg, #2d664e 0%, #214d3a 100%);
+  --btn-primary-border: #132e22;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(19, 46, 34, 0.35), 0 8px 18px -6px rgba(33, 77, 58, 0.45);
+  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 0 3px rgba(35, 83, 64, 0.28);
+  --btn-moment: linear-gradient(100deg, #235340 0%, #8c5828 55%, #b45309 100%);
   --shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 4px rgba(60, 30, 120, 0.06),
-    0 14px 32px -16px rgba(60, 30, 120, 0.28);
-  --focus: rgba(124, 58, 237, 0.45);
-  --spot: rgba(124, 58, 237, 0.12);
-  --skeleton: rgba(60, 30, 120, 0.07);
-  --scroll-thumb: rgba(109, 40, 217, 0.28);
-  --scroll-thumb-hover: rgba(109, 40, 217, 0.6);
-  --topbar-bg: rgba(245, 243, 255, 0.96);
-  --topbar-glass: rgba(245, 243, 255, 0.72);
+    0 1px 0 rgba(255, 255, 255, 0.92) inset, 0 4px 12px -2px rgba(74, 48, 20, 0.09),
+    0 18px 36px -14px rgba(74, 48, 20, 0.22);
+  --focus: rgba(35, 83, 64, 0.5);
+  --spot: rgba(251, 191, 36, 0.18); /* Vầng sáng nắng phấn ấm đi theo chuột */
+  --skeleton: rgba(140, 88, 40, 0.09);
+  --scroll-thumb: rgba(140, 88, 40, 0.35);
+  --scroll-thumb-hover: rgba(140, 88, 40, 0.65);
+  --topbar-bg: rgba(239, 229, 213, 0.96);
+  --topbar-glass: rgba(239, 229, 213, 0.78);
+  /* Cửa hàng Panda ở bản Lớp học: Phòng thử đồ bảng xanh trầm & gỗ mun */
+  --shop-stage: #1d2621;
+  --shop-stage-2: #2b3831;
+  --shop-gold: #d97706;
+  /* Biến chất liệu riêng của Lớp Học Cổ Điển */
+  --wood-light: #e2c499;
+  --wood-mid: #c28547;
+  --wood-dark: #865222;
+  --chalkboard: #2b332e;
+  --chalkboard-deep: #202622;
+  --chalk-text: #f4f6f0;
+  --chalk-muted: #b8c4ba;
+  /* Trang phục mặc định Giáo sư Gấu Trúc & đạo cụ hộp thoại theo tông Lớp học cổ điển */
+  --pd-belly: #f5ecdc;
+  --pd-accent: #2d6a4f;
+  --pd-accent-dark: #1b4332;
+  --pd-accent-edge: #0f291e;
+  --pd-accent-soft: #74c69d;
+  --pd-paper-line: #cbb392;
+  --pd-page-bg: #fffdf8;
+  --shop-awning-1: #d97706;
+  --shop-awning-2: #b45309;
+  --shop-wall-1: #2d6a4f;
+  --shop-wall-2: #1b4332;
+  --shop-trim: #92400e;
 }
 
 :root {
@@ -118,18 +164,8 @@
   --r-badge: 6px;
   --lift: 4px;
   --edge-n: var(--border-strong); /* đáy nút thường */
-  /* Bóng nút chính (cả hai giao diện): trung tính; vầng tím chỉ khi rê chuột */
-  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 14px -8px rgba(46, 16, 101, 0.9);
-  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.35);
-  /* Khoảnh khắc đặc biệt (Nộp bài, cửa hàng gấu): gradient ba màu bản tối, chữ trắng 5,7–6,3:1.
-     --grad sáng hơn giữ cho chữ chuyển màu / thanh tiến độ / trang trí không có chữ trắng đè lên */
-  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #a21caf 55%, #be185d 100%);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* Cửa hàng Panda: sân khấu thử đồ luôn tối như tủ kính trưng bày (cả 2 theme) */
-  --shop-stage: #120c2a;
-  --shop-stage-2: #24124a;
-  --shop-gold: #fcd34d;
   font-family:
     "Be Vietnam Pro",
     system-ui,
@@ -150,14 +186,13 @@
   box-sizing: border-box;
 }
 
-/* Thanh cuộn vũ trụ: siêu mảnh 8px, nền trong suốt, viên neon tím phát sáng nhẹ khi hover */
+/* Thanh cuộn: siêu mảnh 8px, nền trong suốt, đổi màu theo biến --scroll-thumb */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(168, 85, 247, 0.35) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 @supports selector(::-webkit-scrollbar) {
   * {
-    /* Thuộc tính chuẩn khác "auto" làm Chrome bỏ qua ::-webkit-scrollbar → trả về auto */
     scrollbar-width: auto;
     scrollbar-color: auto;
   }
@@ -173,20 +208,18 @@
     min-height: 40px;
     border: 1.5px solid transparent;
     border-radius: 999px;
-    background: rgba(168, 85, 247, 0.35);
+    background: var(--scroll-thumb);
     background-clip: padding-box;
-    box-shadow: 0 0 8px rgba(168, 85, 247, 0.25);
     transition: background-color 0.2s, box-shadow 0.2s;
   }
   ::-webkit-scrollbar-thumb:hover,
   ::-webkit-scrollbar-thumb:active {
-    background: rgba(192, 132, 252, 0.7);
+    background: var(--scroll-thumb-hover);
     background-clip: padding-box;
-    box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
   }
 }
 
-/* Nền (màu, hai quầng sáng tím – hồng, sao, hệ Mặt Trời) vẽ ở lớp .space trong space.css; body để trong suốt để lớp đó hiện ra */
+/* Nền vẽ ở lớp .space trong space.css; body để trong suốt để lớp đó hiện ra */
 body {
   margin: 0;
   min-height: 100vh;
@@ -219,7 +252,7 @@ h3 {
   font-weight: 600;
 }
 
-/* Chữ chuyển màu tím – hồng (dùng tiết kiệm: số điểm) */
+/* Chữ chuyển màu (dùng tiết kiệm: số điểm) */
 .grad-text {
   background: var(--grad);
   -webkit-background-clip: text;
@@ -248,5 +281,8 @@ code {
 }
 
 ::selection {
+  background: rgba(217, 119, 6, 0.28);
+}
+:root[data-theme="dark"] ::selection {
   background: rgba(217, 70, 239, 0.35);
 }

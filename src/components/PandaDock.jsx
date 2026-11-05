@@ -15,12 +15,12 @@ export function ShopIcon() {
     <svg viewBox="0 0 64 64" aria-hidden="true">
       <defs>
         <linearGradient id="shop-awning" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#a855f7" />
-          <stop offset="1" stopColor="#ec4899" />
+          <stop offset="0" stopColor="var(--shop-awning-1, #a855f7)" />
+          <stop offset="1" stopColor="var(--shop-awning-2, #ec4899)" />
         </linearGradient>
         <linearGradient id="shop-wall" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#4c3a9a" />
-          <stop offset="1" stopColor="#241a58" />
+          <stop offset="0" stopColor="var(--shop-wall-1, #4c3a9a)" />
+          <stop offset="1" stopColor="var(--shop-wall-2, #241a58)" />
         </linearGradient>
         <linearGradient id="shop-dress" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#f9a8d4" />
@@ -31,12 +31,12 @@ export function ShopIcon() {
         </clipPath>
       </defs>
       {/* Tường + tủ kính trưng váy + cửa */}
-      <rect x="9" y="22" width="46" height="36" rx="2.5" fill="url(#shop-wall)" stroke="#d8b4fe" strokeWidth="1" />
-      <rect x="13" y="29" width="20" height="21" rx="2" fill="#c084fc" fillOpacity=".25" stroke="#e9d5ff" strokeWidth="1.1" />
+      <rect x="9" y="22" width="46" height="36" rx="2.5" fill="url(#shop-wall)" stroke="var(--pd-paper-line, #d8b4fe)" strokeWidth="1" />
+      <rect x="13" y="29" width="20" height="21" rx="2" fill="var(--pd-accent-soft, #c084fc)" fillOpacity=".25" stroke="var(--pd-paper-line, #e9d5ff)" strokeWidth="1.1" />
       <path d="M19.5 34.2 23 32l3.5 2.2" fill="none" stroke="#fcd34d" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M20.6 34.6h4.8l-.8 3.2 4 9.2H17.4l4-9.2Z" fill="url(#shop-dress)" />
-      <rect x="38" y="33" width="13" height="25" rx="1.5" fill="#c084fc" fillOpacity=".45" stroke="#e9d5ff" strokeWidth="1" />
-      <rect x="4" y="57.5" width="56" height="3" rx="1.5" fill="#7c3aed" />
+      <rect x="38" y="33" width="13" height="25" rx="1.5" fill="var(--pd-accent-soft, #c084fc)" fillOpacity=".45" stroke="var(--pd-paper-line, #e9d5ff)" strokeWidth="1" />
+      <rect x="4" y="57.5" width="56" height="3" rx="1.5" fill="var(--shop-trim, #7c3aed)" />
       {/* Mái vải sọc */}
       <g clipPath="url(#shop-awning-clip)">
         <rect x="6" y="10" width="52" height="24" fill="url(#shop-awning)" />

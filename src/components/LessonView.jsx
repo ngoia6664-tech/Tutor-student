@@ -69,14 +69,14 @@ function Section({ s }) {
   )
 }
 
-function PageContent({ p }) {
+function PageContent({ p, animKey }) {
   return (
-    <>
+    <div key={animKey} className="lesson-page-sweep">
       {p.lead && <Markdown className="lesson-intro">{p.lead}</Markdown>}
       {p.sections.map((s, i) => (
         <Section key={i} s={s} />
       ))}
-    </>
+    </div>
   )
 }
 
@@ -115,7 +115,7 @@ export function LessonBody({ content, paged = false, page = 0, onPage }) {
       <>
         {index === 0 && intro && <Markdown className="lesson-intro">{intro}</Markdown>}
         {pages.length > 1 && <Pager pages={pages} index={index} onChange={onPage} />}
-        <PageContent p={pages[index]} />
+        <PageContent p={pages[index]} animKey={index} />
         {pages.length > 1 && <Pager pages={pages} index={index} onChange={onPage} />}
       </>
     )

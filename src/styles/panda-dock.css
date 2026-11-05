@@ -117,3 +117,8 @@ body:has(.sticky-actions):has(.panda-dock .panda-shop-icon) .page { padding-bott
   .panda-shop-icon, .panda-dock-tag, .dock-toggle { transition: none; }
   .shop-sparkle, .shop-wave { animation: none; }
 }
+
+
+:root[data-theme="light"] .panda-shop-icon {
+  filter: drop-shadow(0 4px 8px rgba(140, 88, 40, 0.38));
+}

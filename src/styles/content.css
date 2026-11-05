@@ -688,3 +688,85 @@ details > summary {
     font-size: 0.88rem;
   }
 }
+
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): PHIẾU LÀM BÀI TRẮC NGHIỆM (DẠ QUANG VÀNG & MỰC XANH BẢNG)
+   ===================================================================== */
+:root[data-theme="light"] .choice {
+  background: #faf3e6;
+  background-image: linear-gradient(90deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 247, 224, 0.85) 100%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  border: 1px solid #d8c3a5;
+  border-top-color: #fffdf9;
+  border-bottom: 2px solid #c8ae89;
+  transition:
+    transform 0.2s var(--spring),
+    background-size 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+:root[data-theme="light"] .choice:hover {
+  background-color: #fef9e7;
+  border-color: var(--wood-mid, #c28547);
+  box-shadow: 0 4px 12px rgba(140, 88, 40, 0.12);
+}
+:root[data-theme="light"] .choice-label {
+  background: linear-gradient(180deg, #fffdf9 0%, #f0e2ca 100%);
+  border: 1.5px solid #cbb392;
+  border-bottom: 3px solid #b3956e;
+  color: #5c4938;
+  box-shadow: 0 2px 4px rgba(74, 48, 20, 0.08);
+  transition:
+    transform 0.2s var(--spring),
+    background 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+:root[data-theme="light"] .choice:hover .choice-label {
+  background: #fef3c7;
+  border-color: #b45309;
+  border-bottom-color: #92400e;
+  color: #92400e;
+  box-shadow: 0 3px 8px rgba(180, 83, 9, 0.18);
+}
+:root[data-theme="light"] .choice.is-picked {
+  background-size: 100% 100%;
+  border-color: #d97706;
+  border-left: 4px solid #235340;
+  box-shadow:
+    0 6px 16px -4px rgba(180, 83, 9, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+:root[data-theme="light"] .choice.is-picked .choice-label {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
+  border-color: #40916c;
+  border-bottom-color: #0f291e;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(27, 67, 50, 0.32);
+}
+:root[data-theme="light"] .import-dock {
+  border-top: 3px solid var(--wood-mid, #c28547);
+  box-shadow: 0 16px 36px rgba(45, 28, 10, 0.24);
+}
+:root[data-theme="light"] .import-dock-save-btn {
+  box-shadow: var(--btn-primary-shadow);
+}
+
+/* Hiệu ứng lật trang nhẹ nhàng (Page-turn Sweep) khi đọc bài giảng theo trang */
+.lesson-page-sweep {
+  animation: lesson-page-turn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes lesson-page-turn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
