@@ -385,7 +385,24 @@ export function startMusic() {
   syncPlaying()
 }
 
-// fade: giây giảm dần trước khi pause (mặc định 0.8); 0 = pause ngay (ra nền: hẹn giờ bị trình duyệt hoãn)
+// Tiếng tích tắc đồng hồ phòng thi (ASMR nhẹ): mô phỏng kim cơ nhảy
+export function playClockTick(accent = false) {
+  if (!fx() || !audio()) return
+  const t = ctx.currentTime
+  const freq = accent ? 1800 : 1200
+  const dur = 0.02
+  const osc = ctx.createOscillator()
+  const g = ctx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.setValueAtTime(freq, t)
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.4, t + dur)
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.linearRampToValueAtTime(accent ? 0.035 : 0.02, t + 0.003)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+  osc.connect(g).connect(master)
+  osc.start(t)
+  osc.stop(t + dur + 0.01)
+}
 export function stopMusic(fade = 0.8) {
   if (!music || !ctx) return
   const { el, gain } = music

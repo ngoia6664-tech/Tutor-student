@@ -154,7 +154,8 @@
 /* --- Soạn đề: bật đề thi + cấu trúc --- */
 .exam-toggle.on {
   border-color: var(--primary);
-  background: linear-gradient(var(--primary-soft), var(--primary-soft)), var(--surface);
+  background:
+    linear-gradient(var(--primary-soft), var(--primary-soft)), var(--surface);
 }
 .exam-switch {
   display: inline-flex;
@@ -183,7 +184,7 @@
   align-items: center;
   gap: 0.45rem;
 }
-.tf-edit-row input[type='text'] {
+.tf-edit-row input[type="text"] {
   flex: 1;
   min-width: 0;
 }
@@ -376,7 +377,7 @@ details.method-box:not([open]) > summary {
   .tf-edit-row {
     flex-wrap: wrap;
   }
-  .tf-edit-row input[type='text'] {
+  .tf-edit-row input[type="text"] {
     flex-basis: calc(100% - 2rem);
   }
   .exam-nav-label {
@@ -517,7 +518,6 @@ details.method-box:not([open]) > summary {
     transition: none;
   }
 }
-
 
 /* =====================================================================
    GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): NÚT CHỌN ĐÚNG / SAI TRONG ĐỀ THI

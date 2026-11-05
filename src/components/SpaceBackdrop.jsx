@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { prefersReducedMotion, updateSettings, useSettings } from '../lib/settings.js'
 import { maxScroll, onScroll as onContentScroll, scrollY } from '../lib/scroller.js'
 import { useTheme } from '../lib/theme.js'
+import { playClockTick } from '../lib/spaceSound.js'
 
 // Nền phía sau toàn app:
 // - Giao diện tối (Vũ trụ học): 3 lớp sao ở 3 độ xa, vài sao lấp lánh, hệ Mặt Trời 3D nghiêng theo cuộn trang, sao băng.
@@ -245,7 +246,13 @@ export default function SpaceBackdrop() {
 
           {/* Tường bảng đen than chì, Đồng hồ treo tường, Bảng lớn & Tủ gỗ */}
           <div className="classroom-backwall">
-            <div className="wall-clock">
+            <div
+              className="wall-clock"
+              role="img"
+              aria-label="Đồng hồ treo tường"
+              title="Đồng hồ treo tường lớp học"
+              onClick={() => playClockTick(true)}
+            >
               <span className="clock-num clock-12">12</span>
               <span className="clock-num clock-3">3</span>
               <span className="clock-num clock-6">6</span>
