@@ -516,3 +516,85 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): PHÒNG THỬ ĐỒ BẢNG PHẤN – BỤC GỖ SỒI – THẺ GỖ MUN
+   ===================================================================== */
+:root[data-theme="light"] .tier-common {
+  --t1: #b45309;
+  --t2: #f59e0b;
+  --tglow: rgba(251, 191, 36, 0.24);
+}
+
+/* Bảng Xu · Sao · Chuỗi & nút Sở hữu sẵn: Thẻ gỗ mun viền đồng thau ấm áp */
+:root[data-theme="light"] .led-panel {
+  border: 1.5px solid #c28547;
+  background:
+    radial-gradient(rgba(255, 235, 200, 0.05) 0.7px, transparent 1px) 0 0 / 4px 4px,
+    linear-gradient(180deg, #3d2918 0%, #26180d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 200, 0.22),
+    0 4px 12px rgba(45, 28, 10, 0.18);
+}
+:root[data-theme="light"] .coin-star-unit,
+:root[data-theme="light"] .showcase-price small {
+  color: rgba(254, 243, 199, 0.78);
+}
+
+/* Sân khấu thử đồ lớp học: nền bảng xanh đen ấm + khung gỗ sồi + đèn chao vàng chiếu xuống */
+:root[data-theme="light"] .showcase-stage {
+  border: 4px solid #b5834d;
+  background:
+    radial-gradient(62% 55% at 50% 66%, var(--tglow), transparent 72%),
+    radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.06), transparent 45%),
+    radial-gradient(circle at 78% 36%, rgba(255, 255, 255, 0.05), transparent 45%),
+    linear-gradient(180deg, #28362e 0%, #1e2822 72%, #2c1e12 100%);
+  box-shadow:
+    0 20px 44px -18px rgba(45, 28, 10, 0.42),
+    inset 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+:root[data-theme="light"] .showcase-spot {
+  background: linear-gradient(
+    180deg,
+    rgba(254, 240, 138, 0.28) 0%,
+    rgba(251, 191, 36, 0.09) 62%,
+    transparent 90%
+  );
+}
+:root[data-theme="light"] .showcase-arena {
+  background: radial-gradient(closest-side, rgba(251, 191, 36, 0.14), transparent);
+  box-shadow:
+    0 0 0 1px rgba(217, 119, 6, 0.28) inset,
+    0 0 26px -10px rgba(251, 191, 36, 0.2) inset;
+}
+:root[data-theme="light"] .showcase-pedestal {
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    #e5ad68 0%,
+    #b87835 58%,
+    #704318 88%,
+    transparent 100%
+  );
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.45),
+    inset 0 2px 3px rgba(255, 243, 219, 0.55);
+  opacity: 0.95;
+}
+
+/* Ô xem trước từng bộ đồ trên lưới: nền bảng phấn xanh trầm ấm áp */
+:root[data-theme="light"] .ocard-thumb {
+  background:
+    radial-gradient(62% 58% at 50% 55%, var(--tglow), transparent 75%),
+    linear-gradient(180deg, #2b3831 0%, #1d2621 100%);
+}
+:root[data-theme="light"] .ocard-status {
+  background: rgba(43, 29, 16, 0.86);
+  color: #fde68a;
+  border: 1px solid rgba(194, 133, 71, 0.45);
+}
+:root[data-theme="light"] .ocard-status.is-on {
+  background: #235340;
+  color: #ffffff;
+  border-color: #40916c;
+}

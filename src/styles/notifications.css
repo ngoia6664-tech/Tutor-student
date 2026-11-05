@@ -201,3 +201,10 @@
 @media (max-width: 520px) {
   .user-name { display: none; }
 }
+
+
+:root[data-theme="light"] .bell-panel,
+:root[data-theme="light"] .toast {
+  border-top: 3px solid var(--wood-mid, #c28547);
+  box-shadow: 0 18px 42px rgba(45, 28, 10, 0.26);
+}

@@ -64,6 +64,15 @@ export default function DialogHost() {
 function DialogCard({ dlg, showPanda, onClose }) {
   const cardRef = useRef(null)
   const isConfirm = dlg.type === 'confirm'
+  const [closing, setClosing] = useState(false)
+
+  function handleClose(answer) {
+    if (closing) return
+    setClosing(true)
+    setTimeout(() => {
+      onClose(answer)
+    }, 180)
+  }
 
   // Mở: focus nút an toàn (xóa → Hủy); hộp xong việc tự tắt
   useEffect(() => {
@@ -71,7 +80,7 @@ function DialogCard({ dlg, showPanda, onClose }) {
     const first = card?.querySelector(isConfirm && !dlg.danger ? '[data-confirm]' : '[data-cancel]')
     first?.focus({ preventScroll: true })
     if (!isConfirm && dlg.autoClose) {
-      const t = setTimeout(() => onClose(), dlg.autoClose)
+      const t = setTimeout(() => handleClose(), dlg.autoClose)
       return () => clearTimeout(t)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,7 +91,7 @@ function DialogCard({ dlg, showPanda, onClose }) {
     function onKey(e) {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onClose(false)
+        handleClose(false)
       } else if (e.key === 'Tab') {
         const items = [...(cardRef.current?.querySelectorAll('button') || [])]
         if (!items.length) return
@@ -101,18 +110,18 @@ function DialogCard({ dlg, showPanda, onClose }) {
       html.style.overflow = prev
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [closing])
 
   return (
     <div
-      className="dlg-overlay"
+      className={`dlg-overlay ${closing ? 'is-closing' : ''}`}
       onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onClose(false)
+        if (e.target === e.currentTarget) handleClose(false)
       }}
     >
       <div
         ref={cardRef}
-        className={`dlg-card ${isConfirm ? '' : 'is-done'} ${dlg.danger ? 'is-danger' : ''} ${showPanda ? 'has-panda' : ''} ${dlg.scene ? `scene-${dlg.scene}` : ''}`}
+        className={`dlg-card ${isConfirm ? '' : 'is-done'} ${dlg.danger ? 'is-danger' : ''} ${showPanda ? 'has-panda' : ''} ${dlg.scene ? `scene-${dlg.scene}` : ''} ${closing ? 'is-closing' : ''}`}
         role={isConfirm ? 'alertdialog' : 'dialog'}
         aria-modal="true"
         aria-labelledby={`dlg-title-${dlg.id}`}
@@ -126,7 +135,7 @@ function DialogCard({ dlg, showPanda, onClose }) {
           </div>
         )}
         {!isConfirm && (
-          <button type="button" className="dlg-x" onClick={() => onClose()} aria-label="Đóng" data-cancel>
+          <button type="button" className="dlg-x" onClick={() => handleClose()} aria-label="Đóng" data-cancel>
             <Icon name="close" size={16} />
           </button>
         )}
@@ -139,10 +148,10 @@ function DialogCard({ dlg, showPanda, onClose }) {
         </div>
         {isConfirm && (
           <div className="dlg-actions">
-            <button type="button" className="btn" onClick={() => onClose(false)} data-cancel>
+            <button type="button" className="btn" onClick={() => handleClose(false)} data-cancel>
               {dlg.cancelText || 'Hủy'}
             </button>
-            <button type="button" className={dlg.danger ? 'btn btn-danger' : 'btn btn-primary'} onClick={() => onClose(true)} data-confirm>
+            <button type="button" className={dlg.danger ? 'btn btn-danger' : 'btn btn-primary'} onClick={() => handleClose(true)} data-confirm>
               {dlg.confirmText || 'Đồng ý'}
             </button>
           </div>

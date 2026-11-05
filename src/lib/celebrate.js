@@ -16,7 +16,8 @@ export function celebrate(text) {
   mascotSay(text, on ? 'cheer' : 'talk')
 }
 
-const COLORS = ['#a855f7', '#ec4899', '#facc15', '#22d3ee', '#4ade80']
+const COLORS_SPACE = ['#a855f7', '#ec4899', '#facc15', '#22d3ee', '#4ade80']
+const COLORS_CLASSROOM = ['#dc2626', '#f59e0b', '#2d6a4f', '#ea580c', '#fef3c7', '#3b82f6']
 
 // Pháo giấy riêng (hộp thoại xong việc dùng); tôn trọng "Hiệu ứng ăn mừng" trong Cài đặt
 export function burstConfetti() {
@@ -26,13 +27,15 @@ export function burstConfetti() {
 function confetti() {
   // Giảm chuyển động / tab đang ẩn (không ai xem): không tạo hạt
   if (prefersReducedMotion() || document.hidden) return
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light'
+  const colors = isLight ? COLORS_CLASSROOM : COLORS_SPACE
   const box = document.createElement('div')
   box.className = 'confetti'
   box.setAttribute('aria-hidden', 'true')
   for (let i = 0; i < 70; i++) {
     const p = document.createElement('span')
     p.style.left = `${Math.random() * 100}%`
-    p.style.background = COLORS[i % COLORS.length]
+    p.style.background = colors[i % colors.length]
     p.style.animationDelay = `${Math.random() * 0.4}s`
     p.style.animationDuration = `${1.6 + Math.random() * 1.2}s`
     p.style.setProperty('--drift', `${(Math.random() - 0.5) * 160}px`)

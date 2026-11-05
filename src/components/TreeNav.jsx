@@ -93,11 +93,13 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, now
         )}
         {count !== undefined && <span className="tree-count">{count}</span>}
       </div>
-      {open && (
-        <ul role="group" className="tree-children">
-          {children}
-        </ul>
-      )}
+      <div className={`tree-collapse-wrap ${open ? 'is-expanded' : ''}`}>
+        <div className="tree-collapse-inner">
+          <ul role="group" className="tree-children">
+            {children}
+          </ul>
+        </div>
+      </div>
     </li>
   )
 }

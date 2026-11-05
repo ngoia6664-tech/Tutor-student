@@ -19,11 +19,11 @@
 .mascot > * {
   pointer-events: auto;
 }
-/* Giao diện sáng: viền trắng không thấy trên nền sáng → viền và quầng tím */
-:root[data-theme='light'] .mascot {
-  --pd-rim: rgba(124, 58, 237, 0.55);
-  --pd-aura: rgba(167, 139, 250, 0.3);
-  --pd-spark: #a855f7;
+/* Giao diện sáng (Lớp học cổ điển): viền và quầng nắng phấn ấm áp */
+:root[data-theme='light']:not(.space-exploring) .mascot {
+  --pd-rim: rgba(194, 133, 71, 0.65);
+  --pd-aura: rgba(251, 191, 36, 0.32);
+  --pd-spark: #d97706;
 }
 /* Ngủ thì quầng sáng dịu đi */
 .is-sleep .mascot-body::before,
@@ -657,4 +657,25 @@ body:has(.exam-timer-float) .mascot-restore {
   50% {
     transform: translateY(-3px) rotate(-10deg);
   }
+}
+
+
+/* Giao diện sáng (Lớp học cổ điển): Gấu Trúc tỏa quầng nắng ấm, bảng giảng bài đóng khung gỗ sồi & khay phấn gỗ */
+:root[data-theme='light'] .mascot {
+  --pd-rim: rgba(194, 133, 71, 0.65);
+  --pd-aura: rgba(251, 191, 36, 0.32);
+  --pd-spark: #d97706;
+}
+:root[data-theme='light'] .mascot-board {
+  border-color: #b5834d;
+}
+:root[data-theme='light'] .mascot-board::after {
+  background: #8c5828;
+}
+
+:root[data-theme='light'] .is-roll .mascot-stage::before {
+  background:
+    radial-gradient(circle at 25% 65%, rgba(217, 119, 6, 0.45) 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 40%, rgba(194, 133, 71, 0.38) 0 3px, transparent 4px),
+    radial-gradient(circle at 75% 70%, rgba(217, 119, 6, 0.42) 0 4.5px, transparent 5.5px);
 }

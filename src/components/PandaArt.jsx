@@ -4,10 +4,13 @@ import { useId } from 'react'
 // Chuyển động (bước chân, vẫy tay, lăn...) do styles/mascot.css điều khiển qua các class pd-*.
 const INK = '#2a2238'
 const FUR = '#ffffff'
-const BELLY = '#efe9fb'
-const VIOLET = '#7c3aed'
-const VIOLET_DARK = '#5b21b6'
-const VIOLET_EDGE = '#4c1d95'
+const BELLY = 'var(--pd-belly, #efe9fb)'
+const VIOLET = 'var(--pd-accent, #7c3aed)'
+const VIOLET_DARK = 'var(--pd-accent-dark, #5b21b6)'
+const VIOLET_EDGE = 'var(--pd-accent-edge, #4c1d95)'
+const VIOLET_SOFT = 'var(--pd-accent-soft, #a78bfa)'
+const PAPER_LINE = 'var(--pd-paper-line, #c4b5fd)'
+const PAGE_BG = 'var(--pd-page-bg, #f5f3ff)'
 const GOLD = '#facc15'
 const PINK = '#f9a8d4'
 
@@ -27,7 +30,7 @@ function Cap({ back = false }) {
     <g className="pd-cap">
       <path d="M42 35 V26 Q60 20 78 26 V35 Q60 41 42 35 Z" fill={VIOLET_DARK} />
       <path d="M24 24 L60 11 L96 24 L60 37 Z" fill={VIOLET} stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M31 24 L60 14 L89 24" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M31 24 L60 14 L89 24" fill="none" stroke={VIOLET_SOFT} strokeWidth="1.5" strokeLinecap="round" />
       <circle cx="60" cy="24" r="2.2" fill={GOLD} />
       {back ? (
         <g className="pd-tassel">
@@ -241,7 +244,7 @@ function Book({ x, y, angle }) {
     <g transform={`rotate(${angle} ${x + 10} ${y + 12})`}>
       <rect x={x} y={y} width="20" height="25" rx="2.5" fill={VIOLET} stroke={VIOLET_EDGE} strokeWidth="1.5" />
       <rect x={x + 3} y={y} width="3" height="25" fill={VIOLET_DARK} />
-      <rect x={x + 9} y={y + 6} width="8" height="3" rx="1" fill="#c4b5fd" />
+      <rect x={x + 9} y={y + 6} width="8" height="3" rx="1" fill={PAPER_LINE} />
     </g>
   )
 }
@@ -425,9 +428,9 @@ export { starPath, INK, FUR }
 function ReadingArms() {
   return (
     <g className="pd-reading">
-      <path d="M60 90 Q49 85 37 88 L39 108 Q50 105 60 110 Z" fill="#f5f3ff" stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
-      <path className="pd-page" d="M60 90 Q71 85 83 88 L81 108 Q70 105 60 110 Z" fill="#f5f3ff" stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M43 93 h12 M43 97 h12 M43 101 h9 M65 93 h12 M65 97 h12 M65 101 h8" stroke="#c4b5fd" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M60 90 Q49 85 37 88 L39 108 Q50 105 60 110 Z" fill={PAGE_BG} stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
+      <path className="pd-page" d="M60 90 Q71 85 83 88 L81 108 Q70 105 60 110 Z" fill={PAGE_BG} stroke={VIOLET_EDGE} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M43 93 h12 M43 97 h12 M43 101 h9 M65 93 h12 M65 97 h12 M65 101 h8" stroke={PAPER_LINE} strokeWidth="1.4" strokeLinecap="round" />
       <path d="M60 90 V110" stroke={VIOLET} strokeWidth="2" />
       <ellipse cx="37" cy="98" rx="7.5" ry="11" transform="rotate(15 37 98)" fill={INK} />
       <ellipse cx="83" cy="98" rx="7.5" ry="11" transform="rotate(-15 83 98)" fill={INK} />

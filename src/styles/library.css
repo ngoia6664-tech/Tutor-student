@@ -1414,3 +1414,242 @@
   font-weight: 700;
   font-size: 0.92rem;
 }
+
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): THƯ VIỆN SỔ TAY, THẺ MỤC LỤC & KỆ SÁCH GỖ SỒI
+   ===================================================================== */
+
+/* 1. Bỏ 4 góc ngắm công nghệ tím (┌ ┐ └ ┘) ở bản Lớp học, thay bằng khung sổ giáo án viền gỗ sồi */
+@media (min-width: 821px) {
+  :root[data-theme="light"] .library {
+    padding: 0.9rem;
+    border-radius: 16px;
+    border: 1px solid #d8c3a5;
+    border-top: 4px solid var(--wood-mid, #c28547);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: var(--shadow);
+  }
+  :root[data-theme="light"] .library::before {
+    display: none;
+  }
+  :root[data-theme="light"] .library .library-side {
+    border-right: 1px dashed #d8c3a5;
+    padding-right: 0.5rem;
+  }
+}
+
+/* 2. Thanh tiến độ nộp bài trong Thư viện / Bài cần làm: Xanh bảng phấn & Vàng nắng */
+:root[data-theme="light"] .progress {
+  background: #ebe0cc;
+  border-color: #d5be9d;
+  box-shadow: inset 0 1px 3px rgba(74, 48, 20, 0.14);
+}
+:root[data-theme="light"] .progress-bar {
+  background: linear-gradient(90deg, #235340 0%, #2d6a4f 58%, #d97706 100%);
+  box-shadow: 0 0 10px rgba(35, 83, 64, 0.25);
+}
+
+/* 3. Card Chủ đề xoay (.ccar-face) & Bìa sách nổi (.shelf-cover): Thẻ Bìa Sổ Tay Cổ Điển */
+:root[data-theme="light"] .ccar-face,
+:root[data-theme="light"] .shelf-cover {
+  --dots: radial-gradient(circle, rgba(140, 88, 40, 0.16) 1px, transparent 1.5px) 0 0 / 14px 14px;
+  --paper: linear-gradient(160deg, #fffdf8 0%, #f9f0df 58%, #f1e2c6 100%);
+  border: 1.5px solid #cbb089;
+  color: #2b231d;
+  box-shadow:
+    0 12px 26px -12px rgba(74, 48, 20, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="light"] .ccar-card.is-center .ccar-face {
+  border: 2px solid transparent;
+  background:
+    var(--dots) padding-box,
+    var(--paper) padding-box,
+    linear-gradient(135deg, #c28547 0%, #235340 100%) border-box;
+  box-shadow:
+    0 22px 44px -18px rgba(74, 48, 20, 0.34),
+    0 0 0 1px rgba(194, 133, 71, 0.22);
+}
+
+/* Ánh nắng vàng kim lướt nhẹ trên mặt thẻ chủ đề thay cho dải hologram tím lạnh */
+:root[data-theme="light"] .ccar-card.is-center .ccar-face::after {
+  background:
+    radial-gradient(
+      240px circle at var(--gx, 50%) var(--gy, 18%),
+      rgba(255, 251, 235, 0.55),
+      transparent 62%
+    ),
+    linear-gradient(
+        115deg,
+        transparent 26%,
+        rgba(251, 191, 36, 0.14) 42%,
+        rgba(255, 255, 255, 0.32) 50%,
+        rgba(194, 133, 71, 0.14) 58%,
+        transparent 74%
+      )
+      var(--gx, 50%) 0 / 260% 100% no-repeat;
+}
+
+/* Nhãn môn học kiểu tem dán vở học sinh */
+:root[data-theme="light"] .subject-chip {
+  background: rgba(35, 83, 64, 0.11);
+  border: 1px solid rgba(35, 83, 64, 0.35);
+  color: #1b4332;
+}
+:root[data-theme="light"] :is(.is-physics) .subject-chip {
+  background: rgba(180, 83, 9, 0.12);
+  border-color: rgba(180, 83, 9, 0.36);
+  color: #9a3412;
+}
+:root[data-theme="light"] :is(.is-chem) .subject-chip {
+  background: rgba(185, 28, 28, 0.1);
+  border-color: rgba(185, 28, 28, 0.34);
+  color: #991b1b;
+}
+
+:root[data-theme="light"] .ccar-stats span + span {
+  border-left-color: #d5be9d;
+}
+:root[data-theme="light"] .ccar-stats .icon,
+:root[data-theme="light"] .shelf-stats .icon {
+  color: #9a5b20;
+}
+:root[data-theme="light"] .ccar-actions {
+  border-top-color: #d5be9d;
+}
+
+/* 4. Kệ sách Gỗ Sồi & Bộ Sách Bìa Cứng / Bìa Da Cổ Điển */
+:root[data-theme="light"] .shelf-head span {
+  color: #8c5828;
+}
+:root[data-theme="light"] .shelf-board::after {
+  height: 14px;
+  border-radius: 3px 3px 6px 6px;
+  border: 1px solid #78471c;
+  border-top-color: #f3d29c;
+  background: linear-gradient(
+    180deg,
+    #e2ab65 0%,
+    #b87b38 48%,
+    #865222 100%
+  );
+  box-shadow: 0 12px 20px -8px rgba(74, 48, 20, 0.42);
+}
+
+/* 5 tông màu bìa da cổ điển xoay vòng trên kệ gỗ: Xanh rêu, Đỏ đô, Nâu da bò, Xanh cổ vịt, Vàng nghệ */
+:root[data-theme="light"] .shelf-book {
+  --book-c1: #2b593f;
+  --book-c2: #1d3f2c;
+}
+:root[data-theme="light"] .shelf-book:nth-child(5n + 2) {
+  --book-c1: #8c2d2d;
+  --book-c2: #611c1c;
+}
+:root[data-theme="light"] .shelf-book:nth-child(5n + 3) {
+  --book-c1: #8f5325;
+  --book-c2: #633715;
+}
+:root[data-theme="light"] .shelf-book:nth-child(5n + 4) {
+  --book-c1: #265366;
+  --book-c2: #183846;
+}
+:root[data-theme="light"] .shelf-book:nth-child(5n + 5) {
+  --book-c1: #9e6723;
+  --book-c2: #704714;
+}
+
+:root[data-theme="light"] .shelf-spine {
+  padding-top: 0.55rem;
+  color: #fef3c7;
+  background: linear-gradient(
+    90deg,
+    var(--book-c2) 0%,
+    var(--book-c1) 30%,
+    color-mix(in srgb, var(--book-c1) 86%, #ffffff) 52%,
+    var(--book-c1) 72%,
+    var(--book-c2) 100%
+  );
+  border: 1px solid rgba(43, 25, 10, 0.38);
+  border-bottom: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 220, 0.32),
+    2px 0 5px rgba(45, 28, 10, 0.16);
+}
+
+/* Hai đường chỉ dập nhũ vàng kim ngang đầu và chân gáy sách */
+:root[data-theme="light"] .shelf-spine::before,
+:root[data-theme="light"] .shelf-spine::after {
+  border-block: 1px solid rgba(253, 230, 138, 0.68);
+  background: rgba(251, 191, 36, 0.16);
+}
+:root[data-theme="light"] .shelf-spine::before {
+  top: 2.55rem;
+}
+
+/* Tem giấy kem in số chương trên đầu gáy sách */
+:root[data-theme="light"] .shelf-spine b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.55rem;
+  padding: 0.12rem 0.32rem;
+  border-radius: 4px;
+  background: #fdf9f2;
+  border: 1px solid rgba(140, 88, 40, 0.4);
+  color: #2b231d;
+  font-size: 0.92rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="light"] .shelf-spine-name {
+  color: #fffbeb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+@media (hover: hover) and (min-width: 521px) {
+  :root[data-theme="light"] .shelf-book:hover .shelf-link,
+  :root[data-theme="light"] .shelf-book:focus-within .shelf-link {
+    box-shadow: 0 12px 20px -6px rgba(74, 48, 20, 0.45);
+  }
+}
+
+/* =====================================================================
+   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): ĐƯỜNG KẺ PHẤN TRẮNG CÂY THƯ MỤC
+   ===================================================================== */
+:root[data-theme="light"] .tree-children {
+  margin-left: 0.95rem;
+  padding-left: 0.55rem;
+  border-left: 2px dashed rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.65)) drop-shadow(1px 0 2px rgba(74, 48, 20, 0.18));
+}
+
+@media (min-width: 821px) {
+  :root[data-theme="light"] .library .tree-children {
+    border-left: 2px dashed rgba(255, 255, 255, 0.92);
+  }
+}
+
+:root[data-theme="light"] .outline-section ul {
+  border-left: 2px dashed rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.65));
+}
+
+/* Accordion đóng mở êm ái cho các nhánh cây thư mục (grid-template-rows animation) */
+.tree-collapse-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+.tree-collapse-wrap.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.tree-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}

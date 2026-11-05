@@ -2,10 +2,10 @@ import { flushSync } from 'react-dom'
 import { prefersReducedMotion } from '../lib/settings.js'
 import { useTheme } from '../lib/theme.js'
 
-const THEME_COLOR = { dark: '#0c0a1d', light: '#f5f3ff' }
+const THEME_COLOR = { dark: '#0c0a1d', light: '#efe5d5' }
 
 /**
- * Nút chuyển giao diện sáng / tối; lựa chọn được nhớ trên máy này.
+ * Nút chuyển giao diện sáng (Lớp học cổ điển) / tối (Vũ trụ học); lựa chọn được nhớ trên máy này.
  * Theo dõi <html data-theme> (useTheme) nên nhiều nút cùng lúc (thanh trên + ngăn kéo menu) luôn khớp nhau.
  * `withLabel`: dạng hàng có chữ trong thanh bên / ngăn kéo (className do nơi dùng đặt).
  * @param {{ className?: string, withLabel?: boolean }} props
@@ -13,7 +13,7 @@ const THEME_COLOR = { dark: '#0c0a1d', light: '#f5f3ff' }
 export default function ThemeToggle({ className = '', withLabel = false }) {
   const theme = useTheme()
   const next = theme === 'dark' ? 'light' : 'dark'
-  const label = next === 'light' ? 'Giao diện sáng' : 'Giao diện tối'
+  const label = next === 'light' ? 'Giao diện sáng (Lớp học)' : 'Giao diện tối (Vũ trụ)'
 
   // Trình duyệt hỗ trợ View Transitions: cả trang mờ chéo sang màu mới (layout.css), không thì đổi ngay
   function toggle() {
@@ -37,7 +37,7 @@ export default function ThemeToggle({ className = '', withLabel = false }) {
       type="button"
       className={withLabel ? className : `btn btn-ghost theme-toggle ${className}`}
       onClick={toggle}
-      aria-label={next === 'light' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+      aria-label={next === 'light' ? 'Chuyển sang giao diện sáng (Lớp học cổ điển)' : 'Chuyển sang giao diện tối (Vũ trụ học)'}
       title={label}
     >
       {withLabel ? (
