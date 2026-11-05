@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -7,7 +7,7 @@ import { viNum } from '../../lib/exam.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { errMsg } from '../../lib/errors.js'
 import { fetchGroupRows, fetchStudents, renameGroup, saveGroupNote } from '../../lib/students.js'
-import { buildGroups, groupLabel } from '../../lib/studentGroups.js'
+import { buildGroups, groupLabel, summarizeGroup } from '../../lib/studentGroups.js'
 import { buildBackup, downloadBackup, fetchStreaks, parseBackup, restoreStreaks } from '../../lib/streakBackup.js'
 import { askConfirm, notifyDone, notifyError } from '../../lib/dialog.js'
 import { matchTitle } from '../../lib/format.js'
@@ -24,7 +24,7 @@ export default function TutorStudents() {
   const deferredSearchQuery = useDeferredValue(searchQuery)
   const [gradeFilter, setGradeFilter] = useRemembered('tutor-students-grade', 'all', (v) => typeof v === 'string')
   const [statusFilter, setStatusFilter] = useRemembered('tutor-students-status', 'all', (v) => typeof v === 'string')
-  const [viewMode, setViewMode] = useRemembered('tutor-students-view', 'cards', (v) => v === 'cards' || v === 'table')
+  const [viewMode, setViewMode] = useRemembered('tutor-students-view', 'groups', (v) => v === 'groups' || v === 'students')
 
   const [editing, setEditing] = useState(null) // học sinh đang sửa
   const [editGroup, setEditGroup] = useState(/** @type {{ name: string, note: string } | null} */ (null)) // nhóm đang sửa
@@ -136,7 +136,7 @@ export default function TutorStudents() {
           }
           return true
         })
-        return { ...b, matchingList: matching }
+        return { ...b, matchingList: matching, sum: summarizeGroup(matching, data.stats) }
       })
       .filter((b) => !activeSearch || b.matchingList.length > 0)
   }, [blocks, deferredSearchQuery, gradeFilter, statusFilter, activeSearch, data])
@@ -219,25 +219,27 @@ export default function TutorStudents() {
               ariaLabel="Lọc theo tình trạng học sinh"
             />
 
-            {/* Chuyển đổi giữa 2 chế độ: Dạng Thẻ (Cards) vs Dạng Bảng (Table) */}
+            {/* Hai chế độ xem: Nhóm (số nhóm) / Học sinh (số em) — số khớp bộ lọc và ô tìm kiếm. Ẩn khi đang trong một nhóm (lối ra: "← Về tất cả nhóm") */}
+            {!detail && (
             <div className="chips" role="group" aria-label="Chế độ hiển thị" style={{ margin: 0 }}>
               <button
                 type="button"
-                className={`chip${viewMode === 'cards' ? ' active' : ''}`}
-                onClick={() => setViewMode('cards')}
-                title="Xem dạng thẻ trực quan"
+                className={`chip${viewMode === 'groups' ? ' active' : ''}`}
+                onClick={() => setViewMode('groups')}
+                title="Các khối nhóm: bấm một khối để xem học sinh trong nhóm"
               >
-                <Icon name="grid" size={14} /> Dạng thẻ ({filteredStudents.length})
+                <Icon name="grid" size={14} /> Nhóm ({filteredBlocks.length})
               </button>
               <button
                 type="button"
-                className={`chip${viewMode === 'table' ? ' active' : ''}`}
-                onClick={() => setViewMode('table')}
-                title="Xem dạng bảng tóm tắt"
+                className={`chip${viewMode === 'students' ? ' active' : ''}`}
+                onClick={() => setViewMode('students')}
+                title="Mọi học sinh, chia khung theo nhóm"
               >
-                <Icon name="table" size={14} /> Dạng bảng
+                <Icon name="users" size={14} /> Học sinh ({filteredStudents.length})
               </button>
             </div>
+            )}
 
             <button type="button" className="btn btn-small btn-primary" onClick={() => setEditGroup({ name: '', note: '' })}>
               <Icon name="plus" />
@@ -303,96 +305,68 @@ export default function TutorStudents() {
       )}
 
       {/* ========================================================
-          CHẾ ĐỘ HIỂN THỊ: DẠNG THẺ (CARDS) HOẶC DẠNG BẢNG (TABLE)
+          HAI CHẾ ĐỘ: NHÓM (khối nhóm, bấm vào xem em trong nhóm) / HỌC SINH (mọi em, chia khung theo nhóm)
           ======================================================== */}
       {!loading && !error && data && filteredStudents.length > 0 && (
         <section className="group-block">
-          {detail && (
-            <div className="group-head">
-              <h2 className="group-detail-title">
-                <span className="group-card-icon">
-                  <Icon name={detail.key === NONE ? 'inbox' : 'users'} size={22} />
-                </span>
-                {detail.title} <span className="muted small">{detail.list.length} em</span>
-              </h2>
-              <div className="row">
-                <button type="button" className="btn btn-small btn-ghost" onClick={() => setGroup('all')}>
-                  ← Về tất cả nhóm
-                </button>
-                {detail.name && (
-                  <button type="button" className="btn btn-small" onClick={() => setEditGroup({ name: detail.name, note: detail.note })}>
-                    <Icon name="edit" />
-                    Sửa nhóm
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {detail?.note && <p className="group-note">{detail.note}</p>}
-
-          {viewMode === 'table' ? (
-            <StudentTable list={filteredStudents} data={data} onEdit={setEditing} />
-          ) : (
-            <div className="student-grid">
-              {filteredStudents.map((s) => {
-                const st = data.stats[s.id] || { lessons: 0, total: 0, todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
-                const streak = data.streakById.get(s.id)
-                return (
-                  <div key={s.id} className="student-card">
-                    <div>
-                      <div className="student-card-head">
-                        <div className="student-card-avatar">
-                          {(s.full_name || '?').trim().charAt(0).toUpperCase()}
-                        </div>
-                        <div className="student-card-meta">
-                          <Link to={`/tutor/students/${s.id}`} className="student-card-name" title={s.full_name}>
-                            {s.full_name || '(chưa đặt tên)'}
-                          </Link>
-                          <div className="row small muted" style={{ gap: '0.35rem', marginTop: '0.2rem' }}>
-                            <span>{s.group_name ? groupLabel(s.group_name) : 'Chưa xếp nhóm'}</span>
-                            {s.grade && <span>· Lớp {s.grade}</span>}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="student-card-stats">
-                        <div className="student-card-stat-item">
-                          <span className="muted">Điểm TB:</span>
-                          <b>{st.avg === null ? '—' : viNum(st.avg)}</b>
-                        </div>
-                        <div className="student-card-stat-item">
-                          <span className="muted">Đã nộp:</span>
-                          <b>{st.done + st.checked}/{st.total}</b>
-                        </div>
-                        <div className="student-card-stat-item">
-                          <span className="muted">Chờ chấm:</span>
-                          <b style={st.done > 0 ? { color: 'var(--primary)' } : undefined}>{st.done}</b>
-                        </div>
-                        <div className="student-card-stat-item">
-                          <span className="muted">Quá hạn:</span>
-                          <b style={st.overdue > 0 ? { color: 'var(--danger)' } : undefined}>{st.overdue}</b>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="row row-between" style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
-                      <span className="small muted">
-                        {streak !== undefined && streak > 0 ? `🔥 ${streak} ngày` : '—'}
-                      </span>
-                      <div className="row" style={{ gap: '0.35rem' }}>
-                        <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
-                          <Icon name="open" /> Xem
-                        </Link>
-                        <button type="button" className="btn btn-small btn-ghost" onClick={() => setEditing(s)} title="Sửa thông tin">
-                          <Icon name="edit" />
-                        </button>
-                      </div>
-                    </div>
+          {detail ? (
+            <GroupFrame
+              block={detail}
+              list={filteredStudents}
+              data={data}
+              onEditStudent={setEditing}
+              onEditGroup={setEditGroup}
+              onBack={() => setGroup('all')}
+            />
+          ) : viewMode === 'groups' ? (
+            <div className="group-grid">
+              {filteredBlocks.map((b) => (
+                <button
+                  key={b.key}
+                  type="button"
+                  className="group-card"
+                  onClick={() => setGroup(b.key)}
+                >
+                  <div className="group-card-header">
+                    <span className="group-card-icon">
+                      <Icon name={b.key === NONE ? 'inbox' : 'users'} size={20} />
+                    </span>
+                    <span className="group-badge-count">{b.matchingList.length} em</span>
                   </div>
-                )
-              })}
+                  <strong className="group-card-title">{b.title}</strong>
+                  {b.note && <span className="group-card-note">{b.note}</span>}
+                  {(b.sum.avg !== null || b.sum.pending > 0 || b.sum.overdue > 0) && (
+                    <div className="group-card-sum">
+                      {b.sum.avg !== null && <span><span className="muted">TB</span> <b>{viNum(b.sum.avg)}</b></span>}
+                      {b.sum.pending > 0 && <span className="badge badge-primary">{b.sum.pending} chờ chấm</span>}
+                      {b.sum.overdue > 0 && <span className="badge badge-danger">{b.sum.overdue} quá hạn</span>}
+                    </div>
+                  )}
+                  <div className="group-card-names">
+                    {b.matchingList.length === 0 && <span className="muted small">Chưa có học sinh</span>}
+                    {b.matchingList.slice(0, 3).map((s) => (
+                      <span key={s.id} className="student-chip-mini">
+                        <span className="student-initial">{s.full_name?.trim()?.charAt(0) || '?'}</span>
+                        <span className="student-name-text">{s.full_name || '(chưa đặt tên)'}</span>
+                      </span>
+                    ))}
+                    {b.matchingList.length > 3 && <span className="group-card-more">+{b.matchingList.length - 3} em nữa</span>}
+                  </div>
+                </button>
+              ))}
             </div>
+          ) : (
+            filteredBlocks.map((b) => (
+              <GroupFrame
+                key={b.key}
+                block={b}
+                list={b.matchingList}
+                data={data}
+                onEditStudent={setEditing}
+                onEditGroup={setEditGroup}
+                onOpen={() => setGroup(b.key)}
+              />
+            ))
           )}
         </section>
       )}
@@ -400,75 +374,6 @@ export default function TutorStudents() {
   )
 }
 
-/** Bảng học sinh (dạng rút gọn / bảng tổng hợp) */
-function StudentTable({ list, data, onEdit }) {
-  return (
-    <div className="card table-wrap">
-      <table className="table table-cards">
-        <thead>
-          <tr>
-            <th>Học sinh</th>
-            <th>Lớp</th>
-            <th>Môn</th>
-            <th>Bài giảng</th>
-            <th>Đã nộp</th>
-            <th>Chưa nộp</th>
-            <th>Chờ chấm</th>
-            <th>Điểm TB</th>
-            <th>Chuỗi 🔥</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((s) => {
-            const st = data.stats[s.id] || { lessons: 0, total: 0, todo: 0, overdue: 0, done: 0, checked: 0, avg: null }
-            const streak = data.streakById.get(s.id)
-            return (
-              <tr key={s.id}>
-                <td>
-                  <Link to={`/tutor/students/${s.id}`} className="student-link">
-                    <span className="student-initial" style={{ width: '1.65rem', height: '1.65rem', fontSize: '0.78rem' }}>
-                      {s.full_name?.trim()?.charAt(0) || '?'}
-                    </span>
-                    <strong>{s.full_name || '(chưa đặt tên)'}</strong>
-                  </Link>
-                  <div className="small muted">{s.group_name ? groupLabel(s.group_name) : 'Chưa xếp nhóm'}</div>
-                </td>
-                <td data-label="Lớp">{s.grade ? `Lớp ${s.grade}` : '—'}</td>
-                <td data-label="Môn">{s.subjects?.length ? s.subjects.join(', ') : '—'}</td>
-                <td data-label="Bài giảng">{st.lessons}</td>
-                <td data-label="Đã nộp">
-                  <strong>{st.done + st.checked}</strong>/{st.total}
-                </td>
-                <td data-label="Chưa nộp">
-                  {st.todo + st.overdue}
-                  {st.overdue > 0 && <span className="badge badge-danger" style={{ marginLeft: '0.35rem' }}>{st.overdue} quá hạn</span>}
-                </td>
-                <td data-label="Chờ chấm">
-                  {st.done > 0 ? <span className="badge badge-primary">{st.done}</span> : 0}
-                </td>
-                <td data-label="Điểm TB">{st.avg === null ? '—' : <strong>{viNum(st.avg)}</strong>}</td>
-                <td data-label="Chuỗi 🔥">{streak !== undefined && streak > 0 ? `${streak} ngày` : '—'}</td>
-                <td>
-                  <div className="row" style={{ flexWrap: 'nowrap', gap: '0.4rem' }}>
-                    <Link to={`/tutor/students/${s.id}`} className="btn btn-small">
-                      <Icon name="open" />
-                      Xem
-                    </Link>
-                    <button type="button" className="btn btn-small btn-ghost" onClick={() => onEdit(s)} title="Sửa thông tin">
-                      <Icon name="edit" />
-                      Sửa
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
-}
 
 function GroupForm({ group, onCancel, onSaved }) {
   const isNew = !group.name
@@ -656,5 +561,82 @@ export function EditStudent({ student, onCancel, onSaved }) {
         </button>
       </div>
     </form>
+  )
+}
+
+/** Một học sinh = một dòng gọn, cả dòng bấm được (mở hồ sơ). Chỉ hiện số đáng chú ý: chờ chấm, quá hạn, chuỗi. */
+const StudentRow = memo(function StudentRow(/** @type {{ s: any, data: any, onEdit: (s: any) => void }} */ { s, data, onEdit }) {
+  const st = data.stats[s.id] || { total: 0, overdue: 0, done: 0, checked: 0, avg: null }
+  const streak = data.streakById.get(s.id)
+  const info = [s.grade ? `Lớp ${s.grade}` : '', s.subjects?.join(', ')].filter(Boolean).join(' · ')
+  return (
+    <div className="student-row">
+      <div className="student-row-main">
+        <span className="student-initial student-row-avatar">{(s.full_name || '?').trim().charAt(0)}</span>
+        <span className="student-row-text">
+          <Link to={`/tutor/students/${s.id}`} className="student-row-name" title={s.full_name}>
+            {s.full_name || '(chưa đặt tên)'}
+          </Link>
+          {info && <span className="student-row-info">{info}</span>}
+        </span>
+      </div>
+      <div className="student-row-stats">
+        <span><span className="muted">TB</span> <b>{st.avg === null ? '—' : viNum(st.avg)}</b></span>
+        <span><span className="muted">Nộp</span> <b>{st.done + st.checked}/{st.total}</b></span>
+        {st.done > 0 && <span className="badge badge-primary">{st.done} chờ chấm</span>}
+        {st.overdue > 0 && <span className="badge badge-danger">{st.overdue} quá hạn</span>}
+        {streak > 0 && <span>🔥 {streak}</span>}
+      </div>
+      <button type="button" className="btn btn-small btn-ghost student-row-edit" onClick={() => onEdit(s)} title="Sửa thông tin" aria-label={`Sửa ${s.full_name || 'học sinh'}`}>
+        <Icon name="edit" />
+      </button>
+    </div>
+  )
+})
+
+/** Khung viền mỏng của một nhóm: tiêu đề + các dòng học sinh. onBack: đang xem riêng một nhóm; onOpen: mở riêng nhóm này. */
+function GroupFrame(
+  /** @type {{ block: any, list: any[], data: any, onEditStudent: (s: any) => void, onEditGroup: (g: { name: string, note: string }) => void, onOpen?: () => void, onBack?: () => void }} */
+  { block, list, data, onEditStudent, onEditGroup, onOpen, onBack }
+) {
+  return (
+    <div className="group-frame">
+      <div className="group-head">
+        <h2 className="group-detail-title">
+          <span className="group-card-icon">
+            <Icon name={block.key === NONE ? 'inbox' : 'users'} size={18} />
+          </span>
+          <span>{block.title}</span>
+          <span className="group-badge-count">{list.length} em</span>
+        </h2>
+        <div className="row">
+          {onBack && (
+            <button type="button" className="btn btn-small btn-ghost" onClick={onBack}>
+              ← Về tất cả nhóm
+            </button>
+          )}
+          {onOpen && (
+            <button type="button" className="btn btn-small btn-ghost" onClick={onOpen} title="Xem riêng nhóm này">
+              Vào nhóm →
+            </button>
+          )}
+          {block.name && (
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => onEditGroup({ name: block.name, note: block.note })} title="Sửa nhóm">
+              <Icon name="edit" size={14} /> Sửa
+            </button>
+          )}
+        </div>
+      </div>
+      {block.note && <p className="group-note">{block.note}</p>}
+      {list.length === 0 ? (
+        <p className="muted small">Chưa có học sinh nào trong nhóm này.</p>
+      ) : (
+        <div className="student-rows">
+          {list.map((s) => (
+            <StudentRow key={s.id} s={s} data={data} onEdit={onEditStudent} />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

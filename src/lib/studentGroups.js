@@ -29,3 +29,26 @@ export function buildGroups(students, rows) {
     .map(({ name, note, students: list }) => ({ name, note, students: list }))
   return { groups, ungrouped }
 }
+
+/**
+ * Tóm tắt một nhóm cho khối nhóm: điểm TB của các em đã có điểm, tổng bài chờ chấm, tổng bài quá hạn.
+ * @param {{ id: string }[]} list
+ * @param {Record<string, { avg?: number | null, done?: number, overdue?: number }>} stats
+ */
+export function summarizeGroup(list, stats) {
+  let sum = 0
+  let n = 0
+  let pending = 0
+  let overdue = 0
+  for (const s of list) {
+    const st = stats[s.id]
+    if (!st) continue
+    if (typeof st.avg === 'number') {
+      sum += st.avg
+      n++
+    }
+    pending += st.done || 0
+    overdue += st.overdue || 0
+  }
+  return { avg: n ? sum / n : null, pending, overdue }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildGroups, groupLabel } from '../src/lib/studentGroups.js'
+import { buildGroups, groupLabel, summarizeGroup } from '../src/lib/studentGroups.js'
 
 describe('studentGroups', () => {
   it('nhãn: một chữ cái cũ thành "Nhóm A", tên tự đặt giữ nguyên', () => {
@@ -24,5 +24,11 @@ describe('studentGroups', () => {
     expect(groups[1]).toMatchObject({ note: 'ghi chú' })
     expect(groups[1].students.map((s) => s.id)).toEqual(['1', '4'])
     expect(ungrouped.map((s) => s.id)).toEqual(['3'])
+  })
+
+  it('tóm tắt nhóm: TB chỉ tính em có điểm, cộng chờ chấm + quá hạn, em chưa có số liệu bị bỏ qua', () => {
+    const stats = { a: { avg: 8, done: 1, overdue: 0 }, b: { avg: 9, done: 2, overdue: 3 }, c: { avg: null, done: 0, overdue: 1 } }
+    expect(summarizeGroup([{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'x' }], stats)).toEqual({ avg: 8.5, pending: 3, overdue: 4 })
+    expect(summarizeGroup([], stats)).toEqual({ avg: null, pending: 0, overdue: 0 })
   })
 })

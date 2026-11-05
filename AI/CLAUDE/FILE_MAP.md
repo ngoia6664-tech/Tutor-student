@@ -29,7 +29,7 @@
 - `TutorFeedback.jsx` — Trang Góp ý (gia sư): xem góp ý học sinh gửi, đánh dấu đã xem
 - `TutorLessonView.jsx` — Xem bài giảng (gia sư), như học sinh sẽ thấy
 - `TutorReports.jsx` — Số thứ tự câu trong bài (đề thi đánh số theo phần: I.
-- `TutorStudents.jsx` — Trang Học sinh: hàng chip lọc nhóm trên lưới + lưới khối nhóm đều chiều cao (icon, tên 2 dòng, "N em", ghi chú, 2 em đầu rồi "+N em nữa", phân trang 6 khối; bấm khối → bảng học sinh của nhóm; tạo / đổi tên nhóm), form sửa tên, nhóm (chọn hoặc gõ mới), lớp, môn
+- `TutorStudents.jsx` — Trang Học sinh: 2 nút chế độ xem, số khớp bộ lọc / tìm kiếm: **Nhóm (số nhóm)** = lưới khối nhóm (icon, tên 2 dòng, "N em", ghi chú, dòng tóm tắt TB + chờ chấm + quá hạn, 3 em đầu rồi "+N em nữa"; bấm khối → xem riêng nhóm), **Học sinh (số em)** = mọi em chia khung viền mỏng theo nhóm, mỗi em một dòng gọn `StudentRow` (cả dòng bấm mở hồ sơ, chỉ hiện chip chờ chấm / quá hạn khi > 0); tạo / đổi tên nhóm; form sửa tên, nhóm (chọn hoặc gõ mới), lớp, môn
 
 ## `src/pages/student/`
 - `StudentAssignment.jsx` — Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệ
