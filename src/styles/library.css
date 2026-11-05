@@ -169,30 +169,22 @@
   .library .tree-children {
     border-left: 0;
   }
-  /* Một khung bọc cả cây mục lục lẫn nội dung: nền mờ (sao nền hiện nhẹ qua), không viền liền, không bóng.
-     Dấu nhận biết là bốn góc ngắm chữ L tím sáng (như khung ngắm kính thiên văn) vẽ bằng gradient ở ::before */
+  /* Một khung bọc cả cây mục lục lẫn nội dung: nền bảng học tập ấm áp, không còn góc chữ L tím cũ */
   .library {
-    --corner: color-mix(in srgb, #a78bfa 80%, transparent);
-    --corner-len: 18px;
-    padding: 0.75rem;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    padding: 0.9rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--wood-mid, #c28547);
+    background: var(--surface);
     position: relative;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   }
   .library::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    pointer-events: none;
-    background:
-      linear-gradient(var(--corner), var(--corner)) top left / var(--corner-len) 2px no-repeat,
-      linear-gradient(var(--corner), var(--corner)) top left / 2px var(--corner-len) no-repeat,
-      linear-gradient(var(--corner), var(--corner)) top right / var(--corner-len) 2px no-repeat,
-      linear-gradient(var(--corner), var(--corner)) top right / 2px var(--corner-len) no-repeat,
-      linear-gradient(var(--corner), var(--corner)) bottom left / var(--corner-len) 2px no-repeat,
-      linear-gradient(var(--corner), var(--corner)) bottom left / 2px var(--corner-len) no-repeat,
-      linear-gradient(var(--corner), var(--corner)) bottom right / var(--corner-len) 2px no-repeat,
-      linear-gradient(var(--corner), var(--corner)) bottom right / 2px var(--corner-len) no-repeat;
+    display: none;
+  }
+  .library .library-side {
+    border-right: 1px dashed var(--border);
+    padding-right: 0.5rem;
   }
   /* Khối nội dung bên trong không còn khung riêng */
   .library .library-panel {

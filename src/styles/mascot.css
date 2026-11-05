@@ -25,6 +25,13 @@
   --pd-aura: rgba(251, 191, 36, 0.32);
   --pd-spark: #d97706;
 }
+/* Giao diện tối (Lớp học ban đêm): viền và quầng sáng hổ phách ấm áp */
+:root[data-theme='dark']:not(.space-exploring) .mascot,
+:root:not([data-theme='light']):not(.space-exploring) .mascot {
+  --pd-rim: rgba(245, 158, 11, 0.45);
+  --pd-aura: rgba(217, 119, 6, 0.22);
+  --pd-spark: #fbbf24;
+}
 /* Ngủ thì quầng sáng dịu đi */
 .is-sleep .mascot-body::before,
 .is-sulk .mascot-body::before {
