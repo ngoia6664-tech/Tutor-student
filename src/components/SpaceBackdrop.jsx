@@ -192,6 +192,7 @@ export default function SpaceBackdrop() {
 
   function toggleLamp() {
     updateSettings({ ceilingLamp: !settings.ceilingLamp })
+    playClockTick(true)
   }
 
   return (
@@ -229,10 +230,14 @@ export default function SpaceBackdrop() {
 
         <span className="space-shooting" />
 
-        {/* LỚP PHÒNG HỌC CỔ ĐIỂN (Giao diện sáng) */}
+        {/* LỚP PHÒNG HỌC CỔ ĐIỂN (Giao diện sáng ban ngày & Giao diện tối ban đêm gác mái) */}
         <div className="classroom-scene">
-          {/* Khung cửa sổ lớn bên trái + Tán cây xanh đung đưa + Hạt mưa ngoài hiên */}
+          {/* Luồng ánh trăng xiên từ cửa sổ rọi vào phòng đêm */}
+          <div className="moonlight-beam" />
+
+          {/* Khung cửa sổ lớn bên trái + Vầng trăng đêm + Tán cây xanh đung đưa + Hạt mưa ngoài hiên */}
           <div className="classroom-window">
+            <div className="window-moon" />
             <div className="window-pane"><div className="window-foliage" /></div>
             <div className="window-pane"><div className="window-foliage is-alt" /></div>
             <div className="window-pane"><div className="window-foliage is-alt" /></div>
@@ -364,6 +369,9 @@ export default function SpaceBackdrop() {
           </defs>
         </svg>
       </button>
+
+      {/* Luồng sáng tam giác từ đèn chao rọi xuống khối trung tâm */}
+      <div className="lamp-cone-triangle" aria-hidden="true" />
     </>
   )
 }

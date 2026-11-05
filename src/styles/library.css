@@ -1616,23 +1616,23 @@
 }
 
 /* =====================================================================
-   GIAO DIỆN SÁNG (LỚP HỌC CỔ ĐIỂN): ĐƯỜNG KẺ PHẤN TRẮNG CÂY THƯ MỤC
+   LỚP HỌC CỔ ĐIỂN & GÁC MÁI ĐÊM: ĐƯỜNG KẺ PHẤN TRẮNG CÂY THƯ MỤC
    ===================================================================== */
-:root[data-theme="light"] .tree-children {
+.tree-children {
   margin-left: 0.95rem;
   padding-left: 0.55rem;
-  border-left: 2px dashed rgba(255, 255, 255, 0.92);
-  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.65)) drop-shadow(1px 0 2px rgba(74, 48, 20, 0.18));
+  border-left: 2px dashed rgba(255, 255, 255, 0.88);
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.65)) drop-shadow(1px 0 2px rgba(0, 0, 0, 0.25));
 }
 
 @media (min-width: 821px) {
-  :root[data-theme="light"] .library .tree-children {
-    border-left: 2px dashed rgba(255, 255, 255, 0.92);
+  .library .tree-children {
+    border-left: 2px dashed rgba(255, 255, 255, 0.88);
   }
 }
 
-:root[data-theme="light"] .outline-section ul {
-  border-left: 2px dashed rgba(255, 255, 255, 0.92);
+.outline-section ul {
+  border-left: 2px dashed rgba(255, 255, 255, 0.88);
   filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.65));
 }
 

@@ -9,75 +9,102 @@
 :root[data-theme="dark"],
 :root[data-theme="light"].space-exploring {
   color-scheme: dark;
-  --bg: #0c0a1d;
+  --bg: #14100d; /* Nền đêm gỗ mun gác mái ấm áp, không tối đen sì */
   --surface: rgba(
-    24,
-    20,
-    50,
-    var(--card-opacity, 0.9)
-  ); /* gần đặc: chỉnh được bằng thanh trượt Độ đặc kính mờ trong Cài đặt */
-  --surface-solid: #16132e;
-  --surface-2: #1e1a3d;
-  --border: #2a2550;
-  --border-strong: #3b3470;
-  --text: #ece9ff;
-  --muted: #a29dc4;
-  --primary: #c084fc;
-  --accent: #f472b6;
+    32,
+    25,
+    21,
+    var(--card-opacity, 0.92)
+  ); /* Giấy da đêm hun khói ấm áp */
+  --surface-solid: #1d1714;
+  --surface-2: #28201a;
+  --border: #48392d;
+  --border-strong: #70543f;
+  --text: #f7eee2; /* Mực giấy ngà đêm, cực kỳ sắc nét và dịu mắt */
+  --muted: #aa9582; /* Nâu xám trầm cổ điển */
+  --primary: #2d6a4f; /* Xanh bảng phấn cổ điển */
+  --accent: #d97706; /* Hổ phách đèn học */
   --on-primary: #ffffff;
-  --grad: linear-gradient(100deg, #a855f7 0%, #d946ef 55%, #ec4899 100%);
+  --grad: linear-gradient(100deg, #2d6a4f 0%, #85532c 55%, #d97706 100%);
   --grad-soft: linear-gradient(
     100deg,
-    rgba(168, 85, 247, 0.18),
-    rgba(236, 72, 153, 0.18)
+    rgba(45, 106, 79, 0.18),
+    rgba(217, 119, 6, 0.18)
   );
-  --glow: 0 8px 28px -6px rgba(217, 70, 239, 0.55);
-  --primary-soft: rgba(192, 132, 252, 0.14);
-  --ok: #4ade80;
-  --ok-soft: rgba(74, 222, 128, 0.12);
-  /* Đỏ cam: cách xa hồng nhấn (--accent) để "sai / lỗi" không bị nhầm với trang trí */
-  --danger: #ff6b4a;
-  --danger-soft: rgba(255, 107, 74, 0.13);
-  --warn: #fbbf24;
-  --warn-soft: rgba(251, 191, 36, 0.13);
-  --aura-1: rgba(124, 58, 237, 0.28);
-  --aura-2: rgba(219, 39, 119, 0.2);
-  --reward: #fcd34d; /* vàng sao: chỉ dùng cho thứ "kiếm được" (Xu, Sao, chuỗi) */
-  --reward-2: #f59e0b;
-  --reward-soft: rgba(252, 211, 77, 0.14);
-  --on-reward: #3b2300;
-  /* Nút chính / mục đang chọn: tím đậm một màu #6d28d9 (chữ trắng 7:1); viền cũng là đáy "phím nổi".
-     Viết dạng gradient để dùng được cả làm lớp nền (library.css: `var(--btn-primary) border-box`) */
-  --btn-primary: linear-gradient(#6d28d9, #6d28d9);
-  --btn-primary-border: #5b21b6;
-  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 14px -8px rgba(46, 16, 101, 0.9);
-  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.35);
-  --btn-moment: linear-gradient(100deg, #7c3aed 0%, #a21caf 55%, #be185d 100%);
+  --glow: 0 8px 24px -8px rgba(217, 119, 6, 0.38);
+  --primary-soft: rgba(45, 106, 79, 0.18);
+  --ok: #34d399;
+  --ok-soft: rgba(52, 211, 153, 0.14);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --warn: #f59e0b;
+  --warn-soft: rgba(245, 158, 11, 0.14);
+  --aura-1: rgba(251, 191, 36, 0.18);
+  --aura-2: rgba(180, 83, 9, 0.14);
+  --reward: #f59e0b;
+  --reward-2: #d97706;
+  --reward-soft: rgba(245, 158, 11, 0.16);
+  --on-reward: #ffffff;
+  --btn-primary: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  --btn-primary-border: #132e22;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.45), 0 6px 16px -6px rgba(45, 106, 79, 0.6);
+  --btn-primary-hover-ring: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 0 3px rgba(45, 106, 79, 0.35);
+  --btn-moment: linear-gradient(100deg, #2d6a4f 0%, #85532c 55%, #d97706 100%);
   --shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.25),
-    0 14px 32px -14px rgba(0, 0, 0, 0.65);
-  --focus: rgba(192, 132, 252, 0.6);
-  --spot: rgba(168, 85, 247, 0.3); /* vầng sáng theo chuột (.cursor-glow) */
+    0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 14px rgba(0, 0, 0, 0.45),
+    0 18px 36px -10px rgba(0, 0, 0, 0.65);
+  --focus: rgba(245, 158, 11, 0.55);
+  --spot: rgba(251, 191, 36, 0.18);
   --skeleton: rgba(255, 255, 255, 0.06);
-  --scroll-thumb: rgba(192, 132, 252, 0.3);
-  --scroll-thumb-hover: rgba(192, 132, 252, 0.62);
-  --topbar-bg: rgba(12, 10, 29, 0.96);
-  --topbar-glass: rgba(12, 10, 29, 0.72);
-  --shop-stage: #120c2a;
-  --shop-stage-2: #24124a;
-  --shop-gold: #fcd34d;
-  --pd-belly: #efe9fb;
-  --pd-accent: #7c3aed;
-  --pd-accent-dark: #5b21b6;
-  --pd-accent-edge: #4c1d95;
-  --pd-accent-soft: #a78bfa;
-  --pd-paper-line: #c4b5fd;
-  --pd-page-bg: #f5f3ff;
-  --shop-awning-1: #a855f7;
-  --shop-awning-2: #ec4899;
-  --shop-wall-1: #4c3a9a;
-  --shop-wall-2: #241a58;
-  --shop-trim: #7c3aed;
+  --scroll-thumb: rgba(133, 83, 44, 0.45);
+  --scroll-thumb-hover: rgba(180, 122, 70, 0.7);
+  --topbar-bg: rgba(20, 16, 13, 0.94);
+  --topbar-glass: rgba(20, 16, 13, 0.82);
+  --shop-stage: #171310;
+  --shop-stage-2: #241c16;
+  --shop-gold: #f59e0b;
+  --wood-light: #b47a46;
+  --wood-mid: #85532c;
+  --wood-dark: #3a2618;
+  --chalkboard: #1c2620;
+  --chalkboard-deep: #141b17;
+  --chalk-text: #f4f6f0;
+  --chalk-muted: #a3b2a6;
+  --pd-belly: #f5ecdc;
+  --pd-accent: #2d6a4f;
+  --pd-accent-dark: #1b4332;
+  --pd-accent-edge: #0f291e;
+  --pd-accent-soft: #74c69d;
+  --pd-paper-line: #524133;
+  --pd-page-bg: #221b16;
+  --shop-awning-1: #d97706;
+  --shop-awning-2: #b45309;
+  --shop-wall-1: #2d6a4f;
+  --shop-wall-2: #1b4332;
+  --shop-trim: #92400e;
+}
+
+/* Khi tắt đèn học ([data-lamp="off"]): khối ở giữa bớt sáng lại, chuyển sang tĩnh mịch theo ánh trăng */
+:root[data-theme="dark"][data-lamp="off"],
+:root:not([data-theme="light"])[data-lamp="off"] {
+  --surface: rgba(20, 16, 13, var(--card-opacity, 0.88));
+  --surface-solid: #16120f;
+  --surface-2: #1e1814;
+  --border: #362a21;
+  --border-strong: #543f2e;
+  --shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 4px 14px rgba(0, 0, 0, 0.6),
+    0 18px 36px -10px rgba(0, 0, 0, 0.85);
+}
+
+/* Khi đèn học bật (mặc định): khối ở giữa được luồng sáng tam giác chiếu vào, nổi rõ và bắt quầng sáng vàng */
+:root[data-theme="dark"]:not([data-lamp="off"]) .group-card,
+:root[data-theme="dark"]:not([data-lamp="off"]) .library-panel,
+:root[data-theme="dark"]:not([data-lamp="off"]) .ctx-card {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(251, 191, 36, 0.12);
 }
 
 :root[data-theme="light"]:not(.space-exploring) {

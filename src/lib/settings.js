@@ -140,6 +140,7 @@ function applyToDocument() {
   root.style.setProperty('--sun-intensity', (settings.sunIntensity / 100).toFixed(2))
   root.style.setProperty('--card-opacity', (settings.cardOpacity / 100).toFixed(2))
   root.style.setProperty('--lamp-on', settings.ceilingLamp ? '1' : '0')
+  root.dataset.lamp = settings.ceilingLamp ? 'on' : 'off'
 }
 
 applyToDocument()

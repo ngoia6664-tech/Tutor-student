@@ -78,16 +78,16 @@
   transition: opacity 0.5s var(--ease);
 }
 
-/* Khi ở Giao diện Sáng (và không mở Kính thiên văn): ẩn Vũ trụ, hiện Lớp học */
-:root[data-theme='light']:not(.space-exploring) .space::before,
-:root[data-theme='light']:not(.space-exploring) .space-depth,
-:root[data-theme='light']:not(.space-exploring) .solar,
-:root[data-theme='light']:not(.space-exploring) .space-shooting {
+/* Khi không mở Kính thiên văn (.space-exploring): ẩn Vũ trụ xa, hiện Lớp học (cả ngày lẫn đêm) */
+:root:not(.space-exploring) .space::before,
+:root:not(.space-exploring) .space-depth,
+:root:not(.space-exploring) .solar,
+:root:not(.space-exploring) .space-shooting {
   opacity: 0;
   visibility: hidden;
 }
 
-/* Khi đang mở Kính thiên văn (.space-exploring) ở Giao diện Sáng: trả nền về màu đêm vũ trụ */
+/* Khi đang mở Kính thiên văn (.space-exploring): hiển thị đêm vũ trụ */
 :root.space-exploring .space {
   background-color: #0c0a1d;
 }
@@ -299,11 +299,16 @@
     radial-gradient(85vw 75vh at 8% 24%, rgba(var(--sun-color, 255, 224, 140), calc(0.75 * var(--sun-intensity, 1))), transparent 70%),
     linear-gradient(180deg, var(--wall-top) 0%, var(--wall-mid) 58%, var(--floor-1) 58.5%, var(--floor-2) 78%, #f4e8d4 100%);
 }
-:root[data-theme='light']:not(.space-exploring) .classroom-scene {
+:root:not(.space-exploring) .classroom-scene {
   opacity: 1;
   visibility: visible;
   transform: scale(1);
   transition: opacity 0.65s var(--ease), transform 0.75s var(--ease), visibility 0s;
+}
+:root[data-theme='dark']:not(.space-exploring) .classroom-scene {
+  background:
+    radial-gradient(85vw 75vh at 8% 24%, rgba(254, 240, 138, 0.14), transparent 70%),
+    linear-gradient(180deg, #181411 0%, #221b16 58%, #191411 58.5%, #1e1814 78%, #14100d 100%);
 }
 
 /* Mảng tường bảng đen than chì phía xa */
@@ -783,8 +788,8 @@
   cursor: pointer;
   transition: opacity 0.45s var(--ease), filter 0.3s var(--ease);
 }
-:root[data-theme='light']:not(.space-exploring) .pendant-lamp {
-  opacity: 0.82;
+:root:not(.space-exploring) .pendant-lamp {
+  opacity: 0.92;
   visibility: visible;
   pointer-events: auto;
 }
@@ -798,6 +803,104 @@
 @keyframes lamp-swing {
   0% { transform: rotate(-3.2deg); }
   100% { transform: rotate(3.2deg); }
+}
+
+/* Luồng sáng tam giác từ đèn chao rọi xuống khối trung tâm */
+.lamp-cone-triangle {
+  position: fixed;
+  top: 15px;
+  left: 55%;
+  transform: translateX(-50%);
+  width: min(92vw, 1150px);
+  height: 92vh;
+  clip-path: polygon(50% 0%, 2% 100%, 98% 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(254, 240, 138, calc(0.32 * var(--lamp-on, 1))) 0%,
+    rgba(254, 240, 138, calc(0.12 * var(--lamp-on, 1))) 45%,
+    rgba(254, 240, 138, calc(0.03 * var(--lamp-on, 1))) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(14px);
+  opacity: var(--lamp-on, 1);
+  transition: opacity 0.5s var(--ease);
+}
+:root.space-exploring .lamp-cone-triangle {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Vầng trăng đêm rọi ngoài cửa sổ */
+.window-moon {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffef5 35%, #fef08a 85%);
+  box-shadow: 0 0 18px rgba(254, 240, 138, 0.85), 0 0 40px rgba(254, 240, 138, 0.35);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+:root[data-theme='dark']:not(.space-exploring) .window-moon {
+  opacity: 1;
+}
+
+/* Vệt ánh trăng rọi từ cửa sổ vào sàn & mép bàn */
+.moonlight-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 65%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(254, 240, 138, 0.12) 0%, rgba(254, 240, 138, 0.04) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+:root[data-theme='dark']:not(.space-exploring) .moonlight-beam {
+  opacity: 1;
+}
+
+/* Điều chỉnh chi tiết nội thất phòng học ban đêm gác mái */
+:root[data-theme='dark']:not(.space-exploring) .classroom-mainboard {
+  background:
+    radial-gradient(circle at 40% 35%, rgba(40, 52, 45, 0.88), rgba(20, 27, 23, 0.85) 60%, rgba(14, 20, 16, 0.95)),
+    #141b17;
+  border-color: #6c4623;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    inset 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+:root[data-theme='dark']:not(.space-exploring) .wall-clock {
+  background: radial-gradient(circle at 45% 45%, #2a221b 0%, #1a1511 80%, #120e0b 100%);
+  border-color: #5c381c;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1.5px #8c5828;
+}
+:root[data-theme='dark']:not(.space-exploring) .clock-num {
+  color: #fbbf24;
+  text-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+}
+:root[data-theme='dark']:not(.space-exploring) .clock-hour {
+  background: #fbbf24;
+  box-shadow: 0 0 3px rgba(251, 191, 36, 0.6);
+}
+:root[data-theme='dark']:not(.space-exploring) .clock-min {
+  background: #f1f5f9;
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+}
+:root[data-theme='dark']:not(.space-exploring) .chalk-wall-notes {
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
 /* Điện thoại: hệ Mặt Trời nhỏ lại; thu gọn chi tiết phụ cho nhẹ máy */
