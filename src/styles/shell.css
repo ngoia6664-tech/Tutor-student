@@ -144,18 +144,24 @@ body:has(.side.is-open) {
   padding: 0.6rem 0.75rem;
   border-radius: var(--r-chip);
   border-color: transparent;
+  color: #c8bfb5;
   overflow: hidden;
   transition: background-color 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease);
 }
 .nav-side .nav-link:hover {
-  background: var(--primary-soft);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
   transform: translateX(2px);
 }
 .nav-side .nav-link.active {
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--primary);
+  background: transparent;
+  color: #ffffff !important;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
+}
+.nav-side .nav-link.active .icon {
+  color: #ffffff !important;
 }
 .nav-side .nav-badge {
   margin-left: auto;
@@ -631,14 +637,28 @@ body:has(.ctx-card) .ctx-panel {
   color: var(--muted);
 }
 .ctx-default .btn-primary {
-  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
-  font-weight: 600;
+  --edge-n: #7c2d12;
+  background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%);
+  border: 1px solid #9a3412;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 16px -4px rgba(194, 65, 12, 0.46);
+  transition:
+    transform 0.18s var(--spring),
+    box-shadow 0.2s var(--ease),
+    filter 0.2s var(--ease);
 }
 .ctx-default .btn-primary:hover {
-  box-shadow: 0 6px 22px rgba(168, 85, 247, 0.55);
-  transform: translateY(-1px);
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 10px 22px -4px rgba(194, 65, 12, 0.58);
+}
+.ctx-default .btn-primary:active {
+  transform: translateY(2px);
 }
 
 /* Danh sách chọn (Nhóm học sinh): hàng bấm được, hàng đang chọn tô như mục menu */
@@ -1432,4 +1452,101 @@ body:has(.ctx-card .qgrid) .answer-progress {
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.28),
     0 0 0 1.5px rgba(230, 184, 122, 0.5);
+}
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - CỘT PHẢI & MENU ĐỒNG BỘ
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-pill,
+:root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-pill {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  border: 1px solid #40916c;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link.active,
+:root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link.active {
+  background: transparent;
+  color: #ffffff !important;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
+}
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link.active .icon,
+:root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link.active .icon {
+  color: #ffffff !important;
+}
+
+/* Thẻ chỉ số Chuỗi / Xu / Sao trên bảng Hôm nay (Lớp học ban đêm) */
+:root[data-theme="dark"]:not(.space-exploring) .ctx-stat,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-stat {
+  background: #241c17;
+  border-color: #423327;
+  border-top-color: #543f31;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-stat:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-stat:hover {
+  border-color: var(--wood-mid, #c28547);
+  background: #2c221c;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-stat.is-lit dd,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-stat.is-lit dd {
+  color: #ea580c;
+  text-shadow: 0 1px 8px rgba(234, 88, 12, 0.35);
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-stat.is-reward dd,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-stat.is-reward dd {
+  color: #f59e0b;
+  text-shadow: none;
+}
+
+/* QuestionGrid ở lớp học ban đêm: Xanh bảng phấn & Vàng hổ phách */
+:root[data-theme="dark"]:not(.space-exploring) .ctx-track,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-track {
+  background: rgba(20, 16, 13, 0.85);
+  border-color: #3d2f25;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-fill,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-fill {
+  background: linear-gradient(90deg, #2d6a4f 0%, #52b788 55%, #d97706 100%);
+  box-shadow: 0 0 10px rgba(82, 183, 136, 0.35);
+}
+:root[data-theme="dark"]:not(.space-exploring) .qcell,
+:root:not([data-theme="light"]):not(.space-exploring) .qcell {
+  background: #241c17;
+  border: 1.5px solid #423327;
+  border-bottom: 3px solid #36291f;
+  color: #d5c8be;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"]:not(.space-exploring) .qcell:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .qcell:hover {
+  background: #33261e;
+  border-color: #d97706;
+  border-bottom-color: #b45309;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+}
+:root[data-theme="dark"]:not(.space-exploring) .qcell.is-done,
+:root:not([data-theme="light"]):not(.space-exploring) .qcell.is-done {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  border-color: #52b788;
+  border-bottom-color: #132e22;
+  color: #ffffff;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+:root[data-theme="dark"]:not(.space-exploring) .qdot,
+:root:not([data-theme="light"]):not(.space-exploring) .qdot {
+  background: #241c17;
+  border-color: #423327;
+}
+:root[data-theme="dark"]:not(.space-exploring) .qdot.is-done,
+:root:not([data-theme="light"]):not(.space-exploring) .qdot.is-done {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  border-color: #52b788;
+  box-shadow: 0 0 6px rgba(82, 183, 136, 0.4);
 }

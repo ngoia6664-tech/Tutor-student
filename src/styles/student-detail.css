@@ -335,3 +335,35 @@
 :root[data-theme="light"] .student-initial {
   background: linear-gradient(135deg, #275944 0%, #1b4332 100%);
 }
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - THẺ NHÓM HỌC SINH
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .group-card-title,
+:root:not([data-theme="light"]):not(.space-exploring) .group-card-title {
+  color: var(--text);
+}
+:root[data-theme="dark"]:not(.space-exploring) .group-card-icon,
+:root:not([data-theme="light"]):not(.space-exploring) .group-card-icon {
+  background: rgba(45, 106, 79, 0.22);
+  border-color: rgba(64, 145, 108, 0.45);
+  color: #74c69d;
+  box-shadow: none;
+}
+:root[data-theme="dark"]:not(.space-exploring) .group-badge-count,
+:root:not([data-theme="light"]):not(.space-exploring) .group-badge-count {
+  background: #241c17;
+  border-color: #423327;
+  color: #fbbf24;
+}
+:root[data-theme="dark"]:not(.space-exploring) .student-chip-mini,
+:root:not([data-theme="light"]):not(.space-exploring) .student-chip-mini {
+  background: #241c17;
+  border-color: #423327;
+  color: var(--text);
+}
+:root[data-theme="dark"]:not(.space-exploring) .student-initial,
+:root:not([data-theme="light"]):not(.space-exploring) .student-initial {
+  background: linear-gradient(135deg, #2d6a4f 0%, #1e4535 100%);
+  color: #ffffff;
+}

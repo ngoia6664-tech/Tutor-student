@@ -1067,3 +1067,29 @@ textarea {
 .chip:hover {
   transform: translateY(-1px);
 }
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - BADGES & LIST ITEM THẺ BÀI
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .badge-primary,
+:root:not([data-theme="light"]):not(.space-exploring) .badge-primary {
+  background: rgba(45, 106, 79, 0.28);
+  border-color: rgba(64, 145, 108, 0.5);
+  color: #74c69d;
+  box-shadow: none;
+}
+:root[data-theme="dark"]:not(.space-exploring) .badge-dot.dot-purple,
+:root:not([data-theme="light"]):not(.space-exploring) .badge-dot.dot-purple {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) a.list-item::before,
+:root:not([data-theme="light"]):not(.space-exploring) a.list-item::before {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.55) 0%, rgba(45, 106, 79, 0.45) 100%);
+}
+:root[data-theme="dark"]:not(.space-exploring) a.list-item:hover,
+:root:not([data-theme="light"]):not(.space-exploring) a.list-item:hover {
+  border-color: rgba(217, 119, 6, 0.45);
+  box-shadow:
+    0 12px 28px -8px rgba(0, 0, 0, 0.65),
+    0 0 16px rgba(217, 119, 6, 0.18);
+}

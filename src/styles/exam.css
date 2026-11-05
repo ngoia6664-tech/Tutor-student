@@ -543,3 +543,31 @@ details.method-box:not([open]) > summary {
   color: #ffffff;
   box-shadow: 0 3px 10px rgba(27, 67, 50, 0.32);
 }
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM): NÚT CHỌN ĐÚNG / SAI TRONG ĐỀ THI
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .tf-pick,
+:root:not([data-theme="light"]):not(.space-exploring) .tf-pick {
+  background: #241c17;
+  border: 1.5px solid #423327;
+  border-bottom: 3px solid #36291f;
+  color: #d5c8be;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+:root[data-theme="dark"]:not(.space-exploring) .tf-pick:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .tf-pick:hover {
+  background: #33261e;
+  border-color: #d97706;
+  border-bottom-color: #b45309;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
+}
+:root[data-theme="dark"]:not(.space-exploring) .tf-pick.is-picked,
+:root:not([data-theme="light"]):not(.space-exploring) .tf-pick.is-picked {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  border-color: #52b788;
+  border-bottom-color: #132e22;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+}

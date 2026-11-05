@@ -609,7 +609,7 @@
   opacity: 0;
   transition: opacity 0.5s var(--ease);
 }
-:root[data-theme='light'][data-weather='rainy'] .window-rain {
+:root[data-weather='rainy']:not(.space-exploring) .window-rain {
   opacity: 0.85;
 }
 .rain-drop {
@@ -685,7 +685,7 @@
   overflow: hidden;
   transition: opacity 0.5s var(--ease);
 }
-:root[data-theme='light'][data-weather='rainy'] .falling-leaves {
+:root[data-weather='rainy']:not(.space-exploring) .falling-leaves {
   opacity: 0;
 }
 .falling-leaf {
@@ -848,7 +848,7 @@
   transition: opacity 0.6s ease;
 }
 :root[data-theme='dark']:not(.space-exploring) .window-moon {
-  opacity: 1;
+  opacity: calc(0.7 + 0.3 * var(--sun-intensity, 1));
 }
 
 /* Vệt ánh trăng rọi từ cửa sổ vào sàn & mép bàn */
@@ -865,7 +865,7 @@
   transition: opacity 0.6s ease;
 }
 :root[data-theme='dark']:not(.space-exploring) .moonlight-beam {
-  opacity: 1;
+  opacity: calc(0.85 * var(--sun-intensity, 1));
 }
 
 /* Điều chỉnh chi tiết nội thất phòng học ban đêm gác mái */

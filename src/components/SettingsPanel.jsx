@@ -12,17 +12,25 @@ const MODES = [
   { id: 'lite', label: 'Tối ưu', desc: 'Nhẹ máy, ít chuyển động' },
 ]
 
-const WEATHER_OPTIONS = [
+const DAY_WEATHER_OPTIONS = [
   { id: 'morning', label: '🌤️ Nắng sớm', desc: 'Sáng trong trẻo' },
   { id: 'sunset', label: '🌇 Nắng chiều', desc: 'Ấm áp hoài niệm' },
   { id: 'rainy', label: '🌧️ Mưa hiên', desc: 'Dịu mắt tập trung' },
   { id: 'auto', label: '🕒 Theo giờ', desc: 'Tự đổi sáng/chiều' },
 ]
 
+const NIGHT_WEATHER_OPTIONS = [
+  { id: 'morning', label: '🌙 Trăng trong', desc: 'Sáng thanh vắng' },
+  { id: 'sunset', label: '✨ Trăng sao', desc: 'Bầu trời đầy sao' },
+  { id: 'rainy', label: '🌧️ Mưa đêm', desc: 'Rì rào ngoài gác mái' },
+  { id: 'auto', label: '🕒 Theo giờ', desc: 'Đồng bộ giờ thực' },
+]
+
 export default function SettingsPanel({ onClose }) {
   const s = useSettings()
   const theme = useTheme()
   const isLight = theme === 'light'
+  const weatherOptions = isLight ? DAY_WEATHER_OPTIONS : NIGHT_WEATHER_OPTIONS
   const mode = performanceMode(s)
   const reduced = prefersReducedMotion()
   const panel = useRef(null)
@@ -68,60 +76,58 @@ export default function SettingsPanel({ onClose }) {
           {mode === 'custom' && <p className="settings-note">Đang tùy chỉnh riêng từng mục bên dưới.</p>}
         </section>
 
-        {isLight && (
-          <section className="settings-section">
-            <h3>Không gian lớp học cổ điển</h3>
-            <div className="settings-weathers" role="radiogroup" aria-label="Không khí ngoài hiên lớp học">
-              {WEATHER_OPTIONS.map((w) => (
-                <button
-                  key={w.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={s.classroomWeather === w.id}
-                  className={`settings-mode settings-weather-chip ${s.classroomWeather === w.id ? 'is-on' : ''}`}
-                  onClick={() => updateSettings({ classroomWeather: w.id })}
-                >
-                  <strong>{w.label}</strong>
-                  <span>{w.desc}</span>
-                </button>
-              ))}
-            </div>
+        <section className="settings-section">
+          <h3>{isLight ? 'Không gian lớp học ban ngày (Nắng ấm)' : 'Không gian lớp học ban đêm (Gác mái trăng rọi)'}</h3>
+          <div className="settings-weathers" role="radiogroup" aria-label={isLight ? 'Không khí ngoài hiên lớp học' : 'Bầu trời đêm ngoài khung cửa gác mái'}>
+            {weatherOptions.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                role="radio"
+                aria-checked={s.classroomWeather === w.id}
+                className={`settings-mode settings-weather-chip ${s.classroomWeather === w.id ? 'is-on' : ''}`}
+                onClick={() => updateSettings({ classroomWeather: w.id })}
+              >
+                <strong>{w.label}</strong>
+                <span>{w.desc}</span>
+              </button>
+            ))}
+          </div>
 
-            <label className="settings-range">
-              <span className="settings-range-label">
-                ☀ Độ nắng chiếu qua cửa sổ <b>{s.sunIntensity}%</b>
-              </span>
-              <input
-                type="range"
-                min="20"
-                max="140"
-                step="5"
-                value={s.sunIntensity}
-                onChange={(e) => updateSettings({ sunIntensity: Number(e.target.value) })}
-              />
-            </label>
-
-            <Toggle
-              label="💡 Đèn chao thả trần"
-              desc="Bật quầng sáng vàng ấm trên trần (hoặc bấm trực tiếp vào đèn)"
-              on={s.ceilingLamp}
-              set={(v) => updateSettings({ ceilingLamp: v })}
+          <label className="settings-range">
+            <span className="settings-range-label">
+              {isLight ? '☀ Độ nắng chiếu qua cửa sổ' : '🌙 Độ sáng trăng rọi qua cửa sổ'} <b>{s.sunIntensity}%</b>
+            </span>
+            <input
+              type="range"
+              min="20"
+              max="140"
+              step="5"
+              value={s.sunIntensity}
+              onChange={(e) => updateSettings({ sunIntensity: Number(e.target.value) })}
             />
-          </section>
-        )}
+          </label>
+
+          <Toggle
+            label="💡 Đèn chao thả trần"
+            desc={isLight ? 'Bật quầng sáng vàng ấm trên trần (hoặc bấm trực tiếp vào đèn)' : 'Bật quầng sáng vàng tam giác rọi bàn học (hoặc bấm trực tiếp vào đèn)'}
+            on={s.ceilingLamp}
+            set={(v) => updateSettings({ ceilingLamp: v })}
+          />
+        </section>
 
         <section className="settings-section">
           <h3>Hình ảnh</h3>
           {reduced && <p className="settings-note">Thiết bị đang bật “Giảm chuyển động”: chuyển động không cần thiết đã tự giảm.</p>}
           <Toggle
             label="Background động"
-            desc={isLight ? 'Nắng đung đưa, bụi phấn bay, đồng hồ & máy bay giấy' : 'Sao trôi, hành tinh quay, sao băng'}
+            desc={isLight ? 'Nắng đung đưa, bụi phấn bay, đồng hồ & lá rơi' : 'Trăng rọi, chùm sáng đèn học tam giác, bụi sáng đêm & đồng hồ'}
             on={s.animatedBackground}
             set={(v) => updateSettings({ animatedBackground: v })}
           />
           <label className="settings-range">
             <span className="settings-range-label">
-              {isLight ? '📄 Độ đặc trang giấy giáo án' : '🛸 Độ đặc tấm kính mờ'} <b>{s.cardOpacity}%</b>
+              {isLight ? '📄 Độ đặc trang giấy giáo án' : '📄 Độ đặc thẻ bàn học'} <b>{s.cardOpacity}%</b>
             </span>
             <input
               type="range"
@@ -133,7 +139,7 @@ export default function SettingsPanel({ onClose }) {
             />
           </label>
           <Toggle label="Linh vật Panda" desc="Giáo sư Gấu Trúc ở góc màn hình" on={s.mascot} set={(v) => updateSettings({ mascot: v })} />
-          <Toggle label="Animation của Panda" desc="Đi dạo, leo tre, lăn tròn" on={s.mascotAnimation} disabled={!s.mascot} set={(v) => updateSettings({ mascotAnimation: v })} />
+          <Toggle label="Animation của Panda" desc="Đi dạo, leo tre, đọc sách" on={s.mascotAnimation} disabled={!s.mascot} set={(v) => updateSettings({ mascotAnimation: v })} />
           <Toggle label="Hiệu ứng ăn mừng" desc="Pháo giấy khi nộp bài, ôn đúng" on={s.celebration} set={(v) => updateSettings({ celebration: v })} />
           <Toggle label="Hiệu ứng du hành" desc="Gấu lên tàu vũ trụ khi đổi địa điểm Kính thiên văn" on={s.travelAnimation} set={(v) => updateSettings({ travelAnimation: v })} />
         </section>

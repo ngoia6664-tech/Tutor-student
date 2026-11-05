@@ -799,3 +799,45 @@ details > summary {
   background: #fdf5ea;
   box-shadow: 0 3px 10px rgba(74, 48, 20, 0.18);
 }
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - CÂU CHỌN & NÚT XEM BÀI
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .choice.is-picked,
+:root:not([data-theme="light"]):not(.space-exploring) .choice.is-picked {
+  border-color: #d97706;
+  border-left: 4px solid #52b788;
+  background: rgba(45, 106, 79, 0.22);
+  box-shadow:
+    0 6px 16px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+:root[data-theme="dark"]:not(.space-exploring) .choice.is-picked .choice-label,
+:root:not([data-theme="light"]):not(.space-exploring) .choice.is-picked .choice-label {
+  background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
+  border-color: #52b788;
+  border-bottom-color: #132e22;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+}
+:root[data-theme="dark"]:not(.space-exploring) .choice:hover .choice-label,
+:root:not([data-theme="light"]):not(.space-exploring) .choice:hover .choice-label {
+  background: #33261e;
+  border-color: #d97706;
+  border-bottom-color: #b45309;
+  color: #fde68a;
+  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.22);
+}
+:root[data-theme="dark"]:not(.space-exploring) .lesson-mode-btn,
+:root:not([data-theme="light"]):not(.space-exploring) .lesson-mode-btn {
+  border: 1.5px solid var(--wood-mid, #c28547);
+  background: linear-gradient(180deg, #2a201a 0%, #1c1511 100%);
+  color: #f7eee2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+:root[data-theme="dark"]:not(.space-exploring) .lesson-mode-btn:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .lesson-mode-btn:hover {
+  border-color: #f59e0b;
+  background: #33261e;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+}

@@ -1450,6 +1450,18 @@
   box-shadow: 0 0 10px rgba(35, 83, 64, 0.25);
 }
 
+:root[data-theme="dark"]:not(.space-exploring) .progress,
+:root:not([data-theme="light"]):not(.space-exploring) .progress {
+  background: rgba(20, 16, 13, 0.85);
+  border-color: #3d2f25;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme="dark"]:not(.space-exploring) .progress-bar,
+:root:not([data-theme="light"]):not(.space-exploring) .progress-bar {
+  background: linear-gradient(90deg, #2d6a4f 0%, #52b788 55%, #d97706 100%);
+  box-shadow: 0 0 10px rgba(82, 183, 136, 0.35);
+}
+
 /* 3. Card Chủ đề xoay (.ccar-face) & Bìa sách nổi (.shelf-cover): Thẻ Bìa Sổ Tay Cổ Điển */
 :root[data-theme="light"] .ccar-face,
 :root[data-theme="light"] .shelf-cover {
