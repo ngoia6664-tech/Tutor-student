@@ -1480,8 +1480,72 @@ body:has(.ctx-card .qgrid) .answer-progress {
 }
 
 /* =====================================================================
-   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - CỘT PHẢI & MENU ĐỒNG BỘ
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - SIDEBAR BẢNG PHẤN ĐÊM & CỘT PHẢI
    ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .side,
+:root[data-theme="dark"]:not(.space-exploring) .app .side,
+:root[data-theme="dark"]:not(.space-exploring)[data-side="rail"] .app .side,
+:root:not([data-theme="light"]):not(.space-exploring) .side,
+:root:not([data-theme="light"]):not(.space-exploring) .app .side,
+:root:not([data-theme="light"]):not(.space-exploring)[data-side="rail"] .app .side {
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.05), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.32), transparent 45%),
+    #131a16;
+  color: #f4f6f0;
+  border-right: 2px solid #423327;
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.45),
+    6px 0 24px -6px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .side-toggle,
+:root:not([data-theme="light"]):not(.space-exploring) .side-toggle {
+  color: #f4f6f0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+:root[data-theme="dark"]:not(.space-exploring) .side-toggle:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .side-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link,
+:root[data-theme="dark"]:not(.space-exploring) .side-btn,
+:root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link,
+:root:not([data-theme="light"]):not(.space-exploring) .side-btn {
+  color: #f1ede8 !important;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .side-btn .icon,
+:root:not([data-theme="light"]):not(.space-exploring) .side-btn .icon {
+  opacity: 0.95;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link:hover,
+:root[data-theme="dark"]:not(.space-exploring) .side-btn:hover,
+:root[data-theme="dark"]:not(.space-exploring) .side-btn.is-current,
+:root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .side-btn:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .side-btn.is-current {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .side-foot,
+:root:not([data-theme="light"]):not(.space-exploring) .side-foot {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .side-user,
+:root:not([data-theme="light"]):not(.space-exploring) .side-user {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fde68a;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-pill,
 :root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-pill {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border: 1px solid #40916c;
