@@ -39,8 +39,12 @@ export default function ExerciseBody({ ex, mode, value, onChange, correct, name,
                 <span className="choice-text">
                   <Markdown>{o.text}</Markdown>
                 </span>
-                {mode === 'review' && picked && <span className="choice-tag">Bạn chọn</span>}
-                {mode !== 'answer' && isRight && <span className="choice-tag">Đáp án</span>}
+                {mode === 'review' && picked && (
+                  <span className="choice-tag">{isRight ? '✓ Bạn chọn đúng' : '✗ Bạn chọn'}</span>
+                )}
+                {mode !== 'answer' && isRight && (!picked || mode === 'preview') && (
+                  <span className="choice-tag">✓ Đáp án</span>
+                )}
               </label>
             )
           })}

@@ -165,9 +165,8 @@ export default function SpaceBackdrop() {
     }
   }, [animated])
 
-  // Đồng hồ treo tường lớp học chạy giờ thực (chỉ khi đang ở Giao diện Sáng)
+  // Đồng hồ treo tường lớp học chạy giờ thực (cả lớp học ban ngày và gác mái ban đêm)
   useEffect(() => {
-    if (theme !== 'light') return
     const rootEl = ref.current
     if (!rootEl) return
     const hourEl = rootEl.querySelector('.clock-hour')
@@ -188,7 +187,7 @@ export default function SpaceBackdrop() {
     if (!animated || prefersReducedMotion()) return
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [theme, animated])
+  }, [animated])
 
   function toggleLamp() {
     updateSettings({ ceilingLamp: !settings.ceilingLamp })

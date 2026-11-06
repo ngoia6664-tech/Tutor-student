@@ -30,13 +30,44 @@ export const PRESETS = {
   lite: { animatedBackground: false, mascotAnimation: false, celebration: false, travelAnimation: false },
 }
 
-// Quy đổi 'auto' theo giờ máy tính: sáng (6h–14h) → nắng sớm, chiều (14h–18h) → nắng chiều, tối/đêm → mưa dịu mắt
-export function resolveClassroomWeather(w = 'sunset') {
+// Tự động xác định giao diện theo giờ: 6h sáng đến trước 18h tối là ban ngày ('light'), 18h tối đến trước 6h sáng là ban đêm ('dark')
+export function getAutoThemeByTime() {
+  const hr = new Date().getHours()
+  return hr >= 6 && hr < 18 ? 'light' : 'dark'
+}
+
+export function syncAutoTheme() {
+  if (typeof document === 'undefined') return
+  if (settings.classroomWeather !== 'auto') return
+  const targetTheme = getAutoThemeByTime()
+  if (document.documentElement.dataset.theme !== targetTheme) {
+    document.documentElement.dataset.theme = targetTheme
+    const metaColor = targetTheme === 'light' ? '#efe5d5' : '#14100d'
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', metaColor)
+    try {
+      localStorage.setItem('theme', targetTheme)
+    } catch {
+      // ignore
+    }
+  }
+}
+
+// Quy đổi 'auto' theo giờ máy tính:
+// Ban ngày (6h–18h): sáng (6h–14h) → nắng sớm ('morning'), chiều (14h–18h) → nắng chiều ('sunset')
+// Ban đêm (18h–6h): đầu tối (18h–21h) → trăng trong ('morning'), khuya (21h–1h) → trăng sao ('sunset'), canh ba (1h–4h) → mưa đêm / sương ('rainy'), rạng sáng (4h–6h) → trăng trong ('morning')
+export function resolveClassroomWeather(w = 'sunset', theme) {
   if (w !== 'auto') return WEATHERS.includes(w) ? w : 'sunset'
   const hr = new Date().getHours()
-  if (hr >= 6 && hr < 14) return 'morning'
-  if (hr >= 14 && hr < 18) return 'sunset'
-  return 'rainy'
+  const isLight = (theme ?? (typeof document !== 'undefined' ? document.documentElement.dataset.theme : 'light')) === 'light'
+  if (isLight) {
+    if (hr >= 6 && hr < 14) return 'morning'
+    if (hr >= 14 && hr < 18) return 'sunset'
+    return 'morning'
+  }
+  if (hr >= 18 && hr < 21) return 'morning'
+  if (hr >= 21 || hr < 1) return 'sunset'
+  if (hr >= 1 && hr < 4) return 'rainy'
+  return 'morning'
 }
 
 // Đọc giá trị cũ trước khi có trang Cài đặt (spaceSound: 'space-sound', 'space-volume') để người dùng cũ giữ lựa chọn
@@ -134,9 +165,12 @@ export const prefersReducedMotion = () => typeof window !== 'undefined' && !!win
 function applyToDocument() {
   if (typeof document === 'undefined') return
   const root = document.documentElement
+  if (settings.classroomWeather === 'auto') {
+    syncAutoTheme()
+  }
   root.toggleAttribute('data-static-bg', !settings.animatedBackground)
   root.toggleAttribute('data-still-mascot', !settings.mascotAnimation)
-  root.dataset.weather = resolveClassroomWeather(settings.classroomWeather)
+  root.dataset.weather = resolveClassroomWeather(settings.classroomWeather, root.dataset.theme)
   root.style.setProperty('--sun-intensity', (settings.sunIntensity / 100).toFixed(2))
   root.style.setProperty('--card-opacity', (settings.cardOpacity / 100).toFixed(2))
   root.style.setProperty('--lamp-on', settings.ceilingLamp ? '1' : '0')
@@ -144,3 +178,12 @@ function applyToDocument() {
 }
 
 applyToDocument()
+
+// Tự động kiểm tra đồng bộ thời gian thực mỗi 20 giây (chuyển giao diện sáng/tối vào đúng 6h sáng và 18h tối)
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    if (settings.classroomWeather === 'auto') {
+      applyToDocument()
+    }
+  }, 20000)
+}

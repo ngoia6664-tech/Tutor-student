@@ -33,7 +33,9 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(8, 6, 22, 0.62);
+  background: rgba(14, 11, 9, 0.72);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 .settings-panel {
   width: min(460px, 100%);
@@ -42,9 +44,10 @@
   overscroll-behavior: contain;
   padding: 1rem 1.1rem 1.1rem;
   border-radius: 20px;
-  border: 1px solid transparent;
-  background: linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box, var(--grad) border-box;
-  box-shadow: var(--shadow), 0 0 40px -12px rgba(217, 70, 239, 0.45);
+  border: 1px solid var(--border-strong);
+  border-top: 4px solid var(--wood-mid, #85532c);
+  background: var(--surface-solid);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.78), 0 0 32px rgba(217, 119, 6, 0.14);
   animation: settings-in 0.25s var(--ease);
 }
 :root[data-theme="light"] .settings-panel {

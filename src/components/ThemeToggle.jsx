@@ -1,5 +1,5 @@
 import { flushSync } from 'react-dom'
-import { prefersReducedMotion } from '../lib/settings.js'
+import { getSettings, prefersReducedMotion, updateSettings } from '../lib/settings.js'
 import { useTheme } from '../lib/theme.js'
 
 const THEME_COLOR = { dark: '#14100d', light: '#efe5d5' }
@@ -28,6 +28,11 @@ export default function ThemeToggle({ className = '', withLabel = false }) {
       localStorage.setItem('theme', next)
     } catch {
       // Không lưu được (chế độ ẩn danh...): vẫn đổi màu cho lần xem này
+    }
+    // Nếu đang bật 'auto' mà bấm chuyển thủ công thì chuyển sang thời tiết thủ công phù hợp
+    const s = getSettings()
+    if (s.classroomWeather === 'auto') {
+      updateSettings({ classroomWeather: next === 'light' ? 'sunset' : 'morning' })
     }
   }
 
