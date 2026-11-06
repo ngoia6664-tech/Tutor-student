@@ -129,6 +129,7 @@
 - `labScene.js` — Cảnh Three.js: phòng + đồ vật + ánh sáng, các cú máy (`playDoor`, `focus`, `home`, `enterScope`, `leaveScope`), `LAB_SPOTS` (nhãn + vị trí camera), kéo nhìn quanh, bấm thẳng vào đồ vật
 - `labPanda.js` — Giáo sư Gấu Trúc 3D (áo choàng, gi-lê, nơ, mũ vuông, kính đồng), chớp mắt, quay đầu, vẫy que
 - `labSolar.js` — Hệ Mặt Trời 3D nhìn qua thị kính (cảnh riêng, chưa rời phòng)
+- `labClock.js` — Đồng hồ quả lắc 3D (vỏ gỗ, mặt số, tủ kính có thước đo); con lắc điều khiển kim, kim chạy giờ thật khi không thí nghiệm
 - `LabModals.jsx` — Mảnh giấy nội dung từng đồ vật + thí nghiệm con lắc
 - `labSound.js` — Tiếng cọt kẹt cửa (`primeDoorCreak` gọi trong cú bấm cho iPhone), các điểm nối file âm thanh khác
 - `scienceLab.css` — Giao diện phòng (tải cùng ScienceLab)
@@ -173,6 +174,7 @@
 - `outfitState.js` — Trạng thái một bộ với tài khoản hiện tại: chưa có /
 - `outfits.js` — Danh mục trang phục Panda (một nơi duy nhất). Hình vẽ từ
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
+- `pendulum.js` — Con lắc đồng hồ (Phòng Khoa học): chu kì, tốc độ đồng hồ theo con lắc, góc 3 kim (có test)
 - `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
 - `pandaShop.js` — Xu / Sao / Chuỗi / trang phục: số thật ở Supabase (sổ cái
 - `pressFx.js` — Hiệu ứng theo con trỏ (cài ở main.jsx): vầng sáng theo chuột phủ trên mọi lớp (`.cursor-glow`, z-index 1000) + sóng lan khi bấm `.btn` (--px/--py, class is-rip); CSS ở components.css

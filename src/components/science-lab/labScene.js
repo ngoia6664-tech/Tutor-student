@@ -1,11 +1,12 @@
 // Căn gác mái dựng bằng Three.js: phòng, đồ vật, ánh sáng và các cú máy (mở cửa, bay đến đồ vật, áp mắt vào kính).
 // Cảnh chỉ lo 3D; nút bấm, hộp thoại, âm thanh ở ScienceLab.jsx.
 import * as THREE from 'three'
+import { buildClock } from './labClock.js'
 import { buildPanda } from './labPanda.js'
 import { createSolarView } from './labSolar.js'
 
 /** @typedef {[number, number, number]} P3 */
-/** @typedef {{ id: string, label: string, at: P3, pose?: { path: P3[], pos: P3, look: P3 } }} LabSpot */
+/** @typedef {{ id: string, label: string, at: P3, pose?: { path: P3[], pos: P3, look: P3, phone?: { pos: P3, look: P3 } } }} LabSpot */
 
 // Nhãn đồng + nơi camera dừng khi bấm vào từng món đồ
 /** @type {LabSpot[]} */
@@ -14,7 +15,8 @@ export const LAB_SPOTS = [
   { id: 'shelf', label: 'Giá sách', at: [-4.4, 2.75, -1.6], pose: { path: [[-1.8, 1.65, 1.6]], pos: [-2.7, 1.65, -0.8], look: [-4.6, 1.55, -1.3] } },
   { id: 'board', label: 'Bảng đen', at: [-0.2, 3.28, -3.9], pose: { path: [[0.1, 1.66, 1.2]], pos: [0.6, 1.95, -0.2], look: [0.6, 2.15, -4] } },
   { id: 'cabinet', label: 'Tủ mẫu vật', at: [4.4, 2.2, -2.9], pose: { path: [[2.3, 1.7, 1.4]], pos: [3.0, 1.95, -1.4], look: [4.6, 1.4, -2.9] } },
-  { id: 'clock', label: 'Đồng hồ quả lắc', at: [4.35, 3.05, -1.2], pose: { path: [[1.9, 1.7, 1.6]], pos: [2.75, 1.8, -0.9], look: [4.7, 1.75, -1.2] } },
+  // Nhìn vuông góc vào tường để đồng hồ thẳng đứng; đứng lệch để mảnh giấy bên phải không che tủ kính. Điện thoại: giấy ở dưới nên đẩy đồng hồ lên trên.
+  { id: 'clock', label: 'Đồng hồ quả lắc', at: [4.35, 3.72, -1.2], pose: { path: [[1.6, 1.7, 1.6]], pos: [0.7, 1.82, -0.35], look: [4.7, 1.82, -0.35], phone: { pos: [1.25, 1.6, -1], look: [4.7, 1.03, -1] } } },
   { id: 'desk', label: 'Bình thí nghiệm', at: [-1.15, 1.75, -3.1], pose: { path: [[-1.1, 1.7, 1.2]], pos: [-0.95, 1.5, -1.55], look: [-1.05, 1.15, -3.4] } },
   { id: 'journal', label: 'Sổ tay', at: [-2.35, 1.42, -3.1], pose: { path: [[-1.5, 1.7, 1]], pos: [-2.25, 1.7, -2.05], look: [-2.3, 1.03, -3.25] } },
   { id: 'panda', label: 'Giáo sư Gấu Trúc', at: [1.05, 2.1, -2.85] },
@@ -392,23 +394,16 @@ export function createLabScene(host, { spotEl, onPick }) {
     ball(size, mat({ color, roughness: 0.5 }), r, 0.025, 0, arm)
     return { arm, speed }
   })
+  // Bóng chỉ tính một lần nên vật đang quay không được đổ bóng, kẻo in vết đen đứng yên lên tường
+  orrery.traverse((o) => {
+    o.castShadow = false
+  })
 
   // ------- Đồng hồ quả lắc -------
-  const clock = item('clock', 4.68, 0, -1.2)
-  clock.rotation.y = -Math.PI / 2
-  box(0.8, 2.85, 0.42, M.oak, 0, 1.42, 0, clock)
-  box(0.92, 0.18, 0.5, M.oak, 0, 2.88, 0, clock)
-  box(0.56, 1.25, 0.04, mat({ color: 0x0d0805, roughness: 0.5 }), 0, 1.15, 0.21, clock)
-  const dial = cyl(0.27, 0.27, 0.03, M.paper, 0, 2.36, 0.22, clock, 40)
-  dial.rotation.x = Math.PI / 2
-  add(new THREE.TorusGeometry(0.28, 0.025, 10, 40), M.brass, 0, 2.36, 0.23, clock)
-  box(0.018, 0.19, 0.012, M.iron, 0.02, 2.42, 0.245, clock)
-  box(0.014, 0.25, 0.012, M.iron, -0.06, 2.4, 0.25, clock).rotation.z = 0.6
-  const pend = new THREE.Group()
-  pend.position.set(0, 1.74, 0.25)
-  clock.add(pend)
-  box(0.018, 0.86, 0.012, M.brass, 0, -0.43, 0, pend)
-  cyl(0.095, 0.095, 0.022, M.brass, 0, -0.88, 0, pend, 32).rotation.x = Math.PI / 2
+  const clock = buildClock()
+  clock.group.position.set(4.68, 0, -1.2)
+  clock.group.rotation.y = -Math.PI / 2
+  scene.add(clock.group)
 
   // ------- Thảm, quả địa cầu làm tiền cảnh, đèn treo -------
   const rugMap = tex(512, 512, (g, w) => {
@@ -518,7 +513,7 @@ export function createLabScene(host, { spotEl, onPick }) {
     g.fillStyle = r
     g.fillRect(0, 0, 32, 32)
   })
-  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ map: dustTex, size: 0.035, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending }))
+  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ map: dustTex, size: 0.024, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending }))
   scene.add(dust)
 
   const solar = createSolarView()
@@ -709,8 +704,8 @@ export function createLabScene(host, { spotEl, onPick }) {
     look.y -= mouse.sy * 0.25 * follow
     camera.lookAt(look)
 
+    clock.update(now, dt, calm)
     if (!calm) {
-      pend.rotation.z = Math.sin(t * 2.6) * 0.17
       globe.rotation.y = t * 0.12
       arms.forEach((a) => {
         a.arm.rotation.y = t * a.speed
@@ -807,12 +802,19 @@ export function createLabScene(host, { spotEl, onPick }) {
     focus(id, done) {
       const s = LAB_SPOTS.find((x) => x.id === id)
       if (!s || !s.pose) return done?.()
-      fly([...s.pose.path.map(v3), v3(s.pose.pos)], v3(s.pose.look), 2.1, done)
+      const stop = (camera.aspect < 1 && s.pose.phone) || s.pose
+      fly([...s.pose.path.map(v3), v3(stop.pos)], v3(stop.look), 2.1, done)
+    },
+    /** Thí nghiệm con lắc: đổi chiều dài dây, gia tốc rơi. @param {number} l @param {number} g */
+    setPendulum(l, g) {
+      clock.setPendulum(l, g)
     },
     /** @param {string} from id món đồ đang đứng trước @param {() => void} [done] */
     home(from, done) {
       const s = LAB_SPOTS.find((x) => x.id === from)
+      clock.reset()
       fly([...(s?.pose?.path ?? []).map(v3), HOME.pos], HOME.look, 1.9, () => {
+        clock.settle()
         inRoom = true
         done?.()
       })

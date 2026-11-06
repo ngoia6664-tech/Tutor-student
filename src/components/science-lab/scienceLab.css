@@ -286,6 +286,43 @@
   cursor: pointer;
 }
 
+.sci-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+
+.sci-seg button {
+  min-height: 40px;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--sci-ink);
+  background: rgba(43, 29, 18, 0.06);
+  border: 1px solid rgba(43, 29, 18, 0.35);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sci-seg button[aria-pressed='true'] {
+  font-weight: 700;
+  color: var(--sci-paper);
+  background: var(--sci-oak);
+  border-color: var(--sci-oak);
+}
+
+.sci-period strong {
+  font-family: var(--sci-serif);
+  font-size: 1.12rem;
+}
+
+.sci-note p.sci-speed {
+  margin: 0;
+  font-weight: 600;
+  color: #7a4a12;
+}
+
 .sci-note-actions {
   display: flex;
   flex-wrap: wrap;
@@ -455,6 +492,32 @@
 
   .sci-note {
     padding: 16px 16px 14px;
+  }
+
+  /* Thí nghiệm cần nhìn vật trong lúc kéo: bỏ bớt chữ để giấy thấp, chừa chỗ cho đồng hồ */
+  .sci-note-wrap.is-compact {
+    top: 52%;
+  }
+
+  .is-compact .sci-note {
+    padding: 10px 14px;
+  }
+
+  .is-compact .sci-note > p {
+    display: none;
+  }
+
+  .is-compact .sci-note h3 {
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+
+  .is-compact .sci-note-actions {
+    margin-top: 6px;
+  }
+
+  .is-compact .sci-modal-box {
+    padding: 6px 0 0;
   }
 
   .sci-tool span {

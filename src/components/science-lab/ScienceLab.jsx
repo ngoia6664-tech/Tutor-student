@@ -264,7 +264,14 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
         </div>
       )}
 
-      {showCard && <LabModal id={spot} onClose={backFromSpot} onScope={lookThroughScope} />}
+      {showCard && (
+        <LabModal
+          id={spot}
+          onClose={backFromSpot}
+          onScope={lookThroughScope}
+          onPendulum={(l, g) => labRef.current?.setPendulum(l, g)}
+        />
+      )}
 
       {/* Viền thị kính: khép lại quanh Hệ Mặt Trời, chưa rời khỏi phòng */}
       <div className={`sci-iris ${iris ? 'is-on' : ''} ${view === 'travel' ? 'is-open' : ''}`} />

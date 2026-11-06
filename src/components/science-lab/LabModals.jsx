@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Icon from '../Icon.jsx'
+import { DEFAULT_LENGTH, EARTH_G, MOON_G, clockRate, clockSpeedText, pendulumPeriod } from '../../lib/pendulum.js'
 
 // Nội dung từng món đồ trong phòng. scope = nhãn nút mở kính thiên văn ngay từ hộp này (nếu có)
 /** @type {Record<string, { title: string, desc: string, items: [string, string][], close: string, scope?: string }>} */
@@ -47,41 +48,51 @@ const CONTENT = {
 }
 
 /** Thí nghiệm con lắc đơn: kéo độ dài dây treo, xem chu kì đổi theo */
-function Pendulum() {
-  const [length, setLength] = useState(1)
-  const period = (2 * Math.PI * Math.sqrt(length / 9.8)).toFixed(2)
+const comma = (/** @type {number} */ n) => n.toFixed(2).replace('.', ',')
+
+/** Thí nghiệm ngay trên đồng hồ: đổi dây hoặc đổi hành tinh, con lắc và kim trong cảnh đổi theo.
+ * @param {{ onChange: (l: number, g: number) => void }} props */
+function Pendulum({ onChange }) {
+  const [length, setLength] = useState(DEFAULT_LENGTH)
+  const [g, setG] = useState(EARTH_G)
+  useEffect(() => onChange(length, g), [length, g]) // onChange tạo mới mỗi lần vẽ, chỉ báo khi số đổi
   return (
     <div className="sci-modal-box">
       <label className="sci-slider-row" htmlFor="sci-pendulum-length">
-        <span>Chiều dài dây treo (l)</span>
-        <strong>{length.toFixed(1)} m</strong>
+        <span>Chiều dài dây (l)</span>
+        <strong>{comma(length)} m</strong>
       </label>
       <input
         id="sci-pendulum-length"
         type="range"
-        min="0.2"
-        max="3.0"
-        step="0.1"
+        min="0.25"
+        max="1.5"
+        step="0.01"
         value={length}
         onChange={(e) => setLength(parseFloat(e.target.value))}
         className="sci-range-input"
       />
-      <div className="sci-slider-row">
-        <span>Chu kì T (g = 9,8 m/s²)</span>
-        <strong>{period} giây</strong>
+      <div className="sci-seg" role="group" aria-label="Nơi đặt đồng hồ">
+        <button type="button" aria-pressed={g === EARTH_G} onClick={() => setG(EARTH_G)}>Trái Đất (g = 9,8)</button>
+        <button type="button" aria-pressed={g === MOON_G} onClick={() => setG(MOON_G)}>Mặt Trăng (g = 1,62)</button>
       </div>
+      <div className="sci-slider-row sci-period">
+        <span>Chu kì T</span>
+        <strong>{comma(pendulumPeriod(length, g))} giây</strong>
+      </div>
+      <p className="sci-speed">{clockSpeedText(clockRate(length, g))}</p>
     </div>
   )
 }
 
 /** Mảnh giấy hiện cạnh món đồ sau khi camera bay đến.
- * @param {{ id: string, onClose: () => void, onScope: () => void }} props */
-export default function LabModal({ id, onClose, onScope }) {
+ * @param {{ id: string, onClose: () => void, onScope: () => void, onPendulum: (l: number, g: number) => void }} props */
+export default function LabModal({ id, onClose, onScope, onPendulum }) {
   const data = CONTENT[id]
   const clockCard = id === 'clock'
-  const title = clockCard ? 'Thí nghiệm con lắc đơn' : data?.title
+  const title = clockCard ? 'Con lắc điều khiển đồng hồ' : data?.title
   return (
-    <div className="sci-note-wrap" role="dialog" aria-modal="true" aria-label={title}>
+    <div className={`sci-note-wrap ${clockCard ? 'is-compact' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
       <div className="sci-note">
         <button type="button" className="sci-note-x" onClick={onClose} aria-label="Đóng">
           <Icon name="close" />
@@ -89,8 +100,8 @@ export default function LabModal({ id, onClose, onScope }) {
         <h3>{title}</h3>
         {clockCard ? (
           <>
-            <p>Đồng hồ quả lắc chạy đều nhờ chu kì T = 2π√(l/g), do Huygens ứng dụng năm 1656. Đổi chiều dài dây để xem chu kì thay đổi:</p>
-            <Pendulum />
+            <p>Mỗi nhịp lắc đẩy kim giây đi một nấc, nên T = 2π√(l/g) quyết định đồng hồ nhanh hay chậm. Thử kéo dài dây rồi nhìn quả lắc và kim giây trong tủ.</p>
+            <Pendulum onChange={onPendulum} />
           </>
         ) : (
           <>
