@@ -220,3 +220,11 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 
 ## Nhóm học sinh
 Tên nhóm tự do (`profiles.group_name`, hết ràng buộc A–E); ghi chú + thứ tự ở bảng `student_groups` (chỉ gia sư); đổi tên qua RPC `rename_student_group`. Gom nhóm: `lib/studentGroups.js`; trang Học sinh chia khối theo nhóm, `StudentPicker` lấy nhóm từ dữ liệu.
+
+## Phòng Khoa học 3D (`components/science-lab/*`)
+- Mỗi món một file dựng cảnh (`labClock`, `labShelf`, `labBoard`, `labBench`, `labOrrery`, `labPanda`, `labSolar`), `labScene.js` ghép lại và lo camera. Bảng tương tác ở `LabModals.jsx`, gọi `lab.parts.*` hoặc `lab.setPendulum`. Số liệu + công thức ở `lib/pendulum.js`, `lib/labPhysics.js` (có test).
+- Nguyên tắc nội dung: mỗi món trả lời một câu hỏi, kéo hoặc bấm thì vật trong cảnh đổi ngay.
+- Thêm món bấm được: thêm dòng `LAB_SPOTS` (nhãn + nơi camera dừng, `phone` nếu cần khung riêng cho màn dọc), đặt `group.userData.spot = id`, thêm thẻ vào `CARDS` trong `LabModals.jsx`.
+- Hiệu năng: bóng phòng chỉ tính lại khi cánh cửa di chuyển, nên vật đang chuyển động không được đổ bóng (`castShadow = false`, kẻo in vết đứng yên). Khối đứng yên gộp bằng `mergeStatic`; phần chuyển động phải đặt `userData.dynamic = true`, nếu không sẽ bị gộp và đứng im. Máy không theo kịp thì cảnh tự giảm độ phân giải. Khi phòng mở, trang học phía sau bị ẩn và dừng hiệu ứng (class `sci-lab-open` trên `<html>`).
+- Chuyển sang Vũ Trụ: phòng che màn hình đến khi SpaceExplorer đã lên (`LabHandoff` trong `Layout.jsx`), không đóng phòng trước.
+- Thử nghiệm: trình duyệt headless có thể báo trang bị ẩn và ngừng `requestAnimationFrame`, trông như camera kẹt; bật `Emulation.setFocusEmulationEnabled` khi chạy tự động.

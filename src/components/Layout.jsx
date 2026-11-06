@@ -9,12 +9,28 @@ import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
 import { mascotSay } from '../lib/celebrate.js'
-import { useSettings } from '../lib/settings.js'
+import { getSettings, useSettings } from '../lib/settings.js'
 import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
-import { openExplorerSound } from '../lib/spaceSound.js'
+import { primeDoorCreak } from './science-lab/labSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
+
+/** Đặt cùng Suspense với SpaceExplorer nên chỉ chạy khi màn Vũ Trụ đã lên: phòng che đến khi trang học mờ hết (0,35s, explorer.css) rồi mới mờ đi.
+ * @param {{ onFade: () => void, onDone: () => void }} props */
+function LabHandoff({ onFade, onDone }) {
+  useEffect(() => {
+    const fade = setTimeout(onFade, 400)
+    const done = setTimeout(onDone, 750)
+    return () => {
+      clearTimeout(fade)
+      clearTimeout(done)
+    }
+    // Chỉ hẹn giờ một lần lúc màn Vũ Trụ vừa lên
+  }, [])
+  return null
+}
+const ScienceLab = lazy(() => import('./science-lab/ScienceLab.jsx'))
 // Bảng Cài đặt (nút bánh răng): bảng nổi, không đổi trang
 const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
 // Gấu trúc (hình vẽ nặng): tải sau khi trang đã hiện; tắt linh vật trong Cài đặt thì không tải
@@ -186,6 +202,10 @@ export default function Layout() {
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
+  const [labOpen, setLabOpen] = useState(false)
+  const [labLeaving, setLabLeaving] = useState(false)
+  const fromLabRef = useRef(false)
+  const labWalkInRef = useRef(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Viên nền trượt sau mục menu đang chọn: đo lại khi đổi trang hoặc khi mục menu đổi cỡ (chuông báo, xoay máy...)
   const navRef = useRef(/** @type {HTMLElement | null} */ (null))
@@ -255,29 +275,22 @@ export default function Layout() {
     }
   }, [])
 
-  /** Nút ngắm vũ trụ: tròn trên thanh trên cùng, hoặc hàng có chữ trong ngăn kéo (`labeled`) @param {boolean} labeled @param {string} [extra] */
+  /** Nút phòng khoa học / kính thiên văn: tròn trên thanh trên cùng, hoặc hàng có chữ trong ngăn kéo (`labeled`) @param {boolean} labeled @param {string} [extra] */
   const telescopeBtn = (labeled, extra = '') => (
     <button
       type="button"
-      className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${studying ? 'is-locked' : ''} ${extra}`}
+      className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${extra}`}
       onClick={() => {
-        if (studying) return mascotSay(TELESCOPE_LOCKED)
+        labWalkInRef.current = true
+        if (getSettings().soundEffects) primeDoorCreak()
         setDrawer(false)
-        // Đã chọn bật nhạc trong phiên này: phát ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ).
-        // Lần đầu chưa chọn: SpaceExplorer hỏi người dùng
-        openExplorerSound()
-        setExploring(true)
+        setLabOpen(true)
       }}
-      aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
-      title={studying ? 'Nộp bài xong để mở khóa' : 'Ngắm vũ trụ'}
+      aria-label="Phòng Khoa học"
+      title="Phòng Khoa học & Nghiên cứu"
     >
       <Icon name="telescope" />
-      {labeled && <span className="side-label">Ngắm vũ trụ</span>}
-      {studying && (
-        <span className="telescope-lock">
-          <Icon name="lock" size={11} />
-        </span>
-      )}
+      {labeled && <span className="side-label">Phòng Khoa học</span>}
     </button>
   )
 
@@ -495,7 +508,45 @@ export default function Layout() {
       <DialogHost />
       {exploring && (
         <Suspense fallback={null}>
-          <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />
+          <SpaceExplorer
+            backLabel={fromLabRef.current ? 'Rời kính viễn vọng' : 'Quay lại học'}
+            onClose={() => {
+              closeExplorer()
+              if (fromLabRef.current) {
+                fromLabRef.current = false
+                labWalkInRef.current = false
+                setLabOpen(true)
+              }
+            }}
+            initialPlace={askedPlace}
+            onPlaceChange={setPlaceParam}
+          />
+          {labOpen && (
+            <LabHandoff
+              onFade={() => setLabLeaving(true)}
+              onDone={() => {
+                setLabOpen(false)
+                setLabLeaving(false)
+              }}
+            />
+          )}
+        </Suspense>
+      )}
+      {labOpen && (
+        <Suspense fallback={null}>
+          <ScienceLab
+            initialWalkIn={labWalkInRef.current}
+            leaving={labLeaving}
+            onClose={() => {
+              fromLabRef.current = false
+              setLabOpen(false)
+            }}
+            onOpenSpace={() => {
+              // Giữ phòng phía trên, LabHandoff đóng phòng khi màn Vũ Trụ đã sẵn sàng, để không lộ trang học
+              fromLabRef.current = true
+              setExploring(true)
+            }}
+          />
         </Suspense>
       )}
       {settingsOpen && (

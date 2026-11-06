@@ -124,6 +124,21 @@
 - `WarpTravel.jsx` — Chuyển địa điểm: gấu lên tàu vũ trụ, du hành vệt sao, đáp xuống mở cửa (~4,8 s kèm tiếng ship-launch.mp3, tắt trong Cài đặt)
 - `FreeFlight.jsx` — Bay tự do trong hệ sao đã mở: canvas, núm kéo nổi + thanh tốc độ, đồng hồ cung tròn, phóng to/thu nhỏ, nhặt Xu (RPC), gấu cảnh báo; vật lý ở lib/flight.js
 
+## `src/components/science-lab/`
+- `ScienceLab.jsx` — Phòng Khoa học 3D (tải lười từ Layout): trạng thái door/room/moving/focus/scope/travel, nhãn đồng, lời gấu, nút Du hành; không có WebGL thì nhãn thành danh sách
+- `labScene.js` — Cảnh Three.js: phòng + đồ vật + ánh sáng, các cú máy (`playDoor`, `focus`, `home`, `enterScope`, `leaveScope`), `LAB_SPOTS` (nhãn + vị trí camera), kéo nhìn quanh, bấm thẳng vào đồ vật
+- `labPanda.js` — Giáo sư Gấu Trúc 3D (áo choàng, gi-lê, nơ, mũ vuông, kính đồng), chớp mắt, quay đầu, vẫy que
+- `labSolar.js` — Hệ Mặt Trời 3D nhìn qua thị kính (cảnh riêng, chưa rời phòng)
+- `labClock.js` — Đồng hồ quả lắc 3D (vỏ gỗ, mặt số, tủ kính có thước đo); con lắc điều khiển kim, kim chạy giờ thật khi không thí nghiệm
+- `labShelf.js` — Giá sách: hàng sách, thang, đồng hồ cát; 3 cuốn nổi bật rút ra và mở được
+- `labBoard.js` — Bảng đen: khung, máng phấn; hình trên bảng vẽ lại theo số kéo trên mảnh giấy
+- `labBench.js` — Bàn thí nghiệm: thử màu ngọn lửa (đèn cồn, đĩa muối, lăng kính, màn phổ) + sổ tay
+- `labOrrery.js` — Tủ 8 ngăn kéo (ngăn trên mở được) + mô hình Hệ Mặt Trời bánh răng đồng theo chu kì thật
+- `labKit.js` — Đồ nghề dựng cảnh: `paintTexture`, `grainTexture`, `kit` (thêm khối), `mergeStatic` (gộp khối tĩnh)
+- `LabModals.jsx` — Mảnh giấy cạnh đồ vật: bảng tương tác của từng món, sổ tay đánh dấu việc đã làm
+- `labSound.js` — Tiếng cọt kẹt cửa (`primeDoorCreak` gọi trong cú bấm cho iPhone), các điểm nối file âm thanh khác
+- `scienceLab.css` — Giao diện phòng (tải cùng ScienceLab)
+
 ## `src/components/shop/`
 - `OutfitCard.jsx` — Thẻ trong lưới: gấu tĩnh (không hiệu ứng chạy), khung t
 - `OutfitGrid.jsx` — Tab Cửa hàng / Tủ đồ + lọc độ hiếm (chỉ ở Cửa hà
@@ -166,6 +181,8 @@
 - `outfitState.js` — Trạng thái một bộ với tài khoản hiện tại: chưa có /
 - `outfits.js` — Danh mục trang phục Panda (một nơi duy nhất). Hình vẽ từ
 - `outline.js` — Đọc mục lục dán vào (chép từ giáo trình / Word) thành d
+- `labPhysics.js` — Số liệu + công thức thí nghiệm Phòng Khoa học: Kepler, hấp dẫn, bước sóng, E = mc², vạch phổ muối và Mặt Trời (có test)
+- `pendulum.js` — Con lắc đồng hồ (Phòng Khoa học): chu kì, tốc độ đồng hồ theo con lắc, góc 3 kim (có test)
 - `pandaSfx.js` — Tiếng hoạt cảnh trang phục (components/panda/PandaAct.jsx), t�
 - `pandaShop.js` — Xu / Sao / Chuỗi / trang phục: số thật ở Supabase (sổ cái
 - `pressFx.js` — Hiệu ứng theo con trỏ (cài ở main.jsx): vầng sáng theo chuột phủ trên mọi lớp (`.cursor-glow`, z-index 1000) + sóng lan khi bấm `.btn` (--px/--py, class is-rip); CSS ở components.css
