@@ -1073,6 +1073,19 @@ body:has(.ctx-card) .ctx-panel {
   color: #ffffff;
   box-shadow: 0 0 12px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
+/* Câu đang xem (ScrollSpy): viền sáng & nhịp thở hổ phách */
+.qcell.is-current {
+  position: relative;
+  outline: 2.5px solid var(--accent);
+  outline-offset: 1.5px;
+  box-shadow: 0 0 14px rgba(217, 119, 6, 0.45);
+  animation: qcell-breathe 2.4s ease-in-out infinite alternate;
+  z-index: 2;
+}
+@keyframes qcell-breathe {
+  0% { transform: scale(1.02); box-shadow: 0 0 8px rgba(217, 119, 6, 0.35); }
+  100% { transform: scale(1.07); box-shadow: 0 0 16px rgba(245, 158, 11, 0.65); }
+}
 .ctx-legend {
   display: flex;
   align-items: center;
@@ -1091,6 +1104,11 @@ body:has(.ctx-card) .ctx-panel {
   border-color: #d8b4fe;
   box-shadow: 0 0 6px rgba(168, 85, 247, 0.5);
 }
+.qdot.is-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
 .ctx-legend .qdot:not(:first-child) {
   margin-left: 0.6rem;
 }
@@ -1099,8 +1117,10 @@ body:has(.ctx-card) .ctx-panel {
   .ctx-panel,
   .ctx-panel.is-open,
   .ctx-fill,
-  .qcell {
+  .qcell,
+  .qcell.is-current {
     transition: none;
+    animation: none;
   }
   .ctx-panel {
     animation: none;
@@ -1430,6 +1450,17 @@ body:has(.ctx-card .qgrid) .answer-progress {
   background: linear-gradient(180deg, #347a5b 0%, #235340 100%);
   color: #ffffff;
 }
+:root[data-theme="light"] .qcell.is-current {
+  outline: 2.5px solid #d97706;
+  outline-offset: 1.5px;
+  border-color: #b45309;
+  box-shadow: 0 0 14px rgba(217, 119, 6, 0.45), 0 3px 6px rgba(74, 48, 20, 0.15);
+}
+:root[data-theme="light"] .qcell.is-current:not(.is-done) {
+  background: #fef3c7;
+  color: #78350f;
+  font-weight: 800;
+}
 :root[data-theme="light"] .qdot {
   background: #fcf8f0;
   border-color: #bfa074;
@@ -1438,6 +1469,11 @@ body:has(.ctx-card .qgrid) .answer-progress {
   background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
   border-color: #1b4332;
   box-shadow: none;
+}
+:root[data-theme="light"] .qdot.is-current {
+  background: #f59e0b;
+  border-color: #b45309;
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.5);
 }
 
 /* Dòng mờ thông minh (Hint Capsule) đầu bài làm trên màn hẹp ở bản Lớp học */
@@ -1620,6 +1656,17 @@ body:has(.ctx-card .qgrid) .answer-progress {
     0 3px 8px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
+:root:not([data-theme="light"]):not(.space-exploring) .qcell.is-current {
+  outline: 2.5px solid #f59e0b;
+  outline-offset: 1.5px;
+  border-color: #fbbf24;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.55);
+}
+:root:not([data-theme="light"]):not(.space-exploring) .qcell.is-current:not(.is-done) {
+  background: #362619;
+  color: #fef3c7;
+  font-weight: 800;
+}
 :root:not([data-theme="light"]):not(.space-exploring) .qdot {
   background: #241c17;
   border-color: #423327;
@@ -1628,4 +1675,9 @@ body:has(.ctx-card .qgrid) .answer-progress {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;
   box-shadow: 0 0 6px rgba(82, 183, 136, 0.4);
+}
+:root:not([data-theme="light"]):not(.space-exploring) .qdot.is-current {
+  background: #f59e0b;
+  border-color: #d97706;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }

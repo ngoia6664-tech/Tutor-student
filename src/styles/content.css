@@ -142,10 +142,58 @@
 .md h2 {
   margin-top: 1.4rem;
 }
+
+/* ===== Tối ưu hiển thị công thức KaTeX inline & display ===== */
+/* Khoảng cách dòng cho văn bản chứa công thức: đủ thoáng để phân số / chỉ số không làm xô lệch dòng */
+.md p,
+.md li,
+.exercise-body,
+.choice-text,
+.tf-statement,
+.blank-statement {
+  line-height: 1.68;
+}
+
+/* Công thức inline: căn chuẩn đường gióng chữ (baseline), co giãn nhịp nhàng */
+.katex {
+  font-size: 1.05em;
+  text-indent: 0;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* Phân số trong chế độ inline: co nhỏ nhẹ và hạ đường gióng để vừa vặn chiều cao dòng */
+.katex .mfrac {
+  font-size: 0.94em;
+  vertical-align: -0.22em;
+}
+
+/* Khoảng cách quanh dấu phép tính và dấu quan hệ trong công thức inline */
+.katex .mbin,
+.katex .mrel {
+  padding-left: 0.18em;
+  padding-right: 0.18em;
+}
+
+/* Dấu căn thức inline: căn gióng tự nhiên */
+.katex .sqrt {
+  vertical-align: -0.08em;
+}
+
+/* Khối công thức độc lập (display mode) */
 .md .katex-display {
+  display: block;
+  margin: 0.85rem 0;
+  padding: 0.5rem 0.4rem;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0.25rem 0;
+  text-align: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.md .katex-display > .katex {
+  font-size: 1.15em;
+  white-space: nowrap;
 }
 
 /* ===== Câu hỏi / đáp án ===== */
