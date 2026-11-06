@@ -93,6 +93,49 @@
 .shop-head {
   padding: 0.25rem 17rem 1rem 0; /* chừa chỗ bảng LED Xu · Sao · 🔥 */
 }
+.shop-head a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+  transition: all 0.2s var(--ease);
+}
+.shop-head a:hover {
+  background: var(--primary-soft);
+  color: var(--text);
+  border-color: var(--primary);
+  transform: translateX(-3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="light"] .shop-head a {
+  background: #fdfaf3;
+  border-color: #d8c3a5;
+  color: #2b2118;
+}
+:root[data-theme="light"] .shop-head a:hover {
+  background: #fef3c7;
+  border-color: #b45309;
+  color: #b45309;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shop-head a,
+:root:not([data-theme="light"]):not(.space-exploring) .shop-head a {
+  background: rgba(36, 28, 22, 0.85);
+  border-color: #543f2e;
+  color: #f7eee2;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shop-head a:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .shop-head a:hover {
+  background: rgba(45, 106, 79, 0.35);
+  border-color: #52b788;
+  color: #ffffff;
+}
 .shop-head h1 {
   margin: 0.4rem 0 0.2rem;
   font-size: clamp(1.6rem, 4.2vw, 2.3rem);

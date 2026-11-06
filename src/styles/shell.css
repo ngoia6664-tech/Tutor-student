@@ -555,13 +555,43 @@ body:has(.ctx-card) .ctx-panel {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.3rem 0.85rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 1rem;
   border-radius: 999px;
-  background: var(--primary-soft);
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .ctx-strip-icon {
   flex: none;
   color: var(--primary);
+}
+.ctx-strip .muted {
+  font-weight: 600;
+}
+:root[data-theme="light"] .ctx-card.ctx-strip {
+  background: #fdfaf3;
+  border: 1.5px solid #d4be9f;
+  box-shadow: 0 2px 6px rgba(74, 48, 20, 0.08);
+}
+:root[data-theme="light"] .ctx-strip-icon {
+  color: #1c4b38;
+}
+:root[data-theme="light"] .ctx-strip .muted {
+  color: #2b2118;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-card.ctx-strip,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-card.ctx-strip {
+  background: rgba(30, 24, 20, 0.92);
+  border: 1.5px solid #543f2e;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-strip-icon,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-strip-icon {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ctx-strip .muted,
+:root:not([data-theme="light"]):not(.space-exploring) .ctx-strip .muted {
+  color: #f7eee2;
 }
 .ctx-strip-item {
   display: inline-flex;
@@ -1295,11 +1325,11 @@ body:has(.ctx-card .qgrid) .answer-progress {
 }
 
 /* Băng dính giấy (Washi Tape) dán phiếu trên bảng bên phải (ContextPanel) */
-:root[data-theme="light"] .ctx-card:not(.ctx-quiet) {
+:root[data-theme="light"] .ctx-card:not(.ctx-quiet):not(.ctx-strip) {
   position: relative;
   border-top: 3px solid var(--wood-mid, #c28547);
 }
-:root[data-theme="light"] .ctx-card:not(.ctx-quiet)::before {
+:root[data-theme="light"] .ctx-card:not(.ctx-quiet):not(.ctx-strip)::before {
   content: "";
   position: absolute;
   top: -8px;
@@ -1312,6 +1342,17 @@ body:has(.ctx-card .qgrid) .answer-progress {
   border-right: 2px dashed rgba(140, 88, 40, 0.28);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   pointer-events: none;
+}
+
+.page-head h1 .muted {
+  font-weight: 500;
+}
+:root[data-theme="dark"]:not(.space-exploring) .page-head h1 .muted,
+:root:not([data-theme="light"]):not(.space-exploring) .page-head h1 .muted {
+  color: #d5be9d;
+}
+:root[data-theme="light"] .page-head h1 .muted {
+  color: #70543f;
 }
 
 

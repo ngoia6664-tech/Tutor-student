@@ -257,6 +257,14 @@ a {
   color: var(--primary);
   text-underline-offset: 3px;
 }
+:root[data-theme="dark"]:not(.space-exploring) a,
+:root:not([data-theme="light"]):not(.space-exploring) a {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) a:hover,
+:root:not([data-theme="light"]):not(.space-exploring) a:hover {
+  color: #74c69d;
+}
 
 h1,
 h2,

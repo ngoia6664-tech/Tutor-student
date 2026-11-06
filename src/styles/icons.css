@@ -79,6 +79,18 @@
   color: var(--primary);
   vertical-align: -0.35rem;
 }
+:root[data-theme="dark"]:not(.space-exploring) .title-icon,
+:root:not([data-theme="light"]):not(.space-exploring) .title-icon {
+  background: rgba(82, 183, 136, 0.22);
+  border: 1.5px solid rgba(82, 183, 136, 0.45);
+  color: #74c69d;
+  box-shadow: 0 0 14px rgba(82, 183, 136, 0.25);
+}
+:root[data-theme="light"] .title-icon {
+  background: rgba(28, 75, 56, 0.12);
+  border: 1.5px solid rgba(28, 75, 56, 0.25);
+  color: #1c4b38;
+}
 .tree-title .title-icon {
   width: 1.7rem;
   height: 1.7rem;
