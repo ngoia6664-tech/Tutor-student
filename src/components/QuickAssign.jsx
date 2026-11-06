@@ -1,5 +1,4 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
 import { confirmDeleteMany, confirmDropSubmitted, notifyDone, notifyError } from '../lib/dialog.js'
@@ -11,18 +10,11 @@ import { errMsg } from '../lib/errors.js'
 import { fetchChapters } from '../lib/chapters.js'
 import { addRecipients, fetchRecipients, setRecipients } from '../lib/recipients.js'
 import { deleteItems, deleteWarning, itemsLabel, moveToChapter } from '../lib/bulk.js'
+import { useFocusTrap } from '../lib/useFocusTrap.js'
 
 // Khung bảng nổi dùng chung (Giao cho học sinh, Chuyển chủ đề): bấm nền / Esc để đóng
 function DialogFrame({ id, icon, title, onClose, children, className = '' }) {
-  const panel = useRef(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
-  useEffect(() => {
-    panel.current?.focus()
-    const key = (e) => e.key === 'Escape' && closeRef.current()
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
-  }, [])
+  const panel = useFocusTrap(onClose)
   return createPortal(
     <div className="settings-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`settings-panel ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1} ref={panel}>
@@ -165,7 +157,7 @@ export function MoveDialog({ items, onClose, onSaved }) {
         Chuyển {itemsLabel(items)} đã chọn sang chủ đề mới. Nội dung, câu hỏi, đáp án và học sinh nhận giữ nguyên.
       </p>
       <ErrorBox message={error} />
-      {chapters === null ? !error && <Loading text="Đang tải danh sách chủ đề..." /> : <ChapterSelect chapters={chapters} value={target} onChange={setTarget} label="Chủ đề đích" defaultOpen />}
+      {chapters === null ? !error && <Loading text="Đang tải danh sách chủ đề..." /> : <ChapterSelect chapters={chapters} value={target} onChange={setTarget} label="Chủ đề đích" hint="" defaultOpen />}
       <div className="row" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
         <button type="button" className="btn" onClick={onClose}>
           Hủy

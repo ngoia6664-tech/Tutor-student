@@ -1,9 +1,9 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import { usePandaShop } from '../contexts/PandaShopContext.jsx'
 import { useStudying } from '../lib/studyLock.js'
+import { useFocusTrap } from '../lib/useFocusTrap.js'
 import Loading from './Loading.jsx'
 import Icon from './Icon.jsx'
 
@@ -81,15 +81,7 @@ function FlameSvg() {
 
 // Bảng nổi (giống bảng Cài đặt): không đổi trang. Dùng cả ở cột phải học sinh (StudentTodayPanel)
 export function DailyDialog({ onClose }) {
-  const panel = useRef(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
-  useEffect(() => {
-    panel.current?.focus()
-    const key = (e) => e.key === 'Escape' && closeRef.current()
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
-  }, [])
+  const panel = useFocusTrap(onClose)
 
   return createPortal(
     <div className="settings-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>

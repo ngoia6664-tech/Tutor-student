@@ -98,9 +98,6 @@
 .tf-pick:has(input:disabled) {
   cursor: default;
 }
-.tr-review .tf-pick {
-  cursor: default;
-}
 .tf-key {
   display: inline-block;
   min-width: 2rem;
@@ -561,7 +558,6 @@ details.method-box:not([open]) > summary {
 /* =====================================================================
    LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM): NÚT CHỌN ĐÚNG / SAI TRONG ĐỀ THI
    ===================================================================== */
-:root[data-theme="dark"]:not(.space-exploring) .tf-pick,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-pick {
   background: #241c17;
   border: 1.5px solid #423327;
@@ -569,7 +565,6 @@ details.method-box:not([open]) > summary {
   color: #d5c8be;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tf-pick:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-pick:hover {
   background: #33261e;
   border-color: #d97706;
@@ -577,7 +572,6 @@ details.method-box:not([open]) > summary {
   color: #ffffff;
   box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tf-pick.is-picked,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-pick.is-picked {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;
@@ -585,7 +579,6 @@ details.method-box:not([open]) > summary {
   color: #ffffff;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tf-pick.is-key,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-pick.is-key {
   background: rgba(45, 106, 79, 0.35);
   border: 1.5px solid #52b788;
@@ -594,11 +587,9 @@ details.method-box:not([open]) > summary {
   font-weight: 800;
   box-shadow: 0 0 8px rgba(82, 183, 136, 0.3);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tf-table tr.is-right td,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-table tr.is-right td {
   background: rgba(45, 106, 79, 0.2);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tf-table tr.is-wrong td,
 :root:not([data-theme="light"]):not(.space-exploring) .tf-table tr.is-wrong td {
   background: rgba(239, 68, 68, 0.16);
 }

@@ -133,9 +133,6 @@ html.space-exploring {
   .explorer-hint {
     font-size: 0.8rem;
   }
-  .explorer-top .btn-text {
-    display: none;
-  }
 }
 
 /* Gấu kể chuyện vũ trụ (góc trái dưới; bên phải là nút phóng to) */

@@ -150,11 +150,13 @@ body:has(.side.is-open) {
   overflow: hidden;
   transition: background-color 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease);
 }
-.nav-side .nav-link:hover,
-.nav-side a.nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff !important;
-  transform: translateX(2px);
+@media (hover: hover) {
+  .nav-side .nav-link:hover,
+  .nav-side a.nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+    transform: translateX(2px);
+  }
 }
 .nav-side .nav-link.active,
 .nav-side a.nav-link.active {
@@ -252,6 +254,10 @@ a.side-btn.is-current {
   margin-left: auto;
 }
 .side-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: opacity 0.2s var(--ease);
 }
 
@@ -496,7 +502,7 @@ a.side-btn.is-current {
     outline-offset: 1px;
   }
   /* Nút nổi nâng lên trên viên thuốc */
-  :root[data-tabbar] :is(.mascot, .mascot-restore, .scroll-jump, .panda-dock, .feedback-fab, .toast) {
+  :root[data-tabbar] :is(.mascot, .mascot-restore, .scroll-jump, .panda-dock, .toast) {
     translate: 0 calc(-1 * var(--tabbar-h));
   }
 }
@@ -586,17 +592,14 @@ body:has(.ctx-card) .ctx-panel {
 :root[data-theme="light"] .ctx-strip .muted {
   color: #2b2118;
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-card.ctx-strip,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-card.ctx-strip {
   background: rgba(30, 24, 20, 0.92);
   border: 1.5px solid #543f2e;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-strip-icon,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-strip-icon {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-strip .muted,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-strip .muted {
   color: #f7eee2;
 }
@@ -626,13 +629,14 @@ body:has(.ctx-card) .ctx-panel {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
-  backdrop-filter: blur(6px);
   text-align: center;
   transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
-.ctx-stat:hover {
-  transform: translateY(-2px);
-  border-color: rgba(168, 85, 247, 0.3);
+@media (hover: hover) {
+  .ctx-stat:hover {
+    transform: translateY(-2px);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
 }
 .ctx-stat dt {
   font-size: 0.72rem;
@@ -687,26 +691,20 @@ body:has(.ctx-card) .ctx-panel {
     box-shadow 0.2s var(--ease),
     filter 0.2s var(--ease);
 }
-.ctx-default .btn-primary:hover {
-  filter: brightness(1.08);
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 10px 22px -4px rgba(194, 65, 12, 0.58);
+@media (hover: hover) {
+  .ctx-default .btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 10px 22px -4px rgba(194, 65, 12, 0.58);
+  }
 }
 .ctx-default .btn-primary:active {
   transform: translateY(2px);
 }
 
 /* Danh sách chọn (Nhóm học sinh): hàng bấm được, hàng đang chọn tô như mục menu */
-.ctx-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
 .ctx-row {
   display: flex;
   align-items: center;
@@ -815,8 +813,7 @@ body:has(.ctx-card) .ctx-panel {
   }
 }
 
-/* Việc cần xử lý (TutorTodoPanel) */
-.ctx-todo,
+/* Danh sách tin trong cột phải (GradeQueuePanel) */
 .ctx-feed {
   list-style: none;
   margin: 0;
@@ -824,37 +821,6 @@ body:has(.ctx-card) .ctx-panel {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-/* Khối "Việc cần xử lý" nhẹ: phụ trợ, không tranh với nội dung chính */
-.ctx-card.ctx-quiet {
-  padding: 0.6rem 0.75rem 0.7rem;
-  background: transparent;
-  border-color: var(--border);
-  box-shadow: none;
-}
-.ctx-quiet .ctx-title {
-  margin-bottom: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-.ctx-todo-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.3rem 0.45rem;
-  border: 1px solid transparent;
-  border-radius: var(--r-chip);
-  font-size: 0.88rem;
-  color: var(--text);
-  text-decoration: none;
-  transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease);
-}
-.ctx-todo-row:hover {
-  border-color: currentColor;
-  background: var(--primary-soft);
-}
-.ctx-todo .ctx-num {
-  font-size: 1.15rem;
 }
 .ctx-num {
   font-size: 1.35rem;
@@ -1085,11 +1051,13 @@ body:has(.ctx-card) .ctx-panel {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.qcell:hover {
-  border-color: var(--primary);
-  color: #fff;
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+@media (hover: hover) {
+  .qcell:hover {
+    border-color: var(--primary);
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+  }
 }
 .qcell:active {
   transform: scale(0.94);
@@ -1189,8 +1157,6 @@ body:has(.ctx-card .qgrid) .answer-progress {
   margin: 0 0 1rem;
   border-radius: var(--radius-sm, 10px);
   background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(168, 85, 247, 0.28);
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text);
@@ -1200,11 +1166,13 @@ body:has(.ctx-card .qgrid) .answer-progress {
   transition: all 0.2s var(--ease);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
-.exam-hint-pill:hover {
-  background: rgba(168, 85, 247, 0.1);
-  border-color: var(--primary);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.22);
+@media (hover: hover) {
+  .exam-hint-pill:hover {
+    background: rgba(168, 85, 247, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.22);
+  }
 }
 .hint-pill-text {
   display: flex;
@@ -1227,10 +1195,12 @@ body:has(.ctx-card .qgrid) .answer-progress {
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s ease;
 }
-.exam-hint-pill:hover .hint-pill-action {
-  color: #fff;
-  border-color: var(--primary);
-  background: rgba(168, 85, 247, 0.25);
+@media (hover: hover) {
+  .exam-hint-pill:hover .hint-pill-action {
+    color: #fff;
+    border-color: var(--primary);
+    background: rgba(168, 85, 247, 0.25);
+  }
 }
 
 /* Chấm bài (gia sư): màn ≥ 1360px kết quả nằm ở cột phải (ResultProgress `panel`) nên ẩn thanh dính trên */
@@ -1354,7 +1324,6 @@ body:has(.ctx-card .qgrid) .answer-progress {
 .page-head h1 .muted {
   font-weight: 500;
 }
-:root[data-theme="dark"]:not(.space-exploring) .page-head h1 .muted,
 :root:not([data-theme="light"]):not(.space-exploring) .page-head h1 .muted {
   color: #d5be9d;
 }
@@ -1372,9 +1341,11 @@ body:has(.ctx-card .qgrid) .answer-progress {
   border-color: #d8c3a5;
   border-top-color: #fffdf9;
 }
-:root[data-theme="light"] .ctx-stat:hover {
-  border-color: var(--wood-mid, #c28547);
-  background: #fcf6ea;
+@media (hover: hover) {
+  :root[data-theme="light"] .ctx-stat:hover {
+    border-color: var(--wood-mid, #c28547);
+    background: #fcf6ea;
+  }
 }
 :root[data-theme="light"] .ctx-stat.is-lit dd {
   color: #ea580c;
@@ -1400,12 +1371,14 @@ body:has(.ctx-card .qgrid) .answer-progress {
     box-shadow 0.2s var(--ease),
     filter 0.2s var(--ease);
 }
-:root[data-theme="light"] .ctx-default .btn-primary:hover {
-  filter: brightness(1.06);
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 10px 22px -4px rgba(194, 65, 12, 0.52);
+@media (hover: hover) {
+  :root[data-theme="light"] .ctx-default .btn-primary:hover {
+    filter: brightness(1.06);
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 10px 22px -4px rgba(194, 65, 12, 0.52);
+  }
 }
 :root[data-theme="light"] .ctx-default .btn-primary:active {
   transform: translateY(2px);
@@ -1434,13 +1407,15 @@ body:has(.ctx-card .qgrid) .answer-progress {
     color 0.18s var(--ease),
     box-shadow 0.18s var(--ease);
 }
-:root[data-theme="light"] .qcell:hover {
-  background: #fef3c7;
-  border-color: #b45309;
-  border-bottom-color: #92400e;
-  color: #2b231d;
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 5px 12px rgba(180, 83, 9, 0.2);
+@media (hover: hover) {
+  :root[data-theme="light"] .qcell:hover {
+    background: #fef3c7;
+    border-color: #b45309;
+    border-bottom-color: #92400e;
+    color: #2b231d;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 12px rgba(180, 83, 9, 0.2);
+  }
 }
 :root[data-theme="light"] .qcell.is-done {
   background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
@@ -1472,28 +1447,30 @@ body:has(.ctx-card .qgrid) .answer-progress {
   border-top: 2px solid var(--wood-mid, #c28547);
   box-shadow: var(--shadow);
 }
-:root[data-theme="light"] .exam-hint-pill:hover {
-  background: #fef3c7;
-  border-color: #b45309;
-  box-shadow: 0 6px 16px rgba(180, 83, 9, 0.16);
+@media (hover: hover) {
+  :root[data-theme="light"] .exam-hint-pill:hover {
+    background: #fef3c7;
+    border-color: #b45309;
+    box-shadow: 0 6px 16px rgba(180, 83, 9, 0.16);
+  }
 }
 :root[data-theme="light"] .hint-pill-action {
   background: #f4ead8;
   border-color: #d5be9d;
   color: #5c4938;
 }
-:root[data-theme="light"] .exam-hint-pill:hover .hint-pill-action {
-  background: #235340;
-  border-color: #1b4332;
-  color: #ffffff;
+@media (hover: hover) {
+  :root[data-theme="light"] .exam-hint-pill:hover .hint-pill-action {
+    background: #235340;
+    border-color: #1b4332;
+    color: #ffffff;
+  }
 }
 
 /* Nền mờ ngăn kéo menu & bảng bên ở giao diện Lớp học cổ điển: nâu gỗ ấm áp */
 :root[data-theme="light"] .side-backdrop,
 :root[data-theme="light"] .ctx-backdrop {
   background: rgba(32, 22, 12, 0.42);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 :root[data-theme="light"]:not(.space-exploring) .brand-mark {
   border-radius: 9px;
@@ -1505,7 +1482,6 @@ body:has(.ctx-card .qgrid) .answer-progress {
 /* =====================================================================
    LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - CỘT PHẢI & MENU ĐỒNG BỘ
    ===================================================================== */
-:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-pill,
 :root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-pill {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border: 1px solid #40916c;
@@ -1513,7 +1489,6 @@ body:has(.ctx-card .qgrid) .answer-progress {
     0 2px 8px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
-:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link.active,
 :root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link.active {
   background: transparent;
   color: #ffffff !important;
@@ -1521,47 +1496,41 @@ body:has(.ctx-card .qgrid) .answer-progress {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   box-shadow: none;
 }
-:root[data-theme="dark"]:not(.space-exploring) .nav-side .nav-link.active .icon,
 :root:not([data-theme="light"]):not(.space-exploring) .nav-side .nav-link.active .icon {
   color: #ffffff !important;
 }
 
 /* Thẻ chỉ số Chuỗi / Xu / Sao trên bảng Hôm nay (Lớp học ban đêm) */
-:root[data-theme="dark"]:not(.space-exploring) .ctx-stat,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-stat {
   background: #241c17;
   border-color: #423327;
   border-top-color: #543f31;
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-stat:hover,
-:root:not([data-theme="light"]):not(.space-exploring) .ctx-stat:hover {
-  border-color: var(--wood-mid, #c28547);
-  background: #2c221c;
+@media (hover: hover) {
+  :root:not([data-theme="light"]):not(.space-exploring) .ctx-stat:hover {
+    border-color: var(--wood-mid, #c28547);
+    background: #2c221c;
+  }
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-stat.is-lit dd,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-stat.is-lit dd {
   color: #ea580c;
   text-shadow: 0 1px 8px rgba(234, 88, 12, 0.35);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-stat.is-reward dd,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-stat.is-reward dd {
   color: #f59e0b;
   text-shadow: none;
 }
 
 /* QuestionGrid ở lớp học ban đêm: Xanh bảng phấn & Vàng hổ phách */
-:root[data-theme="dark"]:not(.space-exploring) .ctx-track,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-track {
   background: rgba(20, 16, 13, 0.85);
   border-color: #3d2f25;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ctx-fill,
 :root:not([data-theme="light"]):not(.space-exploring) .ctx-fill {
   background: linear-gradient(90deg, #2d6a4f 0%, #52b788 55%, #d97706 100%);
   box-shadow: 0 0 10px rgba(82, 183, 136, 0.35);
 }
-:root[data-theme="dark"]:not(.space-exploring) .qcell,
 :root:not([data-theme="light"]):not(.space-exploring) .qcell {
   background: #241c17;
   border: 1.5px solid #423327;
@@ -1569,15 +1538,15 @@ body:has(.ctx-card .qgrid) .answer-progress {
   color: #d5c8be;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
-:root[data-theme="dark"]:not(.space-exploring) .qcell:hover,
-:root:not([data-theme="light"]):not(.space-exploring) .qcell:hover {
-  background: #33261e;
-  border-color: #d97706;
-  border-bottom-color: #b45309;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+@media (hover: hover) {
+  :root:not([data-theme="light"]):not(.space-exploring) .qcell:hover {
+    background: #33261e;
+    border-color: #d97706;
+    border-bottom-color: #b45309;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+  }
 }
-:root[data-theme="dark"]:not(.space-exploring) .qcell.is-done,
 :root:not([data-theme="light"]):not(.space-exploring) .qcell.is-done {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;
@@ -1587,12 +1556,10 @@ body:has(.ctx-card .qgrid) .answer-progress {
     0 3px 8px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
-:root[data-theme="dark"]:not(.space-exploring) .qdot,
 :root:not([data-theme="light"]):not(.space-exploring) .qdot {
   background: #241c17;
   border-color: #423327;
 }
-:root[data-theme="dark"]:not(.space-exploring) .qdot.is-done,
 :root:not([data-theme="light"]):not(.space-exploring) .qdot.is-done {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;

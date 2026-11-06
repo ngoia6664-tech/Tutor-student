@@ -1,8 +1,3 @@
-<!-- Việc: [một việc cụ thể, một hành vi cần đổi]
-Vị trí: [trang / tính năng; nếu biết tên file thì ghi luôn]
-Mong muốn: [kết quả nhìn thấy được, không cần nói cách làm]
-Giới hạn: [những thứ không được đổi, nếu có]
-Sau khi xong: [chỉ build / build + test / commit / push] -->
 <!doctype html>
 <html lang="vi" data-theme="dark">
   <head>
@@ -10,7 +5,7 @@ Sau khi xong: [chỉ build / build + test / commit / push] -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0c0a1d" />
+    <meta name="theme-color" content="#14100d" />
     <!-- Cài lên màn hình chính (PWA) -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -24,6 +19,7 @@ Sau khi xong: [chỉ build / build + test / commit / push] -->
       try {
         var t = localStorage.getItem('theme')
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+        if (t === 'light') document.querySelector('meta[name="theme-color"]').content = '#efe5d5'
       } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

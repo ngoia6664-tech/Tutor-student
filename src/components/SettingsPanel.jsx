@@ -1,9 +1,9 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
 import { PRESETS, performanceMode, prefersReducedMotion, resetSettings, updateSettings, useSettings } from '../lib/settings.js'
 import { useTheme } from '../lib/theme.js'
+import { useFocusTrap } from '../lib/useFocusTrap.js'
 
 // Bảng Cài đặt (tải lười từ Layout, mở bằng nút bánh răng): hiệu năng, không gian lớp học, hình ảnh, âm thanh. Lưu trên máy này (lib/settings.js).
 // Mở dạng bảng nổi, không chuyển trang → đang làm bài mở ra cũng không mất bài.
@@ -33,16 +33,7 @@ export default function SettingsPanel({ onClose }) {
   const weatherOptions = isLight ? DAY_WEATHER_OPTIONS : NIGHT_WEATHER_OPTIONS
   const mode = performanceMode(s)
   const reduced = prefersReducedMotion()
-  const panel = useRef(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
-
-  useEffect(() => {
-    panel.current?.focus()
-    const key = (e) => e.key === 'Escape' && closeRef.current()
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
-  }, [])
+  const panel = useFocusTrap(onClose)
 
   return createPortal(
     <div className="settings-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -160,7 +151,7 @@ export default function SettingsPanel({ onClose }) {
               value={s.musicVolume}
               disabled={!s.music}
               onChange={(e) => updateSettings({ musicVolume: Number(e.target.value) })}
-              style={{ '--vol': `${s.musicVolume}%` }}
+              style={/** @type {import('react').CSSProperties} */ ({ '--vol': `${s.musicVolume}%` })}
             />
           </label>
         </section>

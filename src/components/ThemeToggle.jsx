@@ -13,7 +13,8 @@ const THEME_COLOR = { dark: '#14100d', light: '#efe5d5' }
 export default function ThemeToggle({ className = '', withLabel = false }) {
   const theme = useTheme()
   const next = theme === 'dark' ? 'light' : 'dark'
-  const label = next === 'light' ? 'Lớp học ban ngày (Nắng ấm)' : 'Lớp học ban đêm (Gác mái trăng rọi)'
+  const label = next === 'light' ? 'Ban ngày' : 'Ban đêm'
+  const full = next === 'light' ? 'Lớp học ban ngày (Nắng ấm)' : 'Lớp học ban đêm (Gác mái trăng rọi)'
 
   // Trình duyệt hỗ trợ View Transitions: cả trang mờ chéo sang màu mới (layout.css), không thì đổi ngay
   function toggle() {
@@ -43,7 +44,7 @@ export default function ThemeToggle({ className = '', withLabel = false }) {
       className={withLabel ? className : `btn btn-ghost theme-toggle ${className}`}
       onClick={toggle}
       aria-label={next === 'light' ? 'Chuyển sang giao diện sáng (Lớp học cổ điển)' : 'Chuyển sang giao diện tối (Vũ trụ học)'}
-      title={label}
+      title={full}
     >
       {withLabel ? (
         <>

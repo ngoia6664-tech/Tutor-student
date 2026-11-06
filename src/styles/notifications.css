@@ -197,10 +197,6 @@
   }
 }
 
-/* Màn hình hẹp: ẩn tên người dùng để đủ chỗ cho chuông, giao diện, đăng xuất */
-@media (max-width: 520px) {
-  .user-name { display: none; }
-}
 
 
 :root[data-theme="light"] .bell-panel,

@@ -166,15 +166,12 @@
   font-weight: 600;
 }
 
-:root[data-theme="dark"]:not(.space-exploring) .help-item[open] summary,
 :root:not([data-theme="light"]):not(.space-exploring) .help-item[open] summary {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) .help-item[open] .help-chevron,
 :root:not([data-theme="light"]):not(.space-exploring) .help-item[open] .help-chevron {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) .help-answer strong,
 :root:not([data-theme="light"]):not(.space-exploring) .help-answer strong {
   color: #74c69d;
   font-weight: 700;

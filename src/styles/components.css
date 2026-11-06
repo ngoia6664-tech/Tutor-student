@@ -1,8 +1,6 @@
 /* ===== Khối nội dung: Kính mờ vũ trụ đa tầng, viền bắt sáng ===== */
 .card {
   background: var(--surface);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius, 14px);
@@ -21,8 +19,6 @@
   position: relative;
   display: block;
   background: var(--surface);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-bottom-width: 3px;
@@ -55,13 +51,17 @@ a.list-item::before {
   pointer-events: none;
   transition: opacity 0.25s var(--ease);
 }
-a.list-item:hover::before {
-  opacity: 1;
+@media (hover: hover) {
+  a.list-item:hover::before {
+    opacity: 1;
+  }
 }
-a.list-item:hover {
-  transform: translateY(-3px);
-  border-color: rgba(168, 85, 247, 0.45);
-  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(168, 85, 247, 0.25);
+@media (hover: hover) {
+  a.list-item:hover {
+    transform: translateY(-3px);
+    border-color: rgba(168, 85, 247, 0.45);
+    box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(168, 85, 247, 0.25);
+  }
 }
 a.list-item:active {
   transform: translateY(0) scale(0.995);
@@ -249,10 +249,12 @@ a.list-item:active {
     opacity: 0;
   }
 }
-.btn:hover:not(:disabled) {
-  --lift: 5px;
-  border-color: var(--primary);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    --lift: 5px;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+  }
 }
 /* Đang nhấn: phím lún xuống, mặt nút lõm (bóng trong) và tối đi một chút */
 .btn:active:not(:disabled) {
@@ -370,8 +372,10 @@ a.list-item:active {
   font-size: 0.9rem;
   transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
 }
-.chip:hover {
-  border-color: var(--primary);
+@media (hover: hover) {
+  .chip:hover {
+    border-color: var(--primary);
+  }
 }
 .chip:active {
   transform: translateY(2px) scale(0.96);
@@ -413,15 +417,12 @@ a.chip {
 .crumbs a:hover {
   text-decoration: underline;
 }
-:root[data-theme="dark"]:not(.space-exploring) .crumbs,
 :root:not([data-theme="light"]):not(.space-exploring) .crumbs {
   color: #aa9582;
 }
-:root[data-theme="dark"]:not(.space-exploring) .crumbs a,
 :root:not([data-theme="light"]):not(.space-exploring) .crumbs a {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) .crumbs a:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .crumbs a:hover {
   color: #74c69d;
 }
@@ -454,15 +455,6 @@ a.chip {
   }
 }
 
-/* Ô lọc theo chủ đề (cạnh các nút lọc dạng viên thuốc) */
-select.chapter-filter {
-  width: auto;
-  max-width: 100%;
-  border-radius: var(--r-chip);
-  padding: 0.3rem 2rem 0.3rem 0.9rem;
-  font-size: 0.9rem;
-  border-color: var(--border-strong);
-}
 
 /* Tiêu đề nhóm (chương / chủ đề) trong danh sách */
 .section-title {
@@ -505,7 +497,7 @@ textarea {
   font: inherit;
   font-size: 16px; /* tránh iPhone tự phóng to khi gõ */
   padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text);
@@ -691,7 +683,7 @@ select option {
   font-weight: 500;
   color: var(--text);
   background-color: var(--surface-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
   padding: 0.45rem 0.8rem;
   cursor: pointer;
@@ -736,16 +728,13 @@ select option {
   border-radius: 999px;
   font-weight: 600;
 }
-:root[data-theme="dark"]:not(.space-exploring) .custom-select-btn:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .custom-select-btn:hover {
   border-color: #52b788;
   box-shadow: 0 2px 8px -2px rgba(82, 183, 136, 0.35);
 }
-:root[data-theme="dark"]:not(.space-exploring) .custom-select-icon,
 :root:not([data-theme="light"]):not(.space-exploring) .custom-select-icon {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) .custom-select-badge,
 :root:not([data-theme="light"]):not(.space-exploring) .custom-select-badge {
   background: rgba(82, 183, 136, 0.2);
   color: #74c69d;
@@ -774,7 +763,6 @@ select option {
   border: 1px solid var(--border-strong);
   border-radius: 12px;
   box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(192, 132, 252, 0.2);
-  backdrop-filter: blur(16px);
   overflow: hidden;
   animation: customSelectFadeIn 0.15s ease-out;
 }
@@ -942,11 +930,13 @@ input[type='search'].custom-select-search-input {
 :root[data-theme="light"] a.list-item::before {
   background: linear-gradient(135deg, rgba(35, 83, 64, 0.55) 0%, rgba(194, 133, 71, 0.55) 100%);
 }
-:root[data-theme="light"] a.list-item:hover {
-  border-color: var(--wood-mid, #c28547);
-  box-shadow:
-    0 14px 30px -8px rgba(74, 48, 20, 0.2),
-    0 0 18px rgba(194, 133, 71, 0.22);
+@media (hover: hover) {
+  :root[data-theme="light"] a.list-item:hover {
+    border-color: var(--wood-mid, #c28547);
+    box-shadow:
+      0 14px 30px -8px rgba(74, 48, 20, 0.2),
+      0 0 18px rgba(194, 133, 71, 0.22);
+  }
 }
 
 /* Nhãn trạng thái (Badges) ở bản Lớp học: màu mực in đậm rõ nét trên nền giấy kem */
@@ -1090,32 +1080,32 @@ textarea {
     color 0.18s var(--ease),
     box-shadow 0.18s var(--ease);
 }
-.chip:hover {
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .chip:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* =====================================================================
    LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - BADGES & LIST ITEM THẺ BÀI
    ===================================================================== */
-:root[data-theme="dark"]:not(.space-exploring) .badge-primary,
 :root:not([data-theme="light"]):not(.space-exploring) .badge-primary {
   background: rgba(45, 106, 79, 0.28);
   border-color: rgba(64, 145, 108, 0.5);
   color: #74c69d;
   box-shadow: none;
 }
-:root[data-theme="dark"]:not(.space-exploring) .badge-dot.dot-purple,
 :root:not([data-theme="light"]):not(.space-exploring) .badge-dot.dot-purple {
   color: #52b788;
 }
-:root[data-theme="dark"]:not(.space-exploring) a.list-item::before,
 :root:not([data-theme="light"]):not(.space-exploring) a.list-item::before {
   background: linear-gradient(135deg, rgba(217, 119, 6, 0.55) 0%, rgba(45, 106, 79, 0.45) 100%);
 }
-:root[data-theme="dark"]:not(.space-exploring) a.list-item:hover,
-:root:not([data-theme="light"]):not(.space-exploring) a.list-item:hover {
-  border-color: rgba(217, 119, 6, 0.45);
-  box-shadow:
-    0 12px 28px -8px rgba(0, 0, 0, 0.65),
-    0 0 16px rgba(217, 119, 6, 0.18);
+@media (hover: hover) {
+  :root:not([data-theme="light"]):not(.space-exploring) a.list-item:hover {
+    border-color: rgba(217, 119, 6, 0.45);
+    box-shadow:
+      0 12px 28px -8px rgba(0, 0, 0, 0.65),
+      0 0 16px rgba(217, 119, 6, 0.18);
+  }
 }

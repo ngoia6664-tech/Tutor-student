@@ -1,5 +1,4 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import Icon from './Icon.jsx'
@@ -7,33 +6,28 @@ import { KINDS, RATINGS, sendFeedback } from '../lib/feedback.js'
 import { errMsg } from '../lib/errors.js'
 import { mascotSay } from '../lib/celebrate.js'
 import { useStudying } from '../lib/studyLock.js'
+import { useFocusTrap } from '../lib/useFocusTrap.js'
 
 const MAX = 2000
 
-// Nút "Góp ý" (học sinh). Bấm mở bảng gửi góp ý, không đổi trang. Đang làm bài thì ẩn để khỏi phân tâm.
-// variant 'fab' = nút nổi góc trái dưới (hiện Layout không dùng); 'side' = hàng trong thanh bên / ngăn kéo (Layout.jsx) để không chiếm chỗ nội dung
-export default function FeedbackButton({ variant = 'fab' }) {
+// Nút "Góp ý" (học sinh): một hàng trong thanh bên / ngăn kéo (Layout.jsx) để không chiếm chỗ nội dung.
+// Bấm mở bảng gửi góp ý, không đổi trang. Đang làm bài thì ẩn để khỏi phân tâm.
+export default function FeedbackButton() {
   const [open, setOpen] = useState(false)
   const studying = useStudying()
   if (studying && !open) return null
   return (
     <>
-      {variant === 'side' ? (
-        <button type="button" className="side-btn" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
-          <Icon name="chat" />
-          <span className="side-label">Góp ý</span>
-        </button>
-      ) : (
-        <button type="button" className="feedback-fab" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
-          <span className="feedback-fab-emoji" aria-hidden="true">💬</span>
-          <span className="feedback-fab-text">Góp ý</span>
-        </button>
-      )}
+      <button type="button" className="side-btn" onClick={() => setOpen(true)} aria-label="Gửi góp ý" title="Góp ý cho thầy">
+        <Icon name="chat" />
+        <span className="side-label">Góp ý</span>
+      </button>
       {open && <FeedbackPanel onClose={() => setOpen(false)} />}
     </>
   )
 }
 
+/** @param {{ onClose: () => void }} props */
 function FeedbackPanel({ onClose }) {
   const { pathname } = useLocation()
   const [kind, setKind] = useState('idea')
@@ -42,39 +36,7 @@ function FeedbackPanel({ onClose }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
-  const panel = useRef(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
-
-  useEffect(() => {
-    const opener = document.activeElement
-    panel.current?.querySelector('textarea')?.focus()
-    const key = (e) => {
-      if (e.key === 'Escape') return closeRef.current()
-      if (e.key !== 'Tab' || !panel.current) return
-      // Giữ focus trong hộp góp ý: Tab/Shift+Tab xoay vòng, không lọt ra trang phía sau
-      const items = [...panel.current.querySelectorAll('button, textarea, input, select, a[href], [tabindex]:not([tabindex="-1"])')].filter(
-        (el) => !el.disabled
-      )
-      if (!items.length) return
-      const first = items[0]
-      const last = items[items.length - 1]
-      const inside = panel.current.contains(document.activeElement)
-      if (e.shiftKey && (!inside || document.activeElement === first || document.activeElement === panel.current)) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', key)
-    return () => {
-      window.removeEventListener('keydown', key)
-      // Đóng hộp thì trả focus về nút Góp ý
-      if (opener?.isConnected) opener.focus()
-    }
-  }, [])
+  const panel = useFocusTrap(onClose, 'textarea')
 
   async function submit(e) {
     e.preventDefault()

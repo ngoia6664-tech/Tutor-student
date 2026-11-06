@@ -213,10 +213,12 @@ h2 + .question {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.choice:hover {
-  background: var(--primary-soft);
-  border-color: rgba(168, 85, 247, 0.45);
-  transform: translateX(3px);
+@media (hover: hover) {
+  .choice:hover {
+    background: var(--primary-soft);
+    border-color: rgba(168, 85, 247, 0.45);
+    transform: translateX(3px);
+  }
 }
 .choice:active {
   transform: scale(0.99);
@@ -251,10 +253,12 @@ h2 + .question {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
   transition: all 0.2s ease;
 }
-.choice:hover .choice-label {
-  color: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+@media (hover: hover) {
+  .choice:hover .choice-label {
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+  }
 }
 .choice:has(input:not(:disabled)).is-picked .choice-label {
   animation: choice-pop 0.32s var(--spring);
@@ -488,18 +492,15 @@ table.table {
   border-color: var(--primary);
   color: var(--primary);
 }
-:root[data-theme="dark"]:not(.space-exploring) .tab,
 :root:not([data-theme="light"]):not(.space-exploring) .tab {
   border-color: #543f2e;
   background: #1e1814;
   color: #d5be9d;
 }
-:root[data-theme="dark"]:not(.space-exploring) .tab:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .tab:hover {
   border-color: #85532c;
   color: #ffffff;
 }
-:root[data-theme="dark"]:not(.space-exploring) .tab.active,
 :root:not([data-theme="light"]):not(.space-exploring) .tab.active {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;
@@ -607,8 +608,6 @@ details > summary {
   border-radius: var(--radius, 14px);
   border: 1px solid var(--border-strong);
   background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(168, 85, 247, 0.18);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
   pointer-events: auto;
@@ -726,10 +725,12 @@ details > summary {
     border-color 0.2s var(--ease),
     box-shadow 0.2s var(--ease);
 }
-:root[data-theme="light"] .choice:hover {
-  background-color: #fef9e7;
-  border-color: var(--wood-mid, #c28547);
-  box-shadow: 0 4px 12px rgba(140, 88, 40, 0.12);
+@media (hover: hover) {
+  :root[data-theme="light"] .choice:hover {
+    background-color: #fef9e7;
+    border-color: var(--wood-mid, #c28547);
+    box-shadow: 0 4px 12px rgba(140, 88, 40, 0.12);
+  }
 }
 :root[data-theme="light"] .choice-label {
   background: linear-gradient(180deg, #fffdf9 0%, #f0e2ca 100%);
@@ -744,12 +745,14 @@ details > summary {
     color 0.18s var(--ease),
     box-shadow 0.18s var(--ease);
 }
-:root[data-theme="light"] .choice:hover .choice-label {
-  background: #fef3c7;
-  border-color: #b45309;
-  border-bottom-color: #92400e;
-  color: #92400e;
-  box-shadow: 0 3px 8px rgba(180, 83, 9, 0.18);
+@media (hover: hover) {
+  :root[data-theme="light"] .choice:hover .choice-label {
+    background: #fef3c7;
+    border-color: #b45309;
+    border-bottom-color: #92400e;
+    color: #92400e;
+    box-shadow: 0 3px 8px rgba(180, 83, 9, 0.18);
+  }
 }
 :root[data-theme="light"] .choice.is-picked {
   background-size: 100% 100%;
@@ -851,11 +854,13 @@ details > summary {
     background-color 0.18s var(--ease),
     box-shadow 0.18s var(--ease);
 }
-.lesson-mode-btn:hover {
-  border-color: var(--primary);
-  background: var(--surface-2);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+@media (hover: hover) {
+  .lesson-mode-btn:hover {
+    border-color: var(--primary);
+    background: var(--surface-2);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  }
 }
 :root[data-theme="light"] .lesson-mode-btn {
   border: 1.5px solid var(--wood-mid, #c28547);
@@ -863,16 +868,17 @@ details > summary {
   color: #1f1813;
   box-shadow: 0 2px 5px rgba(74, 48, 20, 0.12);
 }
-:root[data-theme="light"] .lesson-mode-btn:hover {
-  border-color: #92400e;
-  background: #fdf5ea;
-  box-shadow: 0 3px 10px rgba(74, 48, 20, 0.18);
+@media (hover: hover) {
+  :root[data-theme="light"] .lesson-mode-btn:hover {
+    border-color: #92400e;
+    background: #fdf5ea;
+    box-shadow: 0 3px 10px rgba(74, 48, 20, 0.18);
+  }
 }
 
 /* =====================================================================
    LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - CÂU CHỌN & NÚT XEM BÀI
    ===================================================================== */
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-picked,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-picked {
   border-color: #d97706;
   border-left: 4px solid #52b788;
@@ -881,7 +887,6 @@ details > summary {
     0 6px 16px -4px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-picked .choice-label,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-picked .choice-label {
   background: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   border-color: #52b788;
@@ -889,7 +894,6 @@ details > summary {
   color: #ffffff;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-right,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-right {
   border: 1.5px solid #2d6a4f;
   border-left: 5px solid #52b788;
@@ -899,7 +903,6 @@ details > summary {
     0 0 16px rgba(82, 183, 136, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-right .choice-label,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-right .choice-label {
   background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
   border-color: #52b788;
@@ -907,7 +910,6 @@ details > summary {
   color: #ffffff;
   box-shadow: 0 0 10px rgba(82, 183, 136, 0.45);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-right .choice-tag,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-right .choice-tag {
   background: rgba(82, 183, 136, 0.22);
   border: 1px solid rgba(82, 183, 136, 0.45);
@@ -917,7 +919,6 @@ details > summary {
   font-weight: 700;
   font-size: 0.78rem;
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-wrong,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-wrong {
   border: 1.5px solid #991b1b;
   border-left: 5px solid #ef4444;
@@ -927,7 +928,6 @@ details > summary {
     0 0 16px rgba(239, 68, 68, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-wrong .choice-label,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-wrong .choice-label {
   background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
   border-color: #ef4444;
@@ -935,7 +935,6 @@ details > summary {
   color: #ffffff;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice.is-wrong .choice-tag,
 :root:not([data-theme="light"]):not(.space-exploring) .choice.is-wrong .choice-tag {
   background: rgba(239, 68, 68, 0.22);
   border: 1px solid rgba(239, 68, 68, 0.45);
@@ -945,24 +944,25 @@ details > summary {
   font-weight: 700;
   font-size: 0.78rem;
 }
-:root[data-theme="dark"]:not(.space-exploring) .choice:hover .choice-label,
-:root:not([data-theme="light"]):not(.space-exploring) .choice:hover .choice-label {
-  background: #33261e;
-  border-color: #d97706;
-  border-bottom-color: #b45309;
-  color: #fde68a;
-  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.22);
+@media (hover: hover) {
+  :root:not([data-theme="light"]):not(.space-exploring) .choice:hover .choice-label {
+    background: #33261e;
+    border-color: #d97706;
+    border-bottom-color: #b45309;
+    color: #fde68a;
+    box-shadow: 0 3px 8px rgba(217, 119, 6, 0.22);
+  }
 }
-:root[data-theme="dark"]:not(.space-exploring) .lesson-mode-btn,
 :root:not([data-theme="light"]):not(.space-exploring) .lesson-mode-btn {
   border: 1.5px solid var(--wood-mid, #c28547);
   background: linear-gradient(180deg, #2a201a 0%, #1c1511 100%);
   color: #f7eee2;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
-:root[data-theme="dark"]:not(.space-exploring) .lesson-mode-btn:hover,
-:root:not([data-theme="light"]):not(.space-exploring) .lesson-mode-btn:hover {
-  border-color: #f59e0b;
-  background: #33261e;
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+@media (hover: hover) {
+  :root:not([data-theme="light"]):not(.space-exploring) .lesson-mode-btn:hover {
+    border-color: #f59e0b;
+    background: #33261e;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+  }
 }

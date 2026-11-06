@@ -1,4 +1,3 @@
-// @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useRef } from 'react'
 import { prefersReducedMotion, updateSettings, useSettings } from '../lib/settings.js'
 import { maxScroll, onScroll as onContentScroll, scrollY } from '../lib/scroller.js'
@@ -48,6 +47,7 @@ const TILES = LAYERS.map(([name, size, count, rMin, rMax], i) => ({
 }))
 
 // Hành tinh: [tên, đường kính quỹ đạo px, cỡ px, chu kỳ giây, góc xuất phát]. Trong quay nhanh, ngoài quay chậm.
+/** @type {[string, number, number, number, number][]} */
 const PLANETS = [
   ['mercury', 230, 7, 36, 40],
   ['venus', 330, 11, 60, 200],
@@ -200,7 +200,7 @@ export default function SpaceBackdrop() {
         {/* LỚP VŨ TRỤ HỌC (Giao diện tối & Chế độ Ngắm vũ trụ) */}
         {TILES.map((t) => (
           <div key={t.name} className={`space-depth space-depth-${t.name}`}>
-            <div className={`space-stars space-${t.name}`} style={t.style} />
+            <div className={`space-stars space-${t.name}`} style={/** @type {import('react').CSSProperties} */ (t.style)} />
           </div>
         ))}
 
@@ -213,11 +213,11 @@ export default function SpaceBackdrop() {
               <div
                 key={name}
                 className="solar-orbit"
-                style={{ '--d': `${orbit}px`, '--period': `${period}s`, '--phase': start / 360 }}
+                style={/** @type {import('react').CSSProperties} */ ({ '--d': `${orbit}px`, '--period': `${period}s`, '--phase': start / 360 })}
               >
                 <div className="solar-carrier">
                   <div className="solar-face">
-                    <span className={`solar-planet solar-${name}`} style={{ '--s': `${size}px` }}>
+                    <span className={`solar-planet solar-${name}`} style={/** @type {import('react').CSSProperties} */ ({ '--s': `${size}px` })}>
                       {name === 'earth' && <span className="solar-moon" />}
                     </span>
                   </div>
@@ -355,11 +355,11 @@ export default function SpaceBackdrop() {
         aria-hidden="true"
         title="Bấm vào đèn để Bật / Tắt ánh sáng vàng lớp học"
       >
-        <svg width="88" height="136" viewBox="0 0 96 150" fill="none">
-          <line x1="48" y1="0" x2="48" y2="78" stroke="#57534e" strokeWidth="2.5" />
-          <path d="M30 78 H66 L80 106 H16 Z" fill="#fafaf9" stroke="#d6d3d1" strokeWidth="2" />
-          <ellipse cx="48" cy="106" rx="32" ry="6" fill="#fef3c7" />
-          <circle className="lamp-light-cone" cx="48" cy="114" r="34" fill="url(#classroomLampGlow)" />
+        <svg width="50" height="69" viewBox="0 0 96 132" fill="none">
+          <line x1="48" y1="0" x2="48" y2="60" stroke="#57534e" strokeWidth="3.5" />
+          <path d="M30 60 H66 L80 88 H16 Z" fill="#fafaf9" stroke="#d6d3d1" strokeWidth="2.5" />
+          <ellipse cx="48" cy="88" rx="32" ry="6" fill="#fef3c7" />
+          <circle className="lamp-light-cone" cx="48" cy="96" r="34" fill="url(#classroomLampGlow)" />
           <defs>
             <radialGradient id="classroomLampGlow">
               <stop offset="0%" stopColor="#fde68a" stopOpacity="0.88" />

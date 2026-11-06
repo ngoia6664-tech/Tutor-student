@@ -1,8 +1,8 @@
 /* =====================================================================
    Giao diện:
-   - Tối (dark): Vũ trụ học — tông tím – hồng trên nền xanh tím than sâu.
+   - Tối (dark): Gác mái ban đêm — gỗ mun ấm, đèn học hổ phách, xanh bảng phấn dạ quang.
    - Sáng (light): Lớp học cổ điển — bảng phấn xanh đen, bàn ghế gỗ sồi mật ong, trang vở kem ấm & mực đỏ chấm bài.
-   - Khi mở Ngắm vũ trụ (.space-exploring): luôn dùng bộ biến Vũ trụ tối để chữ và nút nổi bật trên bầu trời sao.
+   - Khi mở Ngắm vũ trụ (.space-exploring): luôn dùng bộ biến tối để chữ và nút nổi bật trên bầu trời sao.
    Màu đặt bằng biến; <html data-theme="dark|light"> quyết định bộ màu.
    ===================================================================== */
 :root,
@@ -20,6 +20,7 @@
   --surface-2: #28201a;
   --border: #48392d;
   --border-strong: #70543f;
+  --field-border: #89674d; /* viền ô nhập: ≥ 3:1 với nền, thẻ và ô */
   --text: #f7eee2; /* Mực giấy ngà đêm, cực kỳ sắc nét và dịu mắt */
   --muted: #aa9582; /* Nâu xám trầm cổ điển */
   --primary: #52b788; /* Xanh bảng phấn dạ quang, tương phản cao trên nền gỗ/slate đêm (7.5:1) */
@@ -41,10 +42,6 @@
   --warn-soft: rgba(245, 158, 11, 0.14);
   --aura-1: rgba(251, 191, 36, 0.18);
   --aura-2: rgba(180, 83, 9, 0.14);
-  --reward: #f59e0b;
-  --reward-2: #d97706;
-  --reward-soft: rgba(245, 158, 11, 0.16);
-  --on-reward: #ffffff;
   --btn-primary: linear-gradient(180deg, #2d6a4f 0%, #1e4535 100%);
   --btn-primary-border: #132e22;
   --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.45), 0 6px 16px -6px rgba(45, 106, 79, 0.6);
@@ -67,7 +64,6 @@
   --wood-mid: #85532c;
   --wood-dark: #3a2618;
   --chalkboard: #1c2620;
-  --chalkboard-deep: #141b17;
   --chalk-text: #f4f6f0;
   --chalk-muted: #a3b2a6;
   --pd-belly: #f5ecdc;
@@ -115,10 +111,11 @@
   --surface-2: #f4ead8;
   --border: #d8c3a5;
   --border-strong: #c4a77d;
+  --field-border: #9f7b48; /* viền ô nhập: ≥ 3:1 với nền, thẻ và ô */
   --text: #1a140e; /* Mực đen than đậm, sắc nét như viết bút máy */
   --muted: #5e4c3d; /* Nâu trầm đậm nét hơn thay vì xỉn mờ */
   --primary: #1c4b38; /* Xanh bảng phấn cổ điển đậm đà */
-  --accent: #b45309; /* Nâu hổ phách gỗ sồi */
+  --accent: #a54c08; /* Nâu hổ phách gỗ sồi (≥ 4,5:1 trên nền trang) */
   --on-primary: #ffffff;
   --grad: linear-gradient(100deg, #1c4b38 0%, #8c5828 55%, #b45309 100%);
   --grad-soft: linear-gradient(
@@ -130,16 +127,12 @@
   --primary-soft: rgba(28, 75, 56, 0.12);
   --ok: #1b6535;
   --ok-soft: rgba(27, 101, 53, 0.1);
-  --danger: #c93528; /* Đỏ mực chấm bài kiểm tra */
+  --danger: #bc3225; /* Đỏ mực chấm bài kiểm tra (≥ 4,5:1 trên nền trang) */
   --danger-soft: rgba(201, 53, 40, 0.1);
-  --warn: #b45309;
+  --warn: #a54c08;
   --warn-soft: rgba(180, 83, 9, 0.12);
   --aura-1: rgba(251, 191, 36, 0.2);
   --aura-2: rgba(194, 133, 71, 0.14);
-  --reward: #d97706;
-  --reward-2: #b45309;
-  --reward-soft: rgba(217, 119, 6, 0.14);
-  --on-reward: #ffffff;
   /* Nút chính bản Lớp học: xanh bảng phấn viền đế gỗ/đá đậm */
   --btn-primary: linear-gradient(180deg, #2d664e 0%, #214d3a 100%);
   --btn-primary-border: #132e22;
@@ -149,7 +142,7 @@
   --shadow:
     0 1px 0 rgba(255, 255, 255, 0.92) inset, 0 4px 12px -2px rgba(74, 48, 20, 0.09),
     0 18px 36px -14px rgba(74, 48, 20, 0.22);
-  --focus: rgba(35, 83, 64, 0.5);
+  --focus: rgba(28, 75, 56, 0.75); /* ≥ 3:1 trên nền trang và thẻ */
   --spot: rgba(251, 191, 36, 0.18); /* Vầng sáng nắng phấn ấm đi theo chuột */
   --skeleton: rgba(140, 88, 40, 0.09);
   --scroll-thumb: rgba(140, 88, 40, 0.35);
@@ -165,7 +158,6 @@
   --wood-mid: #c28547;
   --wood-dark: #865222;
   --chalkboard: #2b332e;
-  --chalkboard-deep: #202622;
   --chalk-text: #f4f6f0;
   --chalk-muted: #b8c4ba;
   /* Trang phục mặc định Giáo sư Gấu Trúc & đạo cụ hộp thoại theo tông Lớp học cổ điển */
@@ -188,7 +180,6 @@
   --radius-sm: 8px;
   --r-btn: 10px; /* kiểu "phím nổi": góc vuông mềm, nút có đáy dày (--lift) */
   --r-chip: 10px;
-  --r-badge: 6px;
   --lift: 4px;
   --edge-n: var(--border-strong); /* đáy nút thường */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -314,5 +305,5 @@ code {
   background: rgba(217, 119, 6, 0.28);
 }
 :root[data-theme="dark"] ::selection {
-  background: rgba(217, 70, 239, 0.35);
+  background: rgba(217, 119, 6, 0.4);
 }

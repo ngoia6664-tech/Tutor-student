@@ -269,41 +269,34 @@
 /* =====================================================================
    LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - TIẾN ĐỘ LÀM BÀI (ANSWER PROGRESS)
    ===================================================================== */
-:root[data-theme="dark"]:not(.space-exploring) .answer-progress,
 :root:not([data-theme="light"]):not(.space-exploring) .answer-progress {
   border-top: 3.5px solid var(--wood-mid, #c28547);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-track,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-track {
   background: rgba(20, 16, 13, 0.85);
   border-color: #3d2f25;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-fill,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-fill {
   background: linear-gradient(90deg, #2d6a4f 0%, #52b788 55%, #d97706 100%);
   box-shadow: 0 0 10px rgba(82, 183, 136, 0.35);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-chip,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-chip {
   border-color: #5c432d;
   background: #2b2018;
   color: #fbbf24;
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-chip:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-chip:hover {
   background: #3b2c21;
   border-color: #d97706;
   box-shadow: 0 3px 8px rgba(217, 119, 6, 0.22);
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-chip.is-wrong,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-chip.is-wrong {
   border-color: rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
 }
-:root[data-theme="dark"]:not(.space-exploring) .ap-chip.is-noted,
 :root:not([data-theme="light"]):not(.space-exploring) .ap-chip.is-noted {
   border-color: rgba(82, 183, 136, 0.45);
   background: rgba(45, 106, 79, 0.22);

@@ -372,7 +372,7 @@ export default function Layout() {
               <span className="side-label">Cửa hàng gấu</span>
             </NavLink>
           )}
-          {!isTutor && <FeedbackButton variant="side" />}
+          {!isTutor && <FeedbackButton />}
           <NavLink to={`/${isTutor ? 'tutor' : 'student'}/help`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Hỏi đáp">
             <Icon name="help" />
             <span className="side-label">Hỏi đáp</span>

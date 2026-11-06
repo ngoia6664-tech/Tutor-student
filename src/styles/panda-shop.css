@@ -6,7 +6,7 @@
 .tier-rare1 { --t1: #38bdf8; --t2: #a5f3fc; --tglow: rgba(56, 189, 248, 0.26); }
 .tier-rare2 { --t1: #a855f7; --t2: #22d3ee; --tglow: rgba(168, 85, 247, 0.36); }
 .tier-rare3 { --t1: #facc15; --t2: #a855f7; --tglow: rgba(250, 204, 21, 0.3); }
-.tier-premium { --t1: #f472b6; --t2: #38bdf8; --t3: #facc15; --tglow: rgba(244, 114, 182, 0.4); }
+.tier-premium { --t1: #f472b6; --t2: #38bdf8; --tglow: rgba(244, 114, 182, 0.4); }
 .tier-all { --t1: var(--primary); --t2: var(--accent); }
 
 .panda-shop {
@@ -124,13 +124,11 @@
   border-color: #b45309;
   color: #b45309;
 }
-:root[data-theme="dark"]:not(.space-exploring) .shop-head a,
 :root:not([data-theme="light"]):not(.space-exploring) .shop-head a {
   background: rgba(36, 28, 22, 0.85);
   border-color: #543f2e;
   color: #f7eee2;
 }
-:root[data-theme="dark"]:not(.space-exploring) .shop-head a:hover,
 :root:not([data-theme="light"]):not(.space-exploring) .shop-head a:hover {
   background: rgba(45, 106, 79, 0.35);
   border-color: #52b788;

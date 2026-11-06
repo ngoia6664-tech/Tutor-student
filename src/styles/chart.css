@@ -4,15 +4,6 @@
   flex-direction: column;
   gap: 0.8rem;
 }
-.score-chart-range {
-  font: inherit;
-  font-size: 0.88rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--text);
-}
 .score-chart-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

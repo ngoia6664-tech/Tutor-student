@@ -775,7 +775,7 @@
 .pendant-lamp {
   position: fixed;
   top: -6px;
-  left: 63%;
+  left: calc(55% - 25px); /* tâm đèn (rộng 50px) thẳng đỉnh luồng sáng (.lamp-cone-triangle left: 55%); đèn cao ~69px nên nằm gọn trong dải trống phía trên hàng đầu của trang, không đè chữ */
   z-index: 1;
   padding: 0;
   border: 0;
@@ -801,8 +801,8 @@
   transition: opacity 0.45s var(--ease);
 }
 @keyframes lamp-swing {
-  0% { transform: rotate(-3.2deg); }
-  100% { transform: rotate(3.2deg); }
+  0% { transform: rotate(-7deg); }
+  100% { transform: rotate(7deg); }
 }
 
 /* Luồng sáng tam giác từ đèn chao rọi xuống khối trung tâm */
@@ -953,10 +953,6 @@
   .classroom-mainboard {
     left: 12%;
     width: 76%;
-  }
-  .pendant-lamp {
-    left: 72%;
-    scale: 0.8;
   }
 }
 

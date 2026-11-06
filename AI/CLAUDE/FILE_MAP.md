@@ -67,7 +67,7 @@
 - `ErrorBox.jsx` — Khối báo lỗi, có nút thử lại (onRetry)
 - `ExamParts.jsx` — Tiêu đề một phần của đề thi: "PHẦN I. Trắc nghiệm n
 - `ExerciseBody.jsx` — Hiển thị một câu hỏi theo loại (tự luận / trắc nghi�
-- `FeedbackButton.jsx` — Nút "Góp ý" (học sinh): hàng trong thanh bên / ngăn kéo menu (`variant="side"`, mọi cỡ màn); `variant="fab"` (nút nổi) không còn dùng trong Layout. Bấm mở b
+- `FeedbackButton.jsx` — Nút "Góp ý" (học sinh): hàng trong thanh bên / ngăn kéo menu (mọi cỡ màn; đã bỏ biến thể nút nổi `fab`). Bấm mở b
 - `FolderBox.jsx` — Một thư mục trong chủ đề (khối gập / mở, bài giảng + bài tập chung một danh sách), dùng ở ChapterDetail + StudentLibrary
 - `FilterTree.jsx` — Lọc danh sách của học sinh (Bài cần làm, Kết quả, Ôn tập) theo cây Lớp › Môn
 - `FormulaText.jsx` — Chữ gấu nói (Mascot, SpaceExplorer): đoạn đặt trong `...` l
@@ -140,6 +140,7 @@
 - `drafts.js` — Bản nháp câu trả lời học sinh trên máy (`draftKey` / `readDraft` / `writeDraft` / `draftCount`, giờ ghi `readDraftTime`) + bản sao trên máy chủ, bảng `assignment_drafts` (`fetchServerDraft` / `fetchServerDraftCounts` / `pushServerDraft` / `deleteServerDraft`): trang làm bài + cột phải "Đang làm dở" ở Bài cần làm (có test)
 - `useDraftSync.js` — Hook trang làm bài: mở bài lấy bản nháp máy chủ (mới hơn thì thay), sửa xong 2 giây đẩy lên, rời trang đẩy nốt; trả hàm xóa bản nháp máy chủ khi nộp
 - `focusPage.js` — `isFocusPage`: trang làm một bài / đọc một bài giảng của học sinh → Layout ẩn thanh tab dưới (có test)
+- `useFocusTrap.js` — Hook cho hộp thoại nổi: focus vào hộp khi mở, Esc đóng, Tab / Shift+Tab xoay vòng trong hộp, đóng thì trả focus về nút đã mở (SettingsPanel, QuickAssign, StreakFlame, FeedbackButton)
 - `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chủ đề (chỉ chapter_id), chuyển thư mục (chỉ folder_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chủ đề kèm / không kèm bài bên trong
 - `answerNotes.js` — Lời phê từng câu của gia sư ("Giáo viên chấm:"), bảng a
 - `assignments.js` — Xóa ảnh bài nộp trong một thư mục <student_id>/<assignment_

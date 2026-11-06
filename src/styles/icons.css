@@ -57,7 +57,6 @@
   background: var(--primary);
   opacity: 1;
 }
-:root[data-theme="dark"]:not(.space-exploring) .depth-0 > .tree-row .tree-label::before,
 :root:not([data-theme="light"]):not(.space-exploring) .depth-0 > .tree-row .tree-label::before {
   color: #52b788;
   background: #52b788;
@@ -84,7 +83,6 @@
   color: var(--primary);
   vertical-align: -0.35rem;
 }
-:root[data-theme="dark"]:not(.space-exploring) .title-icon,
 :root:not([data-theme="light"]):not(.space-exploring) .title-icon {
   background: rgba(82, 183, 136, 0.22);
   border: 1.5px solid rgba(82, 183, 136, 0.45);
@@ -129,16 +127,5 @@
   .btn:hover .icon {
     transition: none;
     transform: none;
-  }
-}
-/* Điện thoại: nút Đăng xuất chỉ còn icon để thanh trên cùng không tràn */
-@media (max-width: 520px) {
-  .btn-logout .btn-text {
-    display: none;
-  }
-  .btn-logout {
-    width: 2.2rem;
-    min-height: 2.2rem;
-    padding: 0;
   }
 }
