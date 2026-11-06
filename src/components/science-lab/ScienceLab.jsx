@@ -400,3 +400,4 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true 
     </div>
   )
 }
+
