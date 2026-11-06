@@ -12,7 +12,8 @@ export const gradeLabel = (g) => (g ? `Lớp ${g}` : NO_GRADE)
 export const subjectLabel = (s) => s || NO_SUBJECT
 // Tên chương khi hiển thị: bỏ tiền tố dữ liệu "L12_" (dữ liệu giữ nguyên). Cây mục lục dùng bản giữ chữ thường cho gọn,
 // tiêu đề dùng sectionLabel (viết hoa); gáy + bìa kệ sách dùng sectionText cho dễ đọc
-export const sectionText = (s) => s?.replace(/^\s*L\d+_\s*/i, '') || NO_SECTION
+// Dữ liệu cũ ghi "Chuyên đề 2: Sóng": chỉ đổi chữ hiển thị thành "Chương" (CSDL / khóa URL giữ nguyên)
+export const sectionText = (s) => s?.replace(/^\s*L\d+_\s*/i, '').replace(/^\s*chuyên đề(?=\s*\d)/i, 'Chương') || NO_SECTION
 export const sectionLabel = (s) => (s ? sectionText(s).toLocaleUpperCase('vi') : NO_SECTION)
 
 // Sắp chủ đề: lớp → môn → chương → thứ tự → tên ("Chủ đề 4" đứng trước "Chủ đề 10")
@@ -42,7 +43,7 @@ export async function fetchChapters() {
 
 // Nhãn nhóm ngắn gọn cho ô chọn: "Lớp 11 · Vật lý · Chương 2: Sóng"
 export function chapterGroupLabel(c) {
-  return [c.grade ? `Lớp ${c.grade}` : '', c.subject || '', c.section || ''].filter(Boolean).join(' · ') || 'Khác'
+  return [c.grade ? `Lớp ${c.grade}` : '', c.subject || '', c.section ? sectionText(c.section) : ''].filter(Boolean).join(' · ') || 'Khác'
 }
 
 // ----- Cây Lớp › Môn › Chương › Chủ đề -----

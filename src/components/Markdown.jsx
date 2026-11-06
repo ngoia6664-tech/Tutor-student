@@ -2,6 +2,8 @@ import { memo } from 'react'
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
+// CSS phải cùng phiên bản với katex mà rehype-katex dùng (hiện 0.16.x, xem `npm ls katex`): lệch bản thì tên lớp
+// (strut / katex-strut...) không khớp, phân số mất cỡ chữ nhỏ + gạch ngang lệch. Đổi katex thì đổi cả hai.
 import 'katex/dist/katex.min.css'
 import { isSafeImageDataUri, themedSvg } from '../lib/svg.js'
 import { remarkAutoMath } from '../lib/autoMath.js'

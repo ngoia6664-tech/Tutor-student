@@ -24,6 +24,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
   const pick = useAssignSelection()
   const [assigning, setAssigning] = useState(null)
   const [moving, setMoving] = useState(null)
+  const [dest, setDest] = useState('') // thư mục đích đã chọn, bấm "Chuyển" mới thực thi
   const [naming, setNaming] = useState(null) // { id?, name }: đang tạo / đổi tên thư mục
 
   // Sang chủ đề khác: thoát chế độ chọn, không mang tick cũ theo
@@ -273,11 +274,11 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
         extra={
           pick.mode === 'edit' &&
           folders.length > 0 && (
-            <label className="assign-bar-extra">
+            <span className="assign-bar-extra">
               <Icon name="folder" />
-              <select value="" disabled={!pick.items.length} onChange={(e) => moveInto(e.target.value)} aria-label="Chuyển bài đã chọn vào thư mục">
+              <select value={dest} disabled={!pick.items.length} onChange={(e) => setDest(e.target.value)} aria-label="Thư mục đích">
                 <option value="" disabled>
-                  Vào thư mục…
+                  Chọn thư mục đích…
                 </option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -286,7 +287,18 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
                 ))}
                 <option value={OUT}>Chưa xếp (ra khỏi thư mục)</option>
               </select>
-            </label>
+              <button
+                type="button"
+                className="btn btn-small btn-primary"
+                disabled={!pick.items.length || !dest}
+                onClick={async () => {
+                  await moveInto(dest)
+                  setDest('')
+                }}
+              >
+                Chuyển
+              </button>
+            </span>
           )
         }
       />
