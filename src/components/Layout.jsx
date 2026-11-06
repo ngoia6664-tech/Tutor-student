@@ -9,9 +9,9 @@ import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
 import { mascotSay } from '../lib/celebrate.js'
-import { useSettings } from '../lib/settings.js'
+import { getSettings, useSettings } from '../lib/settings.js'
 import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
-import { openExplorerSound } from '../lib/spaceSound.js'
+import { primeDoorCreak } from './science-lab/labSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
@@ -266,6 +266,7 @@ export default function Layout() {
       className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${extra}`}
       onClick={() => {
         labWalkInRef.current = true
+        if (getSettings().soundEffects) primeDoorCreak()
         setDrawer(false)
         setLabOpen(true)
       }}
@@ -517,7 +518,6 @@ export default function Layout() {
             onOpenSpace={() => {
               fromLabRef.current = true
               setLabOpen(false)
-              openExplorerSound()
               setExploring(true)
             }}
           />

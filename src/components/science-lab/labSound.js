@@ -6,7 +6,7 @@
  */
 
 const SOUND_PATHS = {
-  doorCreak: null, // Ví dụ: '/sounds/door-creak.mp3' (sẽ gắn khi có file)
+  doorCreak: '/audio/sfx/door-creak.mp3', // 4 giây, khớp DOOR_MS trong labScene.js
   opticChime: null,
   bubble: null,
   clockTick: null,
@@ -26,8 +26,39 @@ function playFile(path, volume = 0.7) {
   }
 }
 
+// Dùng lại một thẻ Audio: iPhone chỉ cho phát thẻ đã được "mở" ngay trong cú bấm vào phòng
+let doorAudio = null
+
+/** Gọi trong cú bấm mở phòng, trước khi tải xong cảnh 3D */
+export function primeDoorCreak() {
+  if (typeof window === 'undefined') return
+  try {
+    doorAudio = doorAudio || new Audio(SOUND_PATHS.doorCreak)
+    doorAudio.preload = 'auto'
+    doorAudio.muted = true
+    doorAudio.play().then(() => {
+      if (doorAudio.muted) doorAudio.pause()
+    }).catch(() => {})
+  } catch {
+    // Trình duyệt chặn thì cửa mở không có tiếng
+  }
+}
+
 export function playDoorCreak() {
-  playFile(SOUND_PATHS.doorCreak, 0.8)
+  if (typeof window === 'undefined') return
+  try {
+    doorAudio = doorAudio || new Audio(SOUND_PATHS.doorCreak)
+    doorAudio.muted = false
+    doorAudio.currentTime = 0
+    doorAudio.volume = 0.85
+    doorAudio.play().catch(() => {})
+  } catch {
+    // Bỏ qua nếu trình duyệt chặn autoplay
+  }
+}
+
+export function stopDoorCreak() {
+  if (doorAudio) doorAudio.pause()
 }
 
 export function playOpticChime() {
