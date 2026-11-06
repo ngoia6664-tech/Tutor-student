@@ -8,6 +8,7 @@ import { loadSubmissionImages } from '../../lib/submissions.js'
 import { autoSummary } from '../../lib/assignments.js'
 import { clockText, groupExercises, minutesUsed, questionLabels } from '../../lib/exam.js'
 import { loadMarks } from '../../lib/marks.js'
+import { loadMyReports } from '../../lib/reports.js'
 import { loadRetries, MAX_RETRIES, retryScore, submitRetry } from '../../lib/retries.js'
 import { errMsg } from '../../lib/errors.js'
 import Icon from '../../components/Icon.jsx'
@@ -148,19 +149,6 @@ export default function StudentAssignment() {
       )}
     </div>
   )
-}
-
-// Báo lỗi đề gần nhất của học sinh cho từng câu. Bảng chưa có (chưa chạy lại schema.sql) thì bỏ qua, không làm hỏng trang.
-async function loadMyReports(exerciseIds, studentId) {
-  if (!exerciseIds.length) return {}
-  const { data, error } = await supabase
-    .from('question_reports')
-    .select('id, exercise_id, note, status, created_at, resolved_at')
-    .eq('student_id', studentId)
-    .in('exercise_id', exerciseIds)
-    .order('created_at', { ascending: true })
-  if (error) return {}
-  return Object.fromEntries(data.map((r) => [r.exercise_id, r]))
 }
 
 // Giữ tập câu khó đã tải khớp với nút vừa bấm, để chuyển giữa làm lại / xem kết quả không hiện trạng thái cũ

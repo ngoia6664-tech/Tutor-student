@@ -171,7 +171,7 @@
 - `pressFx.js` — Hiệu ứng theo con trỏ (cài ở main.jsx): vầng sáng theo chuột phủ trên mọi lớp (`.cursor-glow`, z-index 1000) + sóng lan khi bấm `.btn` (--px/--py, class is-rip); CSS ở components.css
 - `practice.js` — Chấm ngay trên máy khi học sinh ôn lại câu sai (không lưu
 - `recipients.js` — Giao nhanh bài giảng / bài tập cho học sinh ngay từ danh sá
-- `reports.js` — Sự kiện báo thanh menu cập nhật số câu bị báo lỗi đa
+- `reports.js` — `loadMyReports` (báo lỗi của học sinh theo câu: trang làm bài + DailyReview); Sự kiện báo thanh menu cập nhật số câu bị báo lỗi đa
 - `retries.js` — Học sinh làm lại bài đã nộp tối đa 3 lần. Điểm chín
 - `scoreChart.js` — Dữ liệu cho biểu đồ điểm (components/ScoreChart.jsx): quy
 - `settings.js` — Cài đặt trải nghiệm (hiệu ứng, linh vật, âm thanh), lư

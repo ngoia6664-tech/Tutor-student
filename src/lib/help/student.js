@@ -61,7 +61,7 @@ export const STUDENT_HELP = [
       },
       {
         q: 'Ôn tập mỗi ngày và chuỗi 🔥 là gì?',
-        a: 'Mỗi ngày, làm **Ôn tập hôm nay** để giữ chuỗi. Trên điện thoại, bấm nút ngay dưới ngọn lửa 🔥 ở góc trên bên phải. Trên máy tính, bấm **Ôn tập giữ chuỗi** trong khối **Hôm nay** của Bảng bên. Hoàn thành Ôn tập hôm nay thì được +10 Xu.',
+        a: 'Mỗi ngày, làm **Ôn tập hôm nay** để giữ chuỗi. Trên điện thoại, bấm nút ngay dưới ngọn lửa 🔥 ở góc trên bên phải. Trên máy tính, bấm **Ôn tập giữ chuỗi** trong khối **Hôm nay** của Bảng bên. Hoàn thành Ôn tập hôm nay thì được +10 Xu. Mỗi câu cũng có nút **Câu khó** và **Báo lỗi đề** như lúc làm bài.',
       },
       {
         q: 'Chuỗi bị đứt thì sao? Khiên là gì?',

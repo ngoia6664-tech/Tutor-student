@@ -165,7 +165,8 @@
   color: var(--muted);
   font-weight: 400;
 }
-.mh-btn + .qr-actions {
+.mh-btn + .qr-actions,
+.daily-from + .mh-btn {
   margin-left: 0;
 }
 .mh-btn:hover {

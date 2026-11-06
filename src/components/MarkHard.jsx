@@ -8,6 +8,7 @@ import { askConfirm, notifyError } from '../lib/dialog.js'
  * Nút "Câu khó" cho một câu (đặt trong .question-label, trước nút Báo lỗi đề).
  * Đánh dấu thì câu vào mục "Câu khó" ở trang Ôn tập; chỉ mất khi bấm "Bỏ đánh dấu".
  * - marked: trạng thái ban đầu; onChange(on): báo cho trang cha (vd. ẩn câu khỏi danh sách)
+ * @param {{ exerciseId: string, studentId: string, marked?: boolean, hasNote?: boolean, onChange?: (on: boolean) => void }} props
  */
 export default function MarkHard({ exerciseId, studentId, marked: initial = false, hasNote = false, onChange }) {
   const [marked, setMarked] = useState(initial)
