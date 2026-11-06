@@ -15,6 +15,21 @@ import { primeDoorCreak } from './science-lab/labSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
+
+/** Đặt cùng Suspense với SpaceExplorer nên chỉ chạy khi màn Vũ Trụ đã lên: phòng che đến khi trang học mờ hết (0,35s, explorer.css) rồi mới mờ đi.
+ * @param {{ onFade: () => void, onDone: () => void }} props */
+function LabHandoff({ onFade, onDone }) {
+  useEffect(() => {
+    const fade = setTimeout(onFade, 400)
+    const done = setTimeout(onDone, 750)
+    return () => {
+      clearTimeout(fade)
+      clearTimeout(done)
+    }
+    // Chỉ hẹn giờ một lần lúc màn Vũ Trụ vừa lên
+  }, [])
+  return null
+}
 const ScienceLab = lazy(() => import('./science-lab/ScienceLab.jsx'))
 // Bảng Cài đặt (nút bánh răng): bảng nổi, không đổi trang
 const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
@@ -188,6 +203,7 @@ export default function Layout() {
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
   const [labOpen, setLabOpen] = useState(false)
+  const [labLeaving, setLabLeaving] = useState(false)
   const fromLabRef = useRef(false)
   const labWalkInRef = useRef(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -505,19 +521,29 @@ export default function Layout() {
             initialPlace={askedPlace}
             onPlaceChange={setPlaceParam}
           />
+          {labOpen && (
+            <LabHandoff
+              onFade={() => setLabLeaving(true)}
+              onDone={() => {
+                setLabOpen(false)
+                setLabLeaving(false)
+              }}
+            />
+          )}
         </Suspense>
       )}
       {labOpen && (
         <Suspense fallback={null}>
           <ScienceLab
             initialWalkIn={labWalkInRef.current}
+            leaving={labLeaving}
             onClose={() => {
               fromLabRef.current = false
               setLabOpen(false)
             }}
             onOpenSpace={() => {
+              // Giữ phòng phía trên, LabHandoff đóng phòng khi màn Vũ Trụ đã sẵn sàng, để không lộ trang học
               fromLabRef.current = true
-              setLabOpen(false)
               setExploring(true)
             }}
           />

@@ -18,6 +18,13 @@
   -webkit-user-select: none;
 }
 
+/* Màn Vũ Trụ đã lên phía dưới: phòng mờ đi để lộ ra */
+.sci-lab-viewport.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
 .sci-stage {
   position: absolute;
   inset: 0;
@@ -347,7 +354,7 @@
   position: absolute;
   inset: 0;
   z-index: 8;
-  background: #fff6dd;
+  background: #030306;
   pointer-events: none;
   animation: sciFlash 0.75s ease-in forwards;
 }

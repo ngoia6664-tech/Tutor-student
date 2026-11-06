@@ -32,8 +32,8 @@ const FLY_MS_TRAVEL = 750
 
 /** Phòng Khoa học 3D: cửa gỗ mở, bước vào gác mái, bấm đồ vật thì camera bay đến.
  * Bấm kính thiên văn chỉ nhìn Hệ Mặt Trời qua thị kính; phải bấm thêm nút Du hành mới sang màn Vũ Trụ.
- * @param {{ onClose?: () => void, onOpenSpace?: () => void, initialWalkIn?: boolean }} props */
-export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true }) {
+ * @param {{ onClose?: () => void, onOpenSpace?: () => void, initialWalkIn?: boolean, leaving?: boolean }} props */
+export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true, leaving = false }) {
   const hostRef = useRef(/** @type {HTMLDivElement | null} */ (null))
   /** @type {import('react').RefObject<ReturnType<typeof createLabScene> | null>} */
   const labRef = useRef(null)
@@ -145,6 +145,8 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true 
   function lookThroughScope() {
     // Máy không có 3D thì không có gì để ngắm trong phòng: sang thẳng màn Vũ Trụ
     if (failed) return travel()
+    // Tải sẵn màn Vũ Trụ để lúc bấm Du hành không phải chờ
+    import('../SpaceExplorer.jsx').catch(() => {})
     if (soundRef.current) playOpticChime()
     setSpot(null)
     setQuote('')
@@ -208,7 +210,7 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true 
   const showCard = view === 'focus' && spot && spot !== 'desk'
 
   return createPortal(
-    <div className={`sci-lab-viewport is-${view} ${failed ? 'is-flat' : ''}`} role="dialog" aria-label="Phòng Khoa học">
+    <div className={`sci-lab-viewport is-${view} ${failed ? 'is-flat' : ''} ${leaving ? 'is-leaving' : ''}`} role="dialog" aria-label="Phòng Khoa học">
       <div ref={hostRef} className="sci-stage" />
 
       <header className="sci-top">
