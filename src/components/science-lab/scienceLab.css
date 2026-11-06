@@ -3,6 +3,26 @@
    Thành phần độc lập, kế thừa 100% hệ thống biến và giao diện của App.
    ===================================================================== */
 
+/* Lớp phủ màn hình & Hộp chứa độc lập không phụ thuộc Tailwind */
+.sci-root-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow-y: auto;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  background: rgba(14, 11, 9, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.sci-root-container {
+  max-width: 980px;
+  width: 100%;
+  margin: auto;
+}
+
 .science-lab {
   position: relative;
   display: flex;

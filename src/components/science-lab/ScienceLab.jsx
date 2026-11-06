@@ -98,15 +98,8 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true 
   }
 
   const content = (
-    <div
-      className="sci-root-overlay fixed inset-0 z-[9999] overflow-y-auto p-3 md:p-6 flex flex-col"
-      style={{
-        background: 'rgba(15, 12, 10, 0.94)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-      }}
-    >
-      <div className="max-w-4xl w-full mx-auto my-auto">
+    <div className="sci-root-overlay">
+      <div className="sci-root-container">
         <div className="science-lab">
           {/* 1. Modal hoạt cảnh: Gấu bước vào phòng */}
           {walkIn && (
