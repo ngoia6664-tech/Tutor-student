@@ -242,6 +242,27 @@
     background-color 0.15s var(--ease),
     border-color 0.15s var(--ease);
 }
+:root[data-theme="dark"]:not(.space-exploring) .crumb-btn,
+:root:not([data-theme="light"]):not(.space-exploring) .crumb-btn,
+:root[data-theme="dark"]:not(.space-exploring) .crumbs .crumb-link,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs .crumb-link {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) .crumb-btn:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .crumb-btn:hover,
+:root[data-theme="dark"]:not(.space-exploring) .crumbs a.crumb-link:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs a.crumb-link:hover {
+  color: #74c69d;
+  background: rgba(82, 183, 136, 0.2);
+}
+:root[data-theme="dark"]:not(.space-exploring) .crumb-caret,
+:root:not([data-theme="light"]):not(.space-exploring) .crumb-caret {
+  color: #f59e0b;
+}
+:root[data-theme="dark"]:not(.space-exploring) .crumbs .crumb-item.is-current,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs .crumb-item.is-current {
+  color: #52b788;
+}
 .crumb-btn:hover,
 .crumb-btn[aria-expanded="true"] {
   background: var(--primary-soft);
@@ -1616,6 +1637,205 @@
   :root[data-theme="light"] .shelf-book:hover .shelf-link,
   :root[data-theme="light"] .shelf-book:focus-within .shelf-link {
     box-shadow: 0 12px 20px -6px rgba(74, 48, 20, 0.45);
+  }
+}
+
+/* =====================================================================
+   LỚP HỌC BAN ĐÊM (MIDNIGHT CLASSROOM) - THẺ CHỦ ĐỀ SỔ DA & KỆ SÁCH CỔ ĐIỂN
+   ===================================================================== */
+:root[data-theme="dark"]:not(.space-exploring) .ccar-face,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-face,
+:root[data-theme="dark"]:not(.space-exploring) .shelf-cover,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-cover {
+  --dots: radial-gradient(circle, rgba(217, 119, 6, 0.14) 1px, transparent 1.5px) 0 0 / 14px 14px;
+  --paper: linear-gradient(160deg, #241c16 0%, #1c1511 58%, #140f0c 100%);
+  border: 1.5px solid #543f2e;
+  color: #f7eee2;
+  box-shadow:
+    0 12px 28px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .ccar-card.is-center .ccar-face,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-card.is-center .ccar-face {
+  border: 2px solid transparent;
+  background:
+    var(--dots) padding-box,
+    var(--paper) padding-box,
+    linear-gradient(135deg, #d97706 0%, #2d6a4f 100%) border-box;
+  box-shadow:
+    0 22px 48px -16px rgba(0, 0, 0, 0.85),
+    0 0 24px rgba(251, 191, 36, 0.16);
+}
+
+/* Ánh đèn bàn học vàng ấm quét nhẹ trên mặt thẻ thay cho dải hologram tím lạnh */
+:root[data-theme="dark"]:not(.space-exploring) .ccar-card.is-center .ccar-face::after,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-card.is-center .ccar-face::after {
+  background:
+    radial-gradient(
+      240px circle at var(--gx, 50%) var(--gy, 18%),
+      rgba(255, 237, 213, 0.22),
+      transparent 62%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 26%,
+      rgba(251, 191, 36, 0.14) 42%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(217, 119, 6, 0.14) 58%,
+      transparent 74%
+    )
+    var(--gx, 50%) 0 / 260% 100% no-repeat;
+}
+
+/* Tem môn học phong cách cổ điển ban đêm */
+:root[data-theme="dark"]:not(.space-exploring) .subject-chip,
+:root:not([data-theme="light"]):not(.space-exploring) .subject-chip {
+  background: rgba(45, 106, 79, 0.35);
+  border: 1px solid #52b788;
+  color: #a7f3d0;
+}
+:root[data-theme="dark"]:not(.space-exploring) :is(.is-physics) .subject-chip,
+:root:not([data-theme="light"]):not(.space-exploring) :is(.is-physics) .subject-chip {
+  background: rgba(180, 83, 9, 0.35);
+  border-color: #f59e0b;
+  color: #fde68a;
+}
+:root[data-theme="dark"]:not(.space-exploring) :is(.is-chem) .subject-chip,
+:root:not([data-theme="light"]):not(.space-exploring) :is(.is-chem) .subject-chip {
+  background: rgba(185, 28, 28, 0.35);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .ccar-stats span + span,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-stats span + span {
+  border-left-color: #48392d;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ccar-stats,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-stats {
+  color: #d5be9d;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ccar-stats .icon,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-stats .icon,
+:root[data-theme="dark"]:not(.space-exploring) .shelf-stats .icon,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-stats .icon {
+  color: #f59e0b;
+}
+:root[data-theme="dark"]:not(.space-exploring) .ccar-actions,
+:root:not([data-theme="light"]):not(.space-exploring) .ccar-actions {
+  border-top-color: #48392d;
+}
+
+/* Kệ Sách Gỗ Mun Gác Mái & Bộ Sách Bìa Da Cổ Điển Ban Đêm */
+:root[data-theme="dark"]:not(.space-exploring) .shelf-head span,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-head span {
+  color: #d5be9d;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-board::after,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-board::after {
+  height: 14px;
+  border-radius: 3px 3px 6px 6px;
+  border: 1px solid #362213;
+  border-top-color: #85532c;
+  background: linear-gradient(
+    180deg,
+    #664121 0%,
+    #422915 48%,
+    #26160a 100%
+  );
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.7);
+}
+
+/* 5 tông màu bìa da/vải cổ điển gác mái đêm: Xanh rêu đậm, Đỏ đô thẫm, Nâu da bò đậm, Xanh đêm, Hổ phách cháy */
+:root[data-theme="dark"]:not(.space-exploring) .shelf-book,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-book {
+  --book-c1: #1a4231;
+  --book-c2: #0e271c;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-book:nth-child(5n + 2),
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-book:nth-child(5n + 2) {
+  --book-c1: #5c1d22;
+  --book-c2: #380e12;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-book:nth-child(5n + 3),
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-book:nth-child(5n + 3) {
+  --book-c1: #5c3519;
+  --book-c2: #381f0d;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-book:nth-child(5n + 4),
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-book:nth-child(5n + 4) {
+  --book-c1: #1a384f;
+  --book-c2: #0e2130;
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-book:nth-child(5n + 5),
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-book:nth-child(5n + 5) {
+  --book-c1: #664317;
+  --book-c2: #3d260b;
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine {
+  padding-top: 0.55rem;
+  color: #fef3c7;
+  background: linear-gradient(
+    90deg,
+    var(--book-c2) 0%,
+    var(--book-c1) 28%,
+    color-mix(in srgb, var(--book-c1) 75%, #ffffff) 50%,
+    var(--book-c1) 72%,
+    var(--book-c2) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    3px 0 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Hai đường chỉ dập nhũ vàng kim ngang đầu và chân gáy sách */
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine::before,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine::before,
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine::after,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine::after {
+  border-block: 1px solid rgba(251, 191, 36, 0.75);
+  background: rgba(217, 119, 6, 0.22);
+}
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine::before,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine::before {
+  top: 2.55rem;
+}
+
+/* Tem giấy kem in số chương trên đầu gáy sách */
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine b,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.55rem;
+  padding: 0.12rem 0.32rem;
+  border-radius: 4px;
+  background: #fdf9f2;
+  border: 1px solid #85532c;
+  color: #1f1610;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"]:not(.space-exploring) .shelf-spine-name,
+:root:not([data-theme="light"]):not(.space-exploring) .shelf-spine-name {
+  color: #fef08a;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font-weight: 600;
+}
+
+@media (hover: hover) and (min-width: 521px) {
+  :root[data-theme="dark"]:not(.space-exploring) .shelf-book:hover .shelf-link,
+  :root:not([data-theme="light"]):not(.space-exploring) .shelf-book:hover .shelf-link,
+  :root[data-theme="dark"]:not(.space-exploring) .shelf-book:focus-within .shelf-link,
+  :root:not([data-theme="light"]):not(.space-exploring) .shelf-book:focus-within .shelf-link {
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.75);
   }
 }
 

@@ -22,17 +22,17 @@
   --border-strong: #70543f;
   --text: #f7eee2; /* Mực giấy ngà đêm, cực kỳ sắc nét và dịu mắt */
   --muted: #aa9582; /* Nâu xám trầm cổ điển */
-  --primary: #2d6a4f; /* Xanh bảng phấn cổ điển */
+  --primary: #52b788; /* Xanh bảng phấn dạ quang, tương phản cao trên nền gỗ/slate đêm (7.5:1) */
   --accent: #d97706; /* Hổ phách đèn học */
   --on-primary: #ffffff;
-  --grad: linear-gradient(100deg, #2d6a4f 0%, #85532c 55%, #d97706 100%);
+  --grad: linear-gradient(100deg, #52b788 0%, #85532c 55%, #d97706 100%);
   --grad-soft: linear-gradient(
     100deg,
-    rgba(45, 106, 79, 0.18),
+    rgba(82, 183, 136, 0.18),
     rgba(217, 119, 6, 0.18)
   );
   --glow: 0 8px 24px -8px rgba(217, 119, 6, 0.38);
-  --primary-soft: rgba(45, 106, 79, 0.18);
+  --primary-soft: rgba(82, 183, 136, 0.18);
   --ok: #34d399;
   --ok-soft: rgba(52, 211, 153, 0.14);
   --danger: #ef4444;
@@ -257,13 +257,8 @@ a {
   color: var(--primary);
   text-underline-offset: 3px;
 }
-:root[data-theme="dark"]:not(.space-exploring) a,
-:root:not([data-theme="light"]):not(.space-exploring) a {
-  color: #52b788;
-}
-:root[data-theme="dark"]:not(.space-exploring) a:hover,
-:root:not([data-theme="light"]):not(.space-exploring) a:hover {
-  color: #74c69d;
+a:hover {
+  filter: brightness(1.15);
 }
 
 h1,

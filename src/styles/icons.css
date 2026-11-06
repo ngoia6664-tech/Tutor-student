@@ -57,6 +57,11 @@
   background: var(--primary);
   opacity: 1;
 }
+:root[data-theme="dark"]:not(.space-exploring) .depth-0 > .tree-row .tree-label::before,
+:root:not([data-theme="light"]):not(.space-exploring) .depth-0 > .tree-row .tree-label::before {
+  color: #52b788;
+  background: #52b788;
+}
 .tree-leaf-text::before {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'1.8'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M14%203H7a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2V8l-5-5Zm0%200v5h5M9%2013h6M9%2017h4'%2F%3E%3C%2Fsvg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'1.8'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M14%203H7a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2V8l-5-5Zm0%200v5h5M9%2013h6M9%2017h4'%2F%3E%3C%2Fsvg%3E");

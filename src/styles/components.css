@@ -413,6 +413,18 @@ a.chip {
 .crumbs a:hover {
   text-decoration: underline;
 }
+:root[data-theme="dark"]:not(.space-exploring) .crumbs,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs {
+  color: #aa9582;
+}
+:root[data-theme="dark"]:not(.space-exploring) .crumbs a,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs a {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) .crumbs a:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .crumbs a:hover {
+  color: #74c69d;
+}
 
 /* ===== Khung xương khi đang tải (thay vòng xoay) ===== */
 .skeleton {
@@ -723,6 +735,20 @@ select option {
   color: var(--primary-light);
   border-radius: 999px;
   font-weight: 600;
+}
+:root[data-theme="dark"]:not(.space-exploring) .custom-select-btn:hover,
+:root:not([data-theme="light"]):not(.space-exploring) .custom-select-btn:hover {
+  border-color: #52b788;
+  box-shadow: 0 2px 8px -2px rgba(82, 183, 136, 0.35);
+}
+:root[data-theme="dark"]:not(.space-exploring) .custom-select-icon,
+:root:not([data-theme="light"]):not(.space-exploring) .custom-select-icon {
+  color: #52b788;
+}
+:root[data-theme="dark"]:not(.space-exploring) .custom-select-badge,
+:root:not([data-theme="light"]):not(.space-exploring) .custom-select-badge {
+  background: rgba(82, 183, 136, 0.2);
+  color: #74c69d;
 }
 
 .custom-select-arrow {
