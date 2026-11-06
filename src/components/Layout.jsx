@@ -261,22 +261,16 @@ export default function Layout() {
   const telescopeBtn = (labeled, extra = '') => (
     <button
       type="button"
-      className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${studying ? 'is-locked' : ''} ${extra}`}
+      className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${extra}`}
       onClick={() => {
-        if (studying) return mascotSay(TELESCOPE_LOCKED)
         setDrawer(false)
         setLabOpen(true)
       }}
-      aria-label={studying ? 'Phòng Khoa học (mở sau khi nộp bài)' : 'Phòng Khoa học'}
-      title={studying ? 'Nộp bài xong để mở khóa' : 'Phòng Khoa học'}
+      aria-label="Phòng Khoa học"
+      title="Phòng Khoa học & Nghiên cứu"
     >
       <Icon name="telescope" />
       {labeled && <span className="side-label">Phòng Khoa học</span>}
-      {studying && (
-        <span className="telescope-lock">
-          <Icon name="lock" size={11} />
-        </span>
-      )}
     </button>
   )
 
@@ -499,25 +493,14 @@ export default function Layout() {
       )}
       {labOpen && (
         <Suspense fallback={null}>
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto p-3 md:p-6 flex flex-col"
-            style={{
-              background: 'rgba(15, 12, 10, 0.94)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+          <ScienceLab
+            onClose={() => setLabOpen(false)}
+            onOpenSpace={() => {
+              setLabOpen(false)
+              openExplorerSound()
+              setExploring(true)
             }}
-          >
-            <div className="max-w-4xl w-full mx-auto my-auto">
-              <ScienceLab
-                onClose={() => setLabOpen(false)}
-                onOpenSpace={() => {
-                  setLabOpen(false)
-                  openExplorerSound()
-                  setExploring(true)
-                }}
-              />
-            </div>
-          </div>
+          />
         </Suspense>
       )}
       {settingsOpen && (
