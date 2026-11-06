@@ -1,0 +1,540 @@
+/* =====================================================================
+   PHÒNG KHOA HỌC & NGHIÊN CỨU (SCIENCE LAB)
+   Thành phần độc lập, kế thừa 100% hệ thống biến và giao diện của App.
+   ===================================================================== */
+
+.science-lab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-height: 100%;
+  padding-bottom: 2.5rem;
+  color: var(--text);
+  animation: sciFadeIn 0.35s ease-out;
+}
+
+@keyframes sciFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Thanh đầu trang: tiêu đề + nhãn trạng thái + nút hành động */
+.sci-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sci-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sci-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 14px rgba(82, 183, 136, 0.25);
+  font-size: 1.25rem;
+}
+
+.sci-title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.sci-subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sci-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+.sci-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: sciPulse 2s infinite ease-in-out;
+}
+
+@keyframes sciPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+/* Thanh Tab chuyển chế độ trong phòng */
+.sci-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sci-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.05rem;
+  border-radius: var(--r-chip, 999px);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sci-tab:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.sci-tab.active {
+  background: var(--btn-primary);
+  border-color: var(--primary);
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 12px rgba(82, 183, 136, 0.35);
+}
+
+/* =====================================================================
+   TAB 1: KHU VỰC KÍNH THIÊN VĂN (OBSERVATORY)
+   ===================================================================== */
+.sci-observatory-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.15rem;
+}
+
+@media (max-width: 900px) {
+  .sci-observatory-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sci-telescope-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1.5px solid var(--border-strong);
+  border-top: 3px solid var(--accent);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 1.4rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sci-telescope-window {
+  position: relative;
+  height: 220px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: radial-gradient(ellipse at top, #141b29 0%, #0d111a 60%, #07090e 100%);
+  overflow: hidden;
+  margin-bottom: 1.1rem;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+.sci-moon {
+  position: absolute;
+  top: 20px;
+  right: 32px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fef3c7;
+  box-shadow: 0 0 35px rgba(254, 243, 199, 0.65);
+}
+
+.sci-moon-crater {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(180, 83, 9, 0.18);
+}
+
+.sci-telescope-art {
+  position: absolute;
+  bottom: 0;
+  left: 28px;
+  width: 170px;
+  height: 160px;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.8));
+}
+
+.sci-telescope-beam {
+  position: absolute;
+  top: 15px;
+  left: 140px;
+  width: 220px;
+  height: 70px;
+  background: linear-gradient(75deg, rgba(251, 191, 36, 0.28) 0%, transparent 80%);
+  transform-origin: left center;
+  transform: rotate(-32deg);
+  pointer-events: none;
+}
+
+.sci-launch-btn {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border-radius: 12px;
+  background: var(--btn-moment, linear-gradient(100deg, #2d6a4f 0%, #85532c 55%, #d97706 100%));
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.35);
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.sci-launch-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.12);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.5);
+}
+
+.sci-launch-btn:active {
+  transform: translateY(1px);
+}
+
+/* Cột danh sách mục tiêu quan sát */
+.sci-targets-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sci-target-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.sci-target-item:hover {
+  border-color: var(--primary);
+  background: rgba(82, 183, 136, 0.12);
+  transform: translateX(3px);
+}
+
+.sci-target-item.is-selected {
+  border-color: var(--primary);
+  background: rgba(82, 183, 136, 0.18);
+  box-shadow: 0 0 10px rgba(82, 183, 136, 0.2);
+}
+
+.sci-target-icon {
+  font-size: 1.4rem;
+  flex: none;
+}
+
+.sci-target-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sci-target-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.sci-target-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+/* =====================================================================
+   TAB 2: BÀN THÍ NGHIỆM & BẢNG ĐEN (EXPERIMENTS)
+   ===================================================================== */
+.sci-board-card {
+  border: 4px solid var(--border-strong);
+  border-radius: 16px;
+  background: var(--chalkboard, #1c2620);
+  padding: 1.35rem 1.5rem;
+  color: var(--chalk-text, #f4f6f0);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7), var(--shadow);
+  position: relative;
+}
+
+.sci-board-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px dashed rgba(255, 255, 255, 0.25);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #a7f3d0;
+}
+
+.sci-formula-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.sci-formula-box {
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.sci-formula-math {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fde047;
+  margin-bottom: 0.35rem;
+}
+
+.sci-formula-desc {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.4;
+}
+
+/* =====================================================================
+   TAB 3: SỔ TAY GIÁO SƯ GẤU TRÚC (JOURNAL)
+   ===================================================================== */
+.sci-journal-wrap {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 650px) {
+  .sci-journal-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sci-panda-stand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.sci-panda-frame {
+  width: 140px;
+  height: 150px;
+}
+
+.sci-journal-bubble {
+  border: 1.5px solid var(--border-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 1.35rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* =====================================================================
+   MODAL HOẠT CẢNH: GẤU BƯỚC VÀO PHÒNG (WALK-IN ANIMATION)
+   ===================================================================== */
+.sci-walkin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 8, 7, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: sciOverlayFade 0.4s ease;
+}
+
+@keyframes sciOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sci-door-stage {
+  position: relative;
+  width: 280px;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.sci-door-frame {
+  position: absolute;
+  inset: 0;
+  border: 8px solid #362213;
+  border-top-left-radius: 140px;
+  border-top-right-radius: 140px;
+  background: #1c130c;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 0 2px #543f2e;
+  overflow: hidden;
+}
+
+.sci-door-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(254, 243, 199, 0.9) 0%, rgba(251, 191, 36, 0.5) 50%, rgba(45, 106, 79, 0.4) 100%);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.sci-door-light.is-shining {
+  opacity: 1;
+}
+
+.sci-door-leaf {
+  position: absolute;
+  inset: 0;
+  border-top-left-radius: 132px;
+  border-top-right-radius: 132px;
+  background: linear-gradient(135deg, #4d2d18 0%, #2e1709 100%);
+  border-right: 2px solid #6b3e1f;
+  transform-origin: left center;
+  transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.sci-door-leaf.is-opened {
+  transform: rotateY(-82deg);
+}
+
+.sci-door-sign {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  border: 1.5px solid #fef08a;
+  color: #fffbeb;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  margin-bottom: 2rem;
+}
+
+.sci-door-knob {
+  position: absolute;
+  right: 18px;
+  top: 55%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #78350f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.sci-panda-walker {
+  position: absolute;
+  bottom: 25px;
+  left: 20px;
+  width: 100px;
+  height: 120px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.sci-panda-walker.is-walking {
+  opacity: 1;
+  animation: sciPandaEnter 2s forwards ease-in-out, sciPandaWaddle 0.35s infinite ease-in-out;
+}
+
+@keyframes sciPandaEnter {
+  0% { transform: translateX(-60px) scale(0.85); }
+  60% { transform: translateX(50px) scale(0.95); opacity: 1; }
+  100% { transform: translateX(85px) scale(0.7); opacity: 0; }
+}
+
+@keyframes sciPandaWaddle {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -6px; }
+}
+
+.sci-walkin-caption {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fef3c7;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.sci-walkin-skip {
+  margin-top: 0.85rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5dcd3;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.sci-walkin-skip:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}

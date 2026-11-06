@@ -15,6 +15,7 @@ import { openExplorerSound } from '../lib/spaceSound.js'
 
 // Chế độ ngắm vũ trụ: chỉ tải khi bấm mở, không làm nặng app
 const SpaceExplorer = lazy(() => import('./SpaceExplorer.jsx'))
+const ScienceLab = lazy(() => import('./science-lab/ScienceLab.jsx'))
 // Bảng Cài đặt (nút bánh răng): bảng nổi, không đổi trang
 const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'))
 // Gấu trúc (hình vẽ nặng): tải sau khi trang đã hiện; tắt linh vật trong Cài đặt thì không tải
@@ -186,6 +187,7 @@ export default function Layout() {
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
+  const [labOpen, setLabOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Viên nền trượt sau mục menu đang chọn: đo lại khi đổi trang hoặc khi mục menu đổi cỡ (chuông báo, xoay máy...)
   const navRef = useRef(/** @type {HTMLElement | null} */ (null))
@@ -255,7 +257,7 @@ export default function Layout() {
     }
   }, [])
 
-  /** Nút ngắm vũ trụ: tròn trên thanh trên cùng, hoặc hàng có chữ trong ngăn kéo (`labeled`) @param {boolean} labeled @param {string} [extra] */
+  /** Nút phòng khoa học / kính thiên văn: tròn trên thanh trên cùng, hoặc hàng có chữ trong ngăn kéo (`labeled`) @param {boolean} labeled @param {string} [extra] */
   const telescopeBtn = (labeled, extra = '') => (
     <button
       type="button"
@@ -263,16 +265,13 @@ export default function Layout() {
       onClick={() => {
         if (studying) return mascotSay(TELESCOPE_LOCKED)
         setDrawer(false)
-        // Đã chọn bật nhạc trong phiên này: phát ngay trong cú bấm (iPhone chặn nếu đợi tải xong trang ngắm vũ trụ).
-        // Lần đầu chưa chọn: SpaceExplorer hỏi người dùng
-        openExplorerSound()
-        setExploring(true)
+        setLabOpen(true)
       }}
-      aria-label={studying ? 'Ngắm vũ trụ (mở sau khi nộp bài)' : 'Ngắm vũ trụ'}
-      title={studying ? 'Nộp bài xong để mở khóa' : 'Ngắm vũ trụ'}
+      aria-label={studying ? 'Phòng Khoa học (mở sau khi nộp bài)' : 'Phòng Khoa học'}
+      title={studying ? 'Nộp bài xong để mở khóa' : 'Phòng Khoa học'}
     >
       <Icon name="telescope" />
-      {labeled && <span className="side-label">Ngắm vũ trụ</span>}
+      {labeled && <span className="side-label">Phòng Khoa học</span>}
       {studying && (
         <span className="telescope-lock">
           <Icon name="lock" size={11} />
@@ -372,7 +371,7 @@ export default function Layout() {
               <span className="side-label">Cửa hàng gấu</span>
             </NavLink>
           )}
-          {!isTutor && <FeedbackButton variant="side" />}
+          {!isTutor && <FeedbackButton />}
           <NavLink to={`/${isTutor ? 'tutor' : 'student'}/help`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Hỏi đáp">
             <Icon name="help" />
             <span className="side-label">Hỏi đáp</span>
@@ -496,6 +495,29 @@ export default function Layout() {
       {exploring && (
         <Suspense fallback={null}>
           <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />
+        </Suspense>
+      )}
+      {labOpen && (
+        <Suspense fallback={null}>
+          <div
+            className="fixed inset-0 z-50 overflow-y-auto p-3 md:p-6 flex flex-col"
+            style={{
+              background: 'rgba(15, 12, 10, 0.94)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+            }}
+          >
+            <div className="max-w-4xl w-full mx-auto my-auto">
+              <ScienceLab
+                onClose={() => setLabOpen(false)}
+                onOpenSpace={() => {
+                  setLabOpen(false)
+                  openExplorerSound()
+                  setExploring(true)
+                }}
+              />
+            </div>
+          </div>
         </Suspense>
       )}
       {settingsOpen && (
