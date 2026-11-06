@@ -48,6 +48,10 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
   delete thùng rác mở + cảnh báo, hộp viền đỏ · deleted thùng rác sạch; gấu `FrontPanda` prop `face` normal/sad/serious/happy)
   + CSS `styles/dialog.css`. Thêm `notifyError` (thay `window.alert`), `confirmNoStudents`, `confirmDropSubmitted`.
   KHÔNG dùng `window.confirm`/`alert` (bị chặn trong app cài trên điện thoại) — mọi hỏi/báo đều qua `lib/dialog.js`.
+- Công thức viết bằng chữ thường (bài cũ nhập từ Word / file JSON, chưa có `$...$`): `lib/autoMath.js` tự đổi lúc hiển thị (plugin remark trong `Markdown.jsx`), không sửa dữ liệu.
+  Nhận: phân số `a/b`, `λD/a`, `(1)/(2)`; chỉ số `x_s`, `x₁`, `λ_min`, `N_riêng,1`; số mũ `x²`, `10⁻³`; căn `√`; `|x|`, `abs(x)`; `⌊x⌋`; hàm `cosα`, `sinπ/6`; số kèm đơn vị `0,6 μm`, `m/s²`;
+  Hy Lạp, `≤ ≥ ≈ ∈`, dấu phẩy thập phân. Không đổi: câu chữ thường, đơn vị đứng một mình, `A/B/C/D`, ngày `12/10`, mã `cd5-ii-tn-1`, công thức hóa học `CO₂`, `P-T`, `a-d`, từ viết tắt (SGK-CD).
+  Đoán sai một đoạn thì bọc trong `` `...` `` để giữ nguyên. Quy tắc nằm một chỗ (`autoMath.js`), có bảng test từ bài thật (`tests/autoMath.test.js`).
 - Hiệu năng ô nhập: `Markdown` là `memo` (KaTeX chỉ vẽ lại khi chữ đổi). Danh sách câu nặng tách thành component `memo` + callback `useCallback`
   (`SheetQuestion` ở AssignmentTracking, `ExerciseEditCard` ở AssignmentEditor, `LessonPreview`/`AssignmentPreview` ở ImportJson) để gõ một ô không vẽ lại cả trang.
 - PWA: `public/manifest.webmanifest`, `public/sw.js` (chỉ cache index.html + /assets, không cache Supabase),

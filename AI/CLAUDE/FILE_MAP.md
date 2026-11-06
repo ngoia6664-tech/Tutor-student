@@ -83,7 +83,7 @@
 - `LessonView.jsx` — Dấu phân trang trong Markdown (một dòng riêng). Bài nhập JSO
 - `Loading.jsx` — Trạng thái đang tải.
 - `MarkHard.jsx` — Nút đánh dấu câu khó (học sinh)
-- `Markdown.jsx` — Mặc định react-markdown chặn mọi link "data:". Cho phép riê
+- `Markdown.jsx` — Hiển thị Markdown + KaTeX (`$...$`, `$$...$$`) cho mọi bài giảng / đề / lời giải; ảnh nhúng base64 (react-markdown mặc định chặn link `data:`, cho riêng ảnh), link mở tab mới, hình SVG đổi màu theo giao diện. Gắn plugin `remarkAutoMath` (lib/autoMath.js): công thức viết bằng chữ thường trong bài cũ tự thành LaTeX lúc hiển thị.
 - `MarkdownField.jsx` — Ô soạn Markdown có nút xem trước công thức.
 - `Mascot.jsx` — Giáo sư Gấu Trúc: linh vật góc dưới phải.
 - `NotificationBell.jsx` — "5 phút trước", "3 giờ trước", "Hôm qua", hoặc ngày
@@ -140,6 +140,7 @@
 - `drafts.js` — Bản nháp câu trả lời học sinh trên máy (`draftKey` / `readDraft` / `writeDraft` / `draftCount`, giờ ghi `readDraftTime`) + bản sao trên máy chủ, bảng `assignment_drafts` (`fetchServerDraft` / `fetchServerDraftCounts` / `pushServerDraft` / `deleteServerDraft`): trang làm bài + cột phải "Đang làm dở" ở Bài cần làm (có test)
 - `useDraftSync.js` — Hook trang làm bài: mở bài lấy bản nháp máy chủ (mới hơn thì thay), sửa xong 2 giây đẩy lên, rời trang đẩy nốt; trả hàm xóa bản nháp máy chủ khi nộp
 - `focusPage.js` — `isFocusPage`: trang làm một bài / đọc một bài giảng của học sinh → Layout ẩn thanh tab dưới (có test)
+- `autoMath.js` — Tự nhận công thức viết bằng chữ thường (`λD/a`, `x_s`, `λ_min`, `N₁ + N₂`, `Δd = kλ`, `0,5 μm`, `abs(x)`, `(1)/(2)`, `cosα`) và đổi sang LaTeX cho KaTeX: `convertText(text)` / `findMathSpans(text)` (thuần, có test) + plugin remark `remarkAutoMath` (duyệt nút chữ của cây Markdown, nên code / link / ảnh / `$...$` có sẵn không bị đụng). Chỉ đổi lúc hiển thị, dữ liệu đã lưu giữ nguyên; thà bỏ sót còn hơn đổi nhầm (đoạn phải có dấu =, ≤, phân số, chỉ số, chữ Hy Lạp, căn...). Muốn giữ nguyên một đoạn: bọc trong `` `...` ``
 - `useFocusTrap.js` — Hook cho hộp thoại nổi: focus vào hộp khi mở, Esc đóng, Tab / Shift+Tab xoay vòng trong hộp, đóng thì trả focus về nút đã mở (SettingsPanel, QuickAssign, StreakFlame, FeedbackButton)
 - `bulk.js` — Sửa nhiều / Xóa nhiều (gia sư): chuyển chủ đề (chỉ chapter_id), chuyển thư mục (chỉ folder_id), xóa nhiều bài giảng / bài tập (kết quả từng phần), xóa nhiều chủ đề kèm / không kèm bài bên trong
 - `answerNotes.js` — Lời phê từng câu của gia sư ("Giáo viên chấm:"), bảng a
@@ -227,4 +228,4 @@
 
 
 ## `tests/`
-- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight), Sửa nhiều / Xóa nhiều (bulk, Supabase giả lập), nhớ điều hướng (navMemory), nhãn chương + menu đường dẫn Thư viện (chapters), ô tìm theo tên (format)
+- `*.test.js` — Test tự động (Vitest, `npm test`): chấm trên máy (practice), điểm đề thi (exam), nhập JSON (importJson), mở khóa địa điểm (telescope), điểm biểu đồ (scoreChart), vật lý bay (flight), Sửa nhiều / Xóa nhiều (bulk, Supabase giả lập), nhớ điều hướng (navMemory), nhãn chương + menu đường dẫn Thư viện (chapters), ô tìm theo tên (format), tự đổi công thức chữ thường sang LaTeX (autoMath: bảng chuỗi lấy từ bài thật + chuỗi phải giữ nguyên + vẽ thử bằng KaTeX / react-markdown)
