@@ -215,10 +215,10 @@
 - `mascot.css` — Giáo sư Gấu Trúc (components/Mascot.jsx, hình vẽ ở PandaArt.
 - `mobile.css` — Điện thoại
 - `notifications.css` — Chuông thông báo (học sinh)
-- `panda-act.css` — Hoạt cảnh tương tác của trang phục (components/panda/PandaA
+- `panda-act.css` — (tải lười: import trong PandaArt.jsx, không qua index.css) Hoạt cảnh tương tác của trang phục (components/panda/PandaA
 - `panda-dock.css` — Cụm góc trái dưới (components/PandaDock.jsx) + chừa chỗ cho cụm (đáy .page, đáy cây Thư viện, nâng trên thanh Lưu .sticky-actions, ẩn khi đang chọn nhiều trên màn hẹp)
 - `panda-shop.css` — Panda Fashion Shop (pages/student/StudentShop.jsx + components/shop/*,
-- `panda-skin.css` — Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tư�
+- `panda-skin.css` — (tải lười: import trong PandaArt.jsx) Trang phục Panda: viền sáng theo độ hiếm (hoạt cảnh tư�
 - `reports.css` — Báo lỗi đề (học sinh)
 - `settings.css` — Cài đặt (components/SettingsPanel.jsx, lib/settings.js)
 - `space.css` — Nền vũ trụ (components/SpaceBackdrop.jsx)

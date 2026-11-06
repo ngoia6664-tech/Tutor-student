@@ -1,4 +1,7 @@
 import { useId } from 'react'
+// CSS gấu mặc đồ + hoạt cảnh: chỉ tải cùng cây gấu (Mascot / hộp thoại / cửa hàng đều lazy), không nằm trong CSS đầu trang
+import '../styles/panda-skin.css'
+import '../styles/panda-act.css'
 
 // Hình vẽ Giáo sư Gấu Trúc (SVG nét mượt): mũ tốt nghiệp, kính, nơ, sách, đũa ngôi sao.
 // Chuyển động (bước chân, vẫy tay, lăn...) do styles/mascot.css điều khiển qua các class pd-*.
