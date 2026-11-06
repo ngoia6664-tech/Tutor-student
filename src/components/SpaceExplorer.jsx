@@ -201,7 +201,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const fmt = (n) => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 
 // initialPlace: địa điểm xin mở từ URL (?vu-tru=...) — vẫn phải qua placeAccess; onPlaceChange: Layout ghi lại vào URL
-export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) {
+export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange, backLabel = 'Quay lại học' }) {
   const [picked, setPicked] = useState(null)
   // Địa điểm đang xem (lib/telescope.js). Luôn bắt đầu ở Hệ Mặt Trời; địa điểm khác chỉ vào khi placeAccess = 'open'
   const shop = usePandaShop()
@@ -611,7 +611,7 @@ export default function SpaceExplorer({ onClose, initialPlace, onPlaceChange }) 
             style={{ '--vol': `${volume}%` }}
           />
           <button type="button" className="btn btn-primary btn-small" onClick={onClose}>
-            <Icon name="close" /> Quay lại học
+            <Icon name="close" /> {backLabel}
           </button>
         </div>
       </div>

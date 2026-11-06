@@ -1,426 +1,522 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '../Icon.jsx'
 import { FrontPanda } from '../PandaArt.jsx'
+import { playDoorCreak, playOpticChime, playBubbleSound, playClockTick } from './labSound.js'
 import './scienceLab.css'
 
-const TARGETS = [
-  {
-    id: 'moon',
-    name: 'Mặt Trăng (Moon)',
-    icon: '🌕',
-    dist: '384 400 km',
-    phase: 'Trăng tròn 100%',
-    note: 'Chi tiết các biển dung nham cổ và hố thiên thạch Tycho.',
-  },
-  {
-    id: 'saturn',
-    name: 'Sao Thổ (Saturn)',
-    icon: '🪐',
-    dist: '1.4 tỉ km',
-    phase: 'Vành đai nghiêng 26°',
-    note: 'Quan sát vành đai băng đá rực rỡ và mặt trăng Titan.',
-  },
-  {
-    id: 'jupiter',
-    name: 'Sao Mộc (Jupiter)',
-    icon: '🌌',
-    dist: '628 triệu km',
-    phase: 'Vệt Đỏ Lớn đang quay',
-    note: '4 vệ tinh Galileo (Io, Europa, Ganymede, Callisto).',
-  },
-  {
-    id: 'orion',
-    name: 'Tinh vân Lạp Hộ (M42)',
-    icon: '✨',
-    dist: '1 344 năm ánh sáng',
-    phase: 'Vườn ươm sao trẻ',
-    note: 'Đám mây bụi khí khổng lồ nơi các ngôi sao mới chào đời.',
-  },
-]
-
 export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true }) {
-  const [tab, setTab] = useState('telescope') // 'telescope' | 'lab' | 'journal'
+  // Trạng thái hoạt cảnh mở cửa bước vào
   const [walkIn, setWalkIn] = useState(initialWalkIn)
   const [doorOpen, setDoorOpen] = useState(false)
-  const [pandaWalking, setPandaWalking] = useState(false)
-  const [target, setTarget] = useState(TARGETS[0])
-  const [pendulumLength, setPendulumLength] = useState(1.0) // mét
+  const [lightGlow, setLightGlow] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
 
-  // Tính chu kì con lắc T = 2π * √(l / 9.8)
+  // Trạng thái tương tác trong phòng
+  const [activeModal, setActiveModal] = useState(null) // 'pendulum' | 'chalkboard' | 'journal' | 'tubes' | null
+  const [tubeColorIdx, setTubeColorIdx] = useState(0)
+  const [pendulumLength, setPendulumLength] = useState(1.0)
+  const [isZoomingSpace, setIsZoomingSpace] = useState(false)
+  const [pandaMood, setPandaMood] = useState('teach') // 'teach' | 'cheer' | 'wait'
+  const [pandaQuote, setPandaQuote] = useState('Chào mừng em đến với Phòng Nghiên Cứu!')
+  const [showPandaBubble, setShowPandaBubble] = useState(true)
+
+  const tubeColors = ['emerald', 'amber', 'cyan']
+
+  // Tính chu kì con lắc: T = 2 * pi * sqrt(l / 9.8)
   const pendulumPeriod = (2 * Math.PI * Math.sqrt(pendulumLength / 9.8)).toFixed(2)
 
-  // Hoạt cảnh cửa mở & gấu bước vào phòng
+  // Diễn hoạt mở cửa bước vào phòng khi vừa bật
   useEffect(() => {
     if (!walkIn) return
-    const t1 = setTimeout(() => setDoorOpen(true), 250)
-    const t2 = setTimeout(() => setPandaWalking(true), 650)
-    const t3 = setTimeout(() => {
-      setWalkIn(false)
-      setDoorOpen(false)
-      setPandaWalking(false)
-    }, 2400)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-      clearTimeout(t3)
-    }
-  }, [walkIn])
+    const t0 = setTimeout(() => {
+      if (soundEnabled) playDoorCreak()
+      setDoorOpen(true)
+      setLightGlow(true)
+    }, 180)
 
-  // Khóa cuộn trang nền khi mở phòng khoa học & lắng nghe phím Esc để đóng
+    const t1 = setTimeout(() => {
+      setWalkIn(false)
+    }, 2800)
+
+    return () => {
+      clearTimeout(t0)
+      clearTimeout(t1)
+    }
+  }, [walkIn, soundEnabled])
+
+  // Lắng nghe phím Esc để đóng popover hoặc thoát phòng
   useEffect(() => {
-    const prev = document.body.style.overflow
+    const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const onKey = (e) => {
-      if (e.key === 'Escape' && typeof onClose === 'function') {
-        onClose()
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (activeModal) {
+          setActiveModal(null)
+        } else if (typeof onClose === 'function') {
+          onClose()
+        }
       }
     }
-    window.addEventListener('keydown', onKey)
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.body.style.overflow = prev
-      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onClose])
+  }, [activeModal, onClose])
 
-  function replayWalkIn() {
-    setDoorOpen(false)
-    setPandaWalking(false)
-    setWalkIn(true)
+  // Khi bấm vào Kính Thiên Văn: Hiệu ứng phóng vào thị kính quang học (Optical Iris Zoom)
+  function handleLaunchSpace() {
+    if (isZoomingSpace) return
+    if (soundEnabled) playOpticChime()
+    setIsZoomingSpace(true)
+
+    setTimeout(() => {
+      if (typeof onOpenSpace === 'function') {
+        onOpenSpace()
+      }
+    }, 850)
   }
 
-  function handleTelescopeLaunch() {
-    if (typeof onOpenSpace === 'function') {
-      onOpenSpace()
-    } else {
-      alert('Đang mở Kính Thiên Văn thám hiểm Không Gian Vũ Trụ!')
-    }
+  // Tương tác với dàn ống nghiệm
+  function handleTubeClick() {
+    if (soundEnabled) playBubbleSound()
+    setTubeColorIdx((prev) => (prev + 1) % tubeColors.length)
+    setPandaMood('cheer')
+    setPandaQuote('Phản ứng quang phổ học thành công rực rỡ!')
+    setShowPandaBubble(true)
+  }
+
+  // Tương tác với con lắc
+  function handlePendulumClick() {
+    if (soundEnabled) playClockTick(false)
+    setActiveModal('pendulum')
+  }
+
+  // Tương tác với chú Gấu Trúc
+  function handlePandaClick() {
+    const quotes = [
+      'Vũ trụ bao la chứa hàng trăm tỉ thiên hà tuyệt đẹp!',
+      'Chu kì con lắc chỉ phụ thuộc chiều dài l và gia tốc g.',
+      'Hãy nhìn qua kính viễn vọng để ngắm vành đai Sao Thổ nhé!',
+      'Hôm nay chúng ta sẽ khám phá định luật vạn vật hấp dẫn!',
+    ]
+    const nextQ = quotes[Math.floor(Math.random() * quotes.length)]
+    setPandaQuote(nextQ)
+    setPandaMood((m) => (m === 'teach' ? 'cheer' : 'teach'))
+    setShowPandaBubble(true)
   }
 
   const content = (
-    <div className="sci-root-overlay">
-      <div className="sci-root-container">
-        <div className="science-lab">
-          {/* 1. Modal hoạt cảnh: Gấu bước vào phòng */}
-          {walkIn && (
-            <div className="sci-walkin-overlay">
-              <div className="sci-door-stage">
-                <div className="sci-door-frame">
-                  {/* Luồng sáng vàng rực từ bên trong phòng */}
-                  <div className={`sci-door-light ${doorOpen ? 'is-shining' : ''}`} />
-                  {/* Cánh cửa xoay bản lề */}
-                  <div className={`sci-door-leaf ${doorOpen ? 'is-opened' : ''}`}>
-                    <div className="sci-door-sign">Phòng Khoa Học</div>
-                    <div className="sci-door-knob" />
-                  </div>
-                </div>
+    <div className="sci-lab-viewport" role="dialog" aria-label="Phòng Khoa Học & Nghiên Cứu Gác Mái">
+      {/* 1. HOẠT CẢNH MỞ CỬA BƯỚC VÀO PHÒNG (CINEMATIC WALK-IN) */}
+      {walkIn && (
+        <div className="sci-walkin-cinematic">
+          <div className="sci-door-portal">
+            {/* Luồng sáng vàng bừng nở từ bên trong */}
+            <div className={`sci-inner-golden-light ${lightGlow ? 'is-glowing' : ''}`} />
 
-                {/* Chú gấu trúc bước qua cửa */}
-                <div className={`sci-panda-walker ${pandaWalking ? 'is-walking' : ''}`}>
-                  <FrontPanda pose="wait" />
-                </div>
-              </div>
-
-              <div className="sci-walkin-caption">
-                Giáo sư Gấu Trúc đang mở cửa vào Phòng Nghiên Cứu Khoa Học...
-              </div>
-              <button type="button" className="sci-walkin-skip" onClick={() => setWalkIn(false)}>
-                Bỏ qua hoạt cảnh &rarr;
-              </button>
-            </div>
-          )}
-
-          {/* 2. Thanh đầu trang chuẩn UI của App */}
-          <header className="sci-head">
-            <div className="sci-title-group">
-              <span className="sci-title-icon">
-                <Icon name="telescope" />
-              </span>
-              <div>
-                <h1 className="sci-title">Phòng Khoa Học & Nghiên Cứu</h1>
-                <p className="sci-subtitle">
-                  Trạm thiên văn gác mái • Khám phá quang học, bảng công thức vật lý & bầu trời sao
-                </p>
-              </div>
+            {/* Chú Gấu Trúc đón khách */}
+            <div className={`sci-panda-welcome ${doorOpen ? 'is-visible' : ''}`}>
+              <FrontPanda pose="cheer" />
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="sci-status-pill">
-                <span className="sci-status-dot" />
-                Đài quan sát sẵn sàng
-              </span>
-              {onClose && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={onClose}
-                  title="Đóng phòng khoa học"
-                  aria-label="Đóng"
-                >
-                  <Icon name="close" />
-                </button>
-              )}
+            {/* Cánh cửa đôi gỗ sồi mở ra 3D */}
+            <div className={`sci-door-leaf-left ${doorOpen ? 'is-opened' : ''}`}>
+              <div className="sci-door-plate">PHÒNG KHOA HỌC</div>
             </div>
-          </header>
+            <div className={`sci-door-leaf-right ${doorOpen ? 'is-opened' : ''}`} />
+          </div>
 
-          {/* 3. Thanh Tab chế độ trong phòng */}
-          <nav className="sci-tabs" aria-label="Các khu vực trong phòng">
+          <div className="sci-walkin-subtitle">
+            Giáo sư Gấu Trúc đang mở cửa vào Trạm Nghiên Cứu Thiên Văn...
+          </div>
+          <button
+            type="button"
+            className="sci-walkin-skip-btn"
+            onClick={() => setWalkIn(false)}
+          >
+            Bỏ qua hoạt cảnh &rarr;
+          </button>
+        </div>
+      )}
+
+      {/* 2. THANH ĐIỀU HƯỚNG TRÊN CÙNG (COZY HUD TOPBAR) */}
+      <header className="sci-hud-topbar">
+        {onClose && (
+          <button
+            type="button"
+            className="sci-exit-btn"
+            onClick={onClose}
+            title="Quay lại lớp học (Esc)"
+          >
+            <Icon name="arrow-left" />
+            <span>&larr; Về Lớp Học</span>
+          </button>
+        )}
+
+        <div className="sci-hud-right">
+          <span className="sci-hud-badge">
+            <span className="sci-hud-dot" />
+            Trạm Thiên Văn Sẵn Sàng
+          </span>
+
+          <button
+            type="button"
+            className="sci-hud-icon-btn"
+            onClick={() => setSoundEnabled((v) => !v)}
+            title={soundEnabled ? 'Tắt âm thanh hiệu ứng' : 'Bật âm thanh hiệu ứng'}
+            aria-label="Bật tắt âm thanh"
+          >
+            <Icon name={soundEnabled ? 'sound' : 'mute'} />
+          </button>
+
+          {onClose && (
             <button
               type="button"
-              className={`sci-tab ${tab === 'telescope' ? 'active' : ''}`}
-              onClick={() => setTab('telescope')}
+              className="sci-hud-icon-btn"
+              onClick={onClose}
+              title="Đóng phòng nghiên cứu"
+              aria-label="Đóng"
             >
-              <Icon name="telescope" />
-              Đài Thiên Văn ({target.name.split(' ')[0]})
+              <Icon name="close" />
             </button>
-            <button
-              type="button"
-              className={`sci-tab ${tab === 'lab' ? 'active' : ''}`}
-              onClick={() => setTab('lab')}
-            >
-              <Icon name="assignment" />
-              Bàn Thí Nghiệm & Bảng Đen
-            </button>
-            <button
-              type="button"
-              className={`sci-tab ${tab === 'journal' ? 'active' : ''}`}
-              onClick={() => setTab('journal')}
-            >
-              <Icon name="book" />
-              Sổ Tay Giáo Sư Gấu Trúc
-            </button>
-          </nav>
-
-          {/* 4. Nội dung từng Tab */}
-          {tab === 'telescope' && (
-            <div className="sci-observatory-grid">
-              {/* Card Kính Thiên Văn Trung Tâm */}
-              <section className="sci-telescope-card">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="badge badge-primary font-mono text-xs">
-                      KHÚC XẠ QUANG HỌC &bull; TIÊU CỰ 1200mm
-                    </span>
-                    <span className="muted small font-mono">Bội giác 400x</span>
-                  </div>
-
-                  {/* Khung cửa sổ vòm ngắm trời đêm */}
-                  <div className="sci-telescope-window">
-                    <div className="sci-moon">
-                      <div className="sci-moon-crater" style={{ top: 12, left: 16, width: 10, height: 10 }} />
-                      <div className="sci-moon-crater" style={{ top: 26, left: 28, width: 14, height: 14 }} />
-                    </div>
-
-                    {/* Vệt sáng từ thấu kính chĩa lên bầu trời */}
-                    <div className="sci-telescope-beam" />
-
-                    {/* Hình kính thiên văn đồng thau cổ điển */}
-                    <svg viewBox="0 0 170 160" className="sci-telescope-art">
-                      {/* Chân kiềng gỗ */}
-                      <line x1="85" y1="90" x2="35" y2="155" stroke="#452715" strokeWidth="6" strokeLinecap="round" />
-                      <line x1="85" y1="90" x2="135" y2="155" stroke="#452715" strokeWidth="6" strokeLinecap="round" />
-                      <line x1="85" y1="90" x2="85" y2="158" stroke="#27160c" strokeWidth="5" strokeLinecap="round" />
-                      {/* Khớp xoay trục tọa độ */}
-                      <circle cx="85" cy="90" r="10" fill="#d97706" stroke="#78350f" strokeWidth="2" />
-                      <circle cx="85" cy="90" r="4" fill="#fef08a" />
-                      {/* Ống kính chính chĩa góc nghiêng */}
-                      <g transform="rotate(-34 85 90)">
-                        <rect x="35" y="76" width="115" height="18" rx="3" fill="#b45309" stroke="#78350f" strokeWidth="2" />
-                        <rect x="50" y="74" width="8" height="22" rx="1.5" fill="#f59e0b" />
-                        <rect x="95" y="74" width="8" height="22" rx="1.5" fill="#f59e0b" />
-                        <path d="M150 72 L162 67 L162 103 L150 98 Z" fill="#92400e" stroke="#78350f" strokeWidth="1.5" />
-                        <ellipse cx="161" cy="85" rx="2" ry="17" fill="#38bdf8" />
-                        <rect x="25" y="80" width="10" height="10" rx="2" fill="#78350f" />
-                      </g>
-                    </svg>
-                  </div>
-
-                  {/* Thông tin mục tiêu hiện tại */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{target.icon}</span>
-                      <h3 className="m-0 text-base font-bold text-[var(--text)]">{target.name}</h3>
-                    </div>
-                    <p className="small muted m-0 leading-relaxed">{target.note}</p>
-                    <div className="flex gap-4 mt-2 text-xs font-mono text-[var(--muted)]">
-                      <span>Khoảng cách: <b className="text-[var(--text)]">{target.dist}</b></span>
-                      <span>Trạng thái: <b className="text-[var(--primary)]">{target.phase}</b></span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Nút hành động chính: Nhìn qua kính thiên văn bay vào Vũ Trụ */}
-                <button
-                  type="button"
-                  className="sci-launch-btn"
-                  onClick={handleTelescopeLaunch}
-                >
-                  <Icon name="telescope" />
-                  <span>Nhìn Qua Kính Thiên Văn &rarr; Vào Không Gian Vũ Trụ</span>
-                </button>
-              </section>
-
-              {/* Cột danh sách mục tiêu quan sát */}
-              <aside className="sci-targets-card">
-                <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
-                  <span className="font-bold text-sm text-[var(--text)]">Mục tiêu quan sát đêm nay</span>
-                  <span className="badge badge-warn text-xs">4 thiên thể</span>
-                </div>
-
-                <div className="flex flex-col gap-2 mt-1">
-                  {TARGETS.map((t) => (
-                    <div
-                      key={t.id}
-                      className={`sci-target-item ${target.id === t.id ? 'is-selected' : ''}`}
-                      onClick={() => setTarget(t)}
-                    >
-                      <span className="sci-target-icon">{t.icon}</span>
-                      <div className="sci-target-info">
-                        <div className="sci-target-name">{t.name}</div>
-                        <div className="sci-target-meta">{t.phase} &bull; {t.dist}</div>
-                      </div>
-                      {target.id === t.id && (
-                        <span className="badge badge-ok text-[11px]">Đang ngắm</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-auto pt-3 border-t border-[var(--border)] text-xs text-[var(--muted)] flex items-center justify-between">
-                  <span>Độ ẩm: 62% &bull; Tầm nhìn: Rất tốt</span>
-                  <button
-                    type="button"
-                    className="btn btn-ghost text-xs py-1 px-2"
-                    onClick={replayWalkIn}
-                    title="Phát lại hoạt cảnh bước vào phòng"
-                  >
-                    🚪 Xem lại cửa vào
-                  </button>
-                </div>
-              </aside>
-            </div>
-          )}
-
-          {tab === 'lab' && (
-            <div className="flex flex-col gap-4">
-              {/* Bảng phấn công thức Thiên văn & Vật lý */}
-              <section className="sci-board-card">
-                <div className="sci-board-title">
-                  <span>BẢNG ĐEN CÔNG THỨC VẬT LÝ & THIÊN VĂN</span>
-                  <span className="text-xs font-mono opacity-80">PHÒNG THÍ NGHIỆM #01</span>
-                </div>
-
-                <div className="sci-formula-grid">
-                  <div className="sci-formula-box">
-                    <div className="sci-formula-math">T = 2&pi; &radic;(l / g)</div>
-                    <div className="sci-formula-desc">
-                      <b>Chu kì con lắc đơn:</b> Phụ thuộc vào chiều dài dây treo <i>l</i> và gia tốc trọng trường <i>g</i>. Không phụ thuộc vào khối lượng vật nặng!
-                    </div>
-                  </div>
-
-                  <div className="sci-formula-box">
-                    <div className="sci-formula-math">F = G &times; (m&sub1;m&sub2; / r&sup2;)</div>
-                    <div className="sci-formula-desc">
-                      <b>Định luật vạn vật hấp dẫn:</b> Lực hút giữa hai thiên thể tỉ lệ thuận với tích khối lượng và tỉ lệ nghịch với bình phương khoảng cách.
-                    </div>
-                  </div>
-
-                  <div className="sci-formula-box">
-                    <div className="sci-formula-math">&lambda; = v / f = c / f</div>
-                    <div className="sci-formula-desc">
-                      <b>Bước sóng ánh sáng:</b> Ánh sáng từ các vì sao truyền qua chân không vũ trụ với vận tốc <i>c &approx; 300 000 km/s</i>.
-                    </div>
-                  </div>
-
-                  <div className="sci-formula-box">
-                    <div className="sci-formula-math">E = m &times; c&sup2;</div>
-                    <div className="sci-formula-desc">
-                      <b>Hệ thức Einstein:</b> Nguồn gốc năng lượng hạt nhân phát sáng của Mặt Trời và các ngôi sao trong ngân hà.
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Dụng cụ thí nghiệm mô phỏng con lắc đơn */}
-              <section className="card p-4">
-                <h3 className="text-base font-bold mb-2 flex items-center gap-2">
-                  <Icon name="zap" /> Thí nghiệm tương tác: Con lắc đơn dao động điều hòa
-                </h3>
-                <p className="small muted mb-4">
-                  Kéo thanh trượt để thay đổi chiều dài dây con lắc <b>l</b> và quan sát chu kì dao động <b>T</b> tương ứng.
-                </p>
-
-                <div className="flex items-center gap-4 flex-wrap bg-[var(--surface-2)] p-3 rounded-xl border border-[var(--border)]">
-                  <label htmlFor="pendulumSlider" className="font-semibold text-sm">
-                    Chiều dài dây l: <b className="text-[var(--primary)]">{pendulumLength} m</b>
-                  </label>
-                  <input
-                    id="pendulumSlider"
-                    type="range"
-                    min="0.2"
-                    max="3.0"
-                    step="0.1"
-                    value={pendulumLength}
-                    onChange={(e) => setPendulumLength(parseFloat(e.target.value))}
-                    className="flex-1 min-w-[180px]"
-                  />
-                  <div className="font-mono text-sm px-3 py-1 bg-[var(--surface)] border border-[var(--border-strong)] rounded-lg">
-                    Chu kì tính toán: <b className="text-amber-400">{pendulumPeriod} giây</b>
-                  </div>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {tab === 'journal' && (
-            <div className="sci-journal-wrap">
-              {/* Bục gấu giáo sư trúc */}
-              <div className="sci-panda-stand">
-                <div className="sci-panda-frame">
-                  <FrontPanda pose="teach" />
-                </div>
-                <b className="mt-2 text-sm">Giáo sư Gấu Trúc</b>
-                <span className="small muted">Chủ nhiệm Đài Quan Sát</span>
-              </div>
-
-              {/* Sổ tay ghi chép */}
-              <div className="sci-journal-bubble">
-                <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
-                  <h3 className="m-0 text-base font-bold">Ghi Chép Hành Trình Nghiên Cứu</h3>
-                  <span className="badge badge-primary text-xs">Cập nhật hôm nay</span>
-                </div>
-
-                <p className="leading-relaxed text-sm">
-                  "Chào mừng các bạn học sinh đến với <b>Phòng Nghiên Cứu Khoa Học</b>! Căn phòng này được thiết kế để kết nối kiến thức Toán học, Vật lý và Thiên văn thành một thể thống nhất sinh động."
-                </p>
-
-                <div className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-sm space-y-2">
-                  <div className="font-semibold text-[var(--primary)]">Nhiệm vụ tuần này của bạn:</div>
-                  <ul className="m-0 pl-5 space-y-1 text-xs text-[var(--muted)]">
-                    <li>&bull; Quan sát vành đai Sao Thổ qua kính thiên văn tiêu cự 1200mm.</li>
-                    <li>&bull; Tính vận tốc thoát ly khỏi bề mặt Trái Đất theo công thức hấp dẫn.</li>
-                    <li>&bull; Hoàn thành 3 câu trắc nghiệm dao động điều hòa để nhận Huy hiệu Nhà Khoa Học Trẻ.</li>
-                  </ul>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleTelescopeLaunch}
-                  >
-                    <Icon name="telescope" />
-                    Vào ngắm hệ sao cùng Gấu Trúc
-                  </button>
-                </div>
-              </div>
-            </div>
           )}
         </div>
+      </header>
+
+      {/* 3. KHUNG CẢNH CĂN PHÒNG GÁC MÁI TOÀN MÀN HÌNH (PANORAMIC SCENE) */}
+      <div className={`sci-room-stage ${isZoomingSpace ? 'is-zooming-lens' : ''}`}>
+        {/* Tầng 1: Bầu trời sao đêm ngoài vòm kính */}
+        <div className="sci-sky-backdrop">
+          <div className="sci-stars-layer" />
+          <div className="sci-shooting-star" />
+          <div className="sci-dome-moon" />
+        </div>
+
+        {/* Tầng 2: Khung vòm kính đài thiên văn */}
+        <div className="sci-glass-dome">
+          <div className="sci-dome-ribs" />
+        </div>
+
+        {/* Tầng 3: Khung dầm gỗ gác mái và sàn gỗ phản quang */}
+        <div className="sci-attic-structure">
+          <div className="sci-beam-left" />
+          <div className="sci-beam-ceiling" />
+        </div>
+        <div className="sci-attic-floor">
+          <div className="sci-floor-planks" />
+        </div>
+
+        {/* Đèn trần thả xuống tỏa quầng sáng vàng ấm áp */}
+        <div className="sci-ceiling-lamp">
+          <div className="sci-lamp-wire" />
+          <div className="sci-lamp-shade">
+            <div className="sci-lamp-bulb" />
+          </div>
+          <div className="sci-lamp-light-cone" />
+        </div>
+
+        {/* --- HOTSPOT 1: KÍNH THIÊN VĂN KHỔNG LỒ (TELESCOPE) --- */}
+        <div
+          className="sci-telescope-spot"
+          onClick={handleLaunchSpace}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && handleLaunchSpace()}
+          aria-label="Kính thiên văn khúc xạ: Bấm để quan sát không gian vũ trụ"
+        >
+          {/* Vệt sáng quang học từ ống kính chiếu lên bầu trời */}
+          <div className="sci-telescope-beam-anim" />
+
+          {/* Huy hiệu nổi chỉ dẫn thân thiện */}
+          <div className="sci-telescope-pill">
+            <Icon name="telescope" />
+            <span>Kính Thiên Văn Khúc Xạ &bull; Bấm để vào Vũ Trụ &rarr;</span>
+          </div>
+
+          {/* Minh họa Kính thiên văn đồng thau cổ điển */}
+          <svg viewBox="0 0 240 280" className="sci-telescope-svg" aria-hidden="true">
+            {/* Chân kiềng 3 chân gỗ sồi viền đồng */}
+            <line x1="120" y1="160" x2="35" y2="270" stroke="#3d2111" strokeWidth="10" strokeLinecap="round" />
+            <line x1="120" y1="160" x2="205" y2="270" stroke="#3d2111" strokeWidth="10" strokeLinecap="round" />
+            <line x1="120" y1="160" x2="120" y2="275" stroke="#221209" strokeWidth="8" strokeLinecap="round" />
+            <line x1="60" y1="230" x2="180" y2="230" stroke="#78350f" strokeWidth="4" />
+
+            {/* Trục tọa độ xích đạo bằng đồng thau */}
+            <circle cx="120" cy="160" r="16" fill="#d97706" stroke="#92400e" strokeWidth="3" />
+            <circle cx="120" cy="160" r="7" fill="#fef08a" />
+
+            {/* Ống kính chính chĩa góc nghiêng 40 độ lên vòm trời */}
+            <g transform="rotate(-38 120 160)">
+              {/* Thị kính ngắm phía sau */}
+              <rect x="25" y="152" width="22" height="16" rx="3" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+              <ellipse cx="25" cy="160" rx="3" ry="10" fill="#38bdf8" />
+
+              {/* Ống đồng thau thân chính */}
+              <rect x="47" y="146" width="160" height="28" rx="4" fill="#b45309" stroke="#78350f" strokeWidth="3" />
+              <rect x="75" y="143" width="12" height="34" rx="2" fill="#f59e0b" />
+              <rect x="145" y="143" width="12" height="34" rx="2" fill="#f59e0b" />
+
+              {/* Vành thấu kính phản chiếu ánh trăng xanh biếc */}
+              <path d="M205 140 L226 132 L226 188 L205 180 Z" fill="#92400e" stroke="#78350f" strokeWidth="2.5" />
+              <ellipse cx="225" cy="160" rx="4" ry="27" fill="#38bdf8" />
+            </g>
+          </svg>
+        </div>
+
+        {/* --- HOTSPOT 2: BÀN THÍ NGHIỆM VÀ GIÁO SƯ GẤU TRÚC (WORKBENCH) --- */}
+        <div className="sci-workbench-spot">
+          {/* Chú Gấu Trúc thân thiện bên bàn */}
+          <div
+            className="sci-panda-assistant"
+            onClick={handlePandaClick}
+            title="Bấm để trò chuyện cùng Giáo sư Gấu Trúc"
+          >
+            {showPandaBubble && (
+              <div className="sci-panda-bubble">
+                {pandaQuote}
+              </div>
+            )}
+            <FrontPanda pose={pandaMood} />
+          </div>
+
+          {/* Mặt bàn gỗ gác mái bóng đẹp */}
+          <div className="sci-desk-wood" />
+
+          {/* Dàn ống nghiệm sủi bọt phát sáng */}
+          <div
+            className="sci-tubes-rack"
+            onClick={handleTubeClick}
+            title="Bấm để thử nghiệm dung dịch quang phổ!"
+          >
+            <div className="sci-test-tube">
+              <div className={`sci-tube-liquid ${tubeColors[tubeColorIdx]}`}>
+                <div className="sci-bubble-dot" style={{ left: 4 }} />
+              </div>
+            </div>
+            <div className="sci-test-tube">
+              <div className={`sci-tube-liquid ${tubeColors[(tubeColorIdx + 1) % tubeColors.length]}`}>
+                <div className="sci-bubble-dot" style={{ left: 8, animationDelay: '0.6s' }} />
+              </div>
+            </div>
+            <div className="sci-test-tube">
+              <div className={`sci-tube-liquid ${tubeColors[(tubeColorIdx + 2) % tubeColors.length]}`}>
+                <div className="sci-bubble-dot" style={{ left: 5, animationDelay: '1.1s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Con lắc đơn dao động điều hòa trên bàn */}
+          <div
+            className="sci-pendulum-desk"
+            onClick={handlePendulumClick}
+            title="Bấm để điều chỉnh thí nghiệm Con Lắc Đơn!"
+          >
+            <div className="sci-pendulum-stand">
+              <div className="sci-pendulum-arm">
+                <div className="sci-pendulum-bob" />
+              </div>
+            </div>
+          </div>
+
+          {/* Cuốn sổ tay nghiên cứu mở sẵn trên bàn */}
+          <div
+            className="sci-open-journal"
+            onClick={() => setActiveModal('journal')}
+            title="Bấm để mở Sổ Tay Nghiên Cứu của Gấu"
+          >
+            <div className="sci-journal-lines" />
+          </div>
+        </div>
+
+        {/* --- HOTSPOT 3: BẢNG ĐEN CÔNG THỨC TRÊN TƯỜNG GỖ (CHALKBOARD) --- */}
+        <div
+          className="sci-chalkboard-spot"
+          onClick={() => setActiveModal('chalkboard')}
+          title="Bấm để phóng to Bảng Công Thức Vật Lý & Thiên Văn!"
+        >
+          <div className="sci-chalk-header">
+            <span>BẢNG ĐEN PHÒNG THÍ NGHIỆM</span>
+            <span>#01</span>
+          </div>
+          <div className="sci-chalk-content">
+            <div className="sci-chalk-formula">T = 2&pi;&radic;(l / g)</div>
+            <div className="sci-chalk-formula">F = G &times; (m&sub1;m&sub2; / r&sup2;)</div>
+            <div className="sci-chalk-formula">E = m &times; c&sup2;</div>
+          </div>
+          <div className="sci-chalk-sketch">
+            <Icon name="assignment" />
+            <span>Chạm để khám phá chi tiết &rarr;</span>
+          </div>
+        </div>
       </div>
+
+      {/* 4. HIỆU ỨNG THẤU KÍNH QUANG HỌC PHÓNG VÀO VŨ TRỤ (OPTICAL IRIS) */}
+      <div className={`sci-optical-iris ${isZoomingSpace ? 'is-active' : ''}`}>
+        <div className="sci-lens-flare" />
+      </div>
+
+      {/* 5. CÁC HỘP THOẠI CHI TIẾT TƯƠNG TÁC (DETAIL MODALS) */}
+
+      {/* Modal Con Lắc Đơn */}
+      {activeModal === 'pendulum' && (
+        <div className="sci-modal-backdrop" onClick={() => setActiveModal(null)}>
+          <div className="sci-parchment-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="sci-card-close"
+              onClick={() => setActiveModal(null)}
+              aria-label="Đóng"
+            >
+              <Icon name="close" />
+            </button>
+
+            <h3 className="m-0 text-lg font-bold text-amber-400 flex items-center gap-2">
+              <Icon name="zap" /> Thí Nghiệm Tương Tác: Con Lắc Đơn
+            </h3>
+            <p className="text-sm text-stone-300 mt-2 mb-4 leading-relaxed">
+              Theo định luật dao động điều hòa của Huygens, chu kì dao động <b>T</b> chỉ phụ thuộc vào chiều dài dây treo <b>l</b> và gia tốc trọng trường <b>g</b>, hoàn toàn không phụ thuộc vào khối lượng vật nặng!
+            </p>
+
+            <div className="p-4 rounded-xl bg-stone-900 border border-stone-700 space-y-3">
+              <div className="flex justify-between items-center text-sm font-semibold">
+                <span>Chiều dài dây treo (l):</span>
+                <span className="text-amber-400 font-mono text-base">{pendulumLength} mét</span>
+              </div>
+              <input
+                type="range"
+                min="0.2"
+                max="3.0"
+                step="0.1"
+                value={pendulumLength}
+                onChange={(e) => setPendulumLength(parseFloat(e.target.value))}
+                className="w-full accent-amber-500 cursor-pointer"
+              />
+              <div className="pt-2 flex justify-between items-center border-t border-stone-800 text-sm">
+                <span>Chu kì tính toán (T):</span>
+                <span className="font-mono text-lg font-bold text-emerald-400">{pendulumPeriod} giây</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveModal(null)}
+              >
+                Hoàn thành quan sát
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Bảng Đen Công Thức */}
+      {activeModal === 'chalkboard' && (
+        <div className="sci-modal-backdrop" onClick={() => setActiveModal(null)}>
+          <div className="sci-parchment-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="sci-card-close"
+              onClick={() => setActiveModal(null)}
+              aria-label="Đóng"
+            >
+              <Icon name="close" />
+            </button>
+
+            <h3 className="m-0 text-lg font-bold text-emerald-400 flex items-center gap-2">
+              <Icon name="assignment" /> Bảng Đen Công Thức Vật Lý & Thiên Văn
+            </h3>
+            <p className="text-sm text-stone-300 mt-2 mb-4 leading-relaxed">
+              Những phương trình nền tảng kết nối cơ học trên Trái Đất với chuyển động của các thiên thể trong vũ trụ:
+            </p>
+
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-lg bg-stone-900 border border-stone-800">
+                <div className="font-mono text-amber-300 font-bold">F = G &times; (m&sub1;m&sub2; / r&sup2;)</div>
+                <div className="text-xs text-stone-400 mt-1">Định luật vạn vật hấp dẫn của Newton: Giữ cho các hành tinh quay quanh Mặt Trời trên quỹ đạo elip ổn định.</div>
+              </div>
+              <div className="p-3 rounded-lg bg-stone-900 border border-stone-800">
+                <div className="font-mono text-amber-300 font-bold">&lambda; = v / f = c / f</div>
+                <div className="text-xs text-stone-400 mt-1">Bước sóng ánh sáng: Giúp các nhà thiên văn phân tích quang phổ và thành phần hóa học của các vì sao xa xôi.</div>
+              </div>
+              <div className="p-3 rounded-lg bg-stone-900 border border-stone-800">
+                <div className="font-mono text-amber-300 font-bold">E = m &times; c&sup2;</div>
+                <div className="text-xs text-stone-400 mt-1">Hệ thức Einstein: Nguồn gốc năng lượng hạt nhân khổng lồ giúp Mặt Trời tỏa sáng hàng tỉ năm.</div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                type="button"
+                className="btn btn-ghost text-xs"
+                onClick={() => {
+                  setActiveModal(null)
+                  handleLaunchSpace()
+                }}
+              >
+                🔭 Vào kính thiên văn xem thực tế
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveModal(null)}
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sổ Tay Nghiên Cứu */}
+      {activeModal === 'journal' && (
+        <div className="sci-modal-backdrop" onClick={() => setActiveModal(null)}>
+          <div className="sci-parchment-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="sci-card-close"
+              onClick={() => setActiveModal(null)}
+              aria-label="Đóng"
+            >
+              <Icon name="close" />
+            </button>
+
+            <h3 className="m-0 text-lg font-bold text-amber-400 flex items-center gap-2">
+              <Icon name="book" /> Sổ Tay Nghiên Cứu Của Giáo Sư Gấu Trúc
+            </h3>
+            <p className="text-sm text-stone-300 mt-2 mb-3 leading-relaxed">
+              "Khoa học không phải là những con số khô khan, mà là chiếc chìa khóa thần kỳ giúp chúng ta mở ra bí mật của các vì sao!"
+            </p>
+
+            <div className="p-3 rounded-xl bg-stone-900/90 border border-amber-900/50 space-y-2 text-xs">
+              <div className="font-bold text-amber-300 uppercase tracking-wide">Mục Tiêu Quan Sát Tuần Này:</div>
+              <ul className="m-0 pl-4 space-y-1 text-stone-300">
+                <li>&bull; Quan sát vành đai băng đá của Sao Thổ qua kính viễn vọng.</li>
+                <li>&bull; Khảo sát thời gian chu kì con lắc $T$ khi thay đổi chiều dài $l$.</li>
+                <li>&bull; Giải thích hiện tượng lóa quang học khi ánh sáng đi qua thấu kính.</li>
+              </ul>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setActiveModal(null)
+                  handleLaunchSpace()
+                }}
+              >
+                Vào ngắm vũ trụ cùng Gấu &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 
   return createPortal(content, document.body)
 }
-

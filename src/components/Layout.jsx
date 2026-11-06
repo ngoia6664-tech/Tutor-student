@@ -188,6 +188,8 @@ export default function Layout() {
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
   const [labOpen, setLabOpen] = useState(false)
+  const fromLabRef = useRef(false)
+  const labWalkInRef = useRef(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Viên nền trượt sau mục menu đang chọn: đo lại khi đổi trang hoặc khi mục menu đổi cỡ (chuông báo, xoay máy...)
   const navRef = useRef(/** @type {HTMLElement | null} */ (null))
@@ -263,6 +265,7 @@ export default function Layout() {
       type="button"
       className={`${labeled ? 'side-btn' : 'btn btn-ghost theme-toggle'} telescope-btn ${extra}`}
       onClick={() => {
+        labWalkInRef.current = true
         setDrawer(false)
         setLabOpen(true)
       }}
@@ -488,14 +491,31 @@ export default function Layout() {
       <DialogHost />
       {exploring && (
         <Suspense fallback={null}>
-          <SpaceExplorer onClose={closeExplorer} initialPlace={askedPlace} onPlaceChange={setPlaceParam} />
+          <SpaceExplorer
+            backLabel={fromLabRef.current ? 'Rời kính viễn vọng' : 'Quay lại học'}
+            onClose={() => {
+              closeExplorer()
+              if (fromLabRef.current) {
+                fromLabRef.current = false
+                labWalkInRef.current = false
+                setLabOpen(true)
+              }
+            }}
+            initialPlace={askedPlace}
+            onPlaceChange={setPlaceParam}
+          />
         </Suspense>
       )}
       {labOpen && (
         <Suspense fallback={null}>
           <ScienceLab
-            onClose={() => setLabOpen(false)}
+            initialWalkIn={labWalkInRef.current}
+            onClose={() => {
+              fromLabRef.current = false
+              setLabOpen(false)
+            }}
             onOpenSpace={() => {
+              fromLabRef.current = true
               setLabOpen(false)
               openExplorerSound()
               setExploring(true)
