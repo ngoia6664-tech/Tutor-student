@@ -1,43 +1,13 @@
 // Đồng hồ quả lắc dựng bằng code: vỏ gỗ gụ, mặt số La Mã, tủ kính có thước đo. Con lắc điều khiển kim đồng hồ, đúng theo T = 2π√(l/g).
 import * as THREE from 'three'
 import { DEFAULT_LENGTH, EARTH_G, clockHands, clockRate } from '../../lib/pendulum.js'
+import { grainTexture, mergeStatic, paintTexture } from './labKit.js'
 
 const SWING = 0.12 // rad, đủ nhỏ để công thức con lắc đúng; quả lắc dài nhất vẫn không chạm thành tủ
 const PIVOT_Y = 1.98
 const BACK_TOP = 2.11
 const BACK_HEIGHT = 1.9
 const NUMERALS = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']
-
-/**
- * @param {number} w @param {number} h
- * @param {(g: CanvasRenderingContext2D) => void} paint
- */
-function paintTexture(w, h, paint) {
-  const c = document.createElement('canvas')
-  c.width = w
-  c.height = h
-  const g = c.getContext('2d')
-  if (g) paint(g)
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  t.anisotropy = 8
-  return t
-}
-
-const grainTexture = () => paintTexture(256, 512, (g) => {
-  g.fillStyle = '#5a2c18'
-  g.fillRect(0, 0, 256, 512)
-  for (let i = 0; i < 900; i++) {
-    g.strokeStyle = `rgba(${Math.random() > 0.55 ? '24,10,4' : '170,96,52'},${0.05 + Math.random() * 0.14})`
-    g.lineWidth = 0.5 + Math.random() * 1.6
-    const x = Math.random() * 256
-    const y = Math.random() * 512
-    g.beginPath()
-    g.moveTo(x, y)
-    g.bezierCurveTo(x + 3, y + 40, x - 3, y + 90, x + Math.random() * 6 - 3, y + 130 + Math.random() * 120)
-    g.stroke()
-  }
-})
 
 /** Mặt đồng hồ: tấm đồng có hoa văn bốn góc, vòng số La Mã, lỗ lên dây */
 const dialTexture = () => paintTexture(1024, 1024, (g) => {
@@ -267,6 +237,9 @@ export function buildClock() {
   const minuteHand = add(handGeometry(0.255, 0.02), blued, 0, 2.57, 0.266, group, false)
   const secondHand = add(handGeometry(0.27, 0.005), brass, 0, 2.57, 0.272, group, false)
   add(new THREE.SphereGeometry(0.018, 16, 12), brass, 0, 2.57, 0.276, group, false)
+  ;[hourHand, minuteHand, secondHand].forEach((h) => {
+    h.userData.dynamic = true
+  })
 
   // Hai quả nặng treo dây phía sau, lệch phải để không che thước
   ;[0.12, 0.25].forEach((x) => {
@@ -278,6 +251,7 @@ export function buildClock() {
   // Con lắc: thanh có gốc ở điểm treo nên co giãn bằng scale.y
   box(0.15, 0.05, 0.03, brass, 0, PIVOT_Y + 0.02, 0.05)
   const swing = new THREE.Group()
+  swing.userData.dynamic = true
   swing.position.set(0, PIVOT_Y, 0.05)
   group.add(swing)
   const rodGeo = new THREE.CylinderGeometry(0.008, 0.008, 1, 10)
@@ -285,6 +259,8 @@ export function buildClock() {
   const rod = add(rodGeo, brightBrass, 0, 0, 0, swing, false)
   const bob = add(new THREE.SphereGeometry(0.1, 32, 20), brightBrass, 0, -DEFAULT_LENGTH, 0, swing, false)
   bob.scale.z = 0.3
+
+  mergeStatic(group)
 
   const now = new Date()
   const startSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() + now.getMilliseconds() / 1000

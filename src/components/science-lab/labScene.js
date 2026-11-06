@@ -1,7 +1,12 @@
 // Căn gác mái dựng bằng Three.js: phòng, đồ vật, ánh sáng và các cú máy (mở cửa, bay đến đồ vật, áp mắt vào kính).
 // Cảnh chỉ lo 3D; nút bấm, hộp thoại, âm thanh ở ScienceLab.jsx.
 import * as THREE from 'three'
+import { buildBench } from './labBench.js'
+import { buildBoard } from './labBoard.js'
 import { buildClock } from './labClock.js'
+import { grainTexture, kit, mergeStatic, paintTexture } from './labKit.js'
+import { buildCabinet } from './labOrrery.js'
+import { buildShelf } from './labShelf.js'
 import { buildPanda } from './labPanda.js'
 import { createSolarView } from './labSolar.js'
 
@@ -12,19 +17,20 @@ import { createSolarView } from './labSolar.js'
 /** @type {LabSpot[]} */
 export const LAB_SPOTS = [
   { id: 'scope', label: 'Kính thiên văn', at: [2.45, 2.72, -2.1] },
-  { id: 'shelf', label: 'Giá sách', at: [-4.4, 2.75, -1.6], pose: { path: [[-1.8, 1.65, 1.6]], pos: [-2.7, 1.65, -0.8], look: [-4.6, 1.55, -1.3] } },
-  { id: 'board', label: 'Bảng đen', at: [-0.2, 3.28, -3.9], pose: { path: [[0.1, 1.66, 1.2]], pos: [0.6, 1.95, -0.2], look: [0.6, 2.15, -4] } },
-  { id: 'cabinet', label: 'Tủ mẫu vật', at: [4.4, 2.2, -2.9], pose: { path: [[2.3, 1.7, 1.4]], pos: [3.0, 1.95, -1.4], look: [4.6, 1.4, -2.9] } },
+  { id: 'shelf', label: 'Giá sách', at: [-4.4, 2.75, -1.6], pose: { path: [[-1.8, 1.65, 1.6]], pos: [-2.7, 1.66, -0.75], look: [-4.6, 1.56, -0.75], phone: { pos: [-2.75, 1.42, -0.75], look: [-4.6, 0.92, -0.75] } } },
+  { id: 'board', label: 'Bảng đen', at: [-0.2, 3.28, -3.9], pose: { path: [[0.1, 1.66, 1.2]], pos: [0.45, 2, -0.75], look: [0.45, 2.2, -4], phone: { pos: [-0.2, 1.95, -0.6], look: [-0.2, 1.42, -4] } } },
+  { id: 'cabinet', label: 'Tủ mẫu vật', at: [4.4, 2.3, -2.9], pose: { path: [[2.3, 1.7, 1.4]], pos: [3.05, 2.02, -2.42], look: [4.5, 1.42, -2.42], phone: { pos: [3.05, 2.1, -2.9], look: [4.5, 1.0, -2.9] } } },
   // Nhìn vuông góc vào tường để đồng hồ thẳng đứng; đứng lệch để mảnh giấy bên phải không che tủ kính. Điện thoại: giấy ở dưới nên đẩy đồng hồ lên trên.
   { id: 'clock', label: 'Đồng hồ quả lắc', at: [4.35, 3.72, -1.2], pose: { path: [[1.6, 1.7, 1.6]], pos: [0.7, 1.82, -0.35], look: [4.7, 1.82, -0.35], phone: { pos: [1.25, 1.6, -1], look: [4.7, 1.03, -1] } } },
-  { id: 'desk', label: 'Bình thí nghiệm', at: [-1.15, 1.75, -3.1], pose: { path: [[-1.1, 1.7, 1.2]], pos: [-0.95, 1.5, -1.55], look: [-1.05, 1.15, -3.4] } },
-  { id: 'journal', label: 'Sổ tay', at: [-2.35, 1.42, -3.1], pose: { path: [[-1.5, 1.7, 1]], pos: [-2.25, 1.7, -2.05], look: [-2.3, 1.03, -3.25] } },
+  { id: 'desk', label: 'Thử màu ngọn lửa', at: [-1.15, 1.85, -3.1], pose: { path: [[-1.1, 1.7, 1.2]], pos: [-1.02, 1.68, -1.75], look: [-1.02, 1.2, -3.6], phone: { pos: [-1.3, 1.8, -1.9], look: [-1.3, 0.72, -3.6] } } },
+  { id: 'journal', label: 'Sổ tay', at: [-2.65, 1.45, -3.1], pose: { path: [[-1.5, 1.7, 1]], pos: [-2.1, 1.75, -2.25], look: [-2.1, 1.0, -3.3], phone: { pos: [-2.55, 1.85, -2.35], look: [-2.55, 0.62, -3.3] } } },
   { id: 'panda', label: 'Giáo sư Gấu Trúc', at: [1.05, 2.1, -2.85] },
 ]
 
 const HOME = { pos: new THREE.Vector3(-0.1, 1.66, 4.15), look: new THREE.Vector3(0.05, 1.55, -3) }
 const DOOR_MS = 4000 // khớp độ dài file door-creak.mp3
 const WOOD_HUES = 26
+const MIN_PIXEL_RATIO = 1
 
 const easeInOut = (/** @type {number} */ t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 // Cửa gỗ nặng: nhích chậm ở đầu rồi mới bung, dừng êm ở cuối
@@ -51,7 +57,9 @@ export function createLabScene(host, { spotEl, onPick }) {
     throw err
   }
   const gl = renderer
-  gl.setPixelRatio(Math.min(window.devicePixelRatio, low ? 1.5 : 2))
+  let pixelRatio = Math.min(window.devicePixelRatio, low ? 1.5 : 2)
+  let slowSum = 0
+  gl.setPixelRatio(pixelRatio)
   gl.shadowMap.enabled = true
   gl.shadowMap.type = low ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap
   // Bóng đèn phòng tính 6 mặt rất nặng: chỉ tính lại khi có vật lớn đổi chỗ (cánh cửa)
@@ -202,12 +210,128 @@ export function createLabScene(host, { spotEl, onPick }) {
     h.lineTo(-0.85, 2.7)
     h.lineTo(-0.85, 0.001)
   })
-  box(0.3, 4.4, 9.1, M.plaster, -5.15, 2.2, 0.1)
-  box(0.3, 4.4, 9.1, M.plaster, 5.15, 2.2, 0.1)
+  // Mặt hộp có toạ độ texture 0..1 nên phải đặt số lần lặp riêng, nếu không vân vữa giãn thành mảng lớn
+  const sideMap = plasterMap.clone()
+  sideMap.repeat.set(2.4, 1.1)
+  sideMap.needsUpdate = true
+  const sidePlaster = mat({ map: sideMap, roughness: 0.95 })
+  box(0.3, 4.4, 9.1, sidePlaster, -5.15, 2.2, 0.1)
+  box(0.3, 4.4, 9.1, sidePlaster, 5.15, 2.2, 0.1)
   box(10.6, 0.3, 9.1, M.oak, 0, 4.55, 0.1)
   for (let z = -3.4; z < 4.4; z += 1.55) box(10, 0.24, 0.3, M.oak, 0, 4.26, z)
   ;[-4.82, 4.82].forEach((x) => [-3.85, 4.35].forEach((z) => box(0.3, 4.2, 0.3, M.oak, x, 2.1, z)))
   box(10, 0.2, 0.08, M.oak, 0, 0.1, -3.96)
+
+  // Ốp gỗ chân tường
+  const trimGrain = grainTexture()
+  const trim = mat({ map: trimGrain, roughness: 0.5 })
+  const trimDark = mat({ map: trimGrain, color: 0x8d6d5c, roughness: 0.58 })
+  const decor = kit(scene)
+  /** @param {number} len @param {number} x @param {number} z @param {number} rotY */
+  function wainscot(len, x, z, rotY) {
+    const g = new THREE.Group()
+    g.position.set(x, 0, z)
+    g.rotation.y = rotY
+    scene.add(g)
+    decor.box(len, 1, 0.02, trimDark, 0, 0.5, 0, g)
+    decor.box(len, 0.05, 0.05, trim, 0, 1.02, 0.015, g)
+    decor.box(len, 0.03, 0.035, trimDark, 0, 0.99, 0.01, g)
+    decor.box(len, 0.18, 0.035, trim, 0, 0.09, 0.012, g)
+    const n = Math.round(len / 0.95)
+    const w = len / n
+    for (let i = 0; i < n; i++) {
+      decor.box(w - 0.14, 0.66, 0.016, trim, -len / 2 + w * (i + 0.5), 0.58, 0.012, g)
+      decor.box(0.05, 0.8, 0.03, trim, -len / 2 + w * i, 0.56, 0.012, g)
+    }
+  }
+  wainscot(9.4, 0, -3.985, 0)
+  wainscot(8.1, -4.985, 0.1, Math.PI / 2)
+  wainscot(8.1, 4.985, 0.1, -Math.PI / 2)
+
+  /** Tranh treo tường có khung. @param {THREE.Texture} map @param {number} w @param {number} h @param {number} x @param {number} y @param {number} z @param {number} rotY */
+  function framed(map, w, h, x, y, z, rotY) {
+    const g = new THREE.Group()
+    g.position.set(x, y, z)
+    g.rotation.y = rotY
+    scene.add(g)
+    decor.box(w + 0.12, h + 0.12, 0.03, trim, 0, 0, 0, g)
+    decor.box(w + 0.04, h + 0.04, 0.012, trimDark, 0, 0, 0.012, g)
+    decor.add(new THREE.PlaneGeometry(w, h), mat({ map, roughness: 0.85 }), 0, 0, 0.02, g, false)
+  }
+  const parchment = (/** @type {CanvasRenderingContext2D} */ g, /** @type {number} */ w, /** @type {number} */ h) => {
+    g.fillStyle = '#e4d6b4'
+    g.fillRect(0, 0, w, h)
+    g.strokeStyle = '#3a2a18'
+    g.fillStyle = '#3a2a18'
+    g.lineWidth = 3
+    g.strokeRect(14, 14, w - 28, h - 28)
+    g.textAlign = 'center'
+  }
+  // Bản đồ bầu trời vẽ tay
+  framed(paintTexture(640, 460, (g) => {
+    parchment(g, 640, 460)
+    g.font = "bold 30px 'Times New Roman', serif"
+    g.fillText('BẢN ĐỒ BẦU TRỜI', 320, 58)
+    g.lineWidth = 1.2
+    for (let r = 60; r <= 180; r += 60) {
+      g.beginPath()
+      g.arc(320, 265, r, 0, 7)
+      g.stroke()
+    }
+    for (let a = 0; a < 12; a++) {
+      g.beginPath()
+      g.moveTo(320, 265)
+      g.lineTo(320 + Math.cos((a * Math.PI) / 6) * 180, 265 + Math.sin((a * Math.PI) / 6) * 180)
+      g.stroke()
+    }
+    for (const c of [[[230, 210], [262, 188], [300, 200], [326, 170], [360, 188], [392, 160]], [[250, 340], [290, 310], [335, 335], [380, 300], [410, 330]], [[420, 240], [450, 275], [430, 325], [395, 290]]]) {
+      g.lineWidth = 2
+      g.beginPath()
+      c.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)))
+      g.stroke()
+      c.forEach(([x, y]) => {
+        g.beginPath()
+        g.arc(x, y, 5, 0, 7)
+        g.fill()
+      })
+    }
+  }), 1.5, 1.08, -2.75, 2.82, -3.985, 0)
+  // Sơ đồ Hệ Mặt Trời trên tường trái
+  framed(paintTexture(640, 460, (g) => {
+    parchment(g, 640, 460)
+    g.font = "bold 30px 'Times New Roman', serif"
+    g.fillText('HỆ MẶT TRỜI', 320, 58)
+    g.lineWidth = 1.4
+    for (let i = 1; i <= 6; i++) {
+      g.beginPath()
+      g.ellipse(320, 265, i * 46, i * 26, 0, 0, 7)
+      g.stroke()
+    }
+    g.beginPath()
+    g.arc(320, 265, 16, 0, 7)
+    g.fill()
+    ;[[6, 46], [8, 92], [8, 138], [7, 184], [14, 230], [12, 276]].forEach(([r, d], i) => {
+      g.beginPath()
+      g.arc(320 + Math.cos(i * 1.7) * d, 265 + (Math.sin(i * 1.7) * d * 26) / 46, r, 0, 7)
+      g.fill()
+    })
+  }), 1.4, 1, -4.985, 2.5, 2.7, Math.PI / 2)
+  // Bản đồ Mặt Trăng trên tường phải
+  framed(paintTexture(460, 620, (g) => {
+    parchment(g, 460, 620)
+    g.font = "bold 28px 'Times New Roman', serif"
+    g.fillText('MẶT TRĂNG', 230, 62)
+    g.lineWidth = 2
+    g.beginPath()
+    g.arc(230, 340, 180, 0, 7)
+    g.stroke()
+    g.fillStyle = 'rgba(58,42,24,.42)'
+    for (const [x, y, r] of [[180, 290, 44], [258, 262, 34], [300, 340, 42], [205, 380, 30], [145, 370, 22], [290, 420, 20], [230, 450, 16], [170, 225, 14], [330, 270, 16]]) {
+      g.beginPath()
+      g.arc(x, y, r, 0, 7)
+      g.fill()
+    }
+  }), 0.95, 1.28, 4.985, 2.4, 2, -Math.PI / 2)
 
   // Cửa vòm: bầu trời đêm là tấm nền đặt ngoài tường
   const stars = tex(1024, 768, (g, w, h) => {
@@ -235,6 +359,22 @@ export function createLabScene(host, { spotEl, onPick }) {
   box(2.4, 0.07, 0.06, M.brass, 2.5, 2.3, -4.08)
   box(2.7, 0.1, 0.36, M.oak, 2.5, 1.06, -4)
   ;[1.3, 3.7].forEach((x) => box(0.1, 1.4, 0.08, M.brass, x, 1.8, -4.08))
+  ;[[1.9, 2.3, 2.42], [3.1, 2.3, 2.42]].forEach(([x, y, h]) => box(0.05, h, 0.05, M.brass, x, y, -4.08))
+  box(2.4, 0.05, 0.05, M.brass, 2.5, 1.7, -4.08)
+  // Rèm nhung: tấm phẳng uốn sóng rồi tính lại pháp tuyến để nếp gấp đón sáng thật
+  const velvet = mat({ color: 0x5a1420, roughness: 0.92, side: THREE.DoubleSide })
+  ;[1.17, 3.83].forEach((x) => {
+    const geo = new THREE.PlaneGeometry(0.46, 3, 30, 1)
+    const p = geo.attributes.position
+    for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 44) * 0.03 * (1 - (p.getY(i) + 1.5) * 0.08))
+    geo.computeVertexNormals()
+    add(geo, velvet, x, 2.38, -3.92)
+    const band = cyl(0.17, 0.17, 0.09, velvet, x, 1.62, -3.9, scene, 14)
+    band.scale.z = 0.34
+  })
+  const curtainRod = cyl(0.016, 0.016, 3.5, M.brass, 2.5, 3.9, -3.92, scene, 10)
+  curtainRod.rotation.z = Math.PI / 2
+  ;[0.75, 4.25].forEach((x) => ball(0.04, M.brass, x, 3.9, -3.92))
 
   // ------- Kính thiên văn -------
   const tubeDir = V(0.08, 0.42, -1).normalize()
@@ -258,146 +398,50 @@ export function createLabScene(host, { spotEl, onPick }) {
   tube(0.075, 0.065, 0.08, -0.74, M.iron)
   tube(0.03, 0.03, 0.01, -0.785, mat({ color: 0x223a6a, metalness: 0.9, roughness: 0.05 }))
   ball(0.1, M.iron, 0, -0.15, 0.1, scope)
+  // Vòng đồng trên thân, núm chỉnh nét, ống ngắm nhỏ
+  ;[-0.3, 0.05, 0.4, 0.68].forEach((z) => tube(0.128 + z * 0.012, 0.128 + z * 0.012, 0.022, z, M.iron))
+  ;[-1, 1].forEach((s2) => {
+    const knob = cyl(0.03, 0.03, 0.03, M.brass, s2 * 0.1, -0.03, -0.46, scope, 16)
+    knob.rotation.z = Math.PI / 2
+    cyl(0.009, 0.009, 0.05, M.iron, s2 * 0.07, -0.03, -0.46, scope, 8).rotation.z = Math.PI / 2
+  })
+  const finder = cyl(0.026, 0.026, 0.46, M.brass, 0, 0.19, 0.06, scope, 18)
+  finder.rotation.x = Math.PI / 2
+  ;[-0.1, 0.2].forEach((z) => box(0.02, 0.07, 0.03, M.iron, 0, 0.14, z, scope))
   ;[0, 2.09, 4.19].forEach((a) => {
     const leg = cyl(0.03, 0.045, 1.75, M.oak, 2.5 + Math.cos(a) * 0.36, 0.72, -2.2 + Math.sin(a) * 0.36, scopeItem)
     leg.rotation.z = -Math.cos(a) * 0.42
     leg.rotation.x = Math.sin(a) * 0.42
   })
   cyl(0.13, 0.13, 0.08, M.brass, 2.5, 1.4, -2.2, scopeItem)
+  // Giá đỡ: cột đồng, vòng khắc độ, nẹp giữ 3 chân, chân bọc đồng
+  kit(scopeItem).turned([[0.11, 0], [0.09, 0.05], [0.05, 0.12], [0.05, 0.28], [0.08, 0.32], [0, 0.32]], M.brass, 2.5, 1.04, -2.2)
+  add(new THREE.TorusGeometry(0.16, 0.012, 10, 40), M.brass, 2.5, 1.43, -2.2, scopeItem).rotation.x = Math.PI / 2
+  cyl(0.05, 0.05, 0.06, M.iron, 2.5, 0.7, -2.2, scopeItem, 14)
+  ;[0, 2.09, 4.19].forEach((a) => {
+    const spreader = box(0.46, 0.022, 0.03, M.oak, 2.5 + Math.cos(a) * 0.24, 0.7, -2.2 + Math.sin(a) * 0.24, scopeItem)
+    spreader.rotation.y = -a
+    cyl(0.05, 0.03, 0.06, M.brass, 2.5 + Math.cos(a) * 0.72, 0.03, -2.2 + Math.sin(a) * 0.72, scopeItem, 12)
+  })
   scene.updateMatrixWorld(true)
   const eye = scope.localToWorld(V(0, 0, -0.8))
   const scopeStart = eye.clone().addScaledVector(tubeDir, -1.25)
 
-  // ------- Giá sách bên trái -------
-  const shelf = item('shelf', -4.72, 0, -1.3)
-  box(0.5, 3.5, 0.08, M.oak, 0, 1.75, -1.75, shelf)
-  box(0.5, 3.5, 0.08, M.oak, 0, 1.75, 1.75, shelf)
-  box(0.05, 3.5, 3.5, M.oak, -0.23, 1.75, 0, shelf)
-  const levels = [0.2, 0.86, 1.52, 2.18, 2.84, 3.46]
-  levels.forEach((y) => box(0.5, 0.06, 3.5, M.oak, 0, y, 0, shelf))
-  const palette = [0x6b2a22, 0x20402f, 0x263a5c, 0x7a5a2c, 0x4a2a44, 0x8a7a55, 0x2c2622]
-  const books = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat({ roughness: 0.72 }), 170)
-  books.castShadow = true
-  books.receiveShadow = true
-  shelf.add(books)
-  {
-    const o = new THREE.Object3D()
-    let n = 0
-    levels.slice(0, 5).forEach((y) => {
-      let z = -1.66
-      while (z < 1.62 && n < 170) {
-        const t = rnd(0.05, 0.12)
-        const h = rnd(0.34, 0.52)
-        if (rnd() < 0.07) {
-          z += 0.22
-          continue
-        }
-        o.position.set(0.02, y + 0.03 + h / 2, z + t / 2)
-        o.scale.set(rnd(0.28, 0.36), h, t)
-        o.rotation.x = rnd() < 0.08 ? 0.1 : 0
-        o.updateMatrix()
-        books.setMatrixAt(n, o.matrix)
-        books.setColorAt(n, new THREE.Color(palette[Math.floor(rnd(palette.length))]))
-        n++
-        z += t + 0.004
-      }
-    })
-    books.count = n
-  }
-
-  // ------- Bảng đen công thức -------
-  const boardItem = item('board', -0.2, 2.25, -3.97)
-  box(2.36, 1.5, 0.05, M.oak, 0, 0, -0.01, boardItem)
-  const boardTex = tex(1024, 640, (g, w, h) => {
-    g.fillStyle = '#1e332b'
-    g.fillRect(0, 0, w, h)
-    for (let i = 0; i < 120; i++) {
-      g.fillStyle = `rgba(220,235,225,${rnd(0.005, 0.03)})`
-      g.fillRect(rnd(w), rnd(h), rnd(40, 240), rnd(3, 22))
-    }
-    g.fillStyle = '#ecefe2'
-    g.font = 'italic 62px Georgia, serif'
-    g.fillText('F = G m₁m₂ / r²', 56, 112)
-    g.fillText('E = mc²', 56, 235)
-    g.fillText('λ = c / f', 56, 355)
-    g.fillStyle = '#f2d78a'
-    g.fillText('T = 2π√(l / g)', 56, 480)
-    g.strokeStyle = '#ecefe2'
-    g.lineWidth = 3
-    g.beginPath()
-    g.ellipse(770, 200, 190, 96, -0.25, 0, 7)
-    g.stroke()
-    g.fillStyle = '#f2d78a'
-    g.beginPath()
-    g.arc(720, 208, 22, 0, 7)
-    g.fill()
-    g.fillStyle = '#ecefe2'
-    g.beginPath()
-    g.arc(920, 138, 11, 0, 7)
-    g.fill()
-    g.font = 'italic 34px Georgia, serif'
-    g.fillText('T² ~ a³', 680, 360)
-  })
-  add(new THREE.PlaneGeometry(2.2, 1.36), mat({ map: boardTex, roughness: 0.9 }), 0, 0, 0.02, boardItem, false)
-  box(2.4, 0.05, 0.1, M.oak, 0, -0.73, 0.04, boardItem)
-
-  // ------- Bàn thí nghiệm: đèn, bình phát sáng, sổ tay -------
-  const desk = item('desk', -2.1, 0, -3.35)
-  box(3.1, 0.09, 1.25, M.oak, 0, 0.98, 0, desk)
-  ;[[-1.45, -0.5], [1.45, -0.5], [-1.45, 0.5], [1.45, 0.5]].forEach(([x, z]) => box(0.11, 0.96, 0.11, M.oak, x, 0.47, z, desk))
-  cyl(0.14, 0.17, 0.04, M.brass, -1.05, 1.05, -0.2, desk)
-  cyl(0.018, 0.018, 0.55, M.brass, -1.05, 1.32, -0.2, desk)
-  cyl(0.08, 0.26, 0.2, mat({ color: 0x1d4633, roughness: 0.4, side: THREE.DoubleSide }), -1.05, 1.62, -0.2, desk)
-  ball(0.05, new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), -1.05, 1.54, -0.2, desk).castShadow = false
-  const journal = item('journal', -2.1, 0, -3.35)
-  box(0.34, 0.025, 0.44, M.paper, -0.2, 1.04, 0.15, journal).rotation.z = 0.04
-  box(0.34, 0.025, 0.44, M.paper, 0.15, 1.04, 0.15, journal).rotation.z = -0.04
-  box(0.72, 0.02, 0.47, mat({ color: 0x5c2a1c, roughness: 0.6 }), -0.03, 1.03, 0.15, journal)
-
-  const brew = mat({ color: 0x25c98c, emissive: 0x18c07e, emissiveIntensity: 1.1, transparent: true, opacity: 0.84, roughness: 0.1 })
-  ball(0.16, brew, 0.85, 1.18, -0.15, desk)
-  cyl(0.04, 0.05, 0.22, mat({ color: 0xa8d8d0, transparent: true, opacity: 0.4 }), 0.85, 1.4, -0.15, desk)
-  const tubes = [0, 0.12, 0.24].map((d) => {
-    const m = mat({ color: 0xf5a524, emissive: 0xf5a524, emissiveIntensity: 0.7 })
-    cyl(0.035, 0.035, 0.26, m, 1.1 + d, 1.16, 0.22, desk)
-    return m
-  })
-  box(0.5, 0.03, 0.12, M.oak, 1.22, 1.14, 0.22, desk)
-  const brewLight = new THREE.PointLight(0x3fe0a0, 2.2, 3.2, 2)
-  brewLight.position.set(-1.25, 1.4, -3.2)
-  scene.add(brewLight)
-
-  // ------- Tủ tám ngăn kéo + mô hình Hệ Mặt Trời bằng đồng -------
-  const cabinet = item('cabinet', 4.62, 0, -2.9)
-  cabinet.rotation.y = -Math.PI / 2
-  box(1.5, 1.28, 0.62, M.oak, 0, 0.64, 0, cabinet)
-  box(1.6, 0.06, 0.7, M.oak, 0, 1.31, 0, cabinet)
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 2; c++) {
-      const x = c ? 0.36 : -0.36
-      const y = 0.2 + r * 0.29
-      box(0.66, 0.25, 0.03, M.oak, x, y, 0.32, cabinet)
-      ball(0.022, M.brass, x, y, 0.345, cabinet)
-    }
-  }
-  const orrery = new THREE.Group()
-  orrery.position.set(0, 1.34, 0)
-  cabinet.add(orrery)
-  cyl(0.16, 0.2, 0.05, M.brass, 0, 0.02, 0, orrery)
-  cyl(0.016, 0.016, 0.42, M.brass, 0, 0.23, 0, orrery)
-  ball(0.075, mat({ color: 0xffc95e, emissive: 0xff9d2e, emissiveIntensity: 1.2 }), 0, 0.46, 0, orrery)
-  const arms = [[0.2, 0x8f8f8f, 0.024, 1.3], [0.31, 0x3b82c4, 0.032, 0.85], [0.42, 0xbb5533, 0.027, 0.55]].map(([r, color, size, speed]) => {
-    const arm = new THREE.Group()
-    arm.position.y = 0.4
-    orrery.add(arm)
-    box(r, 0.008, 0.012, M.brass, r / 2, 0, 0, arm)
-    ball(size, mat({ color, roughness: 0.5 }), r, 0.025, 0, arm)
-    return { arm, speed }
-  })
-  // Bóng chỉ tính một lần nên vật đang quay không được đổ bóng, kẻo in vết đen đứng yên lên tường
-  orrery.traverse((o) => {
-    o.castShadow = false
-  })
+  // ------- Giá sách, bảng đen, bàn thí nghiệm, tủ mẫu vật (mỗi món một file) -------
+  const shelf = buildShelf()
+  shelf.group.position.set(-4.72, 0, -1.3)
+  scene.add(shelf.group)
+  const board = buildBoard()
+  board.group.position.set(-0.2, 2.25, -3.97)
+  scene.add(board.group)
+  const bench = buildBench()
+  bench.group.position.set(-2.1, 0, -3.35)
+  bench.journal.position.set(-2.1, 0, -3.35)
+  scene.add(bench.group, bench.journal)
+  const cabinet = buildCabinet()
+  cabinet.group.position.set(4.62, 0, -2.9)
+  cabinet.group.rotation.y = -Math.PI / 2
+  scene.add(cabinet.group)
 
   // ------- Đồng hồ quả lắc -------
   const clock = buildClock()
@@ -406,40 +450,132 @@ export function createLabScene(host, { spotEl, onPick }) {
   scene.add(clock.group)
 
   // ------- Thảm, quả địa cầu làm tiền cảnh, đèn treo -------
-  const rugMap = tex(512, 512, (g, w) => {
+  const rugMap = tex(1024, 1024, (g, w) => {
+    const c = w / 2
     g.fillStyle = '#5a1f1b'
     g.fillRect(0, 0, w, w)
-    ;/** @type {[number, string, number][]} */ ([[0.48, '#c49a4b', 7], [0.42, '#1f2a42', 18], [0.27, '#c49a4b', 4]]).forEach(([r, c, lw]) => {
-      g.strokeStyle = c
+    /** @type {[number, string, number][]} */
+    const rings = [[0.485, '#c49a4b', 12], [0.455, '#1f2a42', 34], [0.42, '#c49a4b', 6], [0.26, '#c49a4b', 6], [0.235, '#1f2a42', 18]]
+    rings.forEach(([r, color, lw]) => {
+      g.strokeStyle = color
       g.lineWidth = lw
       g.beginPath()
-      g.arc(w / 2, w / 2, w * r, 0, 7)
+      g.arc(c, c, w * r, 0, 7)
+      g.stroke()
+    })
+    g.translate(c, c)
+    // Hoa văn lặp quanh vành
+    for (let i = 0; i < 40; i++) {
+      g.save()
+      g.rotate((i / 40) * Math.PI * 2)
+      g.fillStyle = i % 2 ? '#c49a4b' : '#8c3a2c'
+      g.beginPath()
+      g.moveTo(0, -w * 0.47)
+      g.lineTo(9, -w * 0.455)
+      g.lineTo(0, -w * 0.44)
+      g.lineTo(-9, -w * 0.455)
+      g.fill()
+      g.restore()
+    }
+    for (let i = 0; i < 16; i++) {
+      g.save()
+      g.rotate((i / 16) * Math.PI * 2)
+      g.fillStyle = '#7a2b22'
+      g.beginPath()
+      g.ellipse(0, -w * 0.34, 34, 66, 0, 0, 7)
+      g.fill()
+      g.fillStyle = '#c49a4b'
+      g.beginPath()
+      g.ellipse(0, -w * 0.34, 10, 34, 0, 0, 7)
+      g.fill()
+      g.restore()
+    }
+    // Sao 8 cánh giữa thảm như la bàn
+    for (let i = 0; i < 8; i++) {
+      g.save()
+      g.rotate((i / 8) * Math.PI * 2)
+      g.fillStyle = i % 2 ? '#8c6a2c' : '#d8b05a'
+      g.beginPath()
+      g.moveTo(0, -w * (i % 2 ? 0.14 : 0.22))
+      g.lineTo(w * 0.04, 0)
+      g.lineTo(-w * 0.04, 0)
+      g.fill()
+      g.restore()
+    }
+  })
+  cyl(2.3, 2.3, 0.012, mat({ map: rugMap, roughness: 1 }), -0.2, 0.008, -0.2, scene, 64).castShadow = false
+
+  const globeSpot = V(-2.4, 0, -0.2)
+  const globeKit = kit(scene)
+  globeKit.turned([[0, 0], [0.09, 0.02], [0.05, 0.1], [0.028, 0.16], [0.04, 0.42], [0.022, 0.62], [0.03, 0.7], [0, 0.7]], trim, globeSpot.x, 0.1, globeSpot.z)
+  ;[0, 2.09, 4.19].forEach((a) => {
+    const leg = box(0.3, 0.035, 0.04, trimDark, globeSpot.x + Math.cos(a) * 0.14, 0.09, globeSpot.z + Math.sin(a) * 0.14)
+    leg.rotation.y = -a
+    ball(0.024, M.brass, globeSpot.x + Math.cos(a) * 0.29, 0.03, globeSpot.z + Math.sin(a) * 0.29)
+  })
+  // Quả địa cầu cổ: lưới kinh vĩ, các lục địa vẽ phác theo toạ độ thật
+  const globeMap = tex(1024, 512, (g, w, h) => {
+    g.fillStyle = '#2c5670'
+    g.fillRect(0, 0, w, h)
+    const lon = (/** @type {number} */ d) => ((d + 180) / 360) * w
+    const lat = (/** @type {number} */ d) => ((90 - d) / 180) * h
+    g.strokeStyle = 'rgba(232,214,170,.28)'
+    g.lineWidth = 1
+    for (let d = -150; d <= 180; d += 30) {
+      g.beginPath()
+      g.moveTo(lon(d), 0)
+      g.lineTo(lon(d), h)
+      g.stroke()
+    }
+    for (let d = -60; d <= 60; d += 30) {
+      g.beginPath()
+      g.moveTo(0, lat(d))
+      g.lineTo(w, lat(d))
+      g.stroke()
+    }
+    const lands = [
+      [[-165, 62], [-140, 70], [-95, 72], [-65, 60], [-55, 50], [-80, 30], [-97, 18], [-85, 10], [-105, 22], [-122, 38], [-130, 55]],
+      [[-80, 10], [-60, 8], [-36, -6], [-40, -22], [-58, -38], [-70, -54], [-74, -30], [-81, -6]],
+      [[-16, 28], [-6, 36], [12, 36], [32, 31], [44, 11], [51, 11], [40, -15], [32, -28], [20, -34], [14, -10], [8, 4], [-8, 5], [-16, 14]],
+      [[-9, 37], [-8, 44], [2, 51], [8, 58], [24, 68], [60, 72], [105, 77], [140, 73], [178, 66], [160, 58], [140, 50], [122, 38], [120, 24], [106, 10], [98, 12], [90, 22], [78, 8], [72, 20], [58, 25], [48, 30], [36, 36], [26, 40], [12, 44]],
+      [[114, -22], [122, -18], [131, -12], [142, -11], [153, -27], [147, -38], [130, -32], [116, -34]],
+      [[-52, 60], [-44, 60], [-22, 70], [-30, 82], [-60, 80], [-68, 72]],
+      [[-180, -72], [-90, -72], [-40, -78], [40, -68], [120, -67], [180, -72], [180, -90], [-180, -90]],
+    ]
+    g.fillStyle = '#c7ab70'
+    g.strokeStyle = '#6d5428'
+    g.lineWidth = 1.5
+    lands.forEach((poly) => {
+      g.beginPath()
+      poly.forEach(([x, y], i) => (i ? g.lineTo(lon(x), lat(y)) : g.moveTo(lon(x), lat(y))))
+      g.closePath()
+      g.fill()
       g.stroke()
     })
   })
-  cyl(2.3, 2.3, 0.012, mat({ map: rugMap, roughness: 1 }), -0.2, 0.008, -0.2, scene, 48).castShadow = false
-  const globeSpot = V(-2.4, 0, -0.2)
-  cyl(0.2, 0.26, 0.05, M.oak, globeSpot.x, 0.03, globeSpot.z)
-  cyl(0.03, 0.05, 0.78, M.oak, globeSpot.x, 0.42, globeSpot.z)
-  const globeMap = tex(512, 256, (g, w, h) => {
-    g.fillStyle = '#23465f'
-    g.fillRect(0, 0, w, h)
-    g.fillStyle = '#b9a06a'
-    for (let i = 0; i < 16; i++) {
-      g.beginPath()
-      g.ellipse(rnd(w), rnd(40, h - 40), rnd(16, 58), rnd(9, 34), rnd(3), 0, 7)
-      g.fill()
-    }
-  })
-  const globe = ball(0.3, mat({ map: globeMap, roughness: 0.45 }), globeSpot.x, 1.1, globeSpot.z)
-  const gRing = add(new THREE.TorusGeometry(0.35, 0.014, 8, 44), M.brass, globeSpot.x, 1.1, globeSpot.z)
-  gRing.rotation.set(0.4, 1.1, 0)
-  // Đèn treo nằm ngay cạnh nguồn sáng: không đổ bóng, kẻo thành mảng đen lớn trên trần
-  cyl(0.008, 0.008, 0.85, M.iron, 0, 3.98, 0, scene, 6).castShadow = false
-  cyl(0.05, 0.13, 0.09, M.brass, 0, 3.58, 0).castShadow = false
-  cyl(0.11, 0.07, 0.05, M.brass, 0, 3.27, 0).castShadow = false
-  const lantern = ball(0.13, new THREE.MeshBasicMaterial({ color: 0xffd28a, fog: false }), 0, 3.42, 0)
-  lantern.castShadow = false
+  const globeTilt = new THREE.Group()
+  globeTilt.position.set(globeSpot.x, 1.13, globeSpot.z)
+  globeTilt.rotation.z = -0.41 // trục Trái Đất nghiêng 23,5°
+  globeTilt.userData.dynamic = true
+  scene.add(globeTilt)
+  const globe = ball(0.3, mat({ map: globeMap, roughness: 0.42 }), 0, 0, 0, globeTilt)
+  add(new THREE.TorusGeometry(0.335, 0.012, 8, 56), M.brass, 0, 0, 0, globeTilt).rotation.y = Math.PI / 2
+  cyl(0.008, 0.008, 0.72, M.brass, 0, 0, 0, globeTilt, 8)
+  add(new THREE.TorusGeometry(0.335, 0.016, 8, 56), M.brass, globeSpot.x, 1.13, globeSpot.z).rotation.x = Math.PI / 2
+
+  // Đèn dầu treo: lồng đồng, bóng thủy tinh phát sáng. Đặt sát nguồn sáng nên không đổ bóng, kẻo thành mảng đen trên trần
+  const lampKit = kit(scene)
+  /** @param {THREE.Mesh} m */
+  const noCast = (m) => {
+    m.castShadow = false
+  }
+  noCast(lampKit.cyl(0.008, 0.008, 0.72, M.iron, 0, 4.0, 0, scene, 6))
+  noCast(lampKit.turned([[0, 0.3], [0.03, 0.3], [0.05, 0.24], [0.11, 0.17], [0.13, 0.13], [0.13, 0.11], [0, 0.11]], M.brass, 0, 3.34, 0))
+  noCast(lampKit.turned([[0, 0], [0.1, 0], [0.13, 0.025], [0.1, 0.05], [0, 0.05]], M.brass, 0, 3.06, 0))
+  ;[0, 1, 2, 3].forEach((i) => noCast(lampKit.cyl(0.006, 0.006, 0.36, M.brass, Math.cos(i * 1.57 + 0.78) * 0.115, 3.28, Math.sin(i * 1.57 + 0.78) * 0.115, scene, 6)))
+  noCast(add(new THREE.TorusGeometry(0.03, 0.004, 6, 16), M.brass, 0, 3.66, 0))
+  const lantern = lampKit.turned([[0.05, 0], [0.08, 0.06], [0.09, 0.15], [0.07, 0.26], [0.045, 0.34]], new THREE.MeshBasicMaterial({ color: 0xffd28a, fog: false, side: THREE.DoubleSide }), 0, 3.1, 0)
+  noCast(lantern)
 
   // ------- Giáo sư Gấu Trúc đứng cạnh bảng, que chỉ hướng về bảng -------
   const panda = buildPanda()
@@ -452,6 +588,7 @@ export function createLabScene(host, { spotEl, onPick }) {
   // ------- Cửa gỗ và hành lang ngoài cửa (chỉ thấy trong cú máy bước vào) -------
   const hinge = new THREE.Group()
   hinge.position.set(-0.85, 0, 4.72)
+  hinge.userData.dynamic = true
   scene.add(hinge)
   box(1.7, 2.7, 0.07, M.oak, 0.85, 1.35, 0, hinge)
   ;[0.55, 2.15].forEach((y) => box(0.7, 0.08, 0.1, M.iron, 0.35, y, 0.01, hinge))
@@ -479,7 +616,7 @@ export function createLabScene(host, { spotEl, onPick }) {
   scene.add(hallLamp)
 
   // ------- Ánh sáng -------
-  const hemi = new THREE.HemisphereLight(0x8a7a70, 0x25160d, 0.75)
+  const hemi = new THREE.HemisphereLight(0x8a7a70, 0x25160d, 0.5)
   scene.add(hemi)
   const roomLight = new THREE.PointLight(0xffb76b, 42, 16, 1.8)
   roomLight.position.set(0, 3.05, 0)
@@ -488,8 +625,8 @@ export function createLabScene(host, { spotEl, onPick }) {
   roomLight.shadow.bias = -0.003
   roomLight.shadow.radius = 5
   scene.add(roomLight)
-  const deskLight = new THREE.PointLight(0xffc27c, 9, 7, 2)
-  deskLight.position.set(-3.15, 1.45, -3.5)
+  const deskLight = new THREE.PointLight(0xffc27c, 4.5, 7, 2)
+  deskLight.position.set(-3.2, 1.5, -3.55)
   scene.add(deskLight)
   const moon = new THREE.DirectionalLight(0x8aa8ee, 0.75)
   moon.position.set(3.1, 6, -8)
@@ -514,9 +651,36 @@ export function createLabScene(host, { spotEl, onPick }) {
     g.fillRect(0, 0, 32, 32)
   })
   const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ map: dustTex, size: 0.024, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending }))
+  dust.raycast = () => {} // bụi không chặn cú bấm, cũng đỡ tốn tính toán
   scene.add(dust)
 
+  // Môi trường phản chiếu vẽ tay: đèn ấm phía trên, cửa sổ xanh một bên. Thiếu nó đồng thau chỉ còn màu xỉn tối
+  const envSource = paintTexture(256, 128, (g) => {
+    const wall = g.createLinearGradient(0, 0, 0, 128)
+    wall.addColorStop(0, '#4a3324')
+    wall.addColorStop(0.5, '#6b4a30')
+    wall.addColorStop(1, '#2a1a10')
+    g.fillStyle = wall
+    g.fillRect(0, 0, 256, 128)
+    g.fillStyle = '#ffdca0'
+    g.fillRect(100, 6, 56, 18)
+    g.fillStyle = '#ffc27c'
+    g.fillRect(20, 40, 26, 22)
+    g.fillStyle = '#7f9ad8'
+    g.fillRect(190, 34, 30, 40)
+  })
+  envSource.mapping = THREE.EquirectangularReflectionMapping
+  const pmrem = new THREE.PMREMGenerator(gl)
+  const envTarget = pmrem.fromEquirectangular(envSource)
+  scene.environment = envTarget.texture
+  envSource.dispose()
+  pmrem.dispose()
+
   const solar = createSolarView()
+
+  // Kính thiên văn và vỏ phòng gộp lại; các món khác đã tự gộp lúc dựng
+  mergeStatic(scopeItem)
+  mergeStatic(scene)
 
   // ------- Camera -------
   const cam = { pos: HOME.pos.clone(), look: HOME.look.clone() }
@@ -556,6 +720,13 @@ export function createLabScene(host, { spotEl, onPick }) {
     return flight
   }
   const v3 = (/** @type {P3} */ p) => V(p[0], p[1], p[2])
+  /** Trả mọi món về trạng thái nghỉ khi rời đi */
+  function resetProps() {
+    clock.reset()
+    shelf.pickBook(-1)
+    cabinet.reset()
+    bench.setSalt(null)
+  }
 
   /** Đổi cảnh qua một nhịp tối ngắn và lấy nét lại, che chỗ chuyển giữa phòng và trời sao. @param {boolean} on */
   function swapToSolar(on) {
@@ -604,6 +775,7 @@ export function createLabScene(host, { spotEl, onPick }) {
   }
   /** @type {null | { x: number, y: number, moved: number }} */
   let drag = null
+  let hoverAt = 0
   /** @param {PointerEvent} e */
   const onDown = (e) => {
     if (!inRoom) return
@@ -627,7 +799,10 @@ export function createLabScene(host, { spotEl, onPick }) {
       yaw.now = THREE.MathUtils.clamp(yaw.now + dx * 0.0035, -limit, limit)
       yaw.pitch = THREE.MathUtils.clamp(yaw.pitch - dy * 0.0025, -0.3, 0.35)
     } else if (inRoom && e.pointerType === 'mouse') {
-      canvas.style.cursor = spotAt(e.clientX, e.clientY) ? 'pointer' : 'grab'
+      if (e.timeStamp - hoverAt > 120) {
+        hoverAt = e.timeStamp
+        canvas.style.cursor = spotAt(e.clientX, e.clientY) ? 'pointer' : 'grab'
+      }
     }
   }
   /** @param {PointerEvent} e */
@@ -657,9 +832,20 @@ export function createLabScene(host, { spotEl, onPick }) {
   function frame(now) {
     raf = requestAnimationFrame(frame)
     // Trần 0.25s: máy yếu thì cú máy giật hơn nhưng vẫn đúng giờ, không kéo dài thành hàng chục giây
-    const dt = Math.min(clockObj.getDelta(), 0.25)
+    const rawDt = clockObj.getDelta()
+    const dt = Math.min(rawDt, 0.25)
     const t = now / 1000
     frameNo++
+    if (frameNo > 60) {
+      slowSum += rawDt
+      if (frameNo % 45 === 0) {
+        if (slowSum / 45 > 0.026 && pixelRatio > MIN_PIXEL_RATIO) {
+          pixelRatio = Math.max(MIN_PIXEL_RATIO, pixelRatio - 0.25)
+          gl.setPixelRatio(pixelRatio)
+        }
+        slowSum = 0
+      }
+    }
 
     if (flight) {
       const f = flight
@@ -705,11 +891,11 @@ export function createLabScene(host, { spotEl, onPick }) {
     camera.lookAt(look)
 
     clock.update(now, dt, calm)
+    cabinet.update(t, dt, calm)
+    bench.update(t, dt, calm)
+    shelf.update(dt)
     if (!calm) {
       globe.rotation.y = t * 0.12
-      arms.forEach((a) => {
-        a.arm.rotation.y = t * a.speed
-      })
       panda.update(t, dt, camera.position)
       const a = dustGeo.attributes.position
       for (let i = 0; i < dustN; i++) {
@@ -719,15 +905,14 @@ export function createLabScene(host, { spotEl, onPick }) {
         a.setX(i, a.getX(i) + Math.sin(t * 0.3 + i) * dt * 0.018)
       }
       a.needsUpdate = true
-      brew.emissiveIntensity = 1 + Math.sin(t * 2.2) * 0.22
     }
 
     // Đèn chuyển dần như vặn nhỏ đèn dầu
     const k = Math.min(1, dt * 3)
     const flicker = lightsOn && !calm ? 1 + Math.sin(t * 7.1) * 0.018 + Math.sin(t * 13.3) * 0.012 : 1
     roomLight.intensity += ((lightsOn ? 42 * flicker : 2.2) - roomLight.intensity) * k
-    deskLight.intensity += ((lightsOn ? 9 : 2.6) - deskLight.intensity) * k
-    hemi.intensity += ((lightsOn ? 0.75 : 0.2) - hemi.intensity) * k
+    deskLight.intensity += ((lightsOn ? 4.5 : 1.6) - deskLight.intensity) * k
+    hemi.intensity += ((lightsOn ? 0.5 : 0.14) - hemi.intensity) * k
     moon.intensity += ((lightsOn ? 0.75 : 2) - moon.intensity) * k
 
     if (inRoom) {
@@ -803,6 +988,11 @@ export function createLabScene(host, { spotEl, onPick }) {
       const s = LAB_SPOTS.find((x) => x.id === id)
       if (!s || !s.pose) return done?.()
       const stop = (camera.aspect < 1 && s.pose.phone) || s.pose
+      // Sách đặt trước mắt, ngay trên đường nhìn của nơi camera dừng (trong toạ độ của giá sách)
+      if (id === 'shelf') {
+        const phone = camera.aspect < 1
+        shelf.readingSpot(stop.pos[0] - 1 + 4.72, stop.pos[1] + (phone ? 0.08 : 0), stop.pos[2] + 1.3 + (phone ? -0.15 : 0.34))
+      }
       fly([...s.pose.path.map(v3), v3(stop.pos)], v3(stop.look), 2.1, done)
     },
     /** Thí nghiệm con lắc: đổi chiều dài dây, gia tốc rơi. @param {number} l @param {number} g */
@@ -812,7 +1002,7 @@ export function createLabScene(host, { spotEl, onPick }) {
     /** @param {string} from id món đồ đang đứng trước @param {() => void} [done] */
     home(from, done) {
       const s = LAB_SPOTS.find((x) => x.id === from)
-      clock.reset()
+      resetProps()
       fly([...(s?.pose?.path ?? []).map(v3), HOME.pos], HOME.look, 1.9, () => {
         clock.settle()
         inRoom = true
@@ -822,6 +1012,7 @@ export function createLabScene(host, { spotEl, onPick }) {
     /** Quay đầu, vòng sang phải cho đồ vật trôi qua, vào đúng trục thị kính rồi áp mắt.
      * @param {() => void} onIris lúc viền tối bắt đầu khép @param {() => void} done */
     enterScope(onIris, done) {
+      resetProps()
       const f = fly(
         [V(0.75, 1.62, 2.45), V(3.15, 1.82, 0.9), scopeStart, eye.clone().addScaledVector(tubeDir, -0.28), eye.clone().addScaledVector(tubeDir, -0.05)],
         eye.clone().addScaledVector(tubeDir, 5),
@@ -853,18 +1044,14 @@ export function createLabScene(host, { spotEl, onPick }) {
     /** @param {boolean} on */
     setLights(on) {
       lightsOn = on
-    },
-    /** @param {string[]} colors [bình cầu, ống 1, ống 2, ống 3] */
-    setBrew(colors) {
-      brew.color.set(colors[0])
-      brew.emissive.set(colors[0])
-      brewLight.color.set(colors[0])
-      tubes.forEach((m, i) => {
-        m.color.set(colors[i + 1])
-        m.emissive.set(colors[i + 1])
+      // Tắt đèn thì đồ vật cũng bớt phản chiếu, kẻo tối mà đồng vẫn sáng
+      scene.traverse((o) => {
+        const m = /** @type {THREE.Mesh} */ (o).material
+        if (m && 'envMapIntensity' in m) /** @type {THREE.MeshStandardMaterial} */ (m).envMapIntensity = on ? 1 : 0.3
       })
     },
     waveTo: panda.wave,
+    parts: { shelf, board, bench, cabinet },
     dispose() {
       cancelAnimationFrame(raf)
       timers.splice(0).forEach(clearTimeout)
@@ -880,6 +1067,7 @@ export function createLabScene(host, { spotEl, onPick }) {
           })
         })
       }
+      envTarget.dispose()
       gl.dispose()
       gl.forceContextLoss()
       canvas.remove()

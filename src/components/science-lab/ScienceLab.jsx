@@ -7,7 +7,6 @@ import {
   playDoorCreak,
   stopDoorCreak,
   playOpticChime,
-  playBubbleSound,
   startLabAmbient,
   stopLabAmbient,
 } from './labSound.js'
@@ -22,12 +21,6 @@ const PANDA_QUOTES = [
   'Mô hình Hệ Mặt Trời bằng đồng trên mặt tủ quay theo đúng định luật Kepler.',
   'Ghé mắt vào kính thiên văn bên cửa vòm đi, đêm nay trời rất trong!',
 ]
-// Màu dung dịch khi bấm đổi phản ứng: [bình cầu, ống 1, ống 2, ống 3]
-const BREWS = [
-  ['#10b981', '#f59e0b', '#38bdf8', '#ec4899'],
-  ['#a855f7', '#ec4899', '#38bdf8', '#fbbf24'],
-  ['#f43f5e', '#eab308', '#22c55e', '#60a5fa'],
-]
 const FLY_MS_TRAVEL = 750
 
 /** Phòng Khoa học 3D: cửa gỗ mở, bước vào gác mái, bấm đồ vật thì camera bay đến.
@@ -39,7 +32,6 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
   const labRef = useRef(null)
   const spotEls = useRef(/** @type {Record<string, HTMLButtonElement | null>} */ ({}))
   const soundRef = useRef(getSettings().soundEffects)
-  const brewIdx = useRef(0)
 
   // door: đang mở cửa · room: đứng trong phòng · moving: camera đang bay · focus: đứng trước đồ vật · scope: mắt trong kính · travel: lao đi
   const [view, setView] = useState(initialWalkIn ? 'door' : 'room')
@@ -49,6 +41,9 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
   const [spot, setSpot] = useState(/** @type {string | null} */ (null))
   const [iris, setIris] = useState(false)
   const [quote, setQuote] = useState(WELCOME)
+  // Những món đã xem trong lần vào phòng này, sổ tay đánh dấu lại
+  const [visited, setVisited] = useState(() => /** @type {Set<string>} */ (new Set()))
+  const markVisited = (/** @type {string} */ id) => setVisited((v) => (v.has(id) ? v : new Set(v).add(id)))
 
   useEffect(() => {
     const host = hostRef.current
@@ -60,7 +55,10 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
         spotEl: (id) => spotEls.current[id],
         onPick: (id) => pickRef.current(id),
       })
-    } catch {
+    } catch (err) {
+      // Dựng hỏng giữa chừng: dọn canvas dở dang, phòng hiện dạng danh sách
+      console.error('Không dựng được cảnh 3D:', err)
+      host.replaceChildren()
       setFailed(true)
       setView('room')
       return
@@ -111,6 +109,7 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
     if (failed) {
       setSpot(id)
       setView('focus')
+      markVisited(id)
       return
     }
     setView('moving')
@@ -118,18 +117,11 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
     lab?.focus(id, () => {
       setSpot(id)
       setView('focus')
-      if (id === 'desk') changeBrew()
+      markVisited(id)
     })
   }
   const pickRef = useRef(pick)
   pickRef.current = pick
-
-  function changeBrew() {
-    brewIdx.current = (brewIdx.current + 1) % BREWS.length
-    labRef.current?.setBrew(BREWS[brewIdx.current])
-    if (soundRef.current) playBubbleSound()
-    setQuote('Dung dịch đã đổi màu phát quang! Bấm lần nữa để thử phản ứng khác.')
-  }
 
   function backFromSpot() {
     const from = spot
@@ -148,6 +140,7 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
     // Tải sẵn màn Vũ Trụ để lúc bấm Du hành không phải chờ
     import('../SpaceExplorer.jsx').catch(() => {})
     if (soundRef.current) playOpticChime()
+    markVisited('scope')
     setSpot(null)
     setQuote('')
     setView('moving')
@@ -185,6 +178,14 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
     setQuote(next ? 'Đèn đã sáng trở lại.' : 'Tắt đèn đi, ánh trăng hiện rõ hơn hẳn.')
   }
 
+  // Trang học phía sau bị che kín: ẩn và dừng hiệu ứng để dành sức cho cảnh 3D. Lúc phòng mờ đi thì trả lại cho màn Vũ Trụ
+  useEffect(() => {
+    if (leaving) return
+    const root = document.documentElement
+    root.classList.add('sci-lab-open')
+    return () => root.classList.remove('sci-lab-open')
+  }, [leaving])
+
   // Khóa cuộn trang + phím Esc lùi đúng một bước theo trạng thái hiện tại
   const escRef = useRef(() => {})
   escRef.current = () => {
@@ -207,7 +208,7 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
     }
   }, [])
 
-  const showCard = view === 'focus' && spot && spot !== 'desk'
+  const showCard = view === 'focus' && spot
 
   return createPortal(
     <div className={`sci-lab-viewport is-${view} ${failed ? 'is-flat' : ''} ${leaving ? 'is-leaving' : ''}`} role="dialog" aria-label="Phòng Khoa học">
@@ -257,20 +258,8 @@ export default function ScienceLab({ onClose, onOpenSpace, initialWalkIn = true,
         </button>
       )}
 
-      {view === 'focus' && spot === 'desk' && (
-        <div className="sci-desk-actions">
-          <button type="button" className="sci-btn" onClick={changeBrew}>Đổi phản ứng</button>
-          <button type="button" className="sci-btn sci-btn-line" onClick={backFromSpot} autoFocus>Lùi lại</button>
-        </div>
-      )}
-
       {showCard && (
-        <LabModal
-          id={spot}
-          onClose={backFromSpot}
-          onScope={lookThroughScope}
-          onPendulum={(l, g) => labRef.current?.setPendulum(l, g)}
-        />
+        <LabModal id={spot} lab={labRef.current} visited={visited} onClose={backFromSpot} onScope={lookThroughScope} />
       )}
 
       {/* Viền thị kính: khép lại quanh Hệ Mặt Trời, chưa rời khỏi phòng */}
