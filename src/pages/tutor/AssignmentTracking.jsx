@@ -128,6 +128,10 @@ export default function AssignmentTracking() {
         <ErrorBox message={actionError} />
       </div>
 
+      {/* Đáp án đặt trên khung chấm: kéo xuống đáy trang là gặp ngay ô cho điểm */}
+      {a.is_exam && <ExamStructureNote exercises={exercises} />}
+      <AnswerKey exercises={exercises} isExam={!!a.is_exam} />
+
       {recipients.length === 0 ? (
         <div className="empty">
           Bài này chưa giao cho ai. <Link to={`/tutor/assignments/${a.id}/edit`}>Chọn học sinh</Link>
@@ -154,9 +158,6 @@ export default function AssignmentTracking() {
           </div>
         </>
       )}
-
-      {a.is_exam && <ExamStructureNote exercises={exercises} />}
-      <AnswerKey exercises={exercises} isExam={!!a.is_exam} />
     </div>
   )
 }

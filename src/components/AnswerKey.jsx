@@ -9,15 +9,29 @@ import { groupExercises, maxPoints, viNum } from '../lib/exam.js'
 //  - "Bảng đáp án": gọn để dò nhanh (lưới trắc nghiệm, bảng Đ/S, đáp số trả lời ngắn, đáp án tự luận)
 //  - "Chi tiết từng câu": đề + đáp án + lời giải đầy đủ
 export default function AnswerKey({ exercises, isExam }) {
+  const [shown, setShown] = useState(false) // mặc định thu gọn: đáp án tự luận rất dài, che mất khung cho điểm
   const [view, setView] = useState('table')
   const [openAll, setOpenAll] = useState(null) // null: mặc định theo loại câu; true/false: mở/thu hết lời giải
   const groups = groupExercises(exercises, isExam)
   const hasMethod = exercises.some((ex) => ex.method_md)
 
+  if (!shown)
+    return (
+      <div className="card answer-key row row-between">
+        <h2 style={{ margin: 0 }}>Đáp án ({exercises.length} câu)</h2>
+        <button type="button" className="btn btn-small" aria-expanded="false" onClick={() => setShown(true)}>
+          ▸ Hiện đáp án
+        </button>
+      </div>
+    )
+
   return (
     <div className="card answer-key">
       <div className="row row-between" style={{ marginBottom: '0.75rem' }}>
         <h2 style={{ margin: 0 }}>Đáp án ({exercises.length} câu)</h2>
+        <button type="button" className="btn btn-small btn-ghost" aria-expanded="true" onClick={() => setShown(false)}>
+          ▾ Ẩn
+        </button>
         <div className="chips" role="tablist">
           <button type="button" role="tab" aria-selected={view === 'table'} className={view === 'table' ? 'chip active' : 'chip'} onClick={() => setView('table')}>
             Bảng đáp án
