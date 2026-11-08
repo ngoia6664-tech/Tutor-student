@@ -162,16 +162,10 @@
   line-height: 1.2;
 }
 
-/* Phân số: KaTeX xếp tử / mẫu sát gạch ngang (nhất là khi có mũ, chỉ số) nên đẩy tử lên, mẫu xuống cho thoáng.
-   Cấu trúc: .vlist gồm mẫu (con đầu), gạch .frac-line, tử (con cuối). transform không đổi chiều cao dòng; dòng đã cao 1.68 nên đủ chỗ */
+/* Phân số: chỉ chừa lề ngang. KHÔNG dịch tử / mẫu theo chiều dọc (transform / top): KaTeX đã giữ chỗ chiều cao
+   dòng cho đúng vị trí gốc, dịch ra ngoài thì công thức ngắt dòng ở cột hẹp (điện thoại) sẽ đè lên dòng kế bên. */
 .katex .mfrac {
-  padding: 0.04em 0.06em;
-}
-.katex .mfrac > .vlist-t > .vlist-r > .vlist > span:first-child {
-  transform: translateY(0.14em);
-}
-.katex .mfrac > .vlist-t > .vlist-r > .vlist > span:last-child {
-  transform: translateY(-0.14em);
+  padding: 0 0.06em;
 }
 .katex .mfrac .frac-line {
   margin: 0 0.04em;
