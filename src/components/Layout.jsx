@@ -102,7 +102,7 @@ const NAV = {
     { to: '/tutor', label: 'Học sinh', icon: 'users', end: true, also: /^\/tutor\/students\//, group: 'Dạy học' },
     { to: '/tutor/library', label: 'Thư viện', icon: 'library', group: 'Dạy học' },
     { to: '/tutor/assignments', label: 'Chấm bài', icon: 'grade', group: 'Dạy học' },
-    { to: '/tutor/import', label: 'Dán JSON', icon: 'import', group: 'Công cụ' },
+    { to: '/tutor/import', label: 'Thêm bài giảng / bài tập', icon: 'import', group: 'Công cụ' },
     { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports', group: 'Công cụ' },
     { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback', group: 'Công cụ' },
   ],

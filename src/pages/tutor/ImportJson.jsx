@@ -566,7 +566,7 @@ export default function ImportJson() {
     <div>
       <div className="page-head">
         <h1>
-          <span className="title-icon"><Icon name="import" /></span>Dán JSON
+          <span className="title-icon"><Icon name="import" /></span>Thêm bài giảng / bài tập
         </h1>
       </div>
 
