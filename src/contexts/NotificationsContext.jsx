@@ -31,12 +31,14 @@ async function fetchItems(studentId) {
       .from('lesson_recipients')
       .select('assigned_at, lesson:lessons(id, title, chapter:chapters(title))')
       .eq('student_id', studentId)
+      .eq('quiet', false) // bài có sẵn trong khóa (gia sư chưa bấm Báo) không reo chuông
       .gte('assigned_at', since)
       .then(unwrap),
     supabase
       .from('assignment_recipients')
       .select('assigned_at, status, assignment:assignments(id, title, type, due_date, chapter:chapters(title))')
       .eq('student_id', studentId)
+      .eq('quiet', false)
       .gte('assigned_at', since)
       .then(unwrap),
   ])
@@ -72,6 +74,7 @@ async function fetchSubmissions() {
   const rows = await supabase
     .from('assignment_recipients')
     .select('student_id, submitted_at, status, score, student:profiles(full_name), assignment:assignments(id, title, chapter:chapters(title))')
+    .eq('quiet', false) // bài tự học trong khóa: máy chấm luôn, không báo gia sư
     .gte('submitted_at', windowStart().toISOString())
     .order('submitted_at', { ascending: false })
     .limit(50)

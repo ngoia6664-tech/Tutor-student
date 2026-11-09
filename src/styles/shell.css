@@ -371,11 +371,19 @@ a.side-btn.is-current {
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 1rem max(1rem, calc((100% - 1280px) / 2)) 7rem; /* đáy chừa chỗ cho gấu góc phải dưới */
+    transition: padding-inline 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 @media (min-width: 1360px) {
-  :root[data-shell] .page {
-    grid-template-columns: minmax(0, 1fr) 340px;
+  :root[data-shell] body:has(.ctx-card) .page {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    transition: grid-template-columns 0.34s cubic-bezier(0.22, 1, 0.36, 1), gap 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  :root[data-shell][data-ctx='collapsed'] body:has(.ctx-card) .page {
+    grid-template-columns: minmax(0, 1fr) 0px;
+  }
+  :root[data-shell][data-ctx='collapsed'] .page-body {
+    padding-inline: max(1.25rem, calc((100% - 1480px) / 2));
   }
   /* Cột phải: đứng yên cạnh nội dung, tự cuộn bên trong (không còn sticky theo trang) */
   :root[data-shell] .ctx-panel {
@@ -383,9 +391,10 @@ a.side-btn.is-current {
     top: auto;
     max-height: none;
     min-height: 0;
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 1rem 1rem 7rem 0.25rem;
+    padding: 0.85rem 1rem 7rem 0.25rem;
     animation: none;
   }
 }
@@ -745,12 +754,15 @@ body:has(.ctx-card) .ctx-panel {
   opacity: 0.75;
 }
 
-@media (max-width: 1359px) {
-  /* Mọi màn < 1360px: nút mở bảng bên nằm trong thanh bên / ngăn kéo menu (thanh trên không còn nút này) */
-  body:has(.ctx-card) .ctx-btn-side {
-    display: flex;
-  }
+.ctx-head-bar,
+.ctx-expand-btn {
+  display: none;
 }
+
+body:has(.ctx-card) .ctx-btn-side {
+  display: flex;
+}
+
 @media (max-width: 1359px) {
   .ctx-panel {
     position: fixed;
@@ -787,22 +799,126 @@ body:has(.ctx-card) .ctx-panel {
     grid-template-columns: minmax(0, 1fr) 320px;
     gap: 1.5rem;
     align-items: start;
+    transition:
+      grid-template-columns 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      gap 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  :root[data-ctx='collapsed'] body:has(.ctx-card) .page {
+    grid-template-columns: minmax(0, 1fr) 0px;
+    gap: 0;
+  }
+  :root[data-shell] body:has(.ctx-card) .page {
+    max-width: none;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 0;
+    align-items: stretch;
+  }
+  :root[data-shell][data-ctx='collapsed'] body:has(.ctx-card) .page {
+    grid-template-columns: minmax(0, 1fr) 0px;
   }
   .ctx-panel {
     position: sticky;
     top: calc(var(--topbar-h, 4rem) + 1rem);
     max-height: calc(100vh - var(--topbar-h, 4rem) - 2rem);
+    overflow-x: hidden;
     overflow-y: auto;
-    animation: ctx-in 0.35s var(--ease) both;
+    opacity: 1;
+    transform: translateX(0);
+    visibility: visible;
+    transition:
+      opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s;
+  }
+  .ctx-panel > * {
+    min-width: 295px;
+  }
+  :root[data-ctx='collapsed'] body:has(.ctx-card) .ctx-panel {
+    opacity: 0;
+    transform: translateX(28px);
+    padding-inline: 0;
+    pointer-events: none;
+    visibility: hidden;
+    overflow: hidden;
+    transition:
+      opacity 0.22s ease,
+      transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s 0.34s;
   }
   .ctx-close,
-  .ctx-backdrop,
-  body:has(.ctx-card) .ctx-btn-side {
+  .ctx-backdrop {
     display: none;
   }
+  .ctx-head-bar {
+    display: flex;
+    justify-content: flex-end;
+    order: -2;
+    margin-bottom: -0.35rem;
+  }
+  .ctx-collapse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.18s var(--ease), border-color 0.18s var(--ease), background-color 0.18s var(--ease);
+  }
+  .ctx-collapse-btn:hover {
+    color: var(--text);
+    border-color: var(--wood-mid, var(--border-strong));
+    background: var(--surface-2);
+  }
+  body:has(.ctx-card) .ctx-expand-btn {
+    position: fixed;
+    top: 1.25rem;
+    right: 0;
+    z-index: 15;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem 0.45rem 0.7rem;
+    border: 1.5px solid var(--border-strong);
+    border-right: 0;
+    border-radius: 999px 0 0 999px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(110%);
+    pointer-events: none;
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.24s ease,
+      padding-right 0.2s var(--ease),
+      border-color 0.2s var(--ease),
+      color 0.2s var(--ease);
+  }
+  :root[data-ctx='collapsed'] body:has(.ctx-card) .ctx-expand-btn {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  :root[data-ctx='collapsed'] body:has(.ctx-card) .ctx-expand-btn:hover {
+    padding-right: 1.1rem;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
   /* Trang làm bài: màn rộng có ô số câu ở cột phải cố định nên ẩn cả sticky lẫn dòng mờ */
-  body:has(.ctx-card .qgrid) .answer-progress,
-  body:has(.ctx-card .qgrid) .exam-hint-pill {
+  :root:not([data-ctx='collapsed']) body:has(.ctx-card .qgrid) .answer-progress,
+  :root:not([data-ctx='collapsed']) body:has(.ctx-card .qgrid) .exam-hint-pill {
     display: none !important;
   }
 }
@@ -858,6 +974,15 @@ body:has(.ctx-card) .ctx-panel {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.1rem;
+}
+.ctx-feed-topic {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--wood-light, var(--muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ctx-feed-main .muted {
   overflow: hidden;

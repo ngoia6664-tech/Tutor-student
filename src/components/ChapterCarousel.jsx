@@ -37,6 +37,8 @@ function untilt(e) {
 const finePointer = () => matchMedia('(hover: hover) and (pointer: fine)').matches
 /** @returns {ScrollBehavior} */
 const smooth = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth')
+const hiddenOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object' && x.hidden).length : 0)
+const hiddenCount = (c) => hiddenOf(c.lessons) + hiddenOf(c.assignments)
 
 /**
  * @param {{
@@ -136,6 +138,12 @@ export default function ChapterCarousel({ chapters, memoKey, count, onEdit, onDe
                     <Icon name="assignment" size={17} />
                     <b>{count(c.assignments)}</b> bài tập
                   </span>
+                  {!actions && hiddenCount(c) > 0 && (
+                    <span className="ccar-hidden-pill" title={`${hiddenCount(c)} bài trong chủ đề này đang ẩn với học sinh được giao khóa`}>
+                      <Icon name="lock" size={14} />
+                      <b>{hiddenCount(c)}</b> đang ẩn
+                    </span>
+                  )}
                 </div>
                 <div className="row ccar-actions" inert={!center}>
                   <Link className="btn btn-small btn-primary" to={toUrl(c.id)}>

@@ -67,10 +67,11 @@ export function useOpenNodes(storageKey) {
 
 // Một nút nhóm trên cây: mũi tên mở/thu + tên (bấm để xem nhóm) + số đếm
 // now: nhóm chứa chủ đề đang học (hiện 📍)
-/** @param {{ label: string, to?: string, count?: number, open: boolean, onToggle: () => void, active?: boolean, depth: number, now?: boolean, children?: import('react').ReactNode }} props */
-export function TreeGroup({ label, to, count, open, onToggle, active, depth, now, children }) {
+/** @param {{ label: string, to?: string, count?: number, open: boolean, onToggle: () => void, active?: boolean, depth: number, now?: boolean, className?: string, children?: import('react').ReactNode }} props */
+// className 'tree-node-loose': nhóm tạm "Chương ngoài khóa" (viền đứt, chữ nhạt) để không giống một khóa thật
+export function TreeGroup({ label, to, count, open, onToggle, active, depth, now, className = '', children }) {
   return (
-    <li role="treeitem" aria-expanded={open} className={`tree-node depth-${depth}`}>
+    <li role="treeitem" aria-expanded={open} className={`tree-node depth-${depth} ${className}`}>
       <div className={active ? 'tree-row active' : 'tree-row'}>
         <button type="button" className={open ? 'tree-caret open' : 'tree-caret'} onClick={onToggle} aria-label={open ? `Thu ${label}` : `Mở ${label}`}>
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -107,8 +108,8 @@ export function TreeGroup({ label, to, count, open, onToggle, active, depth, now
 // Lá của cây: một chủ đề (hoặc mục cuối). badge: số nhỏ bên phải (vd. số bài chưa làm), count: số đếm xám.
 // active: truyền vào khi lá phân biệt bằng ?tham số (NavLink chỉ so đường dẫn)
 // now: chủ đề học sinh đang học (hiện nhãn 📍)
-/** @param {{ to: string, label: string, badge?: import('react').ReactNode, count?: number, active?: boolean, dim?: boolean, now?: boolean }} props */
-export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
+/** @param {{ to: string, label: string, badge?: import('react').ReactNode, count?: number, active?: boolean, dim?: boolean, now?: boolean, className?: string }} props */
+export function TreeLeaf({ to, label, badge, count, active, dim, now, className }) {
   const body = (
     <>
       <span className="tree-leaf-text">{label}</span>
@@ -123,7 +124,7 @@ export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
   )
   const cls = (on) => ['tree-leaf', on && 'active', dim && 'dim', now && 'is-now'].filter(Boolean).join(' ')
   return (
-    <li role="treeitem">
+    <li role="treeitem" className={className}>
       {active === undefined ? (
         <NavLink to={to} end className={({ isActive }) => cls(isActive)} title={label}>
           {body}
@@ -137,16 +138,61 @@ export function TreeLeaf({ to, label, badge, count, active, dim, now }) {
   )
 }
 
-// Khung cột trái: trên điện thoại gập thành nút "☰ Mục lục" ghi vị trí đang xem
+const TREE_COLLAPSED_KEY = 'library-tree-collapsed'
+
+function loadTreeCollapsed() {
+  try {
+    return localStorage.getItem(TREE_COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+// Khung cột trái: trên điện thoại gập thành nút "☰ Mục lục" ghi vị trí đang xem; trên máy tính có nút thu gọn / mở rộng mượt
 export function TreeSide({ shown, onToggleShown, where, children }) {
+  const [collapsed, setCollapsed] = useState(loadTreeCollapsed)
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(TREE_COLLAPSED_KEY, next ? '1' : '0')
+      } catch {
+        // bỏ qua
+      }
+      return next
+    })
+  }
+  const cls = ['library-side', shown && 'shown', collapsed && 'is-collapsed'].filter(Boolean).join(' ')
   return (
-    <aside className={shown ? 'library-side shown' : 'library-side'}>
+    <aside className={cls}>
       <button type="button" className="tree-toggle" onClick={onToggleShown} aria-expanded={shown}>
         <span>☰ Mục lục</span>
         <span className="tree-toggle-where">{where}</span>
         <span aria-hidden="true">{shown ? '▴' : '▾'}</span>
       </button>
-      <div className="tree-box">{children}</div>
+      <button
+        type="button"
+        className="tree-expand-btn"
+        onClick={toggleCollapsed}
+        title="Mở mục lục thư viện"
+        aria-label="Mở mục lục thư viện"
+      >
+        <span aria-hidden="true">☰</span>
+        <span>Mục lục</span>
+        <span aria-hidden="true">»</span>
+      </button>
+      <div className="tree-box">
+        <button
+          type="button"
+          className="tree-collapse-btn"
+          onClick={toggleCollapsed}
+          title="Thu gọn mục lục"
+          aria-label="Thu gọn mục lục"
+        >
+          « Thu gọn
+        </button>
+        {children}
+      </div>
     </aside>
   )
 }

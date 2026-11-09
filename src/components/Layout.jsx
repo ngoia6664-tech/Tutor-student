@@ -59,8 +59,10 @@ const PLACE_PARAM = 'vu-tru'
 // Khung điều hướng (styles/shell.css): gia sư màn rộng = thanh bên ghim (☰ thu gọn thành dải icon), màn hẹp = ngăn kéo;
 // học sinh điện thoại = thanh tab dưới + ngăn kéo cho các nút phụ, máy rộng = menu ngang như cũ
 const SIDE_DOCKED = '(min-width: 1024px)'
+const WIDE_CTX = '(min-width: 1360px)'
 const PHONE = '(max-width: 640px)'
 const RAIL_KEY = 'side-rail'
+const CTX_KEY = 'ctx-collapsed'
 
 /** @param {string} query */
 function useMedia(query) {
@@ -78,6 +80,14 @@ function useMedia(query) {
 function loadRail() {
   try {
     return localStorage.getItem(RAIL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function loadCtxCollapsed() {
+  try {
+    return localStorage.getItem(CTX_KEY) === '1'
   } catch {
     return false
   }
@@ -135,32 +145,52 @@ export default function Layout() {
   }, [profile.role])
   // Thanh bên / ngăn kéo menu: mở bằng nút ☰; đổi trang hoặc đổi cỡ màn hình thì đóng ngăn kéo
   const docked = useMedia(SIDE_DOCKED)
+  const wideCtx = useMedia(WIDE_CTX)
   const phone = useMedia(PHONE)
   const [drawer, setDrawer] = useState(false)
   const [rail, setRail] = useState(loadRail)
+  const [ctxCollapsed, setCtxCollapsed] = useState(loadCtxCollapsed)
   const menuBtn = useRef(/** @type {HTMLButtonElement | null} */ (null))
   const sideRef = useRef(/** @type {HTMLElement | null} */ (null))
   const railMode = docked // màn rộng: ☰ thu gọn / mở rộng thanh bên (cả gia sư lẫn học sinh) thay vì mở ngăn kéo
-  // Cột phải (ContextPanel): màn < 1360px là ngăn kéo bên phải, mở bằng nút "Bảng bên" trong thanh bên / ngăn kéo menu
+  // Cột phải (ContextPanel): màn < 1360px là ngăn kéo bên phải, màn ≥ 1360px cho phép thu gọn / mở rộng
   const [ctxOpen, setCtxOpen] = useState(false)
   useEffect(() => {
     setDrawer(false)
     setCtxOpen(false)
   }, [pathname, docked, phone])
   useEffect(() => {
-    const handleOpen = () => setCtxOpen(true)
+    const handleOpen = () => {
+      setCtxOpen(true)
+      setCtxCollapsed(false)
+    }
     window.addEventListener('open-ctx-panel', handleOpen)
     return () => window.removeEventListener('open-ctx-panel', handleOpen)
   }, [])
   useEffect(() => {
     if (!ctxOpen) return
-    // Ngăn kéo phải vừa mở: đưa focus vào nút Đóng (≥ 1360px nút này ẩn nên không có tác dụng)
+    // Ngăn kéo phải vừa mở: đưa focus vào nút Đóng
     /** @type {HTMLElement | null} */ (document.querySelector('#ctx-panel .ctx-close'))?.focus()
     /** @param {KeyboardEvent} e */
     const onKey = (e) => e.key === 'Escape' && setCtxOpen(false)
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [ctxOpen])
+  function toggleCtx() {
+    if (wideCtx) {
+      const next = !ctxCollapsed
+      setCtxCollapsed(next)
+      try {
+        localStorage.setItem(CTX_KEY, next ? '1' : '0')
+      } catch {
+        // bỏ qua
+      }
+      return
+    }
+    if (docked) return setCtxOpen((v) => !v)
+    setDrawer(false)
+    setCtxOpen(true)
+  }
   function toggleMenu() {
     if (!railMode) return setDrawer((v) => !v)
     const next = !rail
@@ -185,7 +215,7 @@ export default function Layout() {
     return () => document.removeEventListener('keydown', onKey)
   }, [drawer])
 
-  // data-tabbar / data-side: các nút nổi (gấu, cụm cửa hàng, góp ý...) né thanh tab dưới / thanh bên (shell.css)
+  // data-tabbar / data-side / data-ctx: các nút nổi (gấu, cụm cửa hàng, góp ý...) né thanh tab dưới / thanh bên (shell.css)
   const tabbar = !isTutor && !isFocusPage(pathname)
   useEffect(() => {
     const root = document.documentElement
@@ -193,12 +223,14 @@ export default function Layout() {
     // Khung cố định (shell.css, lib/scroller.js): màn rộng — trang không cuộn, nội dung và cột phải tự cuộn
     root.toggleAttribute('data-shell', docked)
     root.dataset.side = rail ? 'rail' : 'open'
+    root.dataset.ctx = ctxCollapsed ? 'collapsed' : 'open'
     return () => {
       delete root.dataset.side
+      delete root.dataset.ctx
       root.removeAttribute('data-tabbar')
       root.removeAttribute('data-shell')
     }
-  }, [tabbar, rail, docked])
+  }, [tabbar, rail, docked, ctxCollapsed])
   // Header trong suốt ở đầu trang, đậm lên khi cuộn (chỉ đổi class khi vượt ngưỡng, không làm mờ nền)
   const [scrolled, setScrolled] = useState(false)
   const [exploring, setExploring] = useState(false)
@@ -366,15 +398,11 @@ export default function Layout() {
           <button
             type="button"
             className="side-btn ctx-btn-side"
-            onClick={() => {
-              if (docked) return setCtxOpen((v) => !v)
-              setDrawer(false)
-              setCtxOpen(true)
-            }}
+            onClick={toggleCtx}
             aria-controls="ctx-panel"
-            aria-expanded={ctxOpen}
-            aria-label="Bảng bên"
-            title="Bảng bên"
+            aria-expanded={wideCtx ? !ctxCollapsed : ctxOpen}
+            aria-label={wideCtx ? (ctxCollapsed ? 'Hiện bảng bên' : 'Ẩn bảng bên') : 'Bảng bên'}
+            title={wideCtx ? (ctxCollapsed ? 'Hiện bảng bên' : 'Ẩn bảng bên') : 'Bảng bên'}
           >
             <Icon name="panel" />
             <span className="side-label">Bảng bên</span>
@@ -462,6 +490,12 @@ export default function Layout() {
             <button type="button" className="side-close ctx-close" onClick={() => setCtxOpen(false)} aria-label="Đóng bảng bên" title="Đóng">
               <Icon name="close" />
             </button>
+            <div className="ctx-head-bar">
+              <button type="button" className="ctx-collapse-btn" onClick={toggleCtx} title="Thu gọn cột bên phải để mở rộng vùng làm việc">
+                <span>Thu gọn bảng bên</span>
+                <Icon name="right" size={14} />
+              </button>
+            </div>
             {/* Khối mặc định theo vai trò; khối của trang (ContextPanel) xếp ngay sau */}
             {isTutor ? (
               <>
@@ -472,6 +506,16 @@ export default function Layout() {
               <StudentTodayPanel />
             )}
           </aside>
+          <button
+            type="button"
+            className="ctx-expand-btn"
+            onClick={toggleCtx}
+            title="Mở lại cột Bảng bên"
+            aria-label="Mở lại cột Bảng bên"
+          >
+            <Icon name="left" size={14} />
+            <span>Bảng bên</span>
+          </button>
         </main>
         {ctxOpen && <div className="side-backdrop ctx-backdrop" onClick={() => setCtxOpen(false)} aria-hidden="true" />}
       </div>

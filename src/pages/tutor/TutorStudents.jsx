@@ -534,17 +534,19 @@ export function EditStudent({ student, onCancel, onSaved }) {
             ))}
           </datalist>
         </label>
-        <label className="field">
+        <div className="field">
           <span>Lớp</span>
-          <select value={form.grade} onChange={set('grade')}>
-            <option value="">— chưa có —</option>
-            {[6, 7, 8, 9, 10, 11, 12].map((g) => (
-              <option key={g} value={g}>
-                Lớp {g}
-              </option>
-            ))}
-          </select>
-        </label>
+          <CustomSelect
+            value={form.grade}
+            onChange={(val) => setForm({ ...form, grade: val })}
+            options={[
+              { value: '', label: '— chưa có —' },
+              ...[6, 7, 8, 9, 10, 11, 12].map((g) => ({ value: String(g), label: `Lớp ${g}` })),
+            ]}
+            placeholder="— chưa có —"
+            ariaLabel="Khối lớp"
+          />
+        </div>
       </div>
       <label className="field">
         <span>Môn (cách nhau bằng dấu phẩy)</span>

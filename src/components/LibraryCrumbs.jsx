@@ -10,7 +10,7 @@ import { useDropMenu } from './MoreMenu.jsx'
 
 /** @typedef {ReturnType<typeof import('../lib/chapters.js').libraryCrumbs>[number]} Segment */
 
-const WHAT = { lop: 'lớp', mon: 'môn', cd: 'chương' }
+const WHAT = { lop: 'lớp', mon: 'môn', kh: 'khóa', cd: 'chương' }
 
 /** @param {{ segments: Segment[], root?: string }} props root: link "Thư viện" (học sinh: /student/library) */
 function LibraryCrumbs({ segments, root = libraryUrl() }) {

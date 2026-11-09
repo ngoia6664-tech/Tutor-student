@@ -14,6 +14,14 @@ export const TUTOR_HELP = [
         a: 'Bấm **Sửa nhiều** (ở trang Chấm bài nằm trong menu **⋯**, hoặc trong một chủ đề của Thư viện), chọn các bài, rồi bấm **Chuyển chủ đề** hoặc **Giao cho...**. Trong Thư viện còn chuyển được vào thư mục. Chuyển chủ đề chỉ đổi chỗ xếp bài, nội dung và danh sách học sinh giữ nguyên.',
       },
       {
+        q: 'Khóa học là gì, giao cả khóa thế nào?',
+        a: 'Khóa nằm giữa Môn và Chương (vd. Lớp 12 › Vật lý › Khóa cơ bản). Ở trang một môn trong **Thư viện**, mở menu **⋯** → **Thêm khóa**; chủ đề xếp vào khóa bằng ô **Khóa** khi thêm / sửa chủ đề. Vào trang khóa, bấm **Giao khóa** và chọn học sinh: các bạn tự thấy mọi bài đang mở trong khóa, kể cả bài thêm sau, làm tự do không hạn nộp. Bài tự học được máy chấm luôn, không vào hàng chấm của bạn.',
+      },
+      {
+        q: 'Bài trong khóa chưa dạy tới thì làm sao để học sinh chưa thấy?',
+        a: 'Trong chủ đề thuộc khóa, mỗi bài có nút **Ẩn** / **Mở**. Bài đang ẩn thì học sinh có khóa không thấy (bài các bạn đã làm vẫn giữ). Khi mở, app hỏi có **Báo học sinh** không: báo thì các bạn nhận chuông, bài hiện ở **Bài cần làm** và bài nộp vào hàng chấm; không báo thì bài chỉ nằm sẵn trong khóa để tự học.',
+      },
+      {
         q: 'Làm sao biết học sinh nào chưa nộp?',
         a: 'Vào **Chấm bài**, chọn bài. Bảng hiện trạng thái của từng học sinh: Chưa nộp, Quá hạn, Chờ chấm, Đã chấm.',
       },

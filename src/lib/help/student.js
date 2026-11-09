@@ -47,7 +47,7 @@ export const STUDENT_HELP = [
       },
       {
         q: 'Bài cần làm khác Thư viện thế nào?',
-        a: '**Bài cần làm** chỉ chứa bài chưa hoàn thành. **Thư viện** chứa toàn bộ bài tập và bài giảng đã được giao, sắp theo Môn › Chương › Chủ đề.',
+        a: '**Bài cần làm** chỉ chứa bài chưa hoàn thành. **Thư viện** chứa toàn bộ bài tập và bài giảng đã được giao, sắp theo Môn › Khóa › Chương › Chủ đề. Bài trong khóa học là bài tự học, không có hạn nộp, nên không nằm ở Bài cần làm (trừ khi giáo viên báo riêng).',
       },
     ],
   },

@@ -30,7 +30,7 @@ export default function LessonEditor() {
   const { data, loading, error, reload } = useAsync(async () => {
     const [chapters, lesson] = await Promise.all([
       fetchChapters(),
-      id ? supabase.from('lessons').select('*, lesson_recipients(student_id)').eq('id', id).maybeSingle().then(unwrap) : null,
+      id ? supabase.from('lessons').select('*, lesson_recipients(student_id, from_course)').eq('id', id).maybeSingle().then(unwrap) : null,
     ])
     if (!id) {
       return {
@@ -53,7 +53,7 @@ export default function LessonEditor() {
       content_md: lesson.content_md || '',
       video_url: lesson.video_url || '',
       file_path: lesson.file_path,
-      student_ids: lesson.lesson_recipients.map((r) => r.student_id),
+      student_ids: lesson.lesson_recipients.filter((r) => !r.from_course).map((r) => r.student_id), // học sinh nhận qua khóa do khóa quản
     }
   }, [id])
 

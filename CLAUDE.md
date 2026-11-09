@@ -17,7 +17,7 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Đã biết file cần sửa thì mở thẳng. Bản đồ sai/thiếu thì sửa file này (ngắn) hoặc FEATURES.md (chi tiết).
 
 ## Tên gọi các cấp (chữ hiển thị ≠ tên cột CSDL)
-Lớp › Môn › **Chương** › **Chủ đề** › bài giảng / bài tập. Trong CSDL / JSON nhập tên cũ vẫn giữ: cột `chapters.section` (= Chương; khóa JSON `chapter`), một dòng bảng `chapters` + `chapter_id` (= Chủ đề; khóa JSON `topic`). Chỉ đổi chữ hiển thị, đừng đổi tên cột.
+Lớp › Môn › **Khóa** › **Chương** › **Chủ đề** › bài giảng / bài tập. Khóa = bảng `courses` + `chapters.course_id`; giao khóa tự tạo dòng giao bài `from_course` (FEATURES.md mục "Khóa học"). Trong CSDL / JSON nhập tên cũ vẫn giữ: cột `chapters.section` (= Chương; khóa JSON `chapter`), một dòng bảng `chapters` + `chapter_id` (= Chủ đề; khóa JSON `topic`). Chỉ đổi chữ hiển thị, đừng đổi tên cột.
 
 ## Bản đồ code
 - `src/main.jsx` điểm vào · `src/App.jsx` route · `src/pages/registry.js` lazy-load trang. Trang mới: thêm vào cả hai.

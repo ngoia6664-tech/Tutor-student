@@ -20,10 +20,10 @@
 ## `src/pages/tutor/`
 - `AssignmentEditor.jsx` — Dạng dữ liệu trong form (dễ sửa hơn dạng lưu trong CSDL)
 - `AssignmentTracking.jsx` — Bảng theo dõi một bài tập: trạng thái từng học sinh, �
-- `ChapterDetail.jsx` — Nội dung một chủ đề (cột phải của Thư viện): các bài; id `UNSORTED` = mục "Chưa xếp chủ đề" (bài có chapter_id trống); thư mục trong chủ đề (tạo / đổi tên / xóa, Sửa nhiều → "Vào thư mục…")
+- `ChapterDetail.jsx` — Nội dung một chủ đề (cột phải của Thư viện): các bài; id `UNSORTED` = mục "Chưa xếp chủ đề" (bài có chapter_id trống); thư mục trong chủ đề (tạo / đổi tên / xóa, Sửa nhiều → "Vào thư mục…"); chủ đề thuộc khóa: nút Ẩn / Mở / Báo học sinh từng bài (`CourseControls`)
 - `ImportJson.jsx` — Chủ đề liên kết lần dán trước (lưu trên máy này)
 - `LessonEditor.jsx` — Soạn / sửa bài giảng. Dùng cho /tutor/lessons/new, /tutor/less
-- `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Chương của một lớp bên trái (đang tìm thì hiện chủ đề khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chủ đề" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chương, Xóa nhiều chủ đề, Xóa chương; trang chủ đề: Thêm chủ đề, Nhập mục lục), cuối cây mục "Chưa xếp chủ đề" (kèm số bài), giữa: kệ sách / băng chuyền chủ đề / nội dung chủ đề
+- `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Khóa › Chương của một lớp bên trái (URL `lop/mon/kh/cd`; môn chưa có khóa bỏ cấp Khóa; trang khóa: Giao khóa, menu ⋯ Đổi tên / Xóa khóa; trang môn: ⋯ Thêm khóa) (đang tìm thì hiện chủ đề khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chủ đề" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chương, Xóa nhiều chủ đề, Xóa chương; trang chủ đề: Thêm chủ đề, Nhập mục lục), cuối cây mục "Chưa xếp chủ đề" (kèm số bài), giữa: kệ sách / băng chuyền chủ đề / nội dung chủ đề
 - `StudentDetail.jsx` — Trang một học sinh: tổng quan, điểm từng bài, bài giảng
 - `TutorAssignments.jsx` — Chấm bài (gia sư, /tutor/assignments): danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên; nút chính "+ Soạn bài tập", Sửa nhiều / Xóa nhiều / Dán JSON gom vào menu "⋯"; chip trạng thái chỉ hiện số > 0; cột phải = GradeQueuePanel
 - `TutorFeedback.jsx` — Trang Góp ý (gia sư): xem góp ý học sinh gửi, đánh dấu đã xem
@@ -35,7 +35,7 @@
 - `StudentAssignment.jsx` — Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệ
 - `StudentHome.jsx` — Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc
 - `StudentLesson.jsx` — RLS chỉ trả về bài giảng được giao cho học sinh này
-- `StudentLibrary.jsx` — Thư viện học sinh (bỏ cấp Lớp): cây Môn › Chương, đường dẫn Thư viện › Môn ▾ › Chương ▾ (LibraryCrumbs), trang đầu / một môn: kệ sách (GradeShelf), một chương (`?mon=&cd=`): băng chuyền chủ đề (ChapterCarousel, nút Mở + Đánh dấu đang học), một chủ đề: bài chưa làm lên trước, gom theo thư mục (thư mục rỗng ẩn, bài ngoài thư mục ở "Các bài khác"); `/student/library/khac` "Các bài khác" = bài chưa thuộc chủ đề nào của lớp mình
+- `StudentLibrary.jsx` — Thư viện học sinh (bỏ cấp Lớp): cây Môn › Khóa › Chương (thẻ khóa + thanh tiến độ ở trang đầu và trang khóa), đường dẫn Thư viện › Môn ▾ › Chương ▾ (LibraryCrumbs), trang đầu / một môn: kệ sách (GradeShelf), một chương (`?mon=&cd=`): băng chuyền chủ đề (ChapterCarousel, nút Mở + Đánh dấu đang học), một chủ đề: bài chưa làm lên trước, gom theo thư mục (thư mục rỗng ẩn, bài ngoài thư mục ở "Các bài khác"); `/student/library/khac` "Các bài khác" = bài chưa thuộc chủ đề nào của lớp mình
 - `StudentMistakes.jsx` — Ôn tập, 2 mục:
 - `StudentResults.jsx` — Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm);
 - `StudentShop.jsx` — Panda Fashion Shop (/student/shop, gia sư /tutor/shop): header gọn
@@ -45,7 +45,7 @@
 - `AnswerKey.jsx` — Bảng đáp án cho gia sư. Hai cách xem:
 - `AnswerProgress.jsx` — Chiều cao header (thay đổi khi xoay máy / menu xuống dòng) đ
 - `Badges.jsx` — Nhãn hạn bài (DueBadge) và loại bài (TypeBadge)
-- `ChapterForms.jsx` — Thêm / sửa một chủ đề. chapter = {} (thêm mới, có thể đi
+- `ChapterForms.jsx` — Thêm / sửa một chủ đề (có ô Khóa), `CourseForm` thêm / đổi tên khóa, chapter = {} (thêm mới, có thể đi
 - `ChapterArt.jsx` — Đầu thẻ chủ đề (ChapterCarousel): chip tên môn + số chủ đề nhỏ ở góc; màu ở library.css
 - `ChapterCarousel.jsx` — Chủ đề của một chương (Thư viện gia sư + học sinh) dạng băng chuyền: thẻ giữa to + nghiêng 3D theo chuột + ánh kim loại, hai bên mờ; mũi tên, phím ←→, lưới "Tất cả chủ đề"; nhớ vị trí theo chương; học sinh truyền `toUrl` (link chủ đề) + `actions` (thay nút Sửa / Xóa)
 - `GradeShelf.jsx` — Trang một lớp / một môn (Thư viện gia sư) dạng kệ sách: mỗi môn một kệ, mỗi chương một cuốn (gáy dọc, cao bằng nhau); tên gáy giữ chữ như gõ (`sectionText`); máy có chuột: tiêu đề kệ nằm sát đầu sách trong khoảng trống dành cho bìa, kệ dài vừa số cuốn (`--n`), rê chuột / Tab tới thì cuốn đó nhô lên, bìa hiện ở khoảng trống trên kệ, tiêu đề mờ đi (thuần CSS, không che / không xê dịch cuốn nào); máy cảm ứng / màn ≤ 520px: ẩn gáy, mỗi chương là một thẻ ngang (chính `.shelf-cover`); bấm → vào chương. Props `{ chapters, count, url? }`, link qua `libraryUrl` (học sinh: `url={studentLibraryUrl}`)
@@ -92,7 +92,7 @@
 - `PandaDock.jsx` — (chỉ còn gia sư màn hẹp; học sinh dùng thanh bên) Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
 - `PlanetPortrait.jsx` — Chân dung hành tinh khi gấu giải thích (SpaceExplorer, chế đ
 - `ProtectedRoute.jsx` — Chặn trang theo vai trò: sai vai trò thì chuyển về trang củ
-- `QuickAssign.jsx` — Giao bài nhanh + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện
+- `QuickAssign.jsx` — Giao bài nhanh / giao khóa (`AssignDialog` kind `course`) + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện
 - `ReportQuestion.jsx` — Trạng thái báo lỗi học sinh thấy
 - `ResultProgress.jsx` — Thanh tiến độ và chip câu đúng/sai ở trang kết quả
 - `RootRedirect.jsx` — Trang gốc "/": chuyển theo vai trò

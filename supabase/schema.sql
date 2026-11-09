@@ -140,10 +140,9 @@ alter table public.chapters add column if not exists subject text;
 alter table public.chapters drop constraint if exists chapters_grade_check;
 alter table public.chapters add constraint chapters_grade_check check (grade between 1 and 12);
 
--- Tên chương chỉ cần không trùng trong cùng lớp + môn ("Chủ đề 2" lớp 11 khác "Chủ đề 2" lớp 12)
+-- Tên chủ đề chỉ cần không trùng trong cùng lớp + môn + khóa: index tạo ở mục "Khóa học" (cần cột course_id)
 drop index if exists public.chapters_title_key;
-create unique index if not exists chapters_scope_title_key
-  on public.chapters (coalesce(grade, 0), lower(coalesce(subject, '')), lower(title));
+drop index if exists public.chapters_scope_title_key;
 
 -- Chương cũ chưa có lớp: đoán từ tên chuyên đề, vd. "L11_Chuyên đề 1" hay "Lớp 12 - ..."
 update public.chapters
@@ -505,11 +504,14 @@ begin
     into v_students
     from jsonb_array_elements_text(coalesce(p -> 'student_ids', '[]'::jsonb)) as x;
 
+  -- Dòng do khóa học tạo (from_course) không nằm trong danh sách này: giữ nguyên, khóa tự quản
   delete from lesson_recipients
-   where lesson_id = v_id and student_id <> all (v_students);
+   where lesson_id = v_id and not from_course and student_id <> all (v_students);
   insert into lesson_recipients (lesson_id, student_id)
   select v_id, s from unnest(v_students) as s
-  on conflict do nothing;
+  on conflict (lesson_id, student_id) do update
+    set from_course = false, quiet = false,
+        assigned_at = case when lesson_recipients.from_course then now() else lesson_recipients.assigned_at end;
 
   return v_id;
 end;
@@ -645,11 +647,14 @@ begin
     into v_students
     from jsonb_array_elements_text(coalesce(p -> 'student_ids', '[]'::jsonb)) as x;
 
+  -- Dòng do khóa học tạo (from_course) không nằm trong danh sách này: giữ nguyên, khóa tự quản
   delete from assignment_recipients
-   where assignment_id = v_id and student_id <> all (v_students);
+   where assignment_id = v_id and not from_course and student_id <> all (v_students);
   insert into assignment_recipients (assignment_id, student_id)
   select v_id, s from unnest(v_students) as s
-  on conflict do nothing;
+  on conflict (assignment_id, student_id) do update
+    set from_course = false, quiet = false,
+        assigned_at = case when assignment_recipients.from_course then now() else assignment_recipients.assigned_at end;
 
   return v_id;
 end;
@@ -886,6 +891,11 @@ begin
          submitted_at = now(),
          submission_path = v_uid::text || '/' || p_assignment_id::text
    where assignment_id = p_assignment_id and student_id = v_uid;
+  -- Bài tự học trong khóa (gia sư chưa giao riêng): không vào hàng chấm, máy chấm luôn → 'checked'
+  -- (điểm máy để xét thưởng Xu/Sao; có câu tự luận thì để trống điểm, gia sư vẫn mở chấm được)
+  update assignment_recipients
+     set status = 'checked', score = public.course_auto_score(p_assignment_id, v_uid)
+   where assignment_id = p_assignment_id and student_id = v_uid and from_course and quiet;
   perform set_config('app.submitting', 'off', true);
 end;
 $$;
@@ -2479,6 +2489,236 @@ create policy assignment_drafts_own_update on public.assignment_drafts
 create policy assignment_drafts_own_delete on public.assignment_drafts
   for delete to authenticated
   using (student_id = auth.uid());
+
+-- ---------- Khóa học ----------
+-- Lớp › Môn › Khóa › Chương › Chủ đề. Một khóa gom nhiều chủ đề (chapters.course_id); một bài chỉ thuộc một chủ đề nên
+-- chỉ thuộc một khóa. Giao khóa cho học sinh (course_recipients) thì máy chủ tự tạo dòng giao bài (from_course = true,
+-- quiet = true) cho mọi bài đang mở (hidden = false) trong khóa, nên RLS, luật đọc đáp án, nộp bài, thưởng giữ nguyên.
+--   quiet:  true = có sẵn trong khóa, không chuông / không vào "Bài cần làm"; gia sư bấm "Báo học sinh" → false
+--   hidden: bài trong khóa đang ẩn với học sinh có khóa (bài giao riêng vẫn thấy)
+-- Bỏ khóa / ẩn bài: chỉ xóa dòng from_course chưa làm (todo, chưa bắt đầu, không có nháp); bài đã làm giữ lại.
+create table if not exists public.courses (
+  id          uuid primary key default gen_random_uuid(),
+  grade       int check (grade between 1 and 12),
+  subject     text,
+  title       text not null,
+  sort_order  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists courses_scope_title_key
+  on public.courses (coalesce(grade, 0), lower(coalesce(subject, '')), lower(title));
+
+alter table public.chapters add column if not exists course_id uuid references public.courses (id) on delete set null;
+create index if not exists chapters_course_idx on public.chapters (course_id);
+-- "Dao động điều hòa" có thể có ở cả khóa Cơ bản lẫn khóa Mất gốc
+create unique index if not exists chapters_course_title_key
+  on public.chapters (coalesce(grade, 0), lower(coalesce(subject, '')),
+                      coalesce(course_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(title));
+
+create table if not exists public.course_recipients (
+  course_id    uuid not null references public.courses (id) on delete cascade,
+  student_id   uuid not null references public.profiles (id) on delete cascade,
+  assigned_at  timestamptz not null default now(),
+  primary key (course_id, student_id)
+);
+create index if not exists course_recipients_student_idx on public.course_recipients (student_id);
+
+alter table public.lessons               add column if not exists hidden boolean not null default false;
+alter table public.assignments           add column if not exists hidden boolean not null default false;
+alter table public.lesson_recipients     add column if not exists from_course boolean not null default false;
+alter table public.lesson_recipients     add column if not exists quiet boolean not null default false;
+alter table public.assignment_recipients add column if not exists from_course boolean not null default false;
+alter table public.assignment_recipients add column if not exists quiet boolean not null default false;
+
+alter table public.courses           enable row level security;
+alter table public.course_recipients enable row level security;
+drop policy if exists courses_tutor_all on public.courses;
+drop policy if exists courses_student_select on public.courses;
+drop policy if exists course_recipients_tutor_all on public.course_recipients;
+drop policy if exists course_recipients_student_select on public.course_recipients;
+create policy courses_tutor_all on public.courses
+  for all to authenticated using (public.is_tutor()) with check (public.is_tutor());
+create policy courses_student_select on public.courses
+  for select to authenticated
+  using (exists (select 1 from public.course_recipients cr where cr.course_id = courses.id and cr.student_id = auth.uid()));
+create policy course_recipients_tutor_all on public.course_recipients
+  for all to authenticated using (public.is_tutor()) with check (public.is_tutor());
+create policy course_recipients_student_select on public.course_recipients
+  for select to authenticated using (student_id = auth.uid());
+
+-- Đồng bộ dòng giao bài của MỘT bài theo khóa: thêm cho học sinh có khóa (bài đang mở), bỏ dòng from_course thừa chưa làm.
+-- Tính lại từ đầu mỗi lần nên gọi bao nhiêu lần cũng được.
+create or replace function public.course_sync_item(p_lesson uuid, p_assignment uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_lesson is not null then
+    insert into lesson_recipients (lesson_id, student_id, from_course, quiet)
+    select l.id, cr.student_id, true, true
+      from lessons l
+      join chapters c on c.id = l.chapter_id
+      join course_recipients cr on cr.course_id = c.course_id
+     where l.id = p_lesson and not l.hidden
+    on conflict do nothing;
+    delete from lesson_recipients lr
+     where lr.lesson_id = p_lesson and lr.from_course
+       and not exists (
+         select 1 from lessons l
+           join chapters c on c.id = l.chapter_id
+           join course_recipients cr on cr.course_id = c.course_id
+          where l.id = lr.lesson_id and not l.hidden and cr.student_id = lr.student_id);
+  end if;
+
+  if p_assignment is not null then
+    insert into assignment_recipients (assignment_id, student_id, from_course, quiet)
+    select a.id, cr.student_id, true, true
+      from assignments a
+      join chapters c on c.id = a.chapter_id
+      join course_recipients cr on cr.course_id = c.course_id
+     where a.id = p_assignment and not a.hidden
+    on conflict do nothing;
+    delete from assignment_recipients ar
+     where ar.assignment_id = p_assignment and ar.from_course
+       and ar.status = 'todo' and ar.started_at is null
+       and not exists (select 1 from assignment_drafts d where d.assignment_id = ar.assignment_id and d.student_id = ar.student_id)
+       and not exists (
+         select 1 from assignments a
+           join chapters c on c.id = a.chapter_id
+           join course_recipients cr on cr.course_id = c.course_id
+          where a.id = ar.assignment_id and not a.hidden and cr.student_id = ar.student_id);
+  end if;
+end;
+$$;
+revoke all on function public.course_sync_item(uuid, uuid) from public;
+
+-- Đồng bộ mọi bài trong các chủ đề đã cho
+create or replace function public.course_sync_chapters(p_chapters uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+begin
+  for r in select id from lessons where chapter_id = any (p_chapters) loop
+    perform course_sync_item(r.id, null);
+  end loop;
+  for r in select id from assignments where chapter_id = any (p_chapters) loop
+    perform course_sync_item(null, r.id);
+  end loop;
+end;
+$$;
+revoke all on function public.course_sync_chapters(uuid[]) from public;
+
+-- Bài đổi chủ đề / ẩn hiện (cả lúc chủ đề bị xóa: chapter_id → null)
+create or replace function public.course_on_item_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'UPDATE' and new.chapter_id is not distinct from old.chapter_id and new.hidden = old.hidden then
+    return null;
+  end if;
+  if tg_table_name = 'lessons' then
+    perform course_sync_item(new.id, null);
+  else
+    perform course_sync_item(null, new.id);
+  end if;
+  return null;
+end;
+$$;
+drop trigger if exists course_on_lesson_change on public.lessons;
+create trigger course_on_lesson_change
+  after insert or update of chapter_id, hidden on public.lessons
+  for each row execute function public.course_on_item_change();
+drop trigger if exists course_on_assignment_change on public.assignments;
+create trigger course_on_assignment_change
+  after insert or update of chapter_id, hidden on public.assignments
+  for each row execute function public.course_on_item_change();
+
+-- Chủ đề chuyển vào khóa: lấy lớp + môn của khóa (trước khi ghi)
+create or replace function public.course_fill_chapter()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.course_id is not null and (tg_op = 'INSERT' or new.course_id is distinct from old.course_id) then
+    select grade, subject into new.grade, new.subject from courses where id = new.course_id;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists course_fill_chapter on public.chapters;
+create trigger course_fill_chapter
+  before insert or update of course_id on public.chapters
+  for each row execute function public.course_fill_chapter();
+
+-- Chủ đề đổi khóa → đồng bộ bài bên trong; chủ đề đổi lớp / môn (Sửa môn) → khóa đi theo
+create or replace function public.course_on_chapter_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.course_id is distinct from old.course_id then
+    perform course_sync_chapters(array[new.id]);
+  elsif new.course_id is not null and (new.grade is distinct from old.grade or new.subject is distinct from old.subject) then
+    update courses set grade = new.grade, subject = new.subject where id = new.course_id;
+  end if;
+  return null;
+end;
+$$;
+drop trigger if exists course_on_chapter_change on public.chapters;
+create trigger course_on_chapter_change
+  after update of course_id, grade, subject on public.chapters
+  for each row execute function public.course_on_chapter_change();
+
+-- Giao / bỏ khóa → đồng bộ mọi bài trong khóa
+create or replace function public.course_on_recipient_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_course uuid := case when tg_op = 'DELETE' then old.course_id else new.course_id end;
+begin
+  perform course_sync_chapters(array(select id from chapters where course_id = v_course));
+  return null;
+end;
+$$;
+drop trigger if exists course_on_recipient_change on public.course_recipients;
+create trigger course_on_recipient_change
+  after insert or delete on public.course_recipients
+  for each row execute function public.course_on_recipient_change();
+
+-- Điểm máy (thang 10) cho bài tự học trong khóa. Đề thi: tổng điểm THPT; bài thường: tỉ lệ câu đúng.
+-- shortcut: có câu tự luận thì trả null (máy không chấm được), muốn tính phần trắc nghiệm thì phải có thang điểm từng câu.
+create or replace function public.course_auto_score(p_aid uuid, p_sid uuid)
+returns numeric
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when exists (select 1 from exercises where assignment_id = p_aid and kind = 'essay') then null
+    when (select is_exam from assignments where id = p_aid) then
+      least(10, coalesce((select sum(points) from submission_answers where assignment_id = p_aid and student_id = p_sid), 0))
+    else round(10.0 * (select count(*) from submission_answers where assignment_id = p_aid and student_id = p_sid and is_correct)
+               / nullif((select count(*) from exercises where assignment_id = p_aid), 0), 2)
+  end;
+$$;
+revoke all on function public.course_auto_score(uuid, uuid) from public;
 
 -- Báo API (PostgREST) đọc lại cấu trúc bảng ngay, tránh lỗi "schema cache" sau khi nâng cấp
 notify pgrst, 'reload schema';

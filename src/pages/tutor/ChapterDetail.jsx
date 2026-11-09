@@ -4,7 +4,7 @@ import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { formatDate, formatDateTime } from '../../lib/format.js'
 import { errMsg } from '../../lib/errors.js'
-import { confirmDelete, notifyDone, notifyError } from '../../lib/dialog.js'
+import { askConfirm, confirmDelete, notifyDone, notifyError } from '../../lib/dialog.js'
 import { itemsLabel, moveToFolder } from '../../lib/bulk.js'
 import { groupByFolder } from '../../lib/folders.js'
 import Loading from '../../components/Loading.jsx'
@@ -14,6 +14,7 @@ import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import { libraryUrl, UNSORTED } from '../../lib/chapters.js'
 import { clearRecent } from '../../lib/recentChapters.js'
 import Icon from '../../components/Icon.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 const OUT = 'none' // ô chọn thư mục: "Chưa xếp" (ra khỏi thư mục)
@@ -37,9 +38,15 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
   const { data, loading, error, reload } = useAsync(async () => {
     const inChapter = (q) => (unsorted ? q.is('chapter_id', null) : q.eq('chapter_id', id))
     const [chapter, lessons, assignments, folders] = await Promise.all([
-      unsorted ? { id: null, title: 'Chưa xếp chủ đề' } : supabase.from('chapters').select('*').eq('id', id).maybeSingle().then(unwrap),
-      inChapter(supabase.from('lessons').select('id, title, file_path, created_at, folder_id, lesson_recipients(student_id)')).order('created_at').then(unwrap),
-      inChapter(supabase.from('assignments').select('id, title, type, due_date, created_at, folder_id, assignment_recipients(status)')).order('created_at').then(unwrap),
+      unsorted
+        ? { id: null, title: 'Chưa xếp chủ đề' }
+        : supabase.from('chapters').select('*, course:courses(id, title)').eq('id', id).maybeSingle().then(unwrap),
+      inChapter(supabase.from('lessons').select('id, title, file_path, created_at, folder_id, hidden, lesson_recipients(student_id, from_course)'))
+        .order('created_at')
+        .then(unwrap),
+      inChapter(supabase.from('assignments').select('id, title, type, due_date, created_at, folder_id, hidden, assignment_recipients(status, from_course)'))
+        .order('created_at')
+        .then(unwrap),
       unsorted ? [] : supabase.from('chapter_folders').select('id, name').eq('chapter_id', id).order('created_at').then(unwrap),
     ])
     if (!chapter) throw new Error('Không tìm thấy chủ đề (có thể đã bị xóa).')
@@ -58,8 +65,16 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
   const { chapter, lessons, assignments, folders } = data
   const newState = unsorted ? {} : { state: { chapterId: chapter.id } }
   const here = unsorted ? 'nào chưa xếp chủ đề' : 'trong chủ đề này'
-  const lessonItem = (l) => ({ kind: 'lesson', id: l.id, title: l.title, file_path: l.file_path })
-  const assignmentItem = (a) => ({ kind: 'assignment', id: a.id, title: a.title, submitted: a.assignment_recipients.filter((r) => r.status !== 'todo').length })
+  // Chủ đề trong khóa: bài kèm khóa để bảng Giao hỏi "giao cả khóa?"; nút Ẩn / Mở / Báo cho từng bài
+  const course = chapter.course || null
+  const lessonItem = (l) => ({ kind: 'lesson', id: l.id, title: l.title, file_path: l.file_path, course })
+  const assignmentItem = (a) => ({
+    kind: 'assignment',
+    id: a.id,
+    title: a.title,
+    submitted: a.assignment_recipients.filter((r) => r.status !== 'todo').length,
+    course,
+  })
   const changed = () => {
     reload()
     onChanged?.()
@@ -76,6 +91,50 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
       reload()
     } catch (err) {
       notifyError('Không lưu được thư mục', errMsg(err))
+    }
+  }
+
+  // Ẩn / mở một bài với học sinh có khóa (máy chủ tự thêm / bỏ bài chưa làm của các bạn)
+  async function setHidden(kind, item, hidden) {
+    try {
+      unwrap(await supabase.from(kind === 'lesson' ? 'lessons' : 'assignments').update({ hidden }).eq('id', item.id))
+      changed()
+      if (!hidden) await notifyCourse(kind, item)
+    } catch (err) {
+      notifyError(hidden ? 'Không ẩn được bài' : 'Không mở được bài', errMsg(err))
+    }
+  }
+
+  // Báo cho học sinh có khóa: bài thành bài được giao (chuông, "Bài cần làm", bài nộp vào hàng chấm);
+  // không báo thì bài chỉ nằm sẵn trong khóa để tự học
+  async function notifyCourse(kind, item) {
+    const ok = await askConfirm({
+      title: `Báo cho học sinh trong khóa về "${item.title}"?`,
+      message:
+        'Báo: các bạn nhận chuông thông báo, bài hiện ở "Bài cần làm"' +
+        (kind === 'assignment' ? ' và bài nộp vào hàng chấm của bạn' : '') +
+        '. Không báo: bài chỉ nằm sẵn trong khóa để các bạn tự học.',
+      say: 'Bài này chuẩn bị cho buổi học tới hay để dành sau nè? 🔔',
+      pose: 'teach',
+      confirmText: 'Báo học sinh',
+      cancelText: 'Không cần',
+    })
+    if (!ok) return
+    const [table, key] = kind === 'lesson' ? ['lesson_recipients', 'lesson_id'] : ['assignment_recipients', 'assignment_id']
+    try {
+      const rows = unwrap(
+        await supabase
+          .from(table)
+          .update({ quiet: false, assigned_at: new Date().toISOString() })
+          .eq(key, item.id)
+          .eq('from_course', true)
+          .eq('quiet', true)
+          .select('student_id'),
+      )
+      reload()
+      notifyDone({ title: rows.length ? `Đã báo ${rows.length} học sinh` : 'Các bạn trong khóa đã được báo bài này rồi', say: 'Chuông đã reo cho các bạn rồi nha 🔔' })
+    } catch (err) {
+      notifyError('Không báo được học sinh', errMsg(err))
     }
   }
 
@@ -115,7 +174,15 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           </Link>
         </div>
         <div className="row small">
-          <AssignButton count={l.lesson_recipients.length} onClick={() => setAssigning([item])} />
+          <AssignButton count={l.lesson_recipients.filter((r) => !r.from_course).length} onClick={() => setAssigning([item])} />
+          {course && (
+            <CourseControls
+              hidden={l.hidden}
+              viaCourse={l.lesson_recipients.filter((r) => r.from_course).length}
+              onToggle={() => setHidden('lesson', item, !l.hidden)}
+              onNotify={() => notifyCourse('lesson', item)}
+            />
+          )}
           <span className="muted">{formatDateTime(l.created_at)}</span>
         </div>
       </div>
@@ -124,7 +191,8 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
 
   const assignmentRow = (a) => {
     const cnt = { todo: 0, done: 0, checked: 0 }
-    a.assignment_recipients.forEach((r) => (cnt[r.status] += 1))
+    // Bài tự học qua khóa chưa làm không tính "chưa nộp" (không có hạn, không bắt buộc)
+    a.assignment_recipients.forEach((r) => !(r.from_course && r.status === 'todo') && (cnt[r.status] += 1))
     const item = assignmentItem(a)
     return (
       <div key={a.id} className={pick.has('assignment', a.id) ? 'list-item is-picked' : 'list-item'}>
@@ -135,7 +203,15 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           </Link>
         </div>
         <div className="row small">
-          <AssignButton count={a.assignment_recipients.length} onClick={() => setAssigning([item])} />
+          <AssignButton count={a.assignment_recipients.filter((r) => !r.from_course).length} onClick={() => setAssigning([item])} />
+          {course && (
+            <CourseControls
+              hidden={a.hidden}
+              viaCourse={a.assignment_recipients.filter((r) => r.from_course).length}
+              onToggle={() => setHidden('assignment', item, !a.hidden)}
+              onNotify={() => notifyCourse('assignment', item)}
+            />
+          )}
           <TypeBadge type={a.type} />
           <DueBadge date={a.due_date} />
           {a.due_date && <span className="muted">Hạn: {formatDate(a.due_date)}</span>}
@@ -183,6 +259,12 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           )}
         </div>
       </header>
+      {course && (
+        <p className="muted small">
+          🎓 Thuộc khóa <b>{course.title}</b>: học sinh có khóa tự thấy mọi bài đang mở ở đây. Bấm <b>Ẩn</b> với bài chưa muốn cho xem, <b>Báo</b> khi
+          muốn các bạn làm cho buổi tới.
+        </p>
+      )}
       {unsorted && <p className="muted small">Bài chưa thuộc chủ đề nào (chưa chọn chủ đề, hoặc chủ đề đã bị xóa). Bấm Sửa nhiều → chọn bài → Chuyển chủ đề để xếp vào chủ đề.</p>}
 
       {naming && (
@@ -275,18 +357,21 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           pick.mode === 'edit' &&
           folders.length > 0 && (
             <span className="assign-bar-extra">
-              <Icon name="folder" />
-              <select value={dest} disabled={!pick.items.length} onChange={(e) => setDest(e.target.value)} aria-label="Thư mục đích">
-                <option value="" disabled>
-                  Chọn thư mục đích…
-                </option>
-                {folders.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-                <option value={OUT}>Chưa xếp (ra khỏi thư mục)</option>
-              </select>
+              <CustomSelect
+                value={dest}
+                disabled={!pick.items.length}
+                onChange={setDest}
+                placeholder="Chọn thư mục đích…"
+                icon="folder"
+                placement="top"
+                searchable={folders.length >= 6}
+                ariaLabel="Thư mục đích"
+                className="folder-dest-select"
+                options={[
+                  ...folders.map((f) => ({ value: f.id, label: f.name, icon: 'folder' })),
+                  { value: OUT, label: 'Chưa xếp (ra khỏi thư mục)', icon: 'folder' },
+                ]}
+              />
               <button
                 type="button"
                 className="btn btn-small btn-primary"
@@ -332,5 +417,38 @@ function AssignButton({ count, onClick }) {
       <Icon name="users" />
       Giao ({count})
     </button>
+  )
+}
+
+// Bài trong khóa: số học sinh thấy qua khóa + Ẩn / Mở + Báo học sinh
+function CourseControls({ hidden, viaCourse, onToggle, onNotify }) {
+  if (hidden)
+    return (
+      <>
+        <span className="badge badge-muted">
+          <Icon name="lock" size={13} /> Đang ẩn
+        </span>
+        <button type="button" className="btn btn-small" onClick={onToggle} title="Cho học sinh có khóa thấy bài này">
+          <Icon name="eye" />
+          Mở
+        </button>
+      </>
+    )
+  return (
+    <>
+      <span className="badge" title="Số học sinh thấy bài này qua khóa">
+        🎓 {viaCourse}
+      </span>
+      <button type="button" className="btn btn-small" onClick={onToggle} title="Ẩn với học sinh có khóa (bài các bạn đã làm vẫn giữ)">
+        <Icon name="lock" />
+        Ẩn
+      </button>
+      {viaCourse > 0 && (
+        <button type="button" className="btn btn-small" onClick={onNotify} title="Báo học sinh trong khóa: có chuông, vào Bài cần làm">
+          <Icon name="bell" />
+          Báo
+        </button>
+      )}
+    </>
   )
 }

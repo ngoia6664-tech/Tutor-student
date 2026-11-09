@@ -13,6 +13,7 @@ import StudentPicker from '../../components/StudentPicker.jsx'
 import { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ChapterSelect from '../../components/ChapterSelect.jsx'
 import LessonSelect from '../../components/LessonSelect.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 import { fetchChapters } from '../../lib/chapters.js'
 import Icon from '../../components/Icon.jsx'
 import { confirmDropSubmitted, confirmNoStudents } from '../../lib/dialog.js'
@@ -155,10 +156,10 @@ export default function AssignmentEditor() {
           due_date: full.assignment.due_date || '',
           lesson_id: full.assignment.lesson_id || '',
           exercises: full.exercises.map(toFormExercise),
-          student_ids: full.recipients.map((r) => r.student_id),
+          student_ids: full.recipients.filter((r) => !r.from_course).map((r) => r.student_id),
         },
         // Học sinh đã nộp: cảnh báo nếu bị bỏ chọn
-        submittedIds: full.recipients.filter((r) => r.status !== 'todo').map((r) => r.student_id),
+        submittedIds: full.recipients.filter((r) => !r.from_course && r.status !== 'todo').map((r) => r.student_id),
       }
     }
     return {
@@ -309,13 +310,18 @@ function AssignmentForm({ initial, lessons, chapters, submittedIds, fromImport, 
         </label>
         <ChapterSelect chapters={chapters} value={form.chapter_id} onChange={(v) => set('chapter_id', v)} />
         <div className="grid-2">
-          <label className="field">
+          <div className="field">
             <span>Loại</span>
-            <select value={form.type} onChange={(e) => set('type', e.target.value)}>
-              <option value="classwork">Làm trên lớp</option>
-              <option value="homework">Về nhà</option>
-            </select>
-          </label>
+            <CustomSelect
+              value={form.type}
+              onChange={(val) => set('type', val)}
+              options={[
+                { value: 'classwork', label: 'Làm trên lớp', icon: 'grade' },
+                { value: 'homework', label: 'Về nhà', icon: 'todo' },
+              ]}
+              ariaLabel="Loại bài tập"
+            />
+          </div>
           <label className="field">
             <span>Hạn nộp</span>
             <input type="date" value={form.due_date} onChange={(e) => set('due_date', e.target.value)} />
@@ -386,13 +392,16 @@ const ExerciseEditCard = memo(function ExerciseEditCard({ ex, i, last, only, par
         <div className="row">
           <strong>Câu {i + 1}</strong>
           {part && <span className="badge badge-primary">Phần {part}</span>}
-          <select aria-label={`Loại câu ${i + 1}`} value={ex.kind} onChange={(e) => update({ kind: e.target.value })} style={{ width: 'auto' }}>
-            {Object.entries(KIND_LABEL).map(([k, label]) => (
-              <option key={k} value={k}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            value={ex.kind}
+            onChange={(val) => update({ kind: val })}
+            options={Object.entries(KIND_LABEL).map(([k, label]) => ({
+              value: k,
+              label,
+            }))}
+            ariaLabel={`Loại câu ${i + 1}`}
+            className="ex-kind-select"
+          />
         </div>
         <div className="row">
           <button type="button" className="btn btn-small" onClick={() => onMove(i, -1)} disabled={i === 0} aria-label="Lên">

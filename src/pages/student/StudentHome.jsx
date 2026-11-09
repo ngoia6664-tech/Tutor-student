@@ -37,6 +37,7 @@ export default function StudentHome() {
         .select('status, assigned_at, assignment:assignments(id, title, type, due_date, is_exam, chapter_id, chapter:chapters(title))')
         .eq('student_id', profile.id)
         .eq('status', 'todo')
+        .eq('quiet', false) // bài tự học trong khóa nằm ở Thư viện, không phải bài cần làm
         .then(unwrap),
       fetchStudentChapters(profile.grade ?? null),
       fetchServerDraftCounts(),

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
-import { confirmDeleteMany, confirmDropSubmitted, notifyDone, notifyError } from '../lib/dialog.js'
+import { askConfirm, confirmDeleteMany, confirmDropSubmitted, notifyDone, notifyError } from '../lib/dialog.js'
+import { fetchStudents } from '../lib/students.js'
 import StudentPicker from './StudentPicker.jsx'
 import ChapterSelect from './ChapterSelect.jsx'
 import Loading from './Loading.jsx'
@@ -33,10 +34,11 @@ function DialogFrame({ id, icon, title, onClose, children, className = '' }) {
   )
 }
 
-// Giao bài nhanh từ danh sách (Bài giảng, Bài tập, chủ đề trong Thư viện).
-// items = [{ kind: 'lesson'|'assignment', id, title }]
-//  - 1 bài: sửa đúng danh sách học sinh nhận (bỏ học sinh đã nộp thì hỏi lại)
+// Giao bài nhanh từ danh sách (Bài giảng, Bài tập, chủ đề trong Thư viện) hoặc giao cả khóa.
+// items = [{ kind: 'lesson'|'assignment', id, title, course?: { id, title } }] | [{ kind: 'course', id, title, grade }]
+//  - 1 bài / 1 khóa: sửa đúng danh sách học sinh nhận (bỏ học sinh đã nộp thì hỏi lại)
 //  - nhiều bài: chỉ GIAO THÊM học sinh đã chọn, ai đã có bài thì giữ nguyên
+//  - bài thuộc khóa mà học sinh mới chọn chưa có khóa: hỏi có giao luôn cả khóa không
 export function AssignDialog({ items, onClose, onSaved }) {
   const single = items.length === 1 ? items[0] : null
   const [current, setCurrent] = useState(single ? null : [])
@@ -69,10 +71,18 @@ export function AssignDialog({ items, onClose, onSaved }) {
       setError('Chọn ít nhất một học sinh.')
       return
     }
+    const added = single ? ids.filter((sid) => !current.some((r) => r.student_id === sid)) : ids
     setSaving(true)
     try {
+      if (single?.kind === 'course' && single.grade && added.length && !(await confirmOtherGrade(single, added))) {
+        setSaving(false)
+        return
+      }
+      const course = items.find((it) => it.course)?.course
+      const wholeCourse = course && added.length ? await askWholeCourse(course, added) : []
       if (single) await setRecipients(single.kind, single.id, ids, current)
       else await addRecipients(items, ids)
+      if (wholeCourse.length) await addRecipients([{ kind: 'course', id: course.id }], wholeCourse)
       onSaved?.()
       onClose()
     } catch (e) {
@@ -84,7 +94,12 @@ export function AssignDialog({ items, onClose, onSaved }) {
   return (
     <DialogFrame id="assign-title" icon="users" title="Giao cho học sinh" onClose={onClose}>
       <p className="muted small" style={{ margin: '0 0 0.75rem' }}>
-        {single ? (
+        {single?.kind === 'course' ? (
+          <>
+            🎓 {single.title}: học sinh được chọn thấy mọi bài đang mở trong khóa, kể cả bài thêm sau. Bỏ chọn thì các bạn mất bài chưa làm, bài
+            đã làm vẫn giữ.
+          </>
+        ) : single ? (
           <>
             {single.kind === 'lesson' ? '📘' : '✏️'} {single.title}
           </>
@@ -111,6 +126,35 @@ export function AssignDialog({ items, onClose, onSaved }) {
       </div>
     </DialogFrame>
   )
+}
+
+// Giao khóa cho học sinh khác lớp (vd. khóa lớp 12 cho học sinh lớp 11): vẫn cho giao, hỏi lại trước
+async function confirmOtherGrade(course, studentIds) {
+  const other = (await fetchStudents()).filter((s) => studentIds.includes(s.id) && s.grade && s.grade !== course.grade)
+  if (!other.length) return true
+  return askConfirm({
+    title: `${other.map((s) => `${s.full_name} (lớp ${s.grade})`).join(', ')} không học lớp ${course.grade}`,
+    message: `Bạn vẫn giao khóa "${course.title}" của lớp ${course.grade} cho ${other.length > 1 ? 'các bạn này' : 'bạn này'}?`,
+    say: 'Khác lớp đó nha, bạn kiểm tra lại giúp mình nhé 🧐',
+    pose: 'wait',
+    confirmText: 'Vẫn giao',
+  })
+}
+
+// Bài thuộc khóa: học sinh mới chọn mà chưa có khóa thì hỏi có giao luôn cả khóa không. Trả về học sinh cần giao khóa
+async function askWholeCourse(course, studentIds) {
+  const have = new Set((await fetchRecipients('course', course.id)).map((r) => r.student_id))
+  const missing = studentIds.filter((sid) => !have.has(sid))
+  if (!missing.length) return []
+  const ok = await askConfirm({
+    title: `${missing.length} học sinh chưa có khóa "${course.title}"`,
+    message: 'Giao luôn cả khóa thì các bạn thấy mọi bài đang mở trong khóa. Chọn "Chỉ bài này" thì các bạn chỉ thấy bài vừa giao.',
+    say: 'Bài này nằm trong một khóa học đó 🎓',
+    pose: 'teach',
+    confirmText: 'Giao cả khóa',
+    cancelText: 'Chỉ bài này',
+  })
+  return ok ? missing : []
 }
 
 // Sửa nhiều → Chuyển chủ đề: chỉ đổi chủ đề, nội dung / câu hỏi / học sinh nhận giữ nguyên

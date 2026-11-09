@@ -30,6 +30,8 @@ import { matchTitle } from '../lib/format.js'
  *   className?: string
  *   style?: import('react').CSSProperties
  *   ariaLabel?: string
+ *   disabled?: boolean
+ *   placement?: 'bottom' | 'top' | 'auto'
  * }} props
  */
 export default function CustomSelect({
@@ -44,15 +46,33 @@ export default function CustomSelect({
   className = '',
   style,
   ariaLabel,
+  disabled = false,
+  placement = 'auto',
 }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [dropUp, setDropUp] = useState(placement === 'top')
   const deferredSearch = useDeferredValue(search)
   const boxRef = useRef(/** @type {HTMLDivElement | null} */ (null))
   const searchInputRef = useRef(/** @type {HTMLInputElement | null} */ (null))
   const id = useId()
 
   const currentOption = options.find((o) => o.value === value)
+
+  // Tự động phát hiện hướng mở lên (dropUp) khi gần mép dưới màn hình (VD: thanh thao tác dính đáy)
+  useEffect(() => {
+    if (open) {
+      if (placement === 'top') {
+        setDropUp(true)
+      } else if (placement === 'bottom') {
+        setDropUp(false)
+      } else if (boxRef.current) {
+        const rect = boxRef.current.getBoundingClientRect()
+        const spaceBelow = window.innerHeight - rect.bottom
+        setDropUp(spaceBelow < 260 && rect.top > spaceBelow)
+      }
+    }
+  }, [open, placement])
 
   // Đóng khi click ngoài
   useEffect(() => {
@@ -108,11 +128,13 @@ export default function CustomSelect({
     >
       <button
         type="button"
-        className={`custom-select-btn ${open ? 'is-open' : ''}`}
+        disabled={disabled}
+        className={`custom-select-btn ${open ? 'is-open' : ''} ${disabled ? 'is-disabled' : ''}`}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-disabled={disabled}
         aria-label={ariaLabel || `${prefixLabel}${currentOption?.label || placeholder}`}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
       >
         {icon && <Icon name={icon} size={15} className="custom-select-icon" />}
         <span className="custom-select-text">
@@ -128,7 +150,7 @@ export default function CustomSelect({
       </button>
 
       {open && (
-        <div className="custom-select-popover" role="listbox" id={id}>
+        <div className={`custom-select-popover ${dropUp ? 'is-dropup' : ''}`} role="listbox" id={id}>
           {searchable && (
             <div className="custom-select-search-box">
               <span className="custom-select-search-icon">

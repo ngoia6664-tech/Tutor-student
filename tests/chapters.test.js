@@ -75,7 +75,7 @@ describe('libraryCrumbs', () => {
     const cd = libraryCrumbs(tree, { lop: '11', mon: 'Vật lý', cd: 'Sóng' })[2]
     expect(cd.name).toBe('cd')
     expect(cd.options.map((o) => o.label)).toEqual(['Dao động', 'Sóng'])
-    expect(cd.options[0].to).toBe(libraryUrl('11', 'Vật lý', 'Dao động'))
+    expect(cd.options[0].to).toBe(libraryUrl('11', 'Vật lý', undefined, 'Dao động'))
     expect(cd.options[1].current).toBe(true)
     expect(libraryCrumbs(tree, { lop: '11', mon: 'Toán', cd: 'L11_Dãy số' })[2].label).toBe('Dãy số')
   })
@@ -92,8 +92,52 @@ describe('libraryCrumbs', () => {
   it('Thư viện học sinh: link không có lớp, trỏ về /student/library', () => {
     const [, mon, cd] = libraryCrumbs(tree, { lop: '11', mon: 'Vật lý', cd: 'Sóng' }, studentLibraryUrl)
     expect(mon.options[0].to).toBe('/student/library?mon=To%C3%A1n')
-    expect(cd.options[0].to).toBe(studentLibraryUrl('11', 'Vật lý', 'Dao động'))
-    expect(studentLibraryUrl('11', 'Vật lý', 'Dao động')).toBe('/student/library?mon=V%E1%BA%ADt+l%C3%BD&cd=Dao+%C4%91%E1%BB%99ng')
+    expect(cd.options[0].to).toBe(studentLibraryUrl('11', 'Vật lý', undefined, 'Dao động'))
+    expect(studentLibraryUrl('11', 'Vật lý', undefined, 'Dao động')).toBe('/student/library?mon=V%E1%BA%ADt+l%C3%BD&cd=Dao+%C4%91%E1%BB%99ng')
     expect(studentLibraryUrl()).toBe('/student/library')
+  })
+})
+
+// Cấp Khóa giữa Môn và Chương
+describe('khóa học', () => {
+  const courses = [
+    { id: 'k2', title: 'Khóa mất gốc', grade: 12, subject: 'Vật lý', sort_order: 1 },
+    { id: 'k1', title: 'Khóa cơ bản', grade: 12, subject: 'Vật lý', sort_order: 0 },
+    { id: 'k3', title: 'Khóa nâng cao', grade: 12, subject: 'Vật lý', sort_order: 2 },
+  ]
+  const tree = buildTree(
+    [
+      { id: 'a', title: 'Dao động điều hòa', grade: 12, subject: 'Vật lý', section: 'Dao động', course_id: 'k1' },
+      { id: 'b', title: 'Dao động điều hòa', grade: 12, subject: 'Vật lý', section: 'Dao động', course_id: 'k2' },
+      { id: 'c', title: 'Sóng cơ', grade: 12, subject: 'Vật lý', section: 'Sóng', course_id: null },
+    ],
+    courses,
+  )
+  const vl = tree[0].subjects[0]
+
+  it('khóa xếp theo thứ tự, khóa chưa có chủ đề vẫn có, "Chương ngoài khóa" cuối', () => {
+    expect(vl.courses.map((k) => k.key)).toEqual(['k1', 'k2', 'k3', '-'])
+    expect(vl.courses[2].sections).toEqual([])
+    expect(vl.courses[3].course).toBeNull()
+  })
+
+  it('cùng tên chương ở hai khóa thì tách riêng; sections của môn vẫn gộp', () => {
+    expect(vl.courses[0].sections[0].chapters.map((c) => c.id)).toEqual(['a'])
+    expect(vl.courses[1].sections[0].chapters.map((c) => c.id)).toEqual(['b'])
+    expect(vl.sections.map((x) => x.key)).toEqual(['Dao động', 'Sóng'])
+    expect(vl.sections[0].chapters.length).toBe(2)
+  })
+
+  it('đường dẫn có đoạn khóa; chương chỉ lấy trong khóa đang xem', () => {
+    const segs = libraryCrumbs(tree, { lop: '12', mon: 'Vật lý', kh: 'k2', cd: 'Dao động' })
+    expect(segs.map((s) => s.name)).toEqual(['lop', 'mon', 'kh', 'cd'])
+    expect(segs[2].label).toBe('Khóa mất gốc')
+    expect(segs[2].options.map((o) => o.label)).toEqual(['Khóa cơ bản', 'Khóa mất gốc', 'Khóa nâng cao', 'Chương ngoài khóa'])
+    expect(segs[3].options.map((o) => o.key)).toEqual(['Dao động'])
+    expect(segs[3].options[0].to).toBe(libraryUrl('12', 'Vật lý', 'k2', 'Dao động'))
+  })
+
+  it('link học sinh giữ khóa', () => {
+    expect(studentLibraryUrl('12', 'Vật lý', 'k1')).toBe('/student/library?mon=V%E1%BA%ADt+l%C3%BD&kh=k1')
   })
 })

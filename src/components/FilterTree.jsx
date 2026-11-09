@@ -1,12 +1,12 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { buildTree, gradeFromKey, gradeLabel, keyOf, sectionLabel, sectionText, subjectLabel } from '../lib/chapters.js'
+import { buildTree, courseLabel, gradeFromKey, gradeLabel, keyOf, sectionLabel, sectionText, subjectLabel } from '../lib/chapters.js'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from './TreeNav.jsx'
 import Icon from './Icon.jsx'
 
-// ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › Chương › Chủ đề -----
-// Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&cd=Chương 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
+// ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › (Khóa) › Chương › Chủ đề -----
+// Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&kh=<id khóa>&cd=Chương 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
 export const NONE = 'none'
 
 export function useTreeSelection() {
@@ -14,8 +14,9 @@ export function useTreeSelection() {
   const ch = params.get('ch') ?? undefined
   const lop = params.get('lop') ?? undefined
   const mon = !ch && lop !== undefined ? params.get('mon') ?? undefined : undefined
+  const kh = mon !== undefined ? params.get('kh') ?? undefined : undefined
   const cd = mon !== undefined ? params.get('cd') ?? undefined : undefined
-  return { lop, mon, cd, ch }
+  return { lop, mon, kh, cd, ch }
 }
 
 // Bài (có chapter_id) có thuộc mục đang chọn không. chapterById: chỉ gồm chủ đề hiện trên cây.
@@ -28,6 +29,7 @@ export function matchItem(item, chapterById, sel) {
   return (
     keyOf(c.grade) === sel.lop &&
     (sel.mon === undefined || keyOf(c.subject) === sel.mon) &&
+    (sel.kh === undefined || keyOf(c.course_id) === sel.kh) &&
     (sel.cd === undefined || keyOf(c.section) === sel.cd)
   )
 }
@@ -42,16 +44,18 @@ export function selectionLabel(sel, chapterById, noneLabel) {
   return [
     sel.lop !== undefined && gradeLabel(gradeFromKey(sel.lop)),
     sel.mon !== undefined && subjectLabel(sel.mon === '-' ? null : sel.mon),
+    sel.kh !== undefined && courseLabel([...chapterById.values()].find((c) => keyOf(c.course_id) === sel.kh)?.course),
     sel.cd !== undefined && sectionLabel(sel.cd === '-' ? null : sel.cd),
   ]
     .filter(Boolean)
     .join(' › ')
 }
 
-function makeUrl(pathname, { lop, mon, cd, ch }) {
+function makeUrl(pathname, { lop, mon, kh, cd, ch }) {
   const p = new URLSearchParams()
   if (lop !== undefined) p.set('lop', lop)
   if (mon !== undefined) p.set('mon', mon)
+  if (kh !== undefined) p.set('kh', kh)
   if (cd !== undefined) p.set('cd', cd)
   if (ch !== undefined) p.set('ch', ch)
   const q = p.toString()
@@ -86,7 +90,9 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
   const noneBadge = badgeIf ? items.filter((it) => badgeIf(it) && !chapterById.has(it.chapter_id)).length : 0
 
   const visible = hideEmpty ? chapters.filter((c) => perChapter.get(c.id) || badges.get(c.id)) : chapters
-  const tree = buildTree(visible)
+  // Khóa lấy từ chủ đề (fetchStudentChapters kèm course); môn có khóa thì cây thêm cấp Khóa
+  const courses = [...new Map(visible.filter((c) => c.course).map((c) => [c.course.id, c.course])).values()]
+  const tree = buildTree(visible, courses)
   const tabs = tree.map((g) => g.key)
   // Lớp của chủ đề đang chọn quyết định tab đang mở
   const selChapter = sel.ch && sel.ch !== NONE ? chapterById.get(sel.ch) : null
@@ -95,23 +101,26 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
 
   // Mở sẵn nhánh của mục đang chọn
   useEffect(() => {
-    const [g, s, c] = selChapter ? [keyOf(selChapter.grade), keyOf(selChapter.subject), keyOf(selChapter.section)] : [sel.lop, sel.mon, sel.cd]
+    const [g, s, k, c] = selChapter
+      ? [keyOf(selChapter.grade), keyOf(selChapter.subject), keyOf(selChapter.course_id), keyOf(selChapter.section)]
+      : [sel.lop, sel.mon, sel.kh, sel.cd]
     const keys = []
     if (g !== undefined) keys.push(nodeKey('g', g))
     if (s !== undefined) keys.push(nodeKey('s', g, s))
-    if (c !== undefined) keys.push(nodeKey('c', g, s, c))
+    if (k !== undefined) keys.push(nodeKey('k', g, s, k))
+    if (c !== undefined) keys.push(nodeKey('c', g, s, c), nodeKey('c', g, s, k, c))
     if (keys.length) ensure(keys)
-  }, [selChapter, sel.lop, sel.mon, sel.cd, ensure])
+  }, [selChapter, sel.lop, sel.mon, sel.kh, sel.cd, ensure])
   // Chưa chọn gì: mở sẵn nhánh chủ đề đang học
   const nowChapter = nowId ? chapterById.get(nowId) : null
   const nothingSelected = sel.lop === undefined && sel.ch === undefined
   useEffect(() => {
     if (!nowChapter || !nothingSelected) return
-    const [g, s, c] = [keyOf(nowChapter.grade), keyOf(nowChapter.subject), keyOf(nowChapter.section)]
-    ensure([nodeKey('g', g), nodeKey('s', g, s), nodeKey('c', g, s, c)])
+    const [g, s, k, c] = [keyOf(nowChapter.grade), keyOf(nowChapter.subject), keyOf(nowChapter.course_id), keyOf(nowChapter.section)]
+    ensure([nodeKey('g', g), nodeKey('s', g, s), nodeKey('k', g, s, k), nodeKey('c', g, s, c), nodeKey('c', g, s, k, c)])
   }, [nowChapter, nothingSelected, ensure])
   // Chọn xong trên điện thoại thì gập mục lục
-  useEffect(() => setShown(false), [sel.lop, sel.mon, sel.cd, sel.ch])
+  useEffect(() => setShown(false), [sel.lop, sel.mon, sel.kh, sel.cd, sel.ch])
 
   const url = (s) => makeUrl(pathname, s)
   const isAll = !sel.ch && (sel.lop === undefined || (gradeTabs && sel.mon === undefined && tab === sel.lop))
@@ -119,6 +128,39 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
 
   // Cây có cấp Lớp (tab Tất cả của gia sư) thì môn lùi vào một bậc
   const base = gradeTabs && tab === undefined ? 1 : 0
+  // Khóa node của chương: môn không chia khóa giữ key cũ (trạng thái mở đã lưu)
+  const secKey = (g, s, kh, x) => (kh === undefined ? nodeKey('c', g.key, s.key, x.key) : nodeKey('c', g.key, s.key, kh, x.key))
+  // Các chương của một môn (kh: khóa đang đứng trong, undefined = môn không chia khóa)
+  const sectionNodes = (g, s, sections, kh, depth) => (
+    <>
+      {sections.map((x) => (
+        <TreeGroup
+          key={x.key}
+          label={sectionText(x.section)}
+          to={url({ lop: g.key, mon: s.key, kh, cd: x.key })}
+          count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key && (kh === undefined || keyOf(c.course_id) === kh) && keyOf(c.section) === x.key)}
+          open={open.has(secKey(g, s, kh, x))}
+          onToggle={() => toggle(secKey(g, s, kh, x))}
+          active={!sel.ch && sel.lop === g.key && sel.mon === s.key && sel.kh === kh && sel.cd === x.key}
+          depth={depth}
+          now={x.chapters.some((c) => c.id === nowId)}
+        >
+          {x.chapters.map((c) => (
+            <TreeLeaf
+              key={c.id}
+              to={url({ lop: g.key, ch: c.id })}
+              label={c.title}
+              count={showCount ? perChapter.get(c.id) || 0 : undefined}
+              badge={badges.get(c.id) || null}
+              active={sel.ch === c.id}
+              dim={!perChapter.get(c.id) && !badges.get(c.id)}
+              now={c.id === nowId}
+            />
+          ))}
+        </TreeGroup>
+      ))}
+    </>
+  )
   const subjectNodes = (g) =>
     g.subjects.map((s) => (
       <TreeGroup
@@ -131,32 +173,24 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
         active={!sel.ch && sel.lop === g.key && sel.mon === s.key && sel.cd === undefined}
         depth={base}
       >
-        {s.sections.map((x) => (
-          <TreeGroup
-            key={x.key}
-            label={sectionText(x.section)}
-            to={url({ lop: g.key, mon: s.key, cd: x.key })}
-            count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key && keyOf(c.section) === x.key)}
-            open={open.has(nodeKey('c', g.key, s.key, x.key))}
-            onToggle={() => toggle(nodeKey('c', g.key, s.key, x.key))}
-            active={!sel.ch && sel.lop === g.key && sel.mon === s.key && sel.cd === x.key}
-            depth={base + 1}
-            now={x.chapters.some((c) => c.id === nowId)}
-          >
-            {x.chapters.map((c) => (
-              <TreeLeaf
-                key={c.id}
-                to={url({ lop: g.key, ch: c.id })}
-                label={c.title}
-                count={showCount ? perChapter.get(c.id) || 0 : undefined}
-                badge={badges.get(c.id) || null}
-                active={sel.ch === c.id}
-                dim={!perChapter.get(c.id) && !badges.get(c.id)}
-                now={c.id === nowId}
-              />
-            ))}
-          </TreeGroup>
-        ))}
+        {s.courses.some((k) => k.course)
+          ? s.courses.map((k) => (
+              <TreeGroup
+                key={k.key}
+                label={courseLabel(k.course)}
+                className={k.course ? undefined : 'tree-node-loose'}
+                to={url({ lop: g.key, mon: s.key, kh: k.key })}
+                count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key && keyOf(c.course_id) === k.key)}
+                open={open.has(nodeKey('k', g.key, s.key, k.key))}
+                onToggle={() => toggle(nodeKey('k', g.key, s.key, k.key))}
+                active={!sel.ch && sel.lop === g.key && sel.mon === s.key && sel.kh === k.key && sel.cd === undefined}
+                depth={base + 1}
+                now={k.sections.some((x) => x.chapters.some((c) => c.id === nowId))}
+              >
+                {sectionNodes(g, s, k.sections, k.key, base + 2)}
+              </TreeGroup>
+            ))
+          : sectionNodes(g, s, s.sections, undefined, base + 1)}
       </TreeGroup>
     ))
 

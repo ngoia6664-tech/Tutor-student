@@ -218,6 +218,16 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 - Báo thưởng: `get_economy.unseen` → PandaShopContext cho gấu nói (`rewardMessage`) rồi `mark_rewards_seen`. Sau nộp bài / xong Ôn tập gọi `economyChanged()` để HUD đọc lại.
 - Dữ liệu cũ: chạy schema tự tạo ví (+300 Xu) và xét lại thưởng điểm + mốc số bài theo lần nộp hiện tại (idempotent). Không suy ra được chuỗi / Ôn tập quá khứ.
 
+## Khóa học (Lớp › Môn › **Khóa** › Chương › Chủ đề; schema.sql mục "Khóa học", grep `course_`)
+- Bảng `courses` (lớp, môn, tên) + `chapters.course_id` (một bài thuộc một chủ đề → một khóa). Chủ đề cùng tên được ở nhiều khóa (index `chapters_course_title_key`). Trigger `course_fill_chapter`: chủ đề vào khóa lấy lớp + môn của khóa; `course_on_chapter_change`: Sửa môn → khóa đi theo.
+- Giao khóa: `course_recipients`. Máy chủ tự tạo dòng `lesson_recipients` / `assignment_recipients` với `from_course = true, quiet = true` cho mọi bài **đang mở** (`hidden = false`) trong khóa (`course_sync_item`, gọi từ trigger khi giao/bỏ khóa, bài đổi chủ đề / ẩn hiện, chủ đề đổi khóa). Nhờ vậy RLS, đáp án, nộp bài, thưởng không đổi. Bỏ khóa / ẩn bài chỉ xóa dòng from_course chưa làm (todo, chưa bắt đầu, không nháp).
+- `quiet = true`: bài tự học — không chuông, không ở Bài cần làm, không ở "Vừa giao"; nộp thì `submit_assignment` chuyển luôn `checked` + điểm máy (`course_auto_score`, có tự luận → null) nên không vào hàng chấm, vẫn xét thưởng. Gia sư bấm **Báo** (ChapterDetail) → `quiet = false` = như bài giao riêng.
+- Giao riêng một bài cho học sinh đang có bài qua khóa (`addRecipients` / `save_*`) → dòng thành giao riêng (`from_course = false`). Ô chọn học sinh của editor / AssignDialog chỉ hiện người nhận giao riêng (`fetchRecipients` lọc from_course).
+- Giao diện: Library (cây Môn › Khóa › Chương, URL `kh`; môn chưa có khóa giữ cây cũ), `CourseForm` (ChapterForms), nút Giao khóa = `AssignDialog` kind `course` (cảnh báo khác lớp; bài lẻ trong khóa → hỏi "Giao cả khóa?"), ChapterDetail `CourseControls` (Ẩn / Mở / Báo). Học sinh: StudentLibrary có cấp Khóa + thanh tiến độ (bài tập đã nộp / tổng bài tập đang mở). `buildTree(chapters, courses)`: `subject.courses[].sections` + `subject.sections` gộp (cho FilterTree / TreePicker / báo cáo).
+- Chủ đề chưa thuộc khóa = nhóm tạm **"Chương ngoài khóa"** (`NO_COURSE`, key `-`), chỉ hiện khi môn có ≥ 1 khóa; viền đứt (`tree-node-loose`), không Giao/Sửa/Xóa, có nút "Chuyển vào khóa…". Tạo khóa đầu tiên của môn đã có chủ đề → hỏi chuyển hết vào (`offerMoveIntoFirstCourse`).
+- Cây lọc học sinh (`FilterTree`: Bài cần làm / Kết quả / Ôn tập) có cấp Khóa (URL `kh`) khi môn có khóa; khóa lấy từ `fetchStudentChapters` (kèm `course`, khóa không được giao → coi như ngoài khóa).
+- Chưa làm: khóa trong JSON nhập (ImportJson / ensure_chapter chưa nhận khóa).
+
 ## Nhóm học sinh
 Tên nhóm tự do (`profiles.group_name`, hết ràng buộc A–E); ghi chú + thứ tự ở bảng `student_groups` (chỉ gia sư); đổi tên qua RPC `rename_student_group`. Gom nhóm: `lib/studentGroups.js`; trang Học sinh chia khối theo nhóm, `StudentPicker` lấy nhóm từ dữ liệu.
 
