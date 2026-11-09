@@ -1409,6 +1409,11 @@ body:has(.ctx-card .qgrid) .answer-progress {
   color: #ffffff;
 }
 
+/* Nhãn nhóm "Dạy học", "Công cụ" trên nền bảng đen */
+:root[data-theme="light"] .nav-group-label {
+  color: var(--chalk-muted, #b8c4ba);
+}
+
 :root[data-theme="light"] .nav-side .nav-link,
 :root[data-theme="light"] .side-btn {
   color: #dce5de;

@@ -380,7 +380,7 @@ export default function Library() {
   // Trang lớp: chưa biết môn → form có ô chọn môn
   const addCourse = () => openCourseForm({ grade: gradeFromKey(lop), subject: mon !== undefined ? fromKey(mon) : undefined })
   const assignCourse = () => course && setAssigningCourse([{ kind: 'course', id: course.id, title: course.title, grade: course.grade }])
-  // Các thao tác chính (Sửa môn, Sửa khóa, Xóa khóa, Sửa chương, Xóa chương, Thêm khóa) đã đặt trực tiếp trên thanh đầu trang theo đúng cấp;
+  // Các thao tác chính (Sửa môn, Sửa khóa, Sửa chương, Xóa chương, Thêm khóa) đã đặt trực tiếp trên thanh đầu trang theo đúng cấp;
   // menu "⋯" chỉ chứa các thao tác phụ / hàng loạt để tránh trùng lặp.
   const moreGroup = [
     moreBase[1],
@@ -389,7 +389,8 @@ export default function Library() {
     inGroup.length > 0 &&
       (pickCh.on
         ? { key: 'pick', icon: 'close', label: pickCh.mode === 'course' ? 'Thôi chuyển khóa' : 'Thôi xóa nhiều', onSelect: pickCh.stop }
-        : { key: 'pick', icon: 'trash', label: 'Xóa nhiều chủ đề', onSelect: () => pickCh.start('delete') }),
+        : { key: 'pick', icon: 'trash', label: level === 3 ? 'Xóa nhiều chương' : 'Xóa nhiều chủ đề', onSelect: () => pickCh.start('delete') }),
+    level === 3 && course && { key: 'delete-course', icon: 'trash', label: 'Xóa khóa', danger: true, onSelect: handleDeleteCourse },
     level === 4 && inGroup.length > 0 && { key: 'delete-section', icon: 'trash', label: 'Xóa chương này', danger: true, onSelect: handleDeleteSection },
   ]
 
@@ -661,9 +662,6 @@ export default function Library() {
                       <Icon name="edit" />
                       Sửa khóa
                     </button>
-                    <button type="button" className="btn btn-small btn-icon btn-danger" onClick={handleDeleteCourse} aria-label="Xóa khóa" title="Xóa khóa này">
-                      <Icon name="trash" />
-                    </button>
                   </>
                 )}
                 {level === 3 && !course && inGroup.length > 0 && !pickCh.on && subjectCourses.length > 0 && (
@@ -756,6 +754,7 @@ export default function Library() {
                     pick={pickCh}
                     chapters={inGroup}
                     showSection={level < 4}
+                    pickSections={level === 3 && pickCh.mode === 'delete'}
                     onEdit={openChapterForm}
                     onDelete={(c) => handleDelete(c, countOf(c.lessons) + countOf(c.assignments))}
                   />
@@ -805,7 +804,8 @@ export default function Library() {
 // Chủ đề dưới dạng mục chọn nhiều; n = số bài giảng + bài tập bên trong
 const chapterItem = (c) => ({ kind: 'chapter', id: c.id, title: c.title, n: countOf(c.lessons) + countOf(c.assignments) })
 
-function GroupChapters({ pick, chapters, showSection, onEdit, onDelete }) {
+// pickSections: tiêu đề chương có ô chọn cả chương (Xóa nhiều chương trong khóa)
+function GroupChapters({ pick, chapters, showSection, pickSections, onEdit, onDelete }) {
   const groups = []
   for (const c of chapters) {
     const k = showSection ? `${keyOf(c.grade)}|${keyOf(c.subject)}|${keyOf(c.section)}` : 'all'
@@ -815,7 +815,19 @@ function GroupChapters({ pick, chapters, showSection, onEdit, onDelete }) {
   }
   return groups.map((g) => (
     <div key={g.k} style={{ marginBottom: '1.1rem' }}>
-      {g.title && <h2 className="section-title">{g.title}</h2>}
+      {g.title &&
+        (pickSections ? (
+          <label className="section-title assign-title">
+            <input
+              type="checkbox"
+              checked={g.items.every((c) => pick.has('chapter', c.id))}
+              onChange={(e) => pick.setAll(g.items.map(chapterItem), e.target.checked)}
+            />
+            {g.title}
+          </label>
+        ) : (
+          <h2 className="section-title">{g.title}</h2>
+        ))}
       <div className="list">
         {g.items.map((c) => (
           <div key={c.id} className={pick.has('chapter', c.id) ? 'list-item list-item-row is-picked' : 'list-item list-item-row'}>

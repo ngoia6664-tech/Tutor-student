@@ -115,7 +115,7 @@ export default function TutorAssignments() {
             label="Thao tác khác"
             items={[
               ...selectModeItems(pick),
-              { key: 'import', label: 'Thêm bài giảng / bài tập', icon: 'import', onSelect: () => navigate('/tutor/import') },
+              { key: 'import', label: 'Nhập bài', icon: 'import', onSelect: () => navigate('/tutor/import') },
             ]}
           />
         </div>
