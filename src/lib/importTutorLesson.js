@@ -365,8 +365,8 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
     drafts,
     warnings,
     flags: arr(lesson.review_flags).map(str).filter(Boolean),
-    // Chủ đề = topic (vd. Chủ đề 4), chương = chapter (vd. Chuyên đề 2: Sóng), kèm lớp + môn
-    chapter: { title: topic, section: str(lesson.chapter), grade: toGrade(lesson.grade), subject: str(lesson.subject) },
+    // Chủ đề = topic (vd. Chủ đề 4), chương = chapter (vd. Chuyên đề 2: Sóng), kèm lớp + môn; course = tên khóa (tùy chọn)
+    chapter: { title: topic, section: str(lesson.chapter), grade: toGrade(lesson.grade), subject: str(lesson.subject), course: str(lesson.course) },
     dang: lesson.dang ?? null,
   }
 }

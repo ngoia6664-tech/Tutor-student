@@ -589,35 +589,6 @@
   }
 }
 
-/* Tab chọn lớp ở đầu cây lọc (components/FilterTree.jsx) */
-.grade-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0.6rem;
-}
-.grade-tab {
-  padding: 0.3rem 0.8rem;
-  border-radius: var(--r-chip);
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition:
-    border-color 0.15s var(--ease),
-    background-color 0.15s var(--ease);
-}
-.grade-tab:hover {
-  border-color: var(--primary);
-}
-.grade-tab.active {
-  background: var(--btn-primary);
-  color: var(--on-primary);
-  border-color: var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-}
 .tree-empty {
   padding: 0 0.35rem;
 }
@@ -1746,6 +1717,13 @@
 /* Nút đầu trang không gãy chữ thành nhiều dòng */
 .page-head-actions .btn {
   white-space: nowrap;
+}
+.course-help summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.course-help p {
+  margin: 0.35rem 0 0;
 }
 .page-head-actions .btn-icon {
   padding-inline: 0.55rem;

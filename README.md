@@ -248,7 +248,7 @@ Một câu có thể là một trong 3 loại:
 ### Dạng đầy đủ `tutor-lesson/v1` (một file cho cả chủ đề)
 
 ```json
-{"schema":"tutor-lesson/v1","lesson":{"topic":"Chủ đề 4: Giao thoa sóng cơ","chapter":"...","grade":"11",
+{"schema":"tutor-lesson/v1","lesson":{"topic":"Chủ đề 4: Giao thoa sóng cơ","chapter":"...","grade":"11","subject":"Vật lý","course":"Vật lý 11 cơ bản",
  "theory":{"plan":"...","sections":[{"title":"...","explain":"...","analogy":"...","key_points":[],"formulas":[],"common_mistakes":[]}],"summary_1_min":[]},
  "exercises":{
    "fill_blank":[{"assignment":"classwork","items":[{"id":"a","statement":"...","answer":"..."}]}],

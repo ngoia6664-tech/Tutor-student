@@ -667,9 +667,12 @@ grant execute on function public.save_assignment(jsonb) to authenticated;
 
 -- Tìm chương theo tên trong cùng lớp + môn (không phân biệt hoa thường), chưa có thì tạo.
 -- Chương cũ cùng tên nhưng chưa ghi lớp/môn thì dùng lại và điền lớp/môn vào. Dùng khi nhập JSON.
+-- p_course (tùy chọn): tên khóa; có thì tìm / tạo khóa cùng lớp + môn rồi tìm / tạo chủ đề TRONG khóa đó.
 drop function if exists public.ensure_chapter(text, text);
+drop function if exists public.ensure_chapter(text, text, int, text);
 create or replace function public.ensure_chapter(p_title text, p_section text default null,
-                                                 p_grade int default null, p_subject text default null)
+                                                 p_grade int default null, p_subject text default null,
+                                                 p_course text default null)
 returns uuid
 language plpgsql
 security definer
@@ -677,14 +680,38 @@ set search_path = public
 as $$
 declare
   v_id uuid;
+  v_course uuid;
   v_title text := trim(p_title);
   v_subject text := nullif(trim(p_subject), '');
+  v_course_title text := nullif(trim(p_course), '');
 begin
   if not public.is_tutor() then
     raise exception 'Chỉ gia sư mới được tạo chương';
   end if;
   if coalesce(v_title, '') = '' then
     raise exception 'Chương cần có tên';
+  end if;
+
+  if v_course_title is not null then
+    select id into v_course from courses
+     where lower(title) = lower(v_course_title)
+       and coalesce(grade, 0) = coalesce(p_grade, 0)
+       and lower(coalesce(subject, '')) = lower(coalesce(v_subject, ''));
+    if v_course is null then
+      insert into courses (title, grade, subject, sort_order)
+      values (v_course_title, p_grade, v_subject, coalesce((select max(sort_order) + 1 from courses), 0))
+      returning id into v_course;
+    end if;
+    select id into v_id from chapters
+     where course_id = v_course and lower(title) = lower(v_title);
+    if v_id is null then
+      -- trigger course_fill_chapter điền lớp / môn theo khóa
+      insert into chapters (title, section, grade, subject, course_id, sort_order)
+      values (v_title, nullif(trim(p_section), ''), p_grade, v_subject, v_course,
+              coalesce((select max(sort_order) + 1 from chapters), 0))
+      returning id into v_id;
+    end if;
+    return v_id;
   end if;
 
   select id into v_id from chapters
@@ -719,8 +746,8 @@ begin
 end;
 $$;
 
-revoke all on function public.ensure_chapter(text, text, int, text) from public;
-grant execute on function public.ensure_chapter(text, text, int, text) to authenticated;
+revoke all on function public.ensure_chapter(text, text, int, text, text) from public;
+grant execute on function public.ensure_chapter(text, text, int, text, text) to authenticated;
 
 -- ---------- Chấm tự động ----------
 -- Chuẩn hóa câu trả lời điền khuyết: chữ thường, gộp khoảng trắng, bỏ dấu câu cuối.

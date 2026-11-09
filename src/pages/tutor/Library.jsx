@@ -380,17 +380,16 @@ export default function Library() {
   // Trang lớp: chưa biết môn → form có ô chọn môn
   const addCourse = () => openCourseForm({ grade: gradeFromKey(lop), subject: mon !== undefined ? fromKey(mon) : undefined })
   const assignCourse = () => course && setAssigningCourse([{ kind: 'course', id: course.id, title: course.title, grade: course.grade }])
-  // Các thao tác chính (Sửa khóa, Xóa khóa, Sửa chương, Xóa chương, Thêm khóa) đã đặt trực tiếp trên thanh đầu trang theo đúng cấp;
+  // Các thao tác chính (Sửa môn, Sửa khóa, Xóa khóa, Sửa chương, Xóa chương, Thêm khóa) đã đặt trực tiếp trên thanh đầu trang theo đúng cấp;
   // menu "⋯" chỉ chứa các thao tác phụ / hàng loạt để tránh trùng lặp.
   const moreGroup = [
     moreBase[1],
-    level <= 2 && inGroup.length > 0 && { key: 'edit', icon: 'edit', label: `Sửa ${level === 1 ? 'lớp' : 'môn'}`, onSelect: openGroupForm },
+    level === 1 && inGroup.length > 0 && { key: 'edit', icon: 'edit', label: 'Sửa lớp', onSelect: openGroupForm },
     level >= 2 && inGroup.length > 0 && !pickCh.on && subjectCourses.length > 0 && { key: 'to-course', icon: 'folder', label: 'Chuyển vào khóa', onSelect: () => pickCh.start('course') },
     inGroup.length > 0 &&
       (pickCh.on
         ? { key: 'pick', icon: 'close', label: pickCh.mode === 'course' ? 'Thôi chuyển khóa' : 'Thôi xóa nhiều', onSelect: pickCh.stop }
         : { key: 'pick', icon: 'trash', label: 'Xóa nhiều chủ đề', onSelect: () => pickCh.start('delete') }),
-    level === 3 && course && { key: 'delete-course', icon: 'trash', label: 'Xóa khóa này', danger: true, onSelect: handleDeleteCourse },
     level === 4 && inGroup.length > 0 && { key: 'delete-section', icon: 'trash', label: 'Xóa chương này', danger: true, onSelect: handleDeleteSection },
   ]
 
@@ -645,6 +644,12 @@ export default function Library() {
                     Thêm khóa
                   </button>
                 )}
+                {level === 2 && inGroup.length > 0 && (
+                  <button type="button" className="btn btn-small" onClick={openGroupForm} title="Đổi tên môn hoặc chuyển sang lớp khác">
+                    <Icon name="edit" />
+                    Sửa môn
+                  </button>
+                )}
                 {level === 3 && course && (
                   <>
                     <button type="button" className="btn btn-small btn-primary" onClick={assignCourse} title="Chọn học sinh được học cả khóa">
@@ -655,6 +660,9 @@ export default function Library() {
                     <button type="button" className="btn btn-small" onClick={() => openCourseForm(course)} title="Đổi tên khóa">
                       <Icon name="edit" />
                       Sửa khóa
+                    </button>
+                    <button type="button" className="btn btn-small btn-icon btn-danger" onClick={handleDeleteCourse} aria-label="Xóa khóa" title="Xóa khóa này">
+                      <Icon name="trash" />
                     </button>
                   </>
                 )}
@@ -680,11 +688,17 @@ export default function Library() {
                 xếp chúng vào khóa; chuyển hết thì mục này tự mất.
               </p>
             )}
-            {level === 3 && course && (
-              <p className="muted small">
-                Học sinh được giao khóa tự thấy mọi bài đang mở trong khóa (kể cả bài thêm sau), làm tự do, không hạn nộp. Bài nào chưa muốn cho xem thì
-                bấm <b>Ẩn</b> ở bài đó trong chủ đề.
-              </p>
+            {level === 3 && course && <CourseHelp />}
+            {level === 3 && course && course.course_recipients?.[0]?.count === 0 && (
+              <div className="nudge">
+                <span>
+                  <b>Khóa chưa giao cho ai.</b> Học sinh chỉ thấy bài trong khóa sau khi bạn giao khóa cho các bạn.
+                </span>
+                <button type="button" className="btn btn-small btn-primary" onClick={assignCourse}>
+                  <Icon name="users" />
+                  Giao khóa
+                </button>
+              </div>
             )}
             {inGroup.length === 0 ? (
               <div className="empty">
@@ -694,7 +708,11 @@ export default function Library() {
                   </>
                 ) : level === 3 && course ? (
                   <>
-                    Khóa chưa có chủ đề nào. Bấm <b>+ Thêm chủ đề</b> để tạo chủ đề trong khóa, hoặc mở một chủ đề có sẵn → <b>Sửa chủ đề</b> → chọn khóa này.
+                    <p>Khóa chưa có chủ đề nào. Thêm chủ đề mới vào khóa, hoặc mở một chủ đề có sẵn → <b>Sửa chủ đề</b> → chọn khóa này.</p>
+                    <button type="button" className="btn btn-small btn-primary" onClick={addChapter}>
+                      <Icon name="plus" />
+                      Thêm chủ đề
+                    </button>
                   </>
                 ) : (
                   <>
@@ -850,6 +868,39 @@ function AddChapterButton({ onClick, primary = false }) {
   )
 }
 
+// Dòng giải thích dưới tiêu đề khóa: thu gọn được, nhớ lựa chọn trên máy này
+const HELP_KEY = 'courseHelpOpen'
+function CourseHelp() {
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(HELP_KEY) !== '0'
+    } catch {
+      return true
+    }
+  })
+  return (
+    <details
+      className="muted small course-help"
+      open={open}
+      onToggle={(e) => {
+        const next = e.currentTarget.open
+        setOpen(next)
+        try {
+          localStorage.setItem(HELP_KEY, next ? '1' : '0')
+        } catch {
+          /* không lưu được thì thôi */
+        }
+      }}
+    >
+      <summary>{open ? 'Ẩn giải thích' : 'Học sinh thấy gì khi được giao khóa?'}</summary>
+      <p>
+        Học sinh được giao khóa tự thấy mọi bài đang mở trong khóa (kể cả bài thêm sau), làm tự do, không hạn nộp. Bài nào chưa muốn cho xem thì bấm{' '}
+        <b>Ẩn với học sinh</b> ở bài đó trong chủ đề.
+      </p>
+    </details>
+  )
+}
+
 // Chưa chọn gì: tổng quan từng lớp
 function Overview({ tree, onImport, onAdd, more }) {
   const all = tree.flatMap((g) => g.subjects.flatMap((s) => s.sections.flatMap((x) => x.chapters)))
@@ -864,6 +915,9 @@ function Overview({ tree, onImport, onAdd, more }) {
           <MoreMenu items={more} />
         </div>
       </div>
+      <p className="muted small">
+        Các cấp: <b>Lớp › Môn › Khóa › Chương › Chủ đề</b>. Chương là nhóm lớn gom nhiều chủ đề; chủ đề là một bài / một buổi học.
+      </p>
       <p className="muted">
         Mỗi lớp có một cây <b>Môn › Khóa › Chương › Chủ đề</b> riêng (môn chưa có khóa thì bỏ cấp Khóa; thêm khóa ở menu <b>⋯</b> của trang môn): bấm một lớp bên dưới, rồi đổi lớp / môn / chương nhanh bằng nút <b>▾</b> trên đường dẫn
         (lớp chưa có chủ đề cũng chọn được ở đó để mở lớp mới). Học sinh chỉ thấy cây của lớp mình (theo "Lớp" trong hồ sơ học sinh). Khi nhập file JSON, chủ đề được tự xếp theo lớp, môn, chương ghi trong file.

@@ -1,9 +1,10 @@
 // @ts-nocheck — nợ kiểu: xóa dòng này rồi chạy npm run typecheck để sửa
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { buildTree, courseLabel, gradeFromKey, gradeLabel, keyOf, sectionLabel, sectionText, subjectLabel } from '../lib/chapters.js'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from './TreeNav.jsx'
 import Icon from './Icon.jsx'
+import CustomSelect from './CustomSelect.jsx'
 
 // ----- Lọc danh sách (bài tập / bài giảng) theo cây Lớp › Môn › (Khóa) › Chương › Chủ đề -----
 // Lựa chọn nằm trên URL: ?lop=11&mon=Vật lý&kh=<id khóa>&cd=Chương 2  hoặc  ?lop=11&ch=<chapter_id>  hoặc  ?ch=none
@@ -75,6 +76,7 @@ function makeUrl(pathname, { lop, mon, kh, cd, ch }) {
 /** @param {{ chapters: any[], items: any[], countIf?: any, badgeIf?: any, showCount?: boolean, nowId?: any, icon?: any, gradeTabs?: boolean, hideEmpty?: boolean, title: string, noneLabel?: string, storageKey: string }} props */
 export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs: tabsProp = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chủ đề', storageKey }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const sel = useTreeSelection()
   const { open, toggle, ensure } = useOpenNodes(storageKey)
   const [shown, setShown] = useState(false)
@@ -211,16 +213,16 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
         </span>
       </div>
       {gradeTabs && tabs.length > 0 && (
-        <div className="grade-tabs" role="tablist" aria-label="Chọn lớp">
-          <Link role="tab" aria-selected={tab === undefined} to={url({})} className={tab === undefined ? 'grade-tab active' : 'grade-tab'}>
-            Tất cả
-          </Link>
-          {tabs.map((k) => (
-            <Link key={k} role="tab" aria-selected={k === tab} to={url({ lop: k })} className={k === tab ? 'grade-tab active' : 'grade-tab'}>
-              {k === '-' ? 'Chưa rõ lớp' : `Lớp ${k}`}
-            </Link>
-          ))}
-        </div>
+        <CustomSelect
+          value={tab ?? ''}
+          onChange={(k) => navigate(url(k === '' ? {} : { lop: k }))}
+          options={[{ value: '', label: 'Tất cả lớp', icon: 'grade' }, ...tabs.map((k) => ({ value: k, label: k === '-' ? 'Chưa rõ lớp' : `Lớp ${k}`, icon: 'grade' }))]}
+          prefixLabel="Khối: "
+          icon="grade"
+          className="tree-grade-select"
+          style={{ width: '100%' }}
+          ariaLabel="Chọn lớp"
+        />
       )}
       <ul className="tree" role="tree">
         <TreeLeaf

@@ -1,0 +1,81 @@
+{
+  "schema": "tutor-lesson/v1",
+  "lesson": {
+    "subject": "Vật lý",
+    "grade": "11",
+    "course": "Vật lý 11 cơ bản",
+    "chapter": "Chuyên đề 2: Sóng",
+    "topic": "Chủ đề 4: Giao thoa sóng cơ",
+    "theory": {
+      "sections": [
+        {
+          "title": "Vị trí cực đại và cực tiểu",
+          "explain": "Đại lượng quyết định là hiệu đường đi d₂ − d₁.",
+          "formulas": [
+            "Cực đại: d₂ − d₁ = kλ",
+            "Cực tiểu: d₂ − d₁ = (k + 1/2)λ"
+          ]
+        }
+      ],
+      "summary_1_min": [
+        "λ = v/f."
+      ]
+    },
+    "exercises": {
+      "fill_blank": [
+        {
+          "id": "1",
+          "assignment": "classwork",
+          "level": "nhận biết",
+          "items": [
+            {
+              "statement": "Bước sóng λ = v / ____",
+              "answer": "f"
+            }
+          ]
+        }
+      ],
+      "mcq": [
+        {
+          "assignment": "classwork",
+          "level": "nhận biết",
+          "stem": "Khoảng cách giữa hai cực đại liên tiếp trên đường nối hai nguồn bằng",
+          "options": [
+            {
+              "label": "A",
+              "text": "λ",
+              "reason": "Sai."
+            },
+            {
+              "label": "B",
+              "text": "λ/2",
+              "reason": "Đúng."
+            }
+          ],
+          "answer": "B",
+          "core": "Cực đại liền kề cách nhau λ/2."
+        }
+      ],
+      "problem_types": [
+        {
+          "title": "Dạng 1: Điều kiện cực đại – cực tiểu",
+          "method": [
+            "Tính λ = v/f."
+          ],
+          "problems": [
+            {
+              "assignment": "homework",
+              "statement": "v = 20 cm/s, f = 40 Hz. Tính khoảng cách giữa hai cực đại liền kề.",
+              "solution": [
+                "λ = 0,5 cm.",
+                "λ/2 = 0,25 cm."
+              ],
+              "answer": "0,25 cm"
+            }
+          ]
+        }
+      ]
+    },
+    "review_flags": []
+  }
+}

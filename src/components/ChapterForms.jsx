@@ -26,7 +26,7 @@ function GradeSelect({ value, onChange }) {
   )
 }
 
-function TextWithList({ label, id, value, onChange, options, placeholder, autoFocus = false }) {
+function TextWithList({ label, id, value, onChange, options, placeholder, autoFocus = false, hint = '' }) {
   return (
     <label className="field">
       <span>{label}</span>
@@ -36,6 +36,7 @@ function TextWithList({ label, id, value, onChange, options, placeholder, autoFo
           <option key={s} value={s} />
         ))}
       </datalist>
+      {hint && <small className="muted">{hint}</small>}
     </label>
   )
 }
@@ -110,6 +111,7 @@ export function ChapterForm({ chapter, subjects, sections, courses = [], nextOrd
       <label className="field">
         <span>Tên chủ đề *</span>
         <input type="text" value={form.title} onChange={(e) => set('title')(e.target.value)} placeholder="Chủ đề 4: Giao thoa sóng cơ" required autoFocus />
+        <small className="muted">Một bài / một buổi học, vd. Chủ đề 4: Giao thoa sóng cơ.</small>
       </label>
       <div className="grid-2">
         <GradeSelect value={form.grade} onChange={set('grade')} />
@@ -128,7 +130,15 @@ export function ChapterForm({ chapter, subjects, sections, courses = [], nextOrd
         </div>
       )}
       <div className="grid-2">
-        <TextWithList label="Chương" id="chapter-sections" value={form.section} onChange={set('section')} options={sections} placeholder="Chương 2: Sóng" />
+        <TextWithList
+          label="Chương"
+          id="chapter-sections"
+          value={form.section}
+          onChange={set('section')}
+          options={sections}
+          placeholder="Chương 2: Sóng"
+          hint="Nhóm lớn gom nhiều chủ đề, vd. Chương 2: Sóng."
+        />
         <label className="field">
           <span>Thứ tự trong chương</span>
           <input type="number" value={form.sort_order} onChange={(e) => set('sort_order')(e.target.value)} />

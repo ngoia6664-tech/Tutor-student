@@ -1,5 +1,6 @@
 // Nhập JSON bài giảng / bài tập soạn sẵn
 import { describe, expect, it } from 'vitest'
+import sampleFile from '../public/mau-nhap-json.json?raw'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../src/lib/importJson.js'
 
 const assignment = (exercises, extra = {}) => JSON.stringify({ kind: 'assignment', title: 'Bài 1', type: 'homework', exercises, ...extra })
@@ -64,5 +65,19 @@ describe('parseImport', () => {
     expect(parseImport(assignment(one)).drafts[0].time_limit_minutes).toBeUndefined()
     expect(parseImport(assignment(one, { time_limit_minutes: null })).drafts[0].time_limit_minutes).toBeNull()
     expect(parseImport(assignment(one, { time_limit_minutes: 45, is_exam: true })).drafts[0]).toMatchObject({ time_limit_minutes: 45, is_exam: true })
+  })
+})
+
+describe('khóa JSON "course"', () => {
+  it('file mẫu tải về có course và tách được bài giảng + bài tập', () => {
+    const r = /** @type {any} */ (parseImport(sampleFile))
+    expect(r.chapter.course).toBe('Vật lý 11 cơ bản')
+    expect(r.chapter.grade).toBe(11)
+    expect(r.drafts.some((d) => d.kind === 'lesson')).toBe(true)
+    expect(r.drafts.some((d) => d.kind === 'assignment')).toBe(true)
+  })
+  it('không có course thì chapter.course rỗng', () => {
+    const r = /** @type {any} */ (parseImport(JSON.stringify({ schema: 'tutor-lesson/v1', lesson: { topic: 'A', theory: { sections: [{ title: 'x', explain: 'y' }] } } })))
+    expect(r.chapter.course || null).toBe(null)
   })
 })

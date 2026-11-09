@@ -245,7 +245,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
       </header>
       {course && (
         <p className="muted small">
-          🎓 Thuộc khóa <b>{course.title}</b>: học sinh có khóa tự thấy mọi bài đang mở ở đây. Bấm <b>Ẩn</b> với bài chưa muốn cho xem, <b>Báo</b> khi
+          🎓 Thuộc khóa <b>{course.title}</b>: học sinh có khóa tự thấy mọi bài đang mở ở đây. Bấm <b>Ẩn với học sinh</b> với bài chưa muốn cho xem, <b>Báo</b> khi
           muốn các bạn làm cho buổi tới.
         </p>
       )}
@@ -277,7 +277,13 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           <h2 className="section-title">Bài giảng ({lessons.length})</h2>
           {lessons.length === 0 ? (
             <div className="empty" style={{ marginBottom: '1.25rem' }}>
-              Không có bài giảng {here}.
+              <p>Không có bài giảng {here}.</p>
+              {!unsorted && (
+                <Link className="btn btn-small btn-primary" to="/tutor/lessons/new" {...newState}>
+                  <Icon name="plus" />
+                  Bài giảng
+                </Link>
+              )}
             </div>
           ) : (
             <div className="list" style={{ marginBottom: '1.25rem' }}>
@@ -286,7 +292,17 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           )}
 
           <h2 className="section-title">Bài tập ({assignments.length})</h2>
-          {assignments.length === 0 ? <div className="empty">Không có bài tập {here}.</div> : <div className="list">{assignments.map(assignmentRow)}</div>}
+          {assignments.length === 0 ? (
+            <div className="empty">
+              <p>Không có bài tập {here}.</p>
+              {!unsorted && (
+                <Link className="btn btn-small btn-primary" to="/tutor/assignments/new" {...newState}>
+                  <Icon name="plus" />
+                  Bài tập
+                </Link>
+              )}
+            </div>
+          ) : <div className="list">{assignments.map(assignmentRow)}</div>}
         </>
       ) : (
         groupByFolder(folders, lessons, assignments).map(({ folder, lessons: ls, assignments: as }) => {
@@ -427,7 +443,7 @@ function CourseControls({ hidden, viaCourse, waiting, onToggle, onNotify }) {
         </span>
         <button type="button" className="btn btn-small" onClick={onToggle} title="Cho học sinh có khóa thấy bài này">
           <Icon name="eye" />
-          Mở
+          Hiện cho học sinh
         </button>
       </>
     )
@@ -438,7 +454,7 @@ function CourseControls({ hidden, viaCourse, waiting, onToggle, onNotify }) {
       </span>
       <button type="button" className="btn btn-small" onClick={onToggle} title="Ẩn với học sinh có khóa (bài các bạn đã làm vẫn giữ)">
         <Icon name="lock" />
-        Ẩn
+        Ẩn với học sinh
       </button>
       {waiting > 0 ? (
         <button

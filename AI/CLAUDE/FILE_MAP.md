@@ -21,9 +21,9 @@
 - `AssignmentEditor.jsx` — Dạng dữ liệu trong form (dễ sửa hơn dạng lưu trong CSDL)
 - `AssignmentTracking.jsx` — Bảng theo dõi một bài tập: trạng thái từng học sinh, �
 - `ChapterDetail.jsx` — Nội dung một chủ đề (cột phải của Thư viện): các bài; id `UNSORTED` = mục "Chưa xếp chủ đề" (bài có chapter_id trống); thư mục trong chủ đề (tạo / đổi tên / xóa, Sửa nhiều → "Vào thư mục…"); chủ đề thuộc khóa: nút Ẩn / Mở / Báo học sinh từng bài (`CourseControls`)
-- `ImportJson.jsx` — Chủ đề liên kết lần dán trước (lưu trên máy này)
+- `ImportJson.jsx` — Chủ đề liên kết lần dán trước (lưu trên máy này) · có "course" thì chủ đề vào khóa (ensure_chapter p_course) · nút "Tải file mẫu" = `public/mau-nhap-json.json`
 - `LessonEditor.jsx` — Soạn / sửa bài giảng. Dùng cho /tutor/lessons/new, /tutor/less
-- `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Khóa › Chương của một lớp bên trái (URL `lop/mon/kh/cd`; môn chưa có khóa bỏ cấp Khóa; trang khóa: Giao khóa, menu ⋯ Đổi tên / Xóa khóa; trang môn: ⋯ Thêm khóa) (đang tìm thì hiện chủ đề khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chủ đề" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chương, Xóa nhiều chủ đề, Xóa chương; trang chủ đề: Thêm chủ đề, Nhập mục lục), cuối cây mục "Chưa xếp chủ đề" (kèm số bài), giữa: kệ sách / băng chuyền chủ đề / nội dung chủ đề
+- `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Khóa › Chương của một lớp bên trái (URL `lop/mon/kh/cd`; môn chưa có khóa bỏ cấp Khóa; nút hiện: trang lớp/môn Thêm khóa, trang môn Sửa môn, trang khóa Giao khóa / Sửa khóa / Xóa khóa; ⋯ chỉ còn thao tác hàng loạt; trang Chương ngoài khóa: Chuyển vào khóa…) (đang tìm thì hiện chủ đề khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chủ đề" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chương, Xóa nhiều chủ đề, Xóa chương; trang chủ đề: Thêm chủ đề, Nhập mục lục), cuối cây mục "Chưa xếp chủ đề" (kèm số bài), giữa: kệ sách / băng chuyền chủ đề / nội dung chủ đề
 - `StudentDetail.jsx` — Trang một học sinh: tổng quan, điểm từng bài, bài giảng
 - `TutorAssignments.jsx` — Chấm bài (gia sư, /tutor/assignments): danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên; nút chính "+ Soạn bài tập", Sửa nhiều / Xóa nhiều / Dán JSON gom vào menu "⋯"; chip trạng thái chỉ hiện số > 0; cột phải = GradeQueuePanel
 - `TutorFeedback.jsx` — Trang Góp ý (gia sư): xem góp ý học sinh gửi, đánh dấu đã xem
@@ -35,7 +35,7 @@
 - `StudentAssignment.jsx` — Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệ
 - `StudentHome.jsx` — Bài chưa nộp, sắp theo hạn gần nhất; cây bên trái lọc
 - `StudentLesson.jsx` — RLS chỉ trả về bài giảng được giao cho học sinh này
-- `StudentLibrary.jsx` — Thư viện học sinh (bỏ cấp Lớp): cây Môn › Khóa › Chương (thẻ khóa + thanh tiến độ ở trang đầu và trang khóa), đường dẫn Thư viện › Môn ▾ › Chương ▾ (LibraryCrumbs), trang đầu / một môn: kệ sách (GradeShelf), một chương (`?mon=&cd=`): băng chuyền chủ đề (ChapterCarousel, nút Mở + Đánh dấu đang học), một chủ đề: bài chưa làm lên trước, gom theo thư mục (thư mục rỗng ẩn, bài ngoài thư mục ở "Các bài khác"); `/student/library/khac` "Các bài khác" = bài chưa thuộc chủ đề nào của lớp mình
+- `StudentLibrary.jsx` — Thư viện học sinh: ô Khối khi có bài nhiều lớp, cây Môn › Khóa › Chương (trang đầu: thẻ khóa + kệ chương ngoài khóa), đường dẫn Thư viện › Môn ▾ › Chương ▾ (LibraryCrumbs), trang đầu / một môn: kệ sách (GradeShelf), một chương (`?mon=&cd=`): băng chuyền chủ đề (ChapterCarousel, nút Mở + Đánh dấu đang học), một chủ đề: bài chưa làm lên trước, gom theo thư mục (thư mục rỗng ẩn, bài ngoài thư mục ở "Các bài khác"); `/student/library/khac` "Các bài khác" = bài chưa thuộc chủ đề nào của lớp mình
 - `StudentMistakes.jsx` — Ôn tập, 2 mục:
 - `StudentResults.jsx` — Bài đã nộp: điểm và nhận xét (nếu gia sư đã chấm);
 - `StudentShop.jsx` — Panda Fashion Shop (/student/shop, gia sư /tutor/shop): header gọn

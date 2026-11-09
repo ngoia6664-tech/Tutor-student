@@ -56,7 +56,7 @@ const byName = (a, b) => a.name.localeCompare(b.name, 'vi', { numeric: true })
 // Khóa chủ đề của một file, để nhận ra các file cùng chủ đề trong một lần nhập
 function chapterKey(s) {
   if (!s.chapterChoice) return ''
-  return s.chapterChoice === 'new' ? `new:${normTitle(s.result?.chapter?.title)}` : s.chapterChoice
+  return s.chapterChoice === 'new' ? `new:${normTitle(s.result?.chapter?.course)}|${normTitle(s.result?.chapter?.title)}` : s.chapterChoice
 }
 const lessonDraftOf = (s) => s?.result?.drafts.find((d) => d.kind === 'lesson')
 
@@ -110,6 +110,11 @@ export default function ImportJson() {
       s.result = parseImport(s.text, { includeNotes: withNotes })
     } catch (e) {
       s.error = e.message
+      return s
+    }
+    // Có "course": CSDL tự tìm / tạo chủ đề trong khóa đó (ensure_chapter), nên luôn chọn "tạo mới"
+    if (s.result.chapter?.course && s.result.chapter.title) {
+      s.chapterChoice = 'new'
       return s
     }
     const match = s.result.chapter ? findChapter(chapters, s.result.chapter) : null
@@ -272,7 +277,7 @@ export default function ImportJson() {
         if (c?.title && (s.chapterChoice === 'new' || (autoMatch && s.chapterChoice === autoMatch.id))) {
           const k = chapterKey(s)
           if (!made[k]) {
-            made[k] = unwrap(await supabase.rpc('ensure_chapter', { p_title: c.title, p_section: c.section || null, p_grade: c.grade ?? null, p_subject: c.subject || null }))
+            made[k] = unwrap(await supabase.rpc('ensure_chapter', { p_title: c.title, p_section: c.section || null, p_grade: c.grade ?? null, p_subject: c.subject || null, p_course: c.course || null }))
           }
           id = made[k]
           setSource(s.id, { chapterChoice: id })
@@ -440,11 +445,13 @@ export default function ImportJson() {
           onChange={(v) => setSource(s.id, { chapterChoice: v, fromLast: false })}
           label="Xếp vào chủ đề"
           extraTop={
-            s.result.chapter?.title && !findChapter(chapters, s.result.chapter)
+            s.result.chapter?.title && (s.result.chapter.course || !findChapter(chapters, s.result.chapter))
               ? [
                   {
                     value: 'new',
-                    label: `+ Tạo chủ đề mới: ${s.result.chapter.title}${chapterGroupLabel(s.result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(s.result.chapter)})` : ''}`,
+                    label: s.result.chapter.course
+                      ? `+ Chủ đề ${s.result.chapter.title} trong khóa ${s.result.chapter.course} (có sẵn thì dùng lại)`
+                      : `+ Tạo chủ đề mới: ${s.result.chapter.title}${chapterGroupLabel(s.result.chapter) !== 'Khác' ? ` (${chapterGroupLabel(s.result.chapter)})` : ''}`,
                   },
                 ]
               : []
@@ -592,7 +599,23 @@ export default function ImportJson() {
             <Icon name="file" />
             Mẫu bài tập
           </button>
+          <a className="btn btn-small btn-ghost" href="/mau-nhap-json.json" download="mau-nhap-json.json">
+            <Icon name="file" />
+            Tải file mẫu
+          </a>
         </div>
+        <details className="small" style={{ marginBottom: '0.5rem' }}>
+          <summary>Các khóa JSON xếp chỗ (trong "lesson" của dạng đầy đủ)</summary>
+          <table>
+            <tbody>
+              <tr><td><code>grade</code></td><td>Lớp (vd. "11")</td></tr>
+              <tr><td><code>subject</code></td><td>Môn (vd. "Vật lý")</td></tr>
+              <tr><td><code>course</code></td><td>Khóa (tùy chọn): chưa có thì tự tạo, chủ đề nằm trong khóa này</td></tr>
+              <tr><td><code>chapter</code></td><td>Chương (vd. "Chuyên đề 2: Sóng")</td></tr>
+              <tr><td><code>topic</code></td><td>Chủ đề — tên bài giảng / bài tập được xếp vào</td></tr>
+            </tbody>
+          </table>
+        </details>
         {batch ? (
           <div className="row row-between" style={{ marginBottom: '0.5rem' }}>
             <span className="small">
