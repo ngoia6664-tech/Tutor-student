@@ -24,7 +24,6 @@ const {
   TutorReports,
   TutorFeedback,
   TutorLessonView,
-  CoursePreview,
   LessonEditor,
   Help,
 } = Pages
@@ -66,7 +65,6 @@ export default function App() {
         <Route path="lessons" element={<Navigate to="/tutor/library" replace />} />
         <Route path="lessons/new" element={<LessonEditor />} />
         <Route path="lessons/:id" element={<TutorLessonView />} />
-        <Route path="courses/:id/preview" element={<CoursePreview />} />
         <Route path="lessons/:id/edit" element={<LessonEditor />} />
         <Route path="import" element={<ImportJson />} />
         <Route path="reports" element={<TutorReports />} />
