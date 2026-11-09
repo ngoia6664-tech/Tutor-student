@@ -385,7 +385,7 @@ export default function Library() {
   const moreGroup = [
     moreBase[1],
     level <= 2 && inGroup.length > 0 && { key: 'edit', icon: 'edit', label: `Sửa ${level === 1 ? 'lớp' : 'môn'}`, onSelect: openGroupForm },
-    level >= 2 && inGroup.length > 0 && !pickCh.on && { key: 'to-course', icon: 'folder', label: 'Chuyển vào khóa', onSelect: () => pickCh.start('course') },
+    level >= 2 && inGroup.length > 0 && !pickCh.on && subjectCourses.length > 0 && { key: 'to-course', icon: 'folder', label: 'Chuyển vào khóa', onSelect: () => pickCh.start('course') },
     inGroup.length > 0 &&
       (pickCh.on
         ? { key: 'pick', icon: 'close', label: pickCh.mode === 'course' ? 'Thôi chuyển khóa' : 'Thôi xóa nhiều', onSelect: pickCh.stop }

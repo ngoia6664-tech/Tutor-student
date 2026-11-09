@@ -2701,6 +2701,9 @@ create trigger course_on_recipient_change
   after insert or delete on public.course_recipients
   for each row execute function public.course_on_recipient_change();
 
+-- Đồng bộ bù mỗi lần chạy file: khóa đã giao lúc trigger chưa có / bản cũ vẫn có đủ bài (chỉ thêm bài đang mở, không xóa bài đã làm)
+select public.course_sync_chapters(array(select id from public.chapters where course_id is not null));
+
 -- Điểm máy (thang 10) cho bài tự học trong khóa. Đề thi: tổng điểm THPT; bài thường: tỉ lệ câu đúng.
 -- shortcut: có câu tự luận thì trả null (máy không chấm được), muốn tính phần trắc nghiệm thì phải có thang điểm từng câu.
 create or replace function public.course_auto_score(p_aid uuid, p_sid uuid)
