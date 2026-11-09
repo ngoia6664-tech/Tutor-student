@@ -15,7 +15,7 @@ import { libraryUrl, UNSORTED } from '../../lib/chapters.js'
 import { clearRecent } from '../../lib/recentChapters.js'
 import Icon from '../../components/Icon.jsx'
 import CustomSelect from '../../components/CustomSelect.jsx'
-import { AssignDialog, deletePicked, MoveDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
+import { AssignDialog, deletePicked, MoveDialog, NotifyDialog, SelectBar, SelectCheck, SelectModes, useAssignSelection } from '../../components/QuickAssign.jsx'
 
 const OUT = 'none' // ô chọn thư mục: "Chưa xếp" (ra khỏi thư mục)
 
@@ -27,6 +27,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
   const [moving, setMoving] = useState(null)
   const [dest, setDest] = useState('') // thư mục đích đã chọn, bấm "Chuyển" mới thực thi
   const [naming, setNaming] = useState(null) // { id?, name }: đang tạo / đổi tên thư mục
+  const [notifying, setNotifying] = useState(null) // key bài chọn sẵn khi mở bảng Báo học sinh
 
   // Sang chủ đề khác: thoát chế độ chọn, không mang tick cũ theo
   useEffect(() => {
@@ -41,10 +42,10 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
       unsorted
         ? { id: null, title: 'Chưa xếp chủ đề' }
         : supabase.from('chapters').select('*, course:courses(id, title)').eq('id', id).maybeSingle().then(unwrap),
-      inChapter(supabase.from('lessons').select('id, title, file_path, created_at, folder_id, hidden, lesson_recipients(student_id, from_course)'))
+      inChapter(supabase.from('lessons').select('id, title, file_path, created_at, folder_id, hidden, lesson_recipients(student_id, from_course, quiet)'))
         .order('created_at')
         .then(unwrap),
-      inChapter(supabase.from('assignments').select('id, title, type, due_date, created_at, folder_id, hidden, assignment_recipients(status, from_course)'))
+      inChapter(supabase.from('assignments').select('id, title, type, due_date, created_at, folder_id, hidden, assignment_recipients(status, from_course, quiet)'))
         .order('created_at')
         .then(unwrap),
       unsorted ? [] : supabase.from('chapter_folders').select('id, name').eq('chapter_id', id).order('created_at').then(unwrap),
@@ -75,6 +76,11 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
     submitted: a.assignment_recipients.filter((r) => r.status !== 'todo').length,
     course,
   })
+  // Bài đang mở có học sinh qua khóa chưa được báo (cho nút "Báo học sinh…" ở đầu chủ đề)
+  const waitingAll = [
+    ...lessons.filter((l) => !l.hidden && l.lesson_recipients.some((r) => r.from_course && r.quiet)).map(lessonItem),
+    ...assignments.filter((a) => !a.hidden && a.assignment_recipients.some((r) => r.from_course && r.quiet)).map(assignmentItem),
+  ]
   const changed = () => {
     reload()
     onChanged?.()
@@ -99,44 +105,14 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
     try {
       unwrap(await supabase.from(kind === 'lesson' ? 'lessons' : 'assignments').update({ hidden }).eq('id', item.id))
       changed()
-      if (!hidden) await notifyCourse(kind, item)
+      if (!hidden) notifyCourse(kind, item)
     } catch (err) {
       notifyError(hidden ? 'Không ẩn được bài' : 'Không mở được bài', errMsg(err))
     }
   }
 
-  // Báo cho học sinh có khóa: bài thành bài được giao (chuông, "Bài cần làm", bài nộp vào hàng chấm);
-  // không báo thì bài chỉ nằm sẵn trong khóa để tự học
-  async function notifyCourse(kind, item) {
-    const ok = await askConfirm({
-      title: `Báo cho học sinh trong khóa về "${item.title}"?`,
-      message:
-        'Báo: các bạn nhận chuông thông báo, bài hiện ở "Bài cần làm"' +
-        (kind === 'assignment' ? ' và bài nộp vào hàng chấm của bạn' : '') +
-        '. Không báo: bài chỉ nằm sẵn trong khóa để các bạn tự học.',
-      say: 'Bài này chuẩn bị cho buổi học tới hay để dành sau nè? 🔔',
-      pose: 'teach',
-      confirmText: 'Báo học sinh',
-      cancelText: 'Không cần',
-    })
-    if (!ok) return
-    const [table, key] = kind === 'lesson' ? ['lesson_recipients', 'lesson_id'] : ['assignment_recipients', 'assignment_id']
-    try {
-      const rows = unwrap(
-        await supabase
-          .from(table)
-          .update({ quiet: false, assigned_at: new Date().toISOString() })
-          .eq(key, item.id)
-          .eq('from_course', true)
-          .eq('quiet', true)
-          .select('student_id'),
-      )
-      reload()
-      notifyDone({ title: rows.length ? `Đã báo ${rows.length} học sinh` : 'Các bạn trong khóa đã được báo bài này rồi', say: 'Chuông đã reo cho các bạn rồi nha 🔔' })
-    } catch (err) {
-      notifyError('Không báo được học sinh', errMsg(err))
-    }
-  }
+  // Báo cho học sinh có khóa: mở bảng chọn bài + học sinh / nhóm (NotifyDialog)
+  const notifyCourse = (kind, item) => setNotifying([`${kind}:${item.id}`])
 
   async function removeFolder(f, count) {
     const msg = count ? `${count} bài bên trong sẽ về mục "Chưa xếp thư mục", không bài nào bị xóa.` : 'Thư mục đang trống.'
@@ -179,6 +155,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
             <CourseControls
               hidden={l.hidden}
               viaCourse={l.lesson_recipients.filter((r) => r.from_course).length}
+              waiting={l.lesson_recipients.filter((r) => r.from_course && r.quiet).length}
               onToggle={() => setHidden('lesson', item, !l.hidden)}
               onNotify={() => notifyCourse('lesson', item)}
             />
@@ -208,6 +185,7 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
             <CourseControls
               hidden={a.hidden}
               viaCourse={a.assignment_recipients.filter((r) => r.from_course).length}
+              waiting={a.assignment_recipients.filter((r) => r.from_course && r.quiet).length}
               onToggle={() => setHidden('assignment', item, !a.hidden)}
               onNotify={() => notifyCourse('assignment', item)}
             />
@@ -242,6 +220,12 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
             <button type="button" className="btn btn-small" onClick={() => setNaming({ name: '' })}>
               <Icon name="folder" />
               Thư mục mới
+            </button>
+          )}
+          {course && waitingAll.length > 0 && (
+            <button type="button" className="btn btn-small" onClick={() => setNotifying(waitingAll.map((it) => `${it.kind}:${it.id}`))} title="Báo nhiều bài cùng lúc cho học sinh / nhóm bạn chọn">
+              <Icon name="bell" />
+              Báo học sinh…
             </button>
           )}
           {lessons.length + assignments.length > 0 && <SelectModes sel={pick} />}
@@ -397,6 +381,14 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
           }}
         />
       )}
+      {notifying && (
+        <NotifyDialog
+          items={[...lessons.filter((l) => !l.hidden).map(lessonItem), ...assignments.filter((a) => !a.hidden).map(assignmentItem)]}
+          picked={notifying}
+          onClose={() => setNotifying(null)}
+          onSaved={reload}
+        />
+      )}
       {assigning && (
         <AssignDialog
           items={assigning}
@@ -420,8 +412,8 @@ function AssignButton({ count, onClick }) {
   )
 }
 
-// Bài trong khóa: số học sinh thấy qua khóa + Ẩn / Mở + Báo học sinh
-function CourseControls({ hidden, viaCourse, onToggle, onNotify }) {
+// Bài trong khóa: số học sinh thấy qua khóa + Ẩn / Mở + Báo học sinh (waiting: số bạn chưa được báo)
+function CourseControls({ hidden, viaCourse, waiting, onToggle, onNotify }) {
   if (hidden)
     return (
       <>
@@ -443,11 +435,13 @@ function CourseControls({ hidden, viaCourse, onToggle, onNotify }) {
         <Icon name="lock" />
         Ẩn
       </button>
-      {viaCourse > 0 && (
-        <button type="button" className="btn btn-small" onClick={onNotify} title="Báo học sinh trong khóa: có chuông, vào Bài cần làm">
+      {waiting > 0 ? (
+        <button type="button" className="btn btn-small" onClick={onNotify} title="Chọn học sinh / nhóm để báo: có chuông, vào Bài cần làm">
           <Icon name="bell" />
-          Báo
+          Báo ({waiting})
         </button>
+      ) : (
+        viaCourse > 0 && <span className="muted small">🔔 đã báo hết</span>
       )}
     </>
   )

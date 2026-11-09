@@ -227,6 +227,7 @@ App chỉ lo bài giảng + bài tập. Không thêm lịch học, điểm danh,
 - Chủ đề chưa thuộc khóa = nhóm tạm **"Chương ngoài khóa"** (`NO_COURSE`, key `-`), chỉ hiện khi môn có ≥ 1 khóa; viền đứt (`tree-node-loose`), không Giao/Sửa/Xóa, có nút "Chuyển vào khóa…". Tạo khóa đầu tiên của môn đã có chủ đề → hỏi chuyển hết vào (`offerMoveIntoFirstCourse`).
 - Cây lọc học sinh (`FilterTree`: Bài cần làm / Kết quả / Ôn tập) có cấp Khóa (URL `kh`) khi môn có khóa; khóa lấy từ `fetchStudentChapters` (kèm `course`, khóa không được giao → coi như ngoài khóa).
 - Học sinh có khóa của lớp khác: chủ đề thuộc khóa giữ lớp của khóa (`studentGrade`), cây Thư viện học sinh thêm cấp Lớp khi có > 1 lớp (URL `lop` chỉ khi khác lớp mình, `studentLibraryUrlFor`); FilterTree tự bật tab lớp.
+- Báo: `NotifyDialog` (QuickAssign) chọn nhiều bài + học sinh / nhóm (StudentPicker `onlyIds` = bạn đang có bài qua khóa, chưa báo); nút **Báo học sinh…** ở đầu chủ đề. Giao khóa → chuông học sinh một lần (`course_recipients.assigned_at`, kind `course` trong NotificationsContext).
 - Chưa làm: khóa trong JSON nhập (ImportJson / ensure_chapter chưa nhận khóa).
 
 ## Nhóm học sinh

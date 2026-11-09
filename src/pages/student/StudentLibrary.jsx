@@ -119,6 +119,8 @@ export default function StudentLibrary() {
   const tree = buildTree(counted, courses)
   // Có bài của nhiều lớp (khóa lớp khác) → cây thêm cấp Lớp
   const multi = tree.length > 1
+  // Lớp mở mặc định: lớp của mình nếu có bài, không thì lớp đầu tiên có bài (vd. chỉ được giao khóa lớp khác / chưa ghi lớp)
+  const defaultLop = tree.some((g) => g.key === myLop) ? myLop : tree[0]?.key ?? myLop
   // Tiến độ một khóa: số bài tập đã nộp / tổng số bài tập đang có trong khóa
   const courseProgress = (courseId) => {
     const ids = new Set(chapters.filter((c) => c.course_id === courseId).map((c) => c.id))
@@ -131,7 +133,7 @@ export default function StudentLibrary() {
 
   const path = current
     ? { lop: keyOf(current.grade), mon: keyOf(current.subject), kh: keyOf(current.course_id), cd: keyOf(current.section) }
-    : { lop: lopParam ?? myLop, mon, kh, cd }
+    : { lop: lopParam ?? defaultLop, mon, kh, cd }
   const lop = path.lop
   const allCrumbs = libraryCrumbs(tree, path, sUrl)
   // Một lớp: bỏ đoạn Lớp như trước; nhiều lớp: giữ, chỉ cho chọn các lớp có bài
@@ -169,6 +171,21 @@ export default function StudentLibrary() {
         : 'Chọn chương'
 
   const chapterActions = (c) => <StudyNowButton chapterId={c.id} />
+
+  // Có bài của nhiều lớp (khóa lớp khác): chọn lớp riêng như Thư viện gia sư, cây chỉ hiện lớp đang chọn.
+  // Hiện ở mục lục và cả đầu trang Thư viện (mục lục thu gọn vẫn đổi được lớp)
+  const gradePicker = multi && (
+    <CustomSelect
+      value={lop}
+      onChange={(k) => navigate(sUrl(k))}
+      options={tree.map((g) => ({ value: g.key, label: gradeLabel(g.grade), icon: 'grade' }))}
+      prefixLabel="Khối: "
+      icon="grade"
+      className="tree-grade-select"
+      style={{ width: '100%' }}
+      ariaLabel="Chọn lớp"
+    />
+  )
 
   // Các môn của một lớp trên cây (d: độ lùi)
   const subjectNodes = (g, d) =>
@@ -223,19 +240,7 @@ export default function StudentLibrary() {
           <Link to={url()} className="tree-title">
             Thư viện {myGrade && !multi ? `· Lớp ${myGrade}` : ''}
           </Link>
-          {/* Có bài của nhiều lớp (khóa lớp khác): chọn lớp riêng như Thư viện gia sư, cây chỉ hiện lớp đang chọn */}
-          {multi && (
-            <CustomSelect
-              value={lop}
-              onChange={(k) => navigate(sUrl(k))}
-              options={tree.map((g) => ({ value: g.key, label: gradeLabel(g.grade), icon: 'grade' }))}
-              prefixLabel="Khối: "
-              icon="grade"
-              className="tree-grade-select"
-              style={{ width: '100%' }}
-              ariaLabel="Chọn lớp"
-            />
-          )}
+          {gradePicker}
         </div>
         {loading && <Loading text="Đang tải…" />}
         {!loading && !error && chapters.length === 0 && !hasOther && <p className="muted small">Chưa có bài nào được giao.</p>}
@@ -249,6 +254,7 @@ export default function StudentLibrary() {
         <ErrorBox message={error} onRetry={reload} />
         {loading && <Loading />}
         {!loading && !error && (id || mon !== undefined) && <LibraryCrumbs segments={crumbs} root={url()} />}
+        {!loading && !error && !id && mon === undefined && multi && <div className="student-grade-pick">{gradePicker}</div>}
         {!loading && !error && !id && mon === undefined && (
           <Overview
             shelf={counted.filter((c) => keyOf(c.grade) === lop)}

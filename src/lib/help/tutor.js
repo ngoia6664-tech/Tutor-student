@@ -19,7 +19,7 @@ export const TUTOR_HELP = [
       },
       {
         q: 'Bài trong khóa chưa dạy tới thì làm sao để học sinh chưa thấy?',
-        a: 'Trong chủ đề thuộc khóa, mỗi bài có nút **Ẩn** / **Mở**. Bài đang ẩn thì học sinh có khóa không thấy (bài các bạn đã làm vẫn giữ). Khi mở, app hỏi có **Báo học sinh** không: báo thì các bạn nhận chuông, bài hiện ở **Bài cần làm** và bài nộp vào hàng chấm; không báo thì bài chỉ nằm sẵn trong khóa để tự học.',
+        a: 'Trong chủ đề thuộc khóa, mỗi bài có nút **Ẩn** / **Mở**. Bài đang ẩn thì học sinh có khóa không thấy (bài các bạn đã làm vẫn giữ). Bấm **Báo** ở một bài, hoặc **Báo học sinh…** ở đầu chủ đề để báo nhiều bài cùng lúc, rồi chọn học sinh / nhóm cần báo. Khi mở bài, app cũng mở bảng này. Báo thì các bạn nhận chuông, bài hiện ở **Bài cần làm** và bài nộp vào hàng chấm; không báo thì bài chỉ nằm sẵn trong khóa để tự học.',
       },
       {
         q: 'Làm sao biết học sinh nào chưa nộp?',

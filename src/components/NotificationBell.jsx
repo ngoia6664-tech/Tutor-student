@@ -184,7 +184,7 @@ export default function NotificationBell({ variant = 'top' }) {
                 <li key={it.key}>
                   <Link to={it.to} className={highlight.has(it.key) ? 'bell-item new' : 'bell-item'}>
                     <span className="bell-icon" aria-hidden="true">
-                      {it.kind === 'lesson' ? '📘' : it.kind === 'submission' ? '📥' : '✏️'}
+                      {it.kind === 'lesson' ? '📘' : it.kind === 'course' ? '🎓' : it.kind === 'submission' ? '📥' : '✏️'}
                     </span>
                     <span className="bell-body">
                       <span className="bell-kind">
@@ -194,7 +194,7 @@ export default function NotificationBell({ variant = 'top' }) {
                           </>
                         ) : (
                           <>
-                            {it.kind === 'lesson' ? 'Bài giảng mới' : 'Bài tập mới'}
+                            {it.kind === 'lesson' ? 'Bài giảng mới' : it.kind === 'course' ? 'Bạn được giao khóa học' : 'Bài tập mới'}
                             {it.kind === 'assignment' && it.status !== 'todo' && ' · đã nộp'}
                           </>
                         )}

@@ -9,8 +9,13 @@ import Icon from './Icon.jsx'
 import CustomSelect from './CustomSelect.jsx'
 
 // Chọn học sinh nhận bài. Nhóm chỉ là nút chọn nhanh, bài vẫn giao theo từng em.
-export default function StudentPicker({ value, onChange }) {
-  const { data: students, loading, error, reload } = useAsync(fetchStudents, [])
+// onlyIds: chỉ hiện các em này (vd. Báo bài trong khóa: chỉ học sinh có khóa); emptyText: câu khi không có ai
+/** @param {{ value: string[], onChange: (ids: string[]) => void, onlyIds?: string[], emptyText?: string }} props */
+export default function StudentPicker({ value, onChange, onlyIds, emptyText }) {
+  const { data: all, loading, error, reload } = useAsync(fetchStudents, [])
+  const onlyKey = onlyIds ? onlyIds.join(',') : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const students = useMemo(() => (all && onlyIds ? all.filter((s) => onlyIds.includes(s.id)) : all), [all, onlyKey])
   const [q, setQ] = useState('')
   const deferredQ = useDeferredValue(q)
   const selected = new Set(value)
@@ -31,7 +36,7 @@ export default function StudentPicker({ value, onChange }) {
   if (loading) return <Loading text="Đang tải học sinh..." />
   if (error) return <ErrorBox message={error} onRetry={reload} />
   if (!students.length)
-    return <p className="muted">Chưa có học sinh nào. Hãy tạo tài khoản học sinh trong Supabase (xem README).</p>
+    return <p className="muted">{emptyText || 'Chưa có học sinh nào. Hãy tạo tài khoản học sinh trong Supabase (xem README).'}</p>
 
   function toggle(id) {
     const next = new Set(selected)

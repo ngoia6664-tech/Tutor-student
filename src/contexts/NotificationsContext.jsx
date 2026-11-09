@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext.jsx'
 import Icon from '../components/Icon.jsx'
 import { mascotSay } from '../lib/celebrate.js'
 import { SUBMISSIONS_CHANGED } from '../lib/submissions.js'
+import { keyOf, libraryUrl } from '../lib/chapters.js'
 
 // Thông báo bài giảng / bài tập mới cho học sinh; gia sư: học sinh vừa nộp bài.
 // - "Mới" = được giao sau lần cuối học sinh mở chuông (profiles.notif_seen_at, lưu trên máy chủ
@@ -26,7 +27,7 @@ const toDate = (v) => (v ? new Date(v) : null)
 
 async function fetchItems(studentId) {
   const since = windowStart().toISOString()
-  const [lessons, assignments] = await Promise.all([
+  const [lessons, assignments, courses] = await Promise.all([
     supabase
       .from('lesson_recipients')
       .select('assigned_at, lesson:lessons(id, title, chapter:chapters(title))')
@@ -39,6 +40,13 @@ async function fetchItems(studentId) {
       .select('assigned_at, status, assignment:assignments(id, title, type, due_date, chapter:chapters(title))')
       .eq('student_id', studentId)
       .eq('quiet', false)
+      .gte('assigned_at', since)
+      .then(unwrap),
+    // Được giao cả khóa: một chuông cho cả khóa (từng bài trong khóa là bài tự học, không reo)
+    supabase
+      .from('course_recipients')
+      .select('assigned_at, course:courses(id, title, grade, subject)')
+      .eq('student_id', studentId)
       .gte('assigned_at', since)
       .then(unwrap),
   ])
@@ -64,6 +72,17 @@ async function fetchItems(studentId) {
         due: r.assignment.due_date,
         status: r.status,
         to: `/student/assignments/${r.assignment.id}`,
+      })),
+    ...courses
+      .filter((r) => r.course)
+      .map((r) => ({
+        key: `k:${r.course.id}`,
+        kind: 'course',
+        title: r.course.title,
+        chapter: r.course.subject || null,
+        at: r.assigned_at,
+        // Thư viện học sinh tự bỏ "lop" nếu trùng lớp của mình
+        to: libraryUrl(r.course.grade == null ? undefined : keyOf(r.course.grade), keyOf(r.course.subject), r.course.id).replace('/tutor/', '/student/'),
       })),
   ].sort((a, b) => (a.at < b.at ? 1 : -1))
 }
@@ -93,7 +112,8 @@ async function fetchSubmissions() {
     }))
 }
 
-const kindText = (it) => (it.kind === 'lesson' ? 'Bài giảng mới' : it.kind === 'submission' ? `${it.student} vừa nộp bài` : 'Bài tập mới')
+const kindText = (it) =>
+  it.kind === 'lesson' ? 'Bài giảng mới' : it.kind === 'course' ? 'Khóa học mới' : it.kind === 'submission' ? `${it.student} vừa nộp bài` : 'Bài tập mới'
 
 // Chuông báo luôn kèm gấu nói (Mascot nghe sự kiện từ lib/celebrate.js)
 function announce(setToast, toast) {

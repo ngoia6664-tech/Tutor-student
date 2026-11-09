@@ -2248,3 +2248,9 @@
   overflow: hidden;
   min-height: 0;
 }
+
+/* Thư viện học sinh có bài nhiều lớp: ô chọn lớp ở đầu trang (mục lục thu gọn vẫn đổi được lớp) */
+.student-grade-pick {
+  max-width: 16rem;
+  margin-bottom: 0.75rem;
+}

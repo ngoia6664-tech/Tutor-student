@@ -8,6 +8,7 @@ import ChapterSelect from './ChapterSelect.jsx'
 import Loading from './Loading.jsx'
 import ErrorBox from './ErrorBox.jsx'
 import { errMsg } from '../lib/errors.js'
+import { supabase, unwrap } from '../lib/supabase.js'
 import { fetchChapters } from '../lib/chapters.js'
 import { addRecipients, fetchRecipients, setRecipients } from '../lib/recipients.js'
 import { deleteItems, deleteWarning, itemsLabel, moveToChapter } from '../lib/bulk.js'
@@ -122,6 +123,136 @@ export function AssignDialog({ items, onClose, onSaved }) {
         <button type="button" className="btn btn-primary" disabled={saving || current === null} onClick={save}>
           <Icon name="send" />
           {saving ? 'Đang lưu...' : single ? 'Lưu' : 'Giao'}
+        </button>
+      </div>
+    </DialogFrame>
+  )
+}
+
+// Báo bài tự học trong khóa: chọn bài (nhiều bài một lần) + chọn học sinh / nhóm.
+// Chỉ học sinh đang có bài qua khóa mà chưa được báo mới hiện. Báo → quiet = false: có chuông, vào "Bài cần làm",
+// bài nộp vào hàng chấm. items = [{ kind, id, title }] các bài trong chủ đề; picked = key `${kind}:${id}` chọn sẵn
+export function NotifyDialog({ items, picked, onClose, onSaved }) {
+  const keyOf = (it) => `${it.kind}:${it.id}`
+  const [chosen, setChosen] = useState(() => new Set(picked))
+  const [waiting, setWaiting] = useState(null) // Map key bài → [student_id] chưa được báo
+  const [ids, setIds] = useState([])
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    const ofKind = (kind) => items.filter((it) => it.kind === kind).map((it) => it.id)
+    const load = (table, key, list) =>
+      list.length
+        ? supabase.from(table).select(`${key}, student_id`).in(key, list).eq('from_course', true).eq('quiet', true).then(unwrap)
+        : []
+    Promise.all([load('lesson_recipients', 'lesson_id', ofKind('lesson')), load('assignment_recipients', 'assignment_id', ofKind('assignment'))])
+      .then(([ls, as]) => {
+        if (!alive) return
+        const m = new Map()
+        const add = (k, sid) => m.set(k, [...(m.get(k) || []), sid])
+        ls.forEach((r) => add(`lesson:${r.lesson_id}`, r.student_id))
+        as.forEach((r) => add(`assignment:${r.assignment_id}`, r.student_id))
+        setWaiting(m)
+        setIds([...new Set([...m.values()].flat())])
+      })
+      .catch((e) => alive && setError(errMsg(e)))
+    return () => {
+      alive = false
+    }
+  }, []) // mỗi lần mở bảng là một danh sách bài cố định
+
+  const waitingIn = (it) => waiting?.get(keyOf(it)) || []
+  const candidates = items.filter((it) => waitingIn(it).length)
+  const everyone = waiting ? [...new Set([...waiting.values()].flat())] : []
+
+  function toggleItem(it) {
+    const next = new Set(chosen)
+    next.has(keyOf(it)) ? next.delete(keyOf(it)) : next.add(keyOf(it))
+    setChosen(next)
+  }
+
+  async function save() {
+    const list = candidates.filter((it) => chosen.has(keyOf(it)))
+    if (!list.length) return setError('Chọn ít nhất một bài để báo.')
+    if (!ids.length) return setError('Chọn ít nhất một học sinh.')
+    setError(null)
+    setSaving(true)
+    try {
+      let n = 0
+      for (const [kind, table, key] of [
+        ['lesson', 'lesson_recipients', 'lesson_id'],
+        ['assignment', 'assignment_recipients', 'assignment_id'],
+      ]) {
+        const of = list.filter((it) => it.kind === kind).map((it) => it.id)
+        if (!of.length) continue
+        const rows = unwrap(
+          await supabase
+            .from(table)
+            .update({ quiet: false, assigned_at: new Date().toISOString() })
+            .in(key, of)
+            .in('student_id', ids)
+            .eq('from_course', true)
+            .eq('quiet', true)
+            .select('student_id'),
+        )
+        n += rows.length
+      }
+      notifyDone({ title: `Đã báo ${itemsLabel(list)} cho ${ids.length} học sinh`, say: n ? 'Chuông đã reo cho các bạn rồi nha 🔔' : 'Các bạn đã được báo rồi 🔔' })
+      onSaved?.()
+      onClose()
+    } catch (e) {
+      setError(errMsg(e))
+      setSaving(false)
+    }
+  }
+
+  return (
+    <DialogFrame id="notify-title" icon="bell" title="Báo học sinh" onClose={onClose}>
+      <p className="muted small" style={{ margin: '0 0 0.75rem' }}>
+        Bài được báo có chuông, hiện ở <b>Bài cần làm</b>, bài nộp vào hàng chấm của bạn. Bài không báo vẫn nằm trong khóa để các bạn tự học.
+      </p>
+      <ErrorBox message={error} />
+      {waiting === null ? (
+        !error && <Loading text="Đang tải..." />
+      ) : candidates.length === 0 ? (
+        <p className="muted">Học sinh trong khóa đã được báo hết các bài này rồi.</p>
+      ) : (
+        <>
+          <div className="row row-between small" style={{ marginBottom: '0.3rem' }}>
+            <b>Bài cần báo</b>
+            {candidates.length > 1 && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                onClick={() => setChosen(candidates.every((it) => chosen.has(keyOf(it))) ? new Set() : new Set(candidates.map(keyOf)))}
+              >
+                {candidates.every((it) => chosen.has(keyOf(it))) ? 'Bỏ chọn hết' : `Chọn tất cả (${candidates.length})`}
+              </button>
+            )}
+          </div>
+          <div style={{ maxHeight: '180px', overflowY: 'auto', marginBottom: '0.9rem' }}>
+            {candidates.map((it) => (
+              <label key={keyOf(it)} className="check">
+                <input type="checkbox" checked={chosen.has(keyOf(it))} onChange={() => toggleItem(it)} />
+                <span>
+                  {it.kind === 'lesson' ? '📘' : '✏️'} {it.title} <span className="muted small">· {waitingIn(it).length} bạn chưa được báo</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <b className="small">Báo cho</b>
+          <StudentPicker value={ids} onChange={setIds} onlyIds={everyone} emptyText="Không có học sinh nào cần báo." />
+        </>
+      )}
+      <div className="row" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
+        <button type="button" className="btn" onClick={onClose}>
+          Không báo
+        </button>
+        <button type="button" className="btn btn-primary" disabled={saving || !candidates.length} onClick={save}>
+          <Icon name="bell" />
+          {saving ? 'Đang báo...' : 'Báo học sinh'}
         </button>
       </div>
     </DialogFrame>
