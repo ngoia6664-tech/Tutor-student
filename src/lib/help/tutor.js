@@ -6,6 +6,10 @@ export const TUTOR_HELP = [
     icon: 'users',
     items: [
       {
+        q: 'Mới dùng app thì bắt đầu từ đâu?',
+        a: 'Làm lần lượt 4 bước (trang **Học sinh** có danh sách **Bắt đầu** tự tick từng bước): (1) tạo tài khoản cho học sinh trong Supabase (Authentication › Users › Add user, tick **Auto Confirm User**), vì app không có đăng ký, học sinh phải có tài khoản mới đăng nhập được; (2) vào **Thư viện** thêm chủ đề; (3) soạn bài tập hoặc bài giảng; (4) giao bài bằng nút **Giao** ở bài, hoặc **Giao khóa** ở trang khóa.',
+      },
+      {
         q: 'Tôi có thể giao một bài cho nhiều học sinh không?',
         a: 'Có. Chọn bài, bấm **Giao**, rồi chọn các học sinh nhận bài. Nhóm học sinh chỉ là nút chọn nhanh.',
       },

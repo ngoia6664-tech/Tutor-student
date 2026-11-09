@@ -26,6 +26,7 @@ const loaders = {
     TutorReports: () => import('./tutor/TutorReports.jsx'),
     TutorFeedback: () => import('./tutor/TutorFeedback.jsx'),
     TutorLessonView: () => import('./tutor/TutorLessonView.jsx'),
+    CoursePreview: () => import('./tutor/CoursePreview.jsx'),
     LessonEditor: () => import('./tutor/LessonEditor.jsx'),
   },
 }

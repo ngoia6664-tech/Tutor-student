@@ -109,6 +109,23 @@ export function AssignDialog({ items, onClose, onSaved }) {
         )}
       </p>
 
+      {single?.kind === 'course' && (
+        <details className="assign-explain">
+          <summary>Giao khóa khác Giao và Báo thế nào?</summary>
+          <ul>
+            <li>
+              <strong>Giao khóa</strong>: học sinh tự thấy mọi bài đang mở trong khóa ở Thư viện và tự học. Không có chuông từng bài; nộp thì máy
+              chấm luôn, không vào hàng chấm của bạn.
+            </li>
+            <li>
+              <strong>Báo</strong>: muốn một bài thành bài phải làm (có chuông, hiện ở Bài cần làm, bài nộp vào hàng chấm) thì vào chủ đề bấm Báo.
+            </li>
+            <li>
+              <strong>Giao</strong> ở từng bài: giao riêng bài đó cho học sinh bạn chọn.
+            </li>
+          </ul>
+        </details>
+      )}
       <ErrorBox message={error} />
       {current === null ? (
         !error && <Loading text="Đang tải danh sách nhận..." />

@@ -173,6 +173,16 @@ body:has(.side.is-open) {
 .nav-side .nav-badge {
   margin-left: auto;
 }
+/* Tiêu đề nhóm trong menu (Dạy học / Công cụ): chữ nhỏ, không viết hoa */
+.nav-group-label {
+  padding: 0.7rem 0.75rem 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.nav-group-label:first-of-type {
+  padding-top: 0.2rem;
+}
 
 .side-foot {
   margin-top: auto;
@@ -312,6 +322,17 @@ a.side-btn.is-current {
   }
   :root[data-side='rail'] .side .side-label {
     opacity: 0;
+  }
+  /* Dải icon: tiêu đề nhóm ẩn chữ, chỉ còn đường kẻ ngăn nhóm (nhóm đầu không cần) */
+  :root[data-side='rail'] .nav-group-label {
+    font-size: 0;
+    height: 1px;
+    padding: 0;
+    margin: 0.35rem 0.6rem;
+    background: var(--border);
+  }
+  :root[data-side='rail'] .nav-group-label:first-of-type {
+    display: none;
   }
   :root[data-side='rail'] .side .bell-count {
     top: 3px;

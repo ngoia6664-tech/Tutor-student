@@ -98,12 +98,13 @@ const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó �
 
 const NAV = {
   tutor: [
-    { to: '/tutor', label: 'Học sinh', icon: 'users', end: true, also: /^\/tutor\/students\// },
-    { to: '/tutor/library', label: 'Thư viện', icon: 'library' },
-    { to: '/tutor/assignments', label: 'Chấm bài', icon: 'grade' },
-    { to: '/tutor/import', label: 'Dán JSON', icon: 'import' },
-    { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports' },
-    { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback' },
+    // `group`: tiêu đề nhóm nhỏ trong thanh bên (hiện khi đổi nhóm; thanh bên thu gọn thì chỉ còn đường kẻ)
+    { to: '/tutor', label: 'Học sinh', icon: 'users', end: true, also: /^\/tutor\/students\//, group: 'Dạy học' },
+    { to: '/tutor/library', label: 'Thư viện', icon: 'library', group: 'Dạy học' },
+    { to: '/tutor/assignments', label: 'Chấm bài', icon: 'grade', group: 'Dạy học' },
+    { to: '/tutor/import', label: 'Dán JSON', icon: 'import', group: 'Công cụ' },
+    { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports', group: 'Công cụ' },
+    { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback', group: 'Công cụ' },
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
@@ -341,7 +342,12 @@ export default function Layout() {
           style={{ transform: `translate(${pill.x}px, ${pill.y}px)`, width: pill.w, height: pill.h }}
         />
       )}
-      {items.map((it) => (
+      {items.map((it, i) => [
+        it.group && it.group !== items[i - 1]?.group && (
+          <div key={`g-${it.group}`} className="nav-group-label">
+            {it.group}
+          </div>
+        ),
         <NavLink
           key={it.to}
           to={listUrl(it.to)}
@@ -358,8 +364,8 @@ export default function Layout() {
               {badges[it.badge]}
             </span>
           )}
-        </NavLink>
-      ))}
+        </NavLink>,
+      ])}
     </nav>
   )
 

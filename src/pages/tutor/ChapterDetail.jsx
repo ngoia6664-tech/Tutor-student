@@ -405,9 +405,14 @@ export default function ChapterDetail({ id, reloadKey = 0, onEdit, onDelete, onC
 
 function AssignButton({ count, onClick }) {
   return (
-    <button type="button" className="btn btn-small" onClick={onClick} title="Chọn học sinh nhận bài">
+    <button
+      type="button"
+      className="btn btn-small"
+      onClick={onClick}
+      title={count > 0 ? `Đã giao riêng cho ${count} học sinh (không tính bạn có bài qua khóa). Bấm để chọn học sinh nhận bài` : 'Chọn học sinh nhận bài'}
+    >
       <Icon name="users" />
-      Giao ({count})
+      {count > 0 ? `Giao · ${count} học sinh` : 'Giao bài'}
     </button>
   )
 }
@@ -428,17 +433,22 @@ function CourseControls({ hidden, viaCourse, waiting, onToggle, onNotify }) {
     )
   return (
     <>
-      <span className="badge" title="Số học sinh thấy bài này qua khóa">
-        🎓 {viaCourse}
+      <span className="badge" title={`${viaCourse} học sinh thấy bài này nhờ có khóa`}>
+        🎓 {viaCourse} bạn qua khóa
       </span>
       <button type="button" className="btn btn-small" onClick={onToggle} title="Ẩn với học sinh có khóa (bài các bạn đã làm vẫn giữ)">
         <Icon name="lock" />
         Ẩn
       </button>
       {waiting > 0 ? (
-        <button type="button" className="btn btn-small" onClick={onNotify} title="Chọn học sinh / nhóm để báo: có chuông, vào Bài cần làm">
+        <button
+          type="button"
+          className="btn btn-small"
+          onClick={onNotify}
+          title={`${waiting} bạn chưa được báo. Chọn học sinh / nhóm để báo: có chuông, vào Bài cần làm`}
+        >
           <Icon name="bell" />
-          Báo ({waiting})
+          Báo {waiting} bạn
         </button>
       ) : (
         viaCourse > 0 && <span className="muted small">🔔 đã báo hết</span>

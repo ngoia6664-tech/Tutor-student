@@ -656,6 +656,10 @@ export default function Library() {
                       <Icon name="edit" />
                       Sửa khóa
                     </button>
+                    <Link className="btn btn-small" to={`/tutor/courses/${course.id}/preview`} title="Xem khóa như học sinh thấy">
+                      <Icon name="eye" />
+                      Xem như học sinh
+                    </Link>
                   </>
                 )}
                 {level === 3 && !course && inGroup.length > 0 && !pickCh.on && subjectCourses.length > 0 && (

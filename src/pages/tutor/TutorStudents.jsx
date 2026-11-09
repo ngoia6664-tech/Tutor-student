@@ -15,6 +15,7 @@ import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Icon from '../../components/Icon.jsx'
 import CustomSelect from '../../components/CustomSelect.jsx'
+import TutorOnboarding from '../../components/TutorOnboarding.jsx'
 
 const NONE = '__none' // khóa nhóm "Chưa xếp nhóm"
 
@@ -152,6 +153,7 @@ export default function TutorStudents() {
 
   return (
     <div>
+      <TutorOnboarding />
       <div className="page-head">
         <h1>
           <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}

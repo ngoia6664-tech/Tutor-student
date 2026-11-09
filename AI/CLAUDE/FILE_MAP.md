@@ -23,6 +23,7 @@
 - `ChapterDetail.jsx` — Nội dung một chủ đề (cột phải của Thư viện): các bài; id `UNSORTED` = mục "Chưa xếp chủ đề" (bài có chapter_id trống); thư mục trong chủ đề (tạo / đổi tên / xóa, Sửa nhiều → "Vào thư mục…"); chủ đề thuộc khóa: nút Ẩn / Mở / Báo học sinh từng bài (`CourseControls`)
 - `ImportJson.jsx` — Chủ đề liên kết lần dán trước (lưu trên máy này)
 - `LessonEditor.jsx` — Soạn / sửa bài giảng. Dùng cho /tutor/lessons/new, /tutor/less
+- `CoursePreview.jsx` — "Xem như học sinh" (chỉ đọc) một khóa (/tutor/courses/:id/preview, nút ở trang khóa của Library): chương › chủ đề › bài đang mở, nhóm bài ẩn mờ riêng; chọn một học sinh có khóa để xem trạng thái từng bài tập (chưa làm / đã nộp / đã chấm, đã báo / tự học) + tiến độ
 - `Library.jsx` — Trang Thư viện (gia sư): cây Môn › Khóa › Chương của một lớp bên trái (URL `lop/mon/kh/cd`; môn chưa có khóa bỏ cấp Khóa; trang khóa: Giao khóa, menu ⋯ Đổi tên / Xóa khóa; trang môn: ⋯ Thêm khóa) (đang tìm thì hiện chủ đề khớp), đường dẫn có menu chọn nhanh (LibraryCrumbs), đầu trang chỉ "+ Thêm chủ đề" + menu "⋯" (Nhập mục lục, Sửa lớp/môn/chương, Xóa nhiều chủ đề, Xóa chương; trang chủ đề: Thêm chủ đề, Nhập mục lục), cuối cây mục "Chưa xếp chủ đề" (kèm số bài), giữa: kệ sách / băng chuyền chủ đề / nội dung chủ đề
 - `StudentDetail.jsx` — Trang một học sinh: tổng quan, điểm từng bài, bài giảng
 - `TutorAssignments.jsx` — Chấm bài (gia sư, /tutor/assignments): danh sách phẳng mọi bài tập, lọc "Có bài chờ chấm", tìm theo tên; nút chính "+ Soạn bài tập", Sửa nhiều / Xóa nhiều / Dán JSON gom vào menu "⋯"; chip trạng thái chỉ hiện số > 0; cột phải = GradeQueuePanel
@@ -51,6 +52,7 @@
 - `GradeShelf.jsx` — Trang một lớp / một môn (Thư viện gia sư) dạng kệ sách: mỗi môn một kệ, mỗi chương một cuốn (gáy dọc, cao bằng nhau); tên gáy giữ chữ như gõ (`sectionText`); máy có chuột: tiêu đề kệ nằm sát đầu sách trong khoảng trống dành cho bìa, kệ dài vừa số cuốn (`--n`), rê chuột / Tab tới thì cuốn đó nhô lên, bìa hiện ở khoảng trống trên kệ, tiêu đề mờ đi (thuần CSS, không che / không xê dịch cuốn nào); máy cảm ứng / màn ≤ 520px: ẩn gáy, mỗi chương là một thẻ ngang (chính `.shelf-cover`); bấm → vào chương. Props `{ chapters, count, url? }`, link qua `libraryUrl` (học sinh: `url={studentLibraryUrl}`)
 - `ChapterSelect.jsx` — Ô chọn chủ đề dạng cây Lớp › Môn › Chương › Ch
 - `ContextPanel.jsx` — Khối của trang trong cột phải Layout (`#ctx-panel`, portal; `replace` = ẩn khối mặc định; `className` = lớp thêm) + `CtxCard` (thẻ dùng chung); ≥ 1360px cột đứng yên bên phải, hẹp hơn ngăn kéo mở bằng hàng "Bảng bên" trong menu ☰
+- `TutorOnboarding.jsx` — Danh sách "Bắt đầu" cho giáo viên mới ở đầu trang Học sinh: 4 bước tự tick (có học sinh / chủ đề / bài / đã giao bài, đếm `count head`), xong hết thì tự ẩn, nút "Ẩn hướng dẫn" nhớ trong localStorage; CSS cuối `styles/assign.css`
 - `TutorTodoPanel.jsx` — Khối mặc định cột phải của gia sư (Layout): dải số một dòng (viên thuốc `ctx-strip`) "Việc cần xử lý": chờ chấm / báo lỗi / góp ý, luôn ở đầu cột (`ctx-top`)
 - `TutorRecentPanel.jsx` — Khối mặc định cột phải của gia sư: "Vừa giao" (3 bài tập / bài giảng giao gần nhất, gom theo bài, kèm số học sinh; không có thì ẩn)
 - `StudentTodayPanel.jsx` — Khối mặc định cột phải của học sinh (Layout): chuỗi / Xu / Sao một hàng gọn (PandaShopContext) + nút mở Ôn tập mỗi ngày luôn hiện (DailyDialog của StreakFlame); trang Kết quả đẩy khối này xuống sau biểu đồ (`ctx-first`)
@@ -75,7 +77,7 @@
 - `Icon.jsx` — Bộ icon nét mảnh (SVG, theo màu chữ hiện tại nên tự h�
 - `ImageGallery.jsx` — Lưới ảnh bài nộp, bấm vào để xem ảnh gốc ở tab m�
 - `InstallBanner.jsx` — Gợi ý cài app lên màn hình chính.
-- `Layout.jsx` — Khung chung: thanh trên cùng (màn < 1024px chỉ còn ☰ + lửa chuỗi + chuông; ngắm vũ trụ + Bảng bên nằm trong ngăn kéo; màn ≥ 1024px không còn thanh trên: ☰ + chuông + ngắm vũ trụ + bảng bên + chuỗi 🔥 học sinh nằm trong thanh bên), thanh bên chung gia sư + học sinh (ghim / dải icon / ngăn kéo), ngăn kéo nút phụ (học sinh: có cả Cửa hàng gấu + Góp ý) + thanh tab dưới của học sinh (điện thoại), linh vật, cụm nổi, hộp thoại, ngắm vũ trụ; gắn `<html data-tabbar / data-side>`
+- `Layout.jsx` — Khung chung: thanh trên cùng (màn < 1024px chỉ còn ☰ + lửa chuỗi + chuông; ngắm vũ trụ + Bảng bên nằm trong ngăn kéo; màn ≥ 1024px không còn thanh trên: ☰ + chuông + ngắm vũ trụ + bảng bên + chuỗi 🔥 học sinh nằm trong thanh bên), thanh bên chung gia sư + học sinh (ghim / dải icon / ngăn kéo; menu gia sư chia nhóm có tiêu đề nhỏ "Dạy học" / "Công cụ" qua `group` trong `NAV`, thu gọn thì chỉ còn đường kẻ), ngăn kéo nút phụ (học sinh: có cả Cửa hàng gấu + Góp ý) + thanh tab dưới của học sinh (điện thoại), linh vật, cụm nổi, hộp thoại, ngắm vũ trụ; gắn `<html data-tabbar / data-side>`
 - `LibraryCrumbs.jsx` — Đường dẫn Thư viện gia sư "Thư viện › Lớp ▾ › Môn ▾ › Chương ▾": chữ mỗi đoạn là link về cấp đó, nút ▾ riêng mở menu cùng cấp (useDropMenu); lớp chưa có chủ đề chọn được để mở lớp mới; prop `root` (link "Thư viện"); học sinh: bỏ đoạn Lớp, link `/student/library`
 - `MoreMenu.jsx` — Nút "⋯ Thao tác khác" gom thao tác ít dùng (Thư viện gia sư) + hook `useDropMenu` dùng chung cho menu thả xuống (bàn phím ↑↓ Home End Esc Tab, bấm ra ngoài đóng, tự dịch vào trong khi tràn mép)
 - `ListLink.jsx` — Link "← Danh sách" về đúng URL lọc + vị trí cuộn lần trước của tab (RESTORE)
@@ -92,7 +94,7 @@
 - `PandaDock.jsx` — (chỉ còn gia sư màn hẹp; học sinh dùng thanh bên) Logo cửa hàng: tiệm quần áo nhỏ — biển hiệu có móc t
 - `PlanetPortrait.jsx` — Chân dung hành tinh khi gấu giải thích (SpaceExplorer, chế đ
 - `ProtectedRoute.jsx` — Chặn trang theo vai trò: sai vai trò thì chuyển về trang củ
-- `QuickAssign.jsx` — Giao bài nhanh / giao khóa (`AssignDialog` kind `course`) + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện
+- `QuickAssign.jsx` — Giao bài nhanh / giao khóa (`AssignDialog` kind `course`, có khối <details> giải thích Giao khóa / Báo / Giao) + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện
 - `ReportQuestion.jsx` — Trạng thái báo lỗi học sinh thấy
 - `ResultProgress.jsx` — Thanh tiến độ và chip câu đúng/sai ở trang kết quả
 - `RootRedirect.jsx` — Trang gốc "/": chuyển theo vai trò
