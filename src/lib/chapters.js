@@ -40,8 +40,12 @@ export async function fetchStudentChapters(myGrade) {
   const rows = raw.map((c) => (c.course ? c : { ...c, course_id: null }))
   // Chủ đề thuộc khóa được giao vẫn tính dù khóa của lớp khác (gia sư giao khóa lớp 12 cho học sinh lớp 11)
   const mine = rows.filter((c) => myGrade == null || c.grade == null || c.grade === myGrade || c.course_id)
-  return sortChapters(myGrade == null ? mine : mine.map((c) => ({ ...c, grade: myGrade })))
+  return sortChapters(mine.map((c) => ({ ...c, grade: studentGrade(c, myGrade) })))
 }
+
+// Lớp hiển thị cho học sinh: chủ đề thuộc khóa giữ lớp của khóa (giao khóa lớp 12 cho học sinh lớp 11 → cây có thêm Lớp 12);
+// chủ đề giao lẻ gom vào lớp của học sinh
+export const studentGrade = (c, myGrade) => (c.course_id && c.grade != null ? c.grade : myGrade ?? c.grade ?? null)
 
 export async function fetchChapters() {
   return sortChapters(unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, created_at, course_id')))
@@ -117,6 +121,9 @@ export const chapterUrl = (id) => `/tutor/library/${id}`
 // Thư viện học sinh (/student/library?mon=...&kh=...&cd=...): học sinh chỉ có một lớp nên bỏ "lop";
 // cùng thứ tự tham số với libraryUrl để dùng chung GradeShelf / libraryCrumbs
 export const studentLibraryUrl = (_lop, mon, kh, cd) => libraryUrl(undefined, mon, kh, cd).replace('/tutor/', '/student/')
+// Như trên nhưng giữ "lop" khi khác lớp của học sinh (bài của khóa lớp khác)
+export const studentLibraryUrlFor = (myLop) => (lop, mon, kh, cd) =>
+  libraryUrl(lop === myLop ? undefined : lop, mon, kh, cd).replace('/tutor/', '/student/')
 // Mục "Chưa xếp chủ đề" của Thư viện gia sư (/tutor/library/chua-xep): bài có chapter_id trống
 export const UNSORTED = 'chua-xep'
 

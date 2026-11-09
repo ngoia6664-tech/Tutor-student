@@ -66,14 +66,14 @@ function makeUrl(pathname, { lop, mon, kh, cd, ch }) {
  * Cây lọc bên trái.
  * - chapters: các chủ đề hiện trên cây (đã lọc theo quyền / lớp)
  * - items: các bài có chapter_id; countIf: bài nào được đếm (mặc định: tất cả)
- * - gradeTabs: có tab chọn lớp (gia sư). Không có tab → cây bắt đầu từ Môn (học sinh, một lớp)
+ * - gradeTabs: có tab chọn lớp (gia sư). Không có tab → cây bắt đầu từ Môn (học sinh, một lớp; có bài nhiều lớp thì tự bật tab)
  * - hideEmpty: ẩn chủ đề không có bài nào (học sinh)
  * - badgeIf: bài nào hiện thành số vàng cạnh chủ đề (vd. bài chưa làm, bài chờ chấm)
  * - showCount: hiện số bài (xám) cạnh mỗi chủ đề
  * - nowId: chủ đề học sinh đang học → 📍 trên lá + chương chứa nó, chưa chọn gì thì mở sẵn nhánh đó
  */
 /** @param {{ chapters: any[], items: any[], countIf?: any, badgeIf?: any, showCount?: boolean, nowId?: any, icon?: any, gradeTabs?: boolean, hideEmpty?: boolean, title: string, noneLabel?: string, storageKey: string }} props */
-export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chủ đề', storageKey }) {
+export default function FilterTree({ chapters, items, countIf = () => true, badgeIf, showCount = true, nowId, icon, gradeTabs: tabsProp = false, hideEmpty = false, title, noneLabel = 'Chưa xếp chủ đề', storageKey }) {
   const { pathname } = useLocation()
   const sel = useTreeSelection()
   const { open, toggle, ensure } = useOpenNodes(storageKey)
@@ -94,6 +94,8 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
   const courses = [...new Map(visible.filter((c) => c.course).map((c) => [c.course.id, c.course])).values()]
   const tree = buildTree(visible, courses)
   const tabs = tree.map((g) => g.key)
+  // Học sinh được giao khóa của lớp khác → cây có nhiều lớp → hiện tab chọn lớp như gia sư
+  const gradeTabs = tabsProp || tree.length > 1
   // Lớp của chủ đề đang chọn quyết định tab đang mở
   const selChapter = sel.ch && sel.ch !== NONE ? chapterById.get(sel.ch) : null
   const tab = gradeTabs ? (selChapter ? keyOf(selChapter.grade) : sel.lop) : undefined

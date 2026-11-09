@@ -7,13 +7,15 @@ import {
   buildTree,
   courseLabel,
   fromKey,
+  gradeFromKey,
   gradeLabel,
   keyOf,
   libraryCrumbs,
   sectionLabel,
   sectionText,
   sortChapters,
-  studentLibraryUrl,
+  studentGrade,
+  studentLibraryUrlFor,
   subjectLabel,
 } from '../../lib/chapters.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
@@ -47,12 +49,14 @@ const byTodo = (a, b) =>
 export default function StudentLibrary() {
   const { id } = useParams()
   const [params] = useSearchParams()
+  const lopParam = id ? undefined : params.get('lop') ?? undefined // lớp khác lớp mình (khóa của lớp khác)
   const mon = id ? undefined : params.get('mon') ?? undefined
   const kh = mon !== undefined ? params.get('kh') ?? undefined : undefined // khóa ('-' = bài không thuộc khóa)
   const cd = mon !== undefined ? params.get('cd') ?? undefined : undefined
   const { profile } = useAuth()
   const myGrade = profile.grade ?? null
-  const lop = keyOf(myGrade)
+  const myLop = keyOf(myGrade)
+  const sUrl = studentLibraryUrlFor(myLop)
   const { open, toggle, ensure } = useOpenNodes('student-library-open')
   const [treeShown, setTreeShown] = useState(!id && mon === undefined)
 
@@ -80,10 +84,13 @@ export default function StudentLibrary() {
     // Chủ đề của khóa mình được giao luôn tính, kể cả khóa của lớp khác; khóa gắn lớp + môn của chủ đề để cây gom đúng chỗ
     const mine = sortChapters(chapters.filter((c) => myGrade === null || c.grade === null || c.grade === myGrade || c.course_id)).map((c) => ({
       ...c,
-      grade: myGrade,
+      grade: studentGrade(c, myGrade),
     }))
     const myCourses = courses
-      .map((k) => ({ ...k, grade: myGrade, subject: mine.find((c) => c.course_id === k.id)?.subject ?? null }))
+      .map((k) => {
+        const c = mine.find((x) => x.course_id === k.id)
+        return { ...k, grade: c?.grade ?? myGrade, subject: c?.subject ?? null }
+      })
       .filter((k) => k.subject !== null)
     return { lessons, assignments, chapters: mine, folders, courses: myCourses }
   }, [profile.id, myGrade])
@@ -108,7 +115,8 @@ export default function StudentLibrary() {
   })
   const courses = data?.courses || []
   const tree = buildTree(counted, courses)
-  const subjectsTree = tree[0]?.subjects || []
+  // Có bài của nhiều lớp (khóa lớp khác) → cây thêm cấp Lớp
+  const multi = tree.length > 1
   // Tiến độ một khóa: số bài tập đã nộp / tổng số bài tập đang có trong khóa
   const courseProgress = (courseId) => {
     const ids = new Set(chapters.filter((c) => c.course_id === courseId).map((c) => c.id))
@@ -119,32 +127,91 @@ export default function StudentLibrary() {
   const studyId = useStudyChapterId()
   const now = findStudyChapter(chapters, studyId)
 
-  const path = current ? { mon: keyOf(current.subject), kh: keyOf(current.course_id), cd: keyOf(current.section) } : { mon, kh, cd }
-  const crumbs = libraryCrumbs(tree, { lop, ...path }, studentLibraryUrl).slice(1)
+  const path = current
+    ? { lop: keyOf(current.grade), mon: keyOf(current.subject), kh: keyOf(current.course_id), cd: keyOf(current.section) }
+    : { lop: lopParam ?? myLop, mon, kh, cd }
+  const lop = path.lop
+  const allCrumbs = libraryCrumbs(tree, path, sUrl)
+  // Một lớp: bỏ đoạn Lớp như trước; nhiều lớp: giữ, chỉ cho chọn các lớp có bài
+  const crumbs = multi
+    ? allCrumbs.map((seg, i) => (i === 0 ? { ...seg, options: seg.options.filter((o) => !o.empty) } : seg))
+    : allCrumbs.slice(1)
   const inGroup = counted.filter(
-    (c) => keyOf(c.subject) === mon && (kh === undefined || keyOf(c.course_id) === kh) && (cd === undefined || keyOf(c.section) === cd)
+    (c) =>
+      keyOf(c.grade) === lop &&
+      keyOf(c.subject) === mon &&
+      (kh === undefined || keyOf(c.course_id) === kh) &&
+      (cd === undefined || keyOf(c.section) === cd)
   )
   const course = kh !== undefined ? courses.find((k) => k.id === kh) || null : null
 
   useEffect(() => {
-    if (path.mon !== undefined) ensure([nodeKey('s', path.mon), ...(path.kh !== undefined ? [nodeKey('k', path.mon, path.kh)] : [])])
-  }, [path.mon, path.kh, ensure])
+    if (path.mon !== undefined)
+      ensure([nodeKey('g', path.lop), nodeKey('s', path.lop, path.mon), ...(path.kh !== undefined ? [nodeKey('k', path.lop, path.mon, path.kh)] : [])])
+  }, [path.lop, path.mon, path.kh, ensure])
   useEffect(() => {
-    if (now) ensure([nodeKey('s', keyOf(now.subject))])
+    if (now) ensure([nodeKey('g', keyOf(now.grade)), nodeKey('s', keyOf(now.grade), keyOf(now.subject))])
   }, [now, ensure])
   useEffect(() => {
     if (id || mon !== undefined) setTreeShown(false)
   }, [id, mon, kh, cd])
 
   const where = current
-    ? [subjectLabel(current.subject), sectionText(current.section), current.title].join(' › ')
+    ? [multi && gradeLabel(current.grade), subjectLabel(current.subject), sectionText(current.section), current.title].filter(Boolean).join(' › ')
     : view === OTHER
       ? OTHER_NAME
       : mon !== undefined
-        ? [subjectLabel(fromKey(mon)), kh !== undefined && courseLabel(course), cd !== undefined && sectionText(fromKey(cd))].filter(Boolean).join(' › ')
+        ? [multi && gradeLabel(gradeFromKey(lop)), subjectLabel(fromKey(mon)), kh !== undefined && courseLabel(course), cd !== undefined && sectionText(fromKey(cd))]
+            .filter(Boolean)
+            .join(' › ')
         : 'Chọn chương'
 
   const chapterActions = (c) => <StudyNowButton chapterId={c.id} />
+
+  // Các môn của một lớp trên cây (d: độ lùi)
+  const subjectNodes = (g, d) =>
+    g.subjects.map((s) => {
+    // Môn không có khóa nào: cây cũ Môn › Chương
+    const flat = s.courses.length === 1 && !s.courses[0].course
+    const leaves = (sections, k) =>
+      sections.map((x) => (
+        <TreeLeaf
+          key={x.key}
+          to={sUrl(g.key, s.key, k, x.key)}
+          label={sectionText(x.section)}
+          badge={x.chapters.reduce((n, c) => n + todoOf(c.id), 0) || null}
+          active={path.lop === g.key && path.mon === s.key && path.cd === x.key && (k === undefined || path.kh === k)}
+          now={x.chapters.some((c) => c.id === now?.id)}
+        />
+      ))
+    return (
+      <TreeGroup
+        key={s.key}
+        label={subjectLabel(s.subject)}
+        to={sUrl(g.key, s.key)}
+        open={open.has(nodeKey('s', g.key, s.key))}
+        onToggle={() => toggle(nodeKey('s', g.key, s.key))}
+        active={!id && lop === g.key && mon === s.key && kh === undefined && cd === undefined}
+        depth={d}
+      >
+        {flat
+          ? leaves(s.sections, undefined)
+          : s.courses.map((k) => (
+              <TreeGroup
+                key={k.key}
+                label={courseLabel(k.course)}
+                to={sUrl(g.key, s.key, k.key)}
+                open={open.has(nodeKey('k', g.key, s.key, k.key))}
+                onToggle={() => toggle(nodeKey('k', g.key, s.key, k.key))}
+                active={!id && lop === g.key && mon === s.key && kh === k.key && cd === undefined}
+                depth={d + 1}
+              >
+                {leaves(k.sections, k.key)}
+              </TreeGroup>
+            ))}
+      </TreeGroup>
+    )
+  })
 
   return (
     <div className="library">
@@ -152,54 +219,27 @@ export default function StudentLibrary() {
       <TreeSide shown={treeShown} onToggleShown={() => setTreeShown((v) => !v)} where={where}>
         <div className="tree-head">
           <Link to={url()} className="tree-title">
-            Thư viện {myGrade ? `· Lớp ${myGrade}` : ''}
+            Thư viện {myGrade && !multi ? `· Lớp ${myGrade}` : ''}
           </Link>
         </div>
         {loading && <Loading text="Đang tải…" />}
         {!loading && !error && chapters.length === 0 && !hasOther && <p className="muted small">Chưa có bài nào được giao.</p>}
         <ul className="tree" role="tree">
-          {subjectsTree.map((s) => {
-            // Môn không có khóa nào: cây cũ Môn › Chương
-            const flat = s.courses.length === 1 && !s.courses[0].course
-            const leaves = (sections, k) =>
-              sections.map((x) => (
-                <TreeLeaf
-                  key={x.key}
-                  to={studentLibraryUrl(lop, s.key, k, x.key)}
-                  label={sectionText(x.section)}
-                  badge={x.chapters.reduce((n, c) => n + todoOf(c.id), 0) || null}
-                  active={path.mon === s.key && path.cd === x.key && (k === undefined || path.kh === k)}
-                  now={x.chapters.some((c) => c.id === now?.id)}
-                />
+          {multi
+            ? tree.map((g) => (
+                <TreeGroup
+                  key={g.key}
+                  label={gradeLabel(g.grade)}
+                  to={sUrl(g.key)}
+                  open={open.has(nodeKey('g', g.key))}
+                  onToggle={() => toggle(nodeKey('g', g.key))}
+                  active={!id && lop === g.key && mon === undefined}
+                  depth={0}
+                >
+                  {subjectNodes(g, 1)}
+                </TreeGroup>
               ))
-            return (
-              <TreeGroup
-                key={s.key}
-                label={subjectLabel(s.subject)}
-                to={studentLibraryUrl(lop, s.key)}
-                open={open.has(nodeKey('s', s.key))}
-                onToggle={() => toggle(nodeKey('s', s.key))}
-                active={!id && mon === s.key && kh === undefined && cd === undefined}
-                depth={0}
-              >
-                {flat
-                  ? leaves(s.sections, undefined)
-                  : s.courses.map((k) => (
-                      <TreeGroup
-                        key={k.key}
-                        label={courseLabel(k.course)}
-                        to={studentLibraryUrl(lop, s.key, k.key)}
-                        open={open.has(nodeKey('k', s.key, k.key))}
-                        onToggle={() => toggle(nodeKey('k', s.key, k.key))}
-                        active={!id && mon === s.key && kh === k.key && cd === undefined}
-                        depth={1}
-                      >
-                        {leaves(k.sections, k.key)}
-                      </TreeGroup>
-                    ))}
-              </TreeGroup>
-            )
-          })}
+            : tree.map((g) => subjectNodes(g, 0))}
           {hasOther && <TreeLeaf to={url(OTHER)} label={OTHER_NAME} badge={todoOf(OTHER) || null} />}
         </ul>
       </TreeSide>
@@ -208,7 +248,15 @@ export default function StudentLibrary() {
         <ErrorBox message={error} onRetry={reload} />
         {loading && <Loading />}
         {!loading && !error && (id || mon !== undefined) && <LibraryCrumbs segments={crumbs} root={url()} />}
-        {!loading && !error && !id && mon === undefined && (
+        {!loading && !error && !id && mon === undefined && multi && lopParam !== undefined && (
+          <div>
+            <div className="page-head">
+              <h1>{gradeLabel(gradeFromKey(lop))}</h1>
+            </div>
+            <GradeShelf chapters={counted.filter((c) => keyOf(c.grade) === lop)} count={Number} url={sUrl} courses={courses} />
+          </div>
+        )}
+        {!loading && !error && !id && mon === undefined && !(multi && lopParam !== undefined) && (
           <Overview
             shelf={counted}
             todo={(data?.assignments || []).filter((r) => r.status === 'todo').length}
@@ -218,6 +266,7 @@ export default function StudentLibrary() {
             now={now}
             courses={courses}
             progressOf={courseProgress}
+            url={sUrl}
           />
         )}
         {!loading && !error && mon !== undefined && (
@@ -232,7 +281,7 @@ export default function StudentLibrary() {
                 <Link to={url()}>Về Thư viện</Link>
               </div>
             ) : cd === undefined ? (
-              <GradeShelf chapters={inGroup} count={Number} url={studentLibraryUrl} courses={courses} singleCourse={kh !== undefined} />
+              <GradeShelf chapters={inGroup} count={Number} url={sUrl} courses={courses} singleCourse={kh !== undefined} />
             ) : (
               <ChapterCarousel key={`${mon}|${kh}|${cd}`} memoKey={`hs|${mon}|${kh}|${cd}`} chapters={inGroup} count={Number} toUrl={url} actions={chapterActions} />
             )}
@@ -363,7 +412,7 @@ function ChapterView({ chapter, items, folders }) {
   )
 }
 
-function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now, courses, progressOf }) {
+function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now, courses, progressOf, url: sUrl }) {
   return (
     <div>
       <div className="page-head">
@@ -390,9 +439,9 @@ function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now, courses, pro
           {courses.map((k) => {
             const p = progressOf(k.id)
             return (
-              <Link key={k.id} to={studentLibraryUrl(undefined, keyOf(k.subject), k.id)} className="list-item overview-card">
+              <Link key={k.id} to={sUrl(keyOf(k.grade), keyOf(k.subject), k.id)} className="list-item overview-card">
                 <div className="list-item-title">🎓 {k.title}</div>
-                <div className="muted small">{subjectLabel(k.subject)}</div>
+                <div className="muted small">{[k.grade !== myGrade && gradeLabel(k.grade), subjectLabel(k.subject)].filter(Boolean).join(' · ')}</div>
                 {p.total > 0 && (
                   <div className="progress-row" style={{ marginTop: '0.5rem' }}>
                     <Progress done={p.done} total={p.total} />
@@ -407,7 +456,7 @@ function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now, courses, pro
         </div>
       )}
       {shelf.length === 0 && !hasOther && <div className="empty">Chưa có bài nào được giao cho bạn.</div>}
-      <GradeShelf chapters={shelf} count={Number} url={studentLibraryUrl} />
+      <GradeShelf chapters={shelf} count={Number} url={sUrl} />
       {hasOther && (
         <Link to={url(OTHER)} className="list-item overview-card" style={{ display: 'block' }}>
           <div className="list-item-title">

@@ -141,3 +141,18 @@ describe('khóa học', () => {
     expect(studentLibraryUrl('12', 'Vật lý', 'k1')).toBe('/student/library?mon=V%E1%BA%ADt+l%C3%BD&kh=k1')
   })
 })
+
+describe('học sinh có bài nhiều lớp', () => {
+  it('chủ đề thuộc khóa giữ lớp của khóa, chủ đề lẻ về lớp học sinh', async () => {
+    const { studentGrade } = await import('../src/lib/chapters.js')
+    expect(studentGrade({ course_id: 'k', grade: 12 }, 11)).toBe(12)
+    expect(studentGrade({ course_id: null, grade: 10 }, 11)).toBe(11)
+    expect(studentGrade({ course_id: 'k', grade: null }, 11)).toBe(11)
+  })
+  it('link giữ lop khi khác lớp của học sinh', async () => {
+    const { studentLibraryUrlFor } = await import('../src/lib/chapters.js')
+    const url = studentLibraryUrlFor('11')
+    expect(url('11', 'Vật lý')).toBe('/student/library?mon=V%E1%BA%ADt+l%C3%BD')
+    expect(url('12', 'Vật lý', 'k1')).toBe('/student/library?lop=12&mon=V%E1%BA%ADt+l%C3%BD&kh=k1')
+  })
+})
