@@ -123,9 +123,15 @@ export default function StudentLibrary() {
   const defaultLop = tree.some((g) => g.key === myLop) ? myLop : tree[0]?.key ?? myLop
   // Tiến độ một khóa: số bài tập đã nộp / tổng số bài tập đang có trong khóa
   const courseProgress = (courseId) => {
-    const ids = new Set(chapters.filter((c) => c.course_id === courseId).map((c) => c.id))
+    const inCourse = counted.filter((c) => c.course_id === courseId)
+    const ids = new Set(inCourse.map((c) => c.id))
     const list = (data?.assignments || []).filter((r) => ids.has(r.assignment.chapter_id))
-    return { done: list.filter((r) => r.status !== 'todo').length, total: list.length }
+    return {
+      done: list.filter((r) => r.status !== 'todo').length,
+      total: list.length,
+      sections: new Set(inCourse.map((c) => keyOf(c.section))).size,
+      lessons: inCourse.reduce((n, c) => n + c.lessons, 0),
+    }
   }
   const current = view && view !== OTHER ? chapters.find((c) => c.id === view) : null
   const studyId = useStudyChapterId()
@@ -257,7 +263,8 @@ export default function StudentLibrary() {
         {!loading && !error && !id && mon === undefined && multi && <div className="student-grade-pick">{gradePicker}</div>}
         {!loading && !error && !id && mon === undefined && (
           <Overview
-            shelf={counted.filter((c) => keyOf(c.grade) === lop)}
+            // Chương thuộc khóa đã nằm trong thẻ khóa: kệ chỉ còn chương ngoài khóa
+            shelf={counted.filter((c) => keyOf(c.grade) === lop && !c.course_id)}
             todo={(data?.assignments || []).filter((r) => r.status === 'todo').length}
             myGrade={gradeFromKey(lop)}
             hasOther={hasOther}
@@ -304,6 +311,45 @@ function CourseProgress({ done, total }) {
         Đã làm {done}/{total} bài tập trong khóa
       </span>
     </div>
+  )
+}
+
+// Thẻ một khóa ở trang đầu Thư viện: tên + môn, số chương / bài giảng / bài tập, tiến độ nộp bài tập
+function CourseCard({ course, stats, to }) {
+  const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0
+  const finished = stats.total > 0 && stats.done === stats.total
+  return (
+    <Link to={to} className={finished ? 'course-card is-done' : 'course-card'}>
+      <span className="course-card-icon" aria-hidden="true">
+        <Icon name="folder" size={22} />
+      </span>
+      <span className="course-card-body">
+        <span className="course-card-title">{course.title}</span>
+        <span className="course-card-subject">{subjectLabel(course.subject)}</span>
+      </span>
+      <span className="course-card-stats">
+        <span>
+          <Icon name="book" size={14} /> <b>{stats.sections}</b> chương
+        </span>
+        <span>
+          <Icon name="lesson" size={14} /> <b>{stats.lessons}</b> bài giảng
+        </span>
+        <span>
+          <Icon name="assignment" size={14} /> <b>{stats.total}</b> bài tập
+        </span>
+      </span>
+      {stats.total > 0 ? (
+        <span className="course-card-progress">
+          <Progress done={stats.done} total={stats.total} />
+          <span className="course-card-pct">{finished ? 'Xong hết' : `${pct}%`}</span>
+          <span className="muted small course-card-note">
+            Đã nộp {stats.done}/{stats.total} bài tập
+          </span>
+        </span>
+      ) : (
+        <span className="muted small course-card-note">Chưa có bài tập nào được mở.</span>
+      )}
+    </Link>
   )
 }
 
@@ -431,27 +477,13 @@ function Overview({ shelf, todo, myGrade, hasOther, otherTodo, now, courses, pro
             Bạn còn <b>{todo}</b> bài tập chưa làm.{' '}
           </>
         )}
-        Chọn một chương trên kệ để xem các chủ đề.
+        {courses.length > 0 ? 'Chọn một khóa để vào học.' : 'Chọn một chương trên kệ để xem các chủ đề.'}
       </p>
       {courses.length > 0 && (
-        <div className="overview-grid" style={{ marginBottom: '1rem' }}>
-          {courses.map((k) => {
-            const p = progressOf(k.id)
-            return (
-              <Link key={k.id} to={sUrl(keyOf(k.grade), keyOf(k.subject), k.id)} className="list-item overview-card">
-                <div className="list-item-title">🎓 {k.title}</div>
-                <div className="muted small">{[k.grade !== myGrade && gradeLabel(k.grade), subjectLabel(k.subject)].filter(Boolean).join(' · ')}</div>
-                {p.total > 0 && (
-                  <div className="progress-row" style={{ marginTop: '0.5rem' }}>
-                    <Progress done={p.done} total={p.total} />
-                    <span className="muted small">
-                      {p.done}/{p.total}
-                    </span>
-                  </div>
-                )}
-              </Link>
-            )
-          })}
+        <div className="course-grid">
+          {courses.map((k) => (
+            <CourseCard key={k.id} course={k} stats={progressOf(k.id)} to={sUrl(keyOf(k.grade), keyOf(k.subject), k.id)} />
+          ))}
         </div>
       )}
       {shelf.length === 0 && !hasOther && <div className="empty">Chưa có bài nào được giao cho bạn.</div>}

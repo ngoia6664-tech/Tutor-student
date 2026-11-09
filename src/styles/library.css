@@ -2254,3 +2254,102 @@
   max-width: 16rem;
   margin-bottom: 0.75rem;
 }
+
+/* Thẻ khóa ở trang đầu Thư viện học sinh: màu hổ phách = màu thư mục khóa trên cây mục lục */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.course-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem 0.85rem;
+  align-items: center;
+  padding: 1rem 1.1rem 1.05rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--warn);
+  border-radius: 14px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+.course-card:hover,
+.course-card:focus-visible {
+  border-color: var(--warn);
+}
+.course-card:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
+}
+.course-card.is-done {
+  border-left-color: var(--ok);
+}
+.course-card-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.course-card.is-done .course-card-icon {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.course-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.course-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.course-card-subject {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.course-card-stats {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.course-card-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.course-card-stats b {
+  color: var(--text);
+}
+.course-card-progress {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+}
+.course-card-progress .progress-bar {
+  background: linear-gradient(90deg, var(--warn), var(--ok));
+  box-shadow: none;
+}
+.course-card-pct {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.course-card-note {
+  grid-column: 1 / -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card-progress .progress-bar::after {
+    animation: none;
+  }
+}
