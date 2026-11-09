@@ -93,9 +93,10 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
   // Khóa lấy từ chủ đề (fetchStudentChapters kèm course); môn có khóa thì cây thêm cấp Khóa
   const courses = [...new Map(visible.filter((c) => c.course).map((c) => [c.course.id, c.course])).values()]
   const tree = buildTree(visible, courses)
-  const tabs = tree.map((g) => g.key)
+  // Tab lớp lấy từ mọi chủ đề của học sinh (không chỉ chủ đề đang có bài) để Kết quả, Ôn tập... có cùng tab
+  const tabs = [...new Set(chapters.map((c) => keyOf(c.grade)))].sort((x, y) => (gradeFromKey(x) ?? 99) - (gradeFromKey(y) ?? 99))
   // Học sinh được giao khóa của lớp khác → cây có nhiều lớp → hiện tab chọn lớp như gia sư
-  const gradeTabs = tabsProp || tree.length > 1
+  const gradeTabs = tabsProp || tabs.length > 1
   // Lớp của chủ đề đang chọn quyết định tab đang mở
   const selChapter = sel.ch && sel.ch !== NONE ? chapterById.get(sel.ch) : null
   const tab = gradeTabs ? (selChapter ? keyOf(selChapter.grade) : sel.lop) : undefined
