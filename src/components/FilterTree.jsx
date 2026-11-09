@@ -168,6 +168,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
       <TreeGroup
         key={s.key}
         label={subjectLabel(s.subject)}
+        className="tree-kind-subject"
         to={url({ lop: g.key, mon: s.key })}
         count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key)}
         open={open.has(nodeKey('s', g.key, s.key))}
@@ -180,7 +181,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
               <TreeGroup
                 key={k.key}
                 label={courseLabel(k.course)}
-                className={k.course ? undefined : 'tree-node-loose'}
+                className={k.course ? 'tree-kind-course' : 'tree-kind-course tree-node-loose'}
                 to={url({ lop: g.key, mon: s.key, kh: k.key })}
                 count={countIn((c) => c && keyOf(c.grade) === g.key && keyOf(c.subject) === s.key && keyOf(c.course_id) === k.key)}
                 open={open.has(nodeKey('k', g.key, s.key, k.key))}
@@ -234,6 +235,7 @@ export default function FilterTree({ chapters, items, countIf = () => true, badg
             <TreeGroup
               key={g.key}
               label={gradeLabel(g.grade)}
+              className="tree-kind-grade"
               to={url({ lop: g.key })}
               count={countIn((c) => c && keyOf(c.grade) === g.key)}
               open={open.has(nodeKey('g', g.key))}

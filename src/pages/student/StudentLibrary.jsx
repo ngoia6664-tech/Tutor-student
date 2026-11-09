@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
 import { useAsync } from '../../lib/useAsync.js'
 import { compareDue, formatDate } from '../../lib/format.js'
@@ -25,6 +25,7 @@ import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, StatusBadge, TypeBadge } from '../../components/Badges.jsx'
 import { nodeKey, TreeGroup, TreeLeaf, TreeSide, useOpenNodes } from '../../components/TreeNav.jsx'
 import Icon from '../../components/Icon.jsx'
+import CustomSelect from '../../components/CustomSelect.jsx'
 import StudyNow from '../../components/StudyNow.jsx'
 import { findStudyChapter, useStudyChapterId } from '../../lib/studyNow.js'
 import StudyNowButton from '../../components/StudyNowButton.jsx'
@@ -54,6 +55,7 @@ export default function StudentLibrary() {
   const kh = mon !== undefined ? params.get('kh') ?? undefined : undefined // khóa ('-' = bài không thuộc khóa)
   const cd = mon !== undefined ? params.get('cd') ?? undefined : undefined
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const myGrade = profile.grade ?? null
   const myLop = keyOf(myGrade)
   const sUrl = studentLibraryUrlFor(myLop)
@@ -221,25 +223,24 @@ export default function StudentLibrary() {
           <Link to={url()} className="tree-title">
             Thư viện {myGrade && !multi ? `· Lớp ${myGrade}` : ''}
           </Link>
+          {/* Có bài của nhiều lớp (khóa lớp khác): chọn lớp riêng như Thư viện gia sư, cây chỉ hiện lớp đang chọn */}
+          {multi && (
+            <CustomSelect
+              value={lop}
+              onChange={(k) => navigate(sUrl(k))}
+              options={tree.map((g) => ({ value: g.key, label: gradeLabel(g.grade), icon: 'grade' }))}
+              prefixLabel="Khối: "
+              icon="grade"
+              className="tree-grade-select"
+              style={{ width: '100%' }}
+              ariaLabel="Chọn lớp"
+            />
+          )}
         </div>
         {loading && <Loading text="Đang tải…" />}
         {!loading && !error && chapters.length === 0 && !hasOther && <p className="muted small">Chưa có bài nào được giao.</p>}
         <ul className="tree" role="tree">
-          {multi
-            ? tree.map((g) => (
-                <TreeGroup
-                  key={g.key}
-                  label={gradeLabel(g.grade)}
-                  to={sUrl(g.key)}
-                  open={open.has(nodeKey('g', g.key))}
-                  onToggle={() => toggle(nodeKey('g', g.key))}
-                  active={!id && lop === g.key && mon === undefined}
-                  depth={0}
-                >
-                  {subjectNodes(g, 1)}
-                </TreeGroup>
-              ))
-            : tree.map((g) => subjectNodes(g, 0))}
+          {tree.filter((g) => g.key === lop).map((g) => subjectNodes(g, 0))}
           {hasOther && <TreeLeaf to={url(OTHER)} label={OTHER_NAME} badge={todoOf(OTHER) || null} />}
         </ul>
       </TreeSide>
@@ -248,23 +249,15 @@ export default function StudentLibrary() {
         <ErrorBox message={error} onRetry={reload} />
         {loading && <Loading />}
         {!loading && !error && (id || mon !== undefined) && <LibraryCrumbs segments={crumbs} root={url()} />}
-        {!loading && !error && !id && mon === undefined && multi && lopParam !== undefined && (
-          <div>
-            <div className="page-head">
-              <h1>{gradeLabel(gradeFromKey(lop))}</h1>
-            </div>
-            <GradeShelf chapters={counted.filter((c) => keyOf(c.grade) === lop)} count={Number} url={sUrl} courses={courses} />
-          </div>
-        )}
-        {!loading && !error && !id && mon === undefined && !(multi && lopParam !== undefined) && (
+        {!loading && !error && !id && mon === undefined && (
           <Overview
-            shelf={counted}
+            shelf={counted.filter((c) => keyOf(c.grade) === lop)}
             todo={(data?.assignments || []).filter((r) => r.status === 'todo').length}
-            myGrade={myGrade}
+            myGrade={gradeFromKey(lop)}
             hasOther={hasOther}
             otherTodo={todoOf(OTHER)}
             now={now}
-            courses={courses}
+            courses={courses.filter((k) => keyOf(k.grade) === lop)}
             progressOf={courseProgress}
             url={sUrl}
           />
