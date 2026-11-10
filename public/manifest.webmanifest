@@ -3,7 +3,7 @@
   "short_name": "Duy Anh",
   "description": "Bài giảng và bài tập Vật lý",
   "lang": "vi",
-  "start_url": "/login",
+  "start_url": "/home.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#14100d",

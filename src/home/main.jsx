@@ -71,6 +71,24 @@ function mount() {
 
 mount()
 
+// Nút "Cài app" ở thanh đầu trang: giữ sự kiện cài của trình duyệt, bấm nút thì mở hộp cài
+const installBtn = document.getElementById('installApp')
+/** @type {any} */
+let installEvt = null
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  installEvt = e
+  if (installBtn) installBtn.hidden = false
+})
+installBtn?.addEventListener('click', async () => {
+  if (!installEvt) return
+  installEvt.prompt()
+  await installEvt.userChoice
+  installEvt = null
+  installBtn.hidden = true
+})
+window.addEventListener('appinstalled', () => installBtn && (installBtn.hidden = true))
+
 // Đăng ký service worker như trang app để trình duyệt cho cài app ngay từ trang chủ (chỉ bản build)
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
