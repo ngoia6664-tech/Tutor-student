@@ -30,6 +30,7 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
+      <a href="/home.html" className="login-back">← Trang chủ</a>
       <ThemeToggle className="login-theme" />
       <form className="card login-card" onSubmit={handleSubmit}>
         <h1 className="login-logo">
@@ -62,9 +63,10 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
-        <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-          <Icon name="login" />
+        <button type="submit" className="peek-btn btn btn-primary btn-block" disabled={submitting}>
+          <span className="peek" aria-hidden="true" />
           {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          <Icon name="login" />
         </button>
       </form>
     </div>

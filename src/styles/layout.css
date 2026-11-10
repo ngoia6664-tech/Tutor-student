@@ -171,6 +171,69 @@
   top: 0.75rem;
   right: 0.75rem;
 }
+/* Nút dẫn vào học (Đăng nhập...): rê chuột thì gấu ló đầu ở góc trên phải.
+   .peek là ô ngay trên mép nút; ảnh trượt lên từ đáy ô nên phần thân bị cắt như đang nấp sau nút. */
+.peek-btn { position: relative; overflow: visible; }
+.peek-btn .peek {
+  position: absolute;
+  right: 14px;
+  bottom: 100%;
+  width: 48px;
+  height: 30px;
+  background: url(/home/panda-front.svg) 50% 30px / 48px auto no-repeat;
+  pointer-events: none;
+  transition: background-position 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.peek-btn:hover .peek,
+.peek-btn:focus-visible .peek { background-position: 50% 0; }
+.peek-btn:disabled .peek { display: none; }
+@media (prefers-reduced-motion: reduce) { .peek-btn .peek { transition: none; } }
+/* Ló ra thì nghiêng về phía góc + 2 ngôi sao vàng lấp lánh cạnh gấu */
+.peek-btn .peek { transform-origin: 50% 100%; transition: background-position 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), rotate 0.35s ease; }
+.peek-btn:hover .peek,
+.peek-btn:focus-visible .peek { rotate: 14deg; }
+/* Gấu ngồi trên viền ở góc nút (lệch ra ngoài mép phải), không che chữ */
+.peek-btn .peek { right: -10px; }
+.peek-btn .peek::before,
+.peek-btn .peek::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #fcd34d;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 3px rgba(252, 211, 77, 0.9));
+  opacity: 0;
+  scale: 0;
+}
+.peek-btn .peek::before { right: -8px; top: 2px; }
+.peek-btn .peek::after { right: -14px; top: 16px; width: 6px; height: 6px; }
+.peek-btn:hover .peek::before,
+.peek-btn:focus-visible .peek::before { animation: peekTwinkle 1.2s 0.2s ease-in-out infinite; }
+.peek-btn:hover .peek::after,
+.peek-btn:focus-visible .peek::after { animation: peekTwinkle 1.2s 0.6s ease-in-out infinite; }
+@keyframes peekTwinkle {
+  0%, 100% { opacity: 0; scale: 0.2; rotate: 0deg; }
+  50% { opacity: 1; scale: 1; rotate: 45deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .peek-btn .peek { transition: none; }
+  .peek-btn:hover .peek::before, .peek-btn:hover .peek::after { animation: none; opacity: 1; scale: 1; }
+}
+/* Nút quay lại trang chủ (home.html) ở trang đăng nhập */
+.login-back {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: var(--surface-solid);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.login-back:hover { color: var(--primary); }
+.login-back:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 
 .page {
   max-width: 1280px;

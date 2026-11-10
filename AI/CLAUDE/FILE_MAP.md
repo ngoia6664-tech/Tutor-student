@@ -8,6 +8,7 @@
 - `AI/CLAUDE/` — FEATURES (chi tiết tính năng), HANDOFF (ghi chú ca), ROLE, SFX_PL
 - `supabase/schema.sql` — toàn bộ CSDL: bảng, RLS, hàm RPC, kinh tế Xu/Sao/Chuỗi, Stor
 - `tsconfig.json` — tsc chỉ kiểm tra kiểu (`npm run typecheck`, allowJs + checkJs, không strict); Vite vẫn tự build
+- `home.html` + `public/home/` — trang chủ giới thiệu tĩnh (entry Vite thứ hai; "/" chưa đăng nhập chuyển tới). Chỉ ô Phòng thử đồ là React: `src/home/main.jsx` (gấu thật OutfitPanda + giữ để diễn + tiếng) + `src/home/home-panda.css`
 - `src/` — mã ứng dụng (danh sách dưới)
 
 ## `src/pages/`
@@ -96,7 +97,7 @@
 - `QuickAssign.jsx` — Giao bài nhanh / giao khóa (`AssignDialog` kind `course`, có khối <details> giải thích Giao khóa / Báo / Giao) + chế độ Sửa nhiều / Xóa nhiều (SelectModes, SelectBar, MoveDialog, deletePicked) cho Chấm bài, chủ đề trong Thư viện
 - `ReportQuestion.jsx` — Trạng thái báo lỗi học sinh thấy
 - `ResultProgress.jsx` — Thanh tiến độ và chip câu đúng/sai ở trang kết quả
-- `RootRedirect.jsx` — Trang gốc "/": chuyển theo vai trò
+- `RootRedirect.jsx` — Trang gốc "/": luôn chuyển tới trang chủ /home.html
 - `ScoreChart.jsx` — Khung SVG (viewBox), co giãn theo bề rộng thẻ
 - `ScrollMemory.jsx` — Nhớ / khôi phục vị trí cuộn (Back/Forward, mở lại tab) theo mục neo, chờ hết khung tải
 - `ScrollJump.jsx` — Hai mũi tên nổi góc phải dưới, ngay trên đầu gấu: lên đầu trang

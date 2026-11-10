@@ -1,0 +1,85 @@
+/* Gấu thật trong ô "Phòng thử đồ" của trang chủ (src/home/main.jsx).
+   Biến màu gấu chép từ styles/base.css vì trang chủ không tải base.css. */
+:root {
+  --pd-belly: #f5ecdc;
+  --pd-accent: #2d6a4f;
+  --pd-accent-dark: #1b4332;
+  --pd-accent-edge: #0f291e;
+  --pd-accent-soft: #74c69d;
+  --pd-paper-line: #524133;
+  --pd-page-bg: #221b16;
+}
+/* Khung 1,5× gấu 180px như phòng thử đồ của app; hoạt cảnh được tràn ra ngoài */
+.home-panda-root.panda-svg-holder {
+  width: 270px;
+  height: 270px;
+  animation: none;
+}
+.home-panda {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.home-panda.is-clickable { cursor: pointer; }
+.home-panda.is-holding { scale: 0.96; transition: scale 0.55s ease; }
+.home-panda:focus-visible { outline: 3px solid var(--pd-accent-soft); outline-offset: 4px; border-radius: 16px; }
+.panda-fitting-stage { overflow: visible; }
+@media (max-width: 420px) {
+  .home-panda-root.panda-svg-holder { width: 220px; height: 220px; }
+}
+
+/* Nút dẫn vào học (Đăng nhập...): rê chuột thì gấu ló đầu ở góc trên phải.
+   .peek là ô ngay trên mép nút; ảnh trượt lên từ đáy ô nên phần thân bị cắt như đang nấp sau nút. */
+.peek-btn { position: relative; overflow: visible; }
+.peek-btn .peek {
+  position: absolute;
+  right: 14px;
+  bottom: 100%;
+  width: 48px;
+  height: 30px;
+  background: url(/home/panda-front.svg) 50% 30px / 48px auto no-repeat;
+  pointer-events: none;
+  transition: background-position 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.peek-btn:hover .peek,
+.peek-btn:focus-visible .peek { background-position: 50% 0; }
+.peek-btn:disabled .peek { display: none; }
+@media (prefers-reduced-motion: reduce) { .peek-btn .peek { transition: none; } }
+/* Ló ra thì nghiêng về phía góc + 2 ngôi sao vàng lấp lánh cạnh gấu */
+.peek-btn .peek { transform-origin: 50% 100%; transition: background-position 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), rotate 0.35s ease; }
+.peek-btn:hover .peek,
+.peek-btn:focus-visible .peek { rotate: 14deg; }
+/* Gấu ngồi trên viền ở góc nút (lệch ra ngoài mép phải), không che chữ */
+.peek-btn .peek { right: -10px; }
+.peek-btn .peek::before,
+.peek-btn .peek::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #fcd34d;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 3px rgba(252, 211, 77, 0.9));
+  opacity: 0;
+  scale: 0;
+}
+.peek-btn .peek::before { right: -8px; top: 2px; }
+.peek-btn .peek::after { right: -14px; top: 16px; width: 6px; height: 6px; }
+.peek-btn:hover .peek::before,
+.peek-btn:focus-visible .peek::before { animation: peekTwinkle 1.2s 0.2s ease-in-out infinite; }
+.peek-btn:hover .peek::after,
+.peek-btn:focus-visible .peek::after { animation: peekTwinkle 1.2s 0.6s ease-in-out infinite; }
+@keyframes peekTwinkle {
+  0%, 100% { opacity: 0; scale: 0.2; rotate: 0deg; }
+  50% { opacity: 1; scale: 1; rotate: 45deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .peek-btn .peek { transition: none; }
+  .peek-btn:hover .peek::before, .peek-btn:hover .peek::after { animation: none; opacity: 1; scale: 1; }
+}
+.peek-btn svg { flex-shrink: 0; }
+/* Nút ở thanh đầu trang chỉ cách mép màn hình ~12px: hạ gấu đè lên góc nút để mũ không bị cắt */
+.btn-login-header .peek { bottom: calc(100% - 12px); height: 28px; right: -16px; width: 40px; background-size: 40px auto; background-position: 50% 28px; }

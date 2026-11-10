@@ -13,6 +13,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
+      // Hai trang: app (index.html) + trang chủ công khai tĩnh (home.html, chỉ có gấu là React)
+      input: { main: 'index.html', home: 'home.html' },
       output: {
         manualChunks(id) {
           for (const [name, re] of VENDORS) if (re.test(id)) return name

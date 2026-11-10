@@ -24,7 +24,8 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(req)
         .then((res) => {
-          if (res.ok) caches.open(CACHE).then((c) => c.put('/index.html', res.clone()))
+          // Trang chủ tĩnh (home.html) không được ghi đè bản lưu của app
+          if (res.ok && url.pathname !== '/home.html') caches.open(CACHE).then((c) => c.put('/index.html', res.clone()))
           return res
         })
         .catch(() => caches.match('/index.html').then((r) => r || Response.error()))
