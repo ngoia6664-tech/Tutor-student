@@ -70,3 +70,8 @@ function mount() {
 }
 
 mount()
+
+// Đăng ký service worker như trang app để trình duyệt cho cài app ngay từ trang chủ (chỉ bản build)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+}
