@@ -925,6 +925,13 @@
   color: var(--muted);
 }
 
+/* Bản sáng: viên khối cam đặc bị chói, đổi sang nền nhạt + viền như nhãn môn */
+:root[data-theme="light"] .ccar-new {
+  background: var(--warn-soft);
+  color: var(--warn);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 45%, transparent);
+}
+
 /* Nhãn "Mới": chủ đề vừa nhập (lib/recentChapters.js), nằm ngay dưới tên chủ đề */
 .ccar-new {
   width: fit-content;

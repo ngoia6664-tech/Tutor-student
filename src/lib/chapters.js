@@ -48,7 +48,9 @@ export async function fetchStudentChapters(myGrade) {
 export const studentGrade = (c, myGrade) => (c.course_id && c.grade != null ? c.grade : myGrade ?? c.grade ?? null)
 
 export async function fetchChapters() {
-  return sortChapters(unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, created_at, course_id')))
+  return sortChapters(
+    unwrap(await supabase.from('chapters').select('id, title, section, grade, subject, sort_order, created_at, course_id, course:courses(id, title, grade, subject, sort_order)'))
+  )
 }
 
 // Khóa học (gia sư: mọi khóa; học sinh: RLS chỉ trả khóa được giao)

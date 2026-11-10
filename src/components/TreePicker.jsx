@@ -1,27 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildTree, gradeLabel, groupByChapter, sectionLabel, subjectLabel } from '../lib/chapters.js'
+import { buildTree, courseLabel, gradeLabel, groupByChapter, sectionLabel, subjectLabel } from '../lib/chapters.js'
 import Icon from './Icon.jsx'
 
 // ----- Dựng cây cho ô chọn -----
 // Nút: { key, label, icon?, children: [...] } (nhóm) hoặc { key, value, label, hint? } (lá chọn được)
 
-// Lớp › Môn › Chương › Chủ đề (lá = chủ đề)
+// Lớp › Môn › Khóa › Chương › Chủ đề. Tên khóa lấy từ c.course (fetchChapters nhúng sẵn);
+// môn chưa có khóa nào thì bỏ cấp Khóa cho gọn
 export function chapterNodes(chapters) {
-  return buildTree(chapters).map((g) => ({
+  const courses = [...new Map(chapters.filter((c) => c.course).map((c) => [c.course.id, c.course])).values()]
+  const sectionNodes = (prefix, sections) =>
+    sections.map((x) => ({
+      key: `${prefix}:${x.key}`,
+      label: sectionLabel(x.section),
+      icon: 'folder',
+      children: x.chapters.map((c) => ({ key: c.id, value: c.id, label: c.title })),
+    }))
+  return buildTree(chapters, courses).map((g) => ({
     key: `g:${g.key}`,
     label: gradeLabel(g.grade),
     icon: 'grade',
-    children: g.subjects.map((s) => ({
-      key: `s:${g.key}:${s.key}`,
-      label: subjectLabel(s.subject),
-      icon: 'book',
-      children: s.sections.map((x) => ({
-        key: `c:${g.key}:${s.key}:${x.key}`,
-        label: sectionLabel(x.section),
-        icon: 'folder',
-        children: x.chapters.map((c) => ({ key: c.id, value: c.id, label: c.title })),
-      })),
-    })),
+    children: g.subjects.map((s) => {
+      const key = `s:${g.key}:${s.key}`
+      const used = s.courses.filter((k) => k.sections.length)
+      return {
+        key,
+        label: subjectLabel(s.subject),
+        icon: 'book',
+        children: used.some((k) => k.course)
+          ? used.map((k) => ({ key: `k:${key}:${k.key}`, label: courseLabel(k.course), icon: 'folder', children: sectionNodes(`c:${key}:${k.key}`, k.sections) }))
+          : sectionNodes(`c:${key}`, s.sections),
+      }
+    }),
   }))
 }
 

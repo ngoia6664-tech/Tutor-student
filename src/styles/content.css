@@ -709,6 +709,12 @@ details > summary {
   color: var(--warn);
 }
 
+.import-dock-sub .import-dock-skip {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--warn);
+}
 .import-dock-actions {
   display: flex;
   align-items: center;

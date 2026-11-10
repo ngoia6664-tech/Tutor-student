@@ -338,6 +338,9 @@ export default function ImportJson() {
   const failed = sources.filter((s) => s.error).length
 
   const chosenRows = rows.filter((r) => opts[r.key]?.include && !saved[r.key])
+  const unsaved = rows.filter((r) => !saved[r.key])
+  // Phần trùng tên mặc định bỏ chọn; nút "Chọn tất cả" ở thanh đáy tick hết các phần chưa lưu
+  const selectAll = () => setOpts((o) => Object.fromEntries([...Object.entries(o), ...unsaved.map((r) => [r.key, { ...o[r.key], include: true }])]))
   const totalExercises = chosenRows.reduce((sum, r) => sum + (r.d.kind === 'assignment' ? (r.d.exercises?.length || 0) : 0), 0)
   const totalLessons = chosenRows.filter((r) => r.d.kind === 'lesson').length
   const totalReceivers = new Set(chosenRows.flatMap((r) => receiversOf(r.key))).size
@@ -673,7 +676,7 @@ export default function ImportJson() {
               <StudentPicker value={studentIds} onChange={setStudentIds} />
               {pending === 0 && (
                 <p className="alert alert-info">
-                  Chưa chọn phần nào để lưu. Các phần trùng tên bài đã có được tự bỏ chọn; hãy tick phần muốn nhập trong bản xem trước bên dưới. Nội dung mới chưa được lưu.
+                  Chưa chọn phần nào để lưu. Các phần trùng tên bài đã có được tự bỏ chọn; hãy tick phần muốn nhập trong bản xem trước bên dưới, hoặc bấm "Chọn tất cả" ở thanh dưới cùng. Nội dung mới chưa được lưu.
                 </p>
               )}
               {single && <div style={{ marginTop: '1rem' }}>{renderSettings(single)}</div>}
@@ -837,9 +840,16 @@ export default function ImportJson() {
                   ) : (
                     <span>Tick chọn phần muốn lưu ở bên trên</span>
                   )}
+                  {pending < unsaved.length && <span className="import-dock-skip">{unsaved.length - pending} phần chưa chọn (thường do trùng tên bài đã có)</span>}
                 </div>
               </div>
               <div className="import-dock-actions">
+                {pending < unsaved.length && (
+                  <button type="button" className="btn" onClick={selectAll} disabled={saving}>
+                    <Icon name="check" />
+                    <span>Chọn tất cả</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-primary btn-big import-dock-save-btn"
