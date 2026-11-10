@@ -6,3 +6,6 @@ dist
 .vercel
 *.log
 .DS_Store
+
+# Bản làm việc tạm của agent
+.claude/worktrees/
