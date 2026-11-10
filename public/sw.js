@@ -2,7 +2,8 @@
 // - Trang (index.html): lấy bản mới từ mạng trước, mất mạng thì dùng bản đã lưu.
 // - /assets/*: tên file có mã băm, không bao giờ đổi nội dung → lưu và dùng lại.
 // - Không đụng tới dữ liệu Supabase (khác tên miền) để không bao giờ hiện dữ liệu cũ.
-const CACHE = 'app-v1'
+// Đổi tên để xóa bộ nhớ cũ (bản v1 có thể đã lưu nhầm trang HTML thay cho file JS)
+const CACHE = 'app-v2'
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -39,7 +40,9 @@ self.addEventListener('fetch', (e) => {
         (hit) =>
           hit ||
           fetch(req).then((res) => {
-            if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()))
+            // Chỉ lưu đúng file tài nguyên, không lưu trang HTML trả về thay cho file đã bị xóa
+            if (res.ok && !(res.headers.get('content-type') || '').includes('text/html'))
+              caches.open(CACHE).then((c) => c.put(req, res.clone()))
             return res
           })
       )
