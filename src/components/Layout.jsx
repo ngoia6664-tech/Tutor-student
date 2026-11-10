@@ -329,7 +329,7 @@ export default function Layout() {
 
   const brand = (
     <span className="brand">
-      <img className="brand-mark" src="/app-icon.svg" alt="" /> <span className="brand-text">Study with Duy Anh</span>
+      <img className="brand-mark" src="/app-icon.svg?v=2" alt="" /> <span className="brand-text">Study with Duy Anh</span>
     </span>
   )
 
