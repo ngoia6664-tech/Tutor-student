@@ -9,7 +9,8 @@ import Icon from './Icon.jsx'
 import NotificationBell from './NotificationBell.jsx'
 import InstallBanner from './InstallBanner.jsx'
 import { mascotSay } from '../lib/celebrate.js'
-import { getSettings, useSettings } from '../lib/settings.js'
+import { getSettings, prefersReducedMotion, useSettings } from '../lib/settings.js'
+import { DASH_INTRO_KEY } from '../lib/authTransition.js'
 import { TELESCOPE_LOCKED, useStudying } from '../lib/studyLock.js'
 import { primeDoorCreak } from './science-lab/labSound.js'
 
@@ -96,6 +97,8 @@ function loadCtxCollapsed() {
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
 
+const INTRO_MS = 4200
+
 const NAV = {
   tutor: [
     // `group`: tiêu đề nhóm nhỏ trong thanh bên (hiện khi đổi nhóm; thanh bên thu gọn thì chỉ còn đường kẻ)
@@ -150,6 +153,25 @@ export default function Layout() {
   const wideCtx = useMedia(WIDE_CTX)
   const phone = useMedia(PHONE)
   const [drawer, setDrawer] = useState(false)
+  // Màn xuất hiện dashboard (styles/dash-intro.css): 1 lần mỗi phiên / sau đăng nhập; tắt khi giảm chuyển động hoặc chế độ nhẹ
+  const [intro, setIntro] = useState(() => {
+    try {
+      return getSettings().animatedBackground && !prefersReducedMotion() && !sessionStorage.getItem(DASH_INTRO_KEY)
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    if (!intro) return
+    try {
+      sessionStorage.setItem(DASH_INTRO_KEY, '1')
+    } catch {
+      // bỏ qua: chỉ là diễn lại lần sau
+    }
+    // Đủ lâu cho khối tải dữ liệu chậm cũng kịp nổi lên; gỡ lớp để đổi trang sau đó không diễn lại
+    const t = setTimeout(() => setIntro(false), INTRO_MS)
+    return () => clearTimeout(t)
+  }, [intro])
   const [rail, setRail] = useState(loadRail)
   const [ctxCollapsed, setCtxCollapsed] = useState(loadCtxCollapsed)
   const menuBtn = useRef(/** @type {HTMLButtonElement | null} */ (null))
@@ -395,7 +417,7 @@ export default function Layout() {
   )
 
   const content = (
-    <div className={`app ${isTutor ? 'is-tutor' : 'is-student'}`}>
+    <div className={`app ${isTutor ? 'is-tutor' : 'is-student'}${intro ? ' is-intro' : ''}`}>
       {/* Thanh bên chung cho gia sư và học sinh: màn rộng ghim / thu gọn thành dải icon, màn hẹp là ngăn kéo */}
       <aside id="app-side" ref={sideRef} className={`side ${drawer ? 'is-open' : ''}`} aria-label="Menu">
         <div className="side-head">

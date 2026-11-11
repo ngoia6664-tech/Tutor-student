@@ -213,6 +213,7 @@
 - `useAsync.js` — Hook tải dữ liệu chung: luôn có loading / error / data / reloa
 
 ## `src/styles/`
+- `dash-intro.css` — Màn xuất hiện dashboard ~2,2s (nhòe → nét) (Layout `.app.is-intro`, 1 lần mỗi phiên / sau đăng nhập, cờ `DASH_INTRO_KEY`): thanh bên trượt → khối nội dung bồng bềnh → thẻ cột phải trôi vào; trang Học sinh: thẻ nhóm thêm vào lần lượt rồi chữ rõ dần; chỉ animate phần tử con bằng translate/scale
 - `auth.css` — Khung + ô nhập trang Đăng nhập và mọi keyframe chuyển cảnh Trang chủ ↔ Đăng nhập (`auth-*`); trang chủ cũng import
 - `assign.css` — Giao bài nhanh từ danh sách (components/QuickAssign.jsx). Bảng c
 - `attempts.css` — Làm bài: thanh tiến độ, câu khó, làm lại
