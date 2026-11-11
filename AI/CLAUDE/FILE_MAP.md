@@ -8,13 +8,13 @@
 - `AI/CLAUDE/` — FEATURES (chi tiết tính năng), HANDOFF (ghi chú ca), ROLE, SFX_PL
 - `supabase/schema.sql` — toàn bộ CSDL: bảng, RLS, hàm RPC, kinh tế Xu/Sao/Chuỗi, Stor
 - `tsconfig.json` — tsc chỉ kiểm tra kiểu (`npm run typecheck`, allowJs + checkJs, không strict); Vite vẫn tự build
-- `home.html` + `public/home/` — trang chủ giới thiệu tĩnh (entry Vite thứ hai; "/" chưa đăng nhập chuyển tới). Chỉ ô Phòng thử đồ là React: `src/home/main.jsx` (gấu thật OutfitPanda + giữ để diễn + tiếng) + `src/home/home-panda.css`
+- `home.html` + `public/home/` — trang chủ giới thiệu tĩnh (entry Vite thứ hai; "/" chưa đăng nhập chuyển tới). Chỉ ô Phòng thử đồ là React: `src/home/main.jsx` (gấu thật OutfitPanda + giữ để diễn + tiếng) + `src/home/home-panda.css`. `src/home/homeAuth.js`: bấm nút có gấu ló tới /login thì gấu nhảy, trang mờ rồi mới chuyển; về từ Login thì gấu nút đầu trang vẫy chào
 - `src/` — mã ứng dụng (danh sách dưới)
 
 ## `src/pages/`
 - `Help.jsx` — Trang Hỏi đáp (/student/help, /tutor/help; nút trong thanh bên / ngăn kéo): ô tìm + nhóm câu hỏi gập mở, theo vai trò; CSS `styles/help.css`
 - `ConfigError.jsx` — Hiện khi thiếu biến môi trường Supabase (thay vì trang tr�
-- `Login.jsx` — Đã đăng nhập: chuyển thẳng tới trang theo vai trò
+- `Login.jsx` — Đã đăng nhập: chuyển thẳng tới trang theo vai trò. Sai mật khẩu lắc thẻ, đúng thì đinh sáng + thẻ trượt đi rồi mới vào app; cảnh báo Caps Lock, "Quên mật khẩu?" (nhắn gia sư), nhớ email lần trước (localStorage `login-email`). Khung nẹp đồng + 4 đinh tán, ô nhập có icon + nút mắt; từ Trang chủ sang thì thẻ trượt vào, đinh đóng, gấu nút ló chào (`phase`), nút "← Trang chủ" diễn ngược rồi mới chuyển
 - `NotFound.jsx` — Trang 404 (đường dẫn không tồn tại)
 - `registry.js` — Mỗi trang là một file JS riêng, chỉ tải khi cần (mở app
 
@@ -193,6 +193,7 @@
 - `reports.js` — `loadMyReports` (báo lỗi của học sinh theo câu: trang làm bài + DailyReview); Sự kiện báo thanh menu cập nhật số câu bị báo lỗi đa
 - `retries.js` — Học sinh làm lại bài đã nộp tối đa 3 lần. Điểm chín
 - `scoreChart.js` — Dữ liệu cho biểu đồ điểm (components/ScoreChart.jsx): quy
+- `authTransition.js` — Cờ chuyển cảnh Trang chủ ↔ Đăng nhập qua sessionStorage (`markTransition`/`takeTransition`), `canAnimateClick` (bỏ qua Ctrl/Cmd/giảm chuyển động)
 - `settings.js` — Cài đặt trải nghiệm (hiệu ứng, linh vật, âm thanh), lư
 - `spaceSound.js` — Âm thanh chế độ ngắm vũ trụ, tổng hợp bằng Web Audio
 - `starSystems.js` — Các hệ sao khác: quỹ đạo, thiên thể (như BODIES), chuyện gấu kể (Alpha Centauri, TRAPPIST-1, Kepler-90)
@@ -212,6 +213,7 @@
 - `useAsync.js` — Hook tải dữ liệu chung: luôn có loading / error / data / reloa
 
 ## `src/styles/`
+- `auth.css` — Khung + ô nhập trang Đăng nhập và mọi keyframe chuyển cảnh Trang chủ ↔ Đăng nhập (`auth-*`); trang chủ cũng import
 - `assign.css` — Giao bài nhanh từ danh sách (components/QuickAssign.jsx). Bảng c
 - `attempts.css` — Làm bài: thanh tiến độ, câu khó, làm lại
 - `base.css` — Biến màu (sáng/tối), nền, kiểu chữ gốc, thanh cuộn tùy chỉnh (`--scroll-thumb`)

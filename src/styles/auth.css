@@ -1,0 +1,345 @@
+/* ===== Đăng nhập: khung nẹp đồng + đinh tán + icon ô nhập, và chuyển cảnh Trang chủ ↔ Đăng nhập =====
+   Dùng ở app (index.css) và trang chủ tĩnh (home/main.jsx). Logic: lib/authTransition.js, home/homeAuth.js. */
+
+/* --- Khung nẹp đồng 2 tầng (nền thẻ giữ màu --surface của app) --- */
+.login-stage {
+  width: 100%;
+  max-width: 400px;
+}
+.login-card {
+  position: relative;
+  padding: 1.6rem 1.7rem 1.7rem;
+  border: 2px solid #b48c52;
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px #4a3418,
+    0 25px 60px -12px rgba(0, 0, 0, 0.7),
+    inset 0 1.5px 1px rgba(255, 235, 180, 0.35),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='light'] .login-card {
+  border: 2px solid #9f7435;
+  box-shadow:
+    0 0 0 1px #5c3f15,
+    0 20px 45px -12px rgba(70, 40, 10, 0.22),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 2px rgba(100, 60, 20, 0.15);
+}
+
+/* 4 đinh tán đồng ở 4 góc */
+.brass-rivet {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd580 0%, #b48c52 55%, #4a3418 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), inset 0 0.5px 0.5px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+.brass-rivet::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 1px;
+  background: #2a1c0b;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.rivet-tl { top: 9px; left: 9px; }
+.rivet-tr { top: 9px; right: 9px; }
+.rivet-br { bottom: 9px; right: 9px; }
+.rivet-bl { bottom: 9px; left: 9px; }
+
+/* --- Ô nhập có icon (thư / khóa) + nút mắt hiện mật khẩu --- */
+.login-input {
+  position: relative;
+}
+.login-input > .icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--muted);
+  pointer-events: none;
+  transition: color 0.2s var(--ease);
+}
+.login-input:focus-within > .icon {
+  color: var(--primary);
+}
+.login-input input {
+  padding-left: 2.4rem;
+  border-color: rgba(180, 140, 82, 0.4);
+}
+.login-input input:has(+ .login-eye) {
+  padding-right: 2.8rem;
+}
+.login-eye {
+  position: absolute;
+  right: 0.3rem;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.login-eye:hover { color: var(--text); }
+.login-eye:focus-visible { outline: 2px solid var(--focus); }
+
+/* --- Vào trang Đăng nhập (từ Trang chủ): thẻ trượt vào → 4 đinh tán đóng → gấu ở nút ló chào --- */
+.login-wrap.is-arrive,
+.login-wrap.is-leave {
+  overflow-x: clip; /* thẻ nằm ngoài màn hình lúc trượt: không hiện thanh cuộn ngang */
+}
+.is-arrive .login-stage {
+  animation: auth-card-in 760ms both;
+}
+@keyframes auth-card-in {
+  0% { transform: translateX(-110vw) rotate(-6deg); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  66% { transform: translateX(14px) rotate(1.4deg); animation-timing-function: ease-in-out; }
+  84% { transform: translateX(-4px) rotate(-0.4deg); animation-timing-function: ease-out; }
+  100% { transform: none; }
+}
+.is-arrive .brass-rivet {
+  animation: auth-rivet-set 300ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.is-arrive .rivet-tl { --d: 720ms; }
+.is-arrive .rivet-tr { --d: 830ms; }
+.is-arrive .rivet-br { --d: 940ms; }
+.is-arrive .rivet-bl { --d: 1050ms; }
+.is-arrive .brass-rivet { animation-delay: var(--d); }
+/* Bụi phấn vàng bắn ra đúng lúc đinh chạm thẻ (55% của 300ms) */
+.is-arrive .brass-rivet::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px;
+  border-radius: 50%;
+  animation: auth-dust 560ms calc(var(--d) + 165ms) ease-out both;
+}
+@keyframes auth-dust {
+  0% { opacity: 0; box-shadow: 0 0 #ffe9b8, 0 0 #ffd580, 0 0 #fff6e0, 0 0 #ffd580, 0 0 #ffe9b8, 0 0 #fff6e0; }
+  8% { opacity: 1; }
+  100% {
+    opacity: 0;
+    box-shadow: -13px -8px #ffe9b8, 12px -10px #ffd580, -15px 5px #fff6e0, 14px 6px #ffd580, -3px -16px #ffe9b8, 4px 14px #fff6e0;
+  }
+}
+@keyframes auth-rivet-set {
+  0% { opacity: 0; transform: translateY(-16px) scale(2.2); outline: 2px solid rgba(255, 213, 128, 0); outline-offset: 0; }
+  55% { opacity: 1; transform: scale(0.8); outline: 2px solid rgba(255, 213, 128, 0.95); outline-offset: 0; }
+  100% { opacity: 1; transform: none; outline: 2px solid rgba(255, 213, 128, 0); outline-offset: 9px; }
+}
+/* Mỗi lần đinh đóng xuống thẻ khẽ giật */
+.is-arrive .login-card {
+  animation: auth-thunk 110ms 885ms 4 ease-out;
+}
+@keyframes auth-thunk {
+  40% { transform: translateY(1.5px); }
+}
+/* Gấu (vừa nhảy khỏi nút ở trang chủ) rơi từ trên xuống, xoay một vòng, đáp vào góc nút rồi vẫy chào */
+.is-arrive .peek-btn .peek {
+  animation: auth-peek-fly 1500ms 700ms both;
+}
+@keyframes auth-peek-fly {
+  0% { opacity: 0; translate: 0 -70vh; rotate: -340deg; background-position: 50% 0; animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5); }
+  6% { opacity: 1; }
+  30% { translate: 0 0; rotate: 14deg; background-position: 50% 0; animation-timing-function: ease-out; }
+  36% { translate: 0 -9px; animation-timing-function: ease-in; }
+  42% { translate: 0 0; }
+  55% { rotate: -8deg; }
+  70% { rotate: 14deg; }
+  86% { rotate: 0deg; background-position: 50% 0; }
+  100% { opacity: 1; translate: 0 0; rotate: 0deg; }
+}
+
+/* Bóng thẻ dưới bàn: rộng + đậm khi thẻ đang bay, gọn lại lúc thẻ hạ xuống */
+.login-stage { position: relative; }
+.is-arrive .login-stage::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 8%;
+  right: 8%;
+  bottom: -26px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+  pointer-events: none;
+  animation: auth-shadow 900ms both;
+}
+@keyframes auth-shadow {
+  0% { opacity: 0; transform: translateY(26px) scale(0.5, 0.6); }
+  45% { opacity: 0.9; transform: translateY(22px) scale(1.15, 1); }
+  75% { opacity: 0.75; transform: none; }
+  100% { opacity: 0; transform: scale(0.92, 0.8); }
+}
+
+/* Đinh cuối đóng xong: đèn trần lóe sáng như vừa bật đèn vào lớp (đèn đang tắt thì không thấy gì) */
+:root:has(.login-wrap.is-arrive) .lamp-cone-triangle {
+  animation: auth-lamp-flash 620ms 1240ms ease-out both;
+}
+@keyframes auth-lamp-flash {
+  0%, 100% { filter: blur(14px) brightness(1); }
+  18% { filter: blur(14px) brightness(2.1); }
+  32% { filter: blur(14px) brightness(1.2); }
+  48% { filter: blur(14px) brightness(1.8); }
+}
+
+/* --- Rời trang Đăng nhập (về Trang chủ): tháo đinh ngược chiều → thẻ trượt đi --- */
+.is-leave .brass-rivet {
+  animation: auth-rivet-pop 220ms ease-in both;
+}
+.is-leave .rivet-br { animation-delay: 60ms; }
+.is-leave .rivet-tr { animation-delay: 120ms; }
+.is-leave .rivet-tl { animation-delay: 180ms; }
+@keyframes auth-rivet-pop {
+  35% { transform: scale(1.3); }
+  100% { opacity: 0; transform: translateY(-20px) scale(0.3); }
+}
+.is-leave .login-stage {
+  animation: auth-card-out 420ms 220ms both;
+}
+@keyframes auth-card-out {
+  0% { transform: none; animation-timing-function: ease-out; }
+  22% { transform: translateX(-14px) rotate(-1deg); animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.3); }
+  100% { transform: translateX(110vw) rotate(6deg); }
+}
+.is-leave .login-back,
+.is-leave .login-theme {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* --- Trang chủ (home/homeAuth.js): bấm Đăng nhập thì gấu nhảy khỏi nút, trang mờ đi;
+       quay về từ Đăng nhập thì gấu ở nút đầu trang ló ra vẫy chào --- */
+/* Nút lún xuống một nhịp rồi bật lên, gấu mới nhảy */
+.peek-btn.is-going {
+  animation: auth-press 300ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+@keyframes auth-press {
+  35% { transform: translateY(2px) scale(0.94); }
+  70% { transform: translateY(-2px) scale(1.04); }
+  100% { transform: none; }
+}
+.peek-btn.is-going .peek {
+  background-position: 50% 0;
+  animation: auth-peek-leap 420ms 90ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes auth-peek-leap {
+  0% { rotate: 14deg; }
+  45% { translate: 0 -14px; rotate: -8deg; scale: 1.15; }
+  0%, 60% { opacity: 1; } /* đường cong nảy vượt 1: không giữ thì gấu mờ mất ngay nửa đầu */
+  100% { translate: 6px -40px; rotate: 20deg; scale: 0.9; opacity: 0; }
+}
+html.auth-leaving body {
+  animation: auth-fade-out 300ms 200ms ease-in both;
+}
+@keyframes auth-fade-out {
+  to { opacity: 0; }
+}
+.peek-btn.is-hello .peek {
+  animation: auth-peek-hello 1s 200ms both;
+}
+/* 0% / 100% bỏ trống: lấy vị trí nấp sẵn có của từng nút (nút đầu trang thấp hơn) */
+@keyframes auth-peek-hello {
+  20%, 76% { background-position: 50% 0; }
+  20% { rotate: 14deg; }
+  40% { rotate: -8deg; }
+  60% { rotate: 14deg; }
+  76% { rotate: 0deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-arrive *, .is-arrive *::before, .is-arrive .login-stage::after, :root .lamp-cone-triangle, .is-leave *, .peek-btn.is-going, .peek-btn.is-going .peek, .peek-btn.is-hello .peek, html.auth-leaving body {
+    animation: none !important;
+  }
+}
+
+/* --- Caps Lock, Quên mật khẩu --- */
+.login-caps {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--warn);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.login-caps::before { content: '⇪'; }
+.login-forgot {
+  margin: -0.35rem 0 0.85rem;
+  text-align: right;
+}
+.login-forgot p {
+  margin: 0.35rem 0 0;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.login-link {
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-link:hover { text-decoration: underline; }
+.login-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* --- Sai mật khẩu: thẻ lắc ngang, đinh tán rung --- */
+.is-error .login-stage {
+  animation: auth-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes auth-shake {
+  15%, 85% { transform: translateX(-3px); }
+  30%, 70% { transform: translateX(6px); }
+  45%, 55% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+}
+.is-error .brass-rivet {
+  animation: auth-rivet-jitter 420ms ease-in-out both;
+}
+@keyframes auth-rivet-jitter {
+  25% { rotate: 25deg; }
+  50% { rotate: -20deg; }
+  75% { rotate: 10deg; }
+}
+
+/* --- Đăng nhập đúng: 4 đinh sáng lần lượt rồi thẻ trượt đi vào app --- */
+.is-success .brass-rivet {
+  animation: auth-rivet-glow 260ms ease-out both;
+}
+.is-success .rivet-tr { animation-delay: 70ms; }
+.is-success .rivet-br { animation-delay: 140ms; }
+.is-success .rivet-bl { animation-delay: 210ms; }
+@keyframes auth-rivet-glow {
+  60% { scale: 1.35; box-shadow: 0 0 0 4px rgba(255, 213, 128, 0.35), 0 0 14px 4px rgba(255, 213, 128, 0.9); }
+  100% { box-shadow: 0 0 10px 2px rgba(255, 213, 128, 0.7); }
+}
+.is-success .login-stage {
+  animation: auth-card-out 420ms 460ms both;
+}
+.is-success .login-back,
+.is-success .login-theme {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.login-wrap.is-success { overflow-x: clip; }
+
+@media (prefers-reduced-motion: reduce) {
+  .is-error *, .is-success * { animation: none !important; }
+}
+/* Hết cảnh mà hồ sơ chưa tải xong: giữ thẻ ẩn, khỏi bật ngược về giữa trước khi vào app */
+.is-done .login-stage { visibility: hidden; }
