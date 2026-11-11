@@ -20,7 +20,7 @@ import TutorOnboarding from '../../components/TutorOnboarding.jsx'
 const NONE = '__none' // khóa nhóm "Chưa xếp nhóm"
 
 const SHELL_SLOTS = [0, 1, 2, 3, 4, 5]
-const SHELLS_IN_MS = 1400 // 6 khung xuất hiện xong trong màn xuất hiện (khớp --d trong styles/dash-intro.css)
+const SHELLS_IN_MS = 1050 // 6 khung xuất hiện xong trong màn xuất hiện (khớp --d trong styles/dash-intro.css)
 
 export default function TutorStudents() {
   const [group, setGroup] = useRemembered('tutor-students-group', 'all', (v) => typeof v === 'string')

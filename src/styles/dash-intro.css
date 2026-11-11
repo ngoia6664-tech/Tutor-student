@@ -1,4 +1,4 @@
-/* ===== Màn xuất hiện dashboard (Layout: .app.is-intro — 1 lần mỗi phiên / sau đăng nhập, ~2,2 giây) =====
+/* ===== Màn xuất hiện dashboard (Layout: .app.is-intro — 1 lần mỗi phiên / sau đăng nhập, ~1,6 giây gia sư / ~2,7 giây học sinh) =====
    Thứ tự: thanh bên trái → nội dung chính → (trang Học sinh: thẻ nhóm lần lượt, chữ rõ dần) → cột phải.
 
    Nguyên tắc cho mượt:
@@ -70,38 +70,38 @@
   --d: 0ms;
   will-change: translate, opacity;
   animation:
-    intro-left 800ms var(--ease-glide) both,
-    intro-fade 600ms var(--ease-fade) both;
+    intro-left 600ms var(--ease-glide) both,
+    intro-fade 450ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .nav-side > :nth-child(2) { --d: 80ms; }
-.app.is-intro .nav-side > :nth-child(3) { --d: 140ms; }
-.app.is-intro .nav-side > :nth-child(4) { --d: 200ms; }
-.app.is-intro .nav-side > :nth-child(5) { --d: 260ms; }
-.app.is-intro .nav-side > :nth-child(6) { --d: 320ms; }
-.app.is-intro .nav-side > :nth-child(7) { --d: 380ms; }
-.app.is-intro .nav-side > :nth-child(8) { --d: 440ms; }
-.app.is-intro .nav-side > :nth-child(n + 9) { --d: 500ms; }
-.app.is-intro .side-foot > * { --d: 560ms; }
+.app.is-intro .nav-side > :nth-child(2) { --d: 60ms; }
+.app.is-intro .nav-side > :nth-child(3) { --d: 105ms; }
+.app.is-intro .nav-side > :nth-child(4) { --d: 150ms; }
+.app.is-intro .nav-side > :nth-child(5) { --d: 195ms; }
+.app.is-intro .nav-side > :nth-child(6) { --d: 240ms; }
+.app.is-intro .nav-side > :nth-child(7) { --d: 285ms; }
+.app.is-intro .nav-side > :nth-child(8) { --d: 330ms; }
+.app.is-intro .nav-side > :nth-child(n + 9) { --d: 375ms; }
+.app.is-intro .side-foot > * { --d: 420ms; }
 /* Viên nền mục đang chọn hiện sau khi mục menu đã vào chỗ (không đụng transform định vị của nó) */
 .app.is-intro .nav-pill {
-  animation: intro-fade 600ms 420ms var(--ease-fade) both;
+  animation: intro-fade 450ms 320ms var(--ease-fade) both;
 }
 
 /* --- 2. Nội dung chính (0,35 – 1,9s): từng khối bồng bềnh nổi lên, rõ dần (cách 110ms) --- */
 .app.is-intro .page-enter > * > * {
-  --d: 900ms;
+  --d: 660ms;
   will-change: translate, opacity;
   animation:
-    intro-up 1000ms var(--ease-float) both,
-    intro-fade 800ms var(--ease-fade) both;
+    intro-up 700ms var(--ease-float) both,
+    intro-fade 550ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .page-enter > * > :nth-child(1) { --d: 350ms; }
-.app.is-intro .page-enter > * > :nth-child(2) { --d: 460ms; }
-.app.is-intro .page-enter > * > :nth-child(3) { --d: 570ms; }
-.app.is-intro .page-enter > * > :nth-child(4) { --d: 680ms; }
-.app.is-intro .page-enter > * > :nth-child(5) { --d: 790ms; }
+.app.is-intro .page-enter > * > :nth-child(1) { --d: 260ms; }
+.app.is-intro .page-enter > * > :nth-child(2) { --d: 340ms; }
+.app.is-intro .page-enter > * > :nth-child(3) { --d: 420ms; }
+.app.is-intro .page-enter > * > :nth-child(4) { --d: 500ms; }
+.app.is-intro .page-enter > * > :nth-child(5) { --d: 580ms; }
 
 /* --- 2b. Trang Học sinh (trang mở đầu sau đăng nhập): một dòng thời gian cố định, bố cục không nhảy
        (TutorStudents dựng sẵn toolbar + 6 khung thẻ ngay từ đầu, dữ liệu chỉ rót vào chỗ có sẵn)
@@ -112,38 +112,38 @@
   animation: none;
   will-change: auto;
 }
-.app.is-intro .students-page > .page-head { --d: 250ms; }
-.app.is-intro .students-page > .row-between { --d: 620ms; } /* dòng "Tìm thấy…" khi đang có bộ lọc nhớ từ lần trước */
+.app.is-intro .students-page > .page-head { --d: 180ms; }
+.app.is-intro .students-page > .row-between { --d: 450ms; } /* dòng "Tìm thấy…" khi đang có bộ lọc nhớ từ lần trước */
 .app.is-intro .students-page > .assign-toolbar > :not(.row),
 .app.is-intro .students-page > .assign-toolbar > .row > * {
-  --d: 600ms;
+  --d: 440ms;
   will-change: translate, opacity;
   animation:
-    intro-up 900ms var(--ease-float) both,
-    intro-fade 600ms var(--ease-fade) both;
+    intro-up 650ms var(--ease-float) both,
+    intro-fade 450ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .students-page > .assign-toolbar > :first-child { --d: 350ms; }
-.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(1) { --d: 400ms; }
-.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(2) { --d: 450ms; }
-.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(3) { --d: 500ms; }
-.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(4) { --d: 550ms; }
+.app.is-intro .students-page > .assign-toolbar > :first-child { --d: 250ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(1) { --d: 285ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(2) { --d: 320ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(3) { --d: 355ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(4) { --d: 390ms; }
 
 .app.is-intro .group-card {
-  --d: 1180ms;
+  --d: 845ms;
   will-change: translate, opacity;
   animation:
-    intro-up 900ms var(--ease-float) both,
-    intro-fade 500ms var(--ease-fade) both;
+    intro-up 650ms var(--ease-float) both,
+    intro-fade 380ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .group-card:nth-child(1) { --d: 550ms; }
-.app.is-intro .group-card:nth-child(2) { --d: 640ms; }
-.app.is-intro .group-card:nth-child(3) { --d: 730ms; }
-.app.is-intro .group-card:nth-child(4) { --d: 820ms; }
-.app.is-intro .group-card:nth-child(5) { --d: 910ms; }
-.app.is-intro .group-card:nth-child(6) { --d: 1000ms; }
-.app.is-intro .group-card:nth-child(7) { --d: 1090ms; }
+.app.is-intro .group-card:nth-child(1) { --d: 400ms; }
+.app.is-intro .group-card:nth-child(2) { --d: 465ms; }
+.app.is-intro .group-card:nth-child(3) { --d: 530ms; }
+.app.is-intro .group-card:nth-child(4) { --d: 595ms; }
+.app.is-intro .group-card:nth-child(5) { --d: 660ms; }
+.app.is-intro .group-card:nth-child(6) { --d: 725ms; }
+.app.is-intro .group-card:nth-child(7) { --d: 790ms; }
 /* Dữ liệu về muộn (6 khung đã đứng yên): thẻ thứ 7 trở đi chỉ có khi đã có dữ liệu → vào ngay, không bắt chờ */
 .app.is-intro .group-grid.is-filling:not(.is-early) .group-card:nth-child(n + 7) { --d: 100ms; }
 
@@ -178,21 +178,21 @@
 }
 /* Điền dữ liệu: chữ trong từng thẻ rõ dần, nối nhau theo thứ tự thẻ (cách 70ms) */
 .group-grid.is-filling .group-card > * {
-  --f: 660ms;
+  --f: 300ms;
   will-change: opacity, filter;
-  animation: intro-focus 1100ms var(--ease-text) both;
+  animation: intro-focus 480ms cubic-bezier(0.4, 0, 0.2, 1) both;
   animation-delay: var(--f);
 }
 .group-grid.is-filling .group-card:nth-child(1) > * { --f: 0ms; }
-.group-grid.is-filling .group-card:nth-child(2) > * { --f: 110ms; }
-.group-grid.is-filling .group-card:nth-child(3) > * { --f: 220ms; }
-.group-grid.is-filling .group-card:nth-child(4) > * { --f: 330ms; }
-.group-grid.is-filling .group-card:nth-child(5) > * { --f: 440ms; }
-.group-grid.is-filling .group-card:nth-child(6) > * { --f: 550ms; }
+.group-grid.is-filling .group-card:nth-child(2) > * { --f: 50ms; }
+.group-grid.is-filling .group-card:nth-child(3) > * { --f: 100ms; }
+.group-grid.is-filling .group-card:nth-child(4) > * { --f: 150ms; }
+.group-grid.is-filling .group-card:nth-child(5) > * { --f: 200ms; }
+.group-grid.is-filling .group-card:nth-child(6) > * { --f: 250ms; }
 
 /* Dữ liệu về sớm (khung còn đang lần lượt xuất hiện): chữ mỗi thẻ đợi khung đó vào chỗ rồi mới rõ */
 .app.is-intro .group-grid.is-filling.is-early .group-card > * {
-  animation-delay: calc(var(--d) + 350ms);
+  animation-delay: calc(var(--d) + 250ms);
 }
 
 /* Số đếm (tiêu đề, nút Nhóm / Học sinh, dòng "Tìm thấy"): giữ chỗ bằng "–" lúc chờ, có số thì rõ dần */
@@ -202,7 +202,7 @@
   text-align: center;
 }
 .fill-num:not(.is-pending) {
-  animation: intro-focus 1000ms var(--ease-text) both;
+  animation: intro-focus 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 .fill-num.is-pending {
   opacity: 0.45;
@@ -226,34 +226,54 @@
   to { opacity: 1; translate: 0 0; }
 }
 .group-block.is-list .group-frame {
-  animation: list-in 750ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: list-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .group-block.is-list .group-frame:nth-child(2) { animation-delay: 80ms; }
 .group-block.is-list .group-frame:nth-child(n + 3) { animation-delay: 160ms; }
 .group-block.is-list .student-row {
-  --r: 540ms;
-  animation: intro-focus 900ms var(--ease-text) both;
+  --r: 360ms;
+  animation: intro-focus 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
   animation-delay: var(--r);
 }
 .group-block.is-list .student-row:nth-child(1) { --r: 120ms; }
-.group-block.is-list .student-row:nth-child(2) { --r: 190ms; }
-.group-block.is-list .student-row:nth-child(3) { --r: 260ms; }
-.group-block.is-list .student-row:nth-child(4) { --r: 330ms; }
-.group-block.is-list .student-row:nth-child(5) { --r: 400ms; }
-.group-block.is-list .student-row:nth-child(6) { --r: 470ms; }
+.group-block.is-list .student-row:nth-child(2) { --r: 160ms; }
+.group-block.is-list .student-row:nth-child(3) { --r: 200ms; }
+.group-block.is-list .student-row:nth-child(4) { --r: 240ms; }
+.group-block.is-list .student-row:nth-child(5) { --r: 280ms; }
+.group-block.is-list .student-row:nth-child(6) { --r: 320ms; }
+
+/* --- 2e. Tài khoản học sinh: chữ xuất hiện chậm và dịu hơn gia sư (khối nội dung + thẻ cột phải),
+       cùng thứ tự; vẫn chỉ opacity + translate (không blur cả khối lớn cho máy học sinh mượt). --- */
+.app.is-student.is-intro .page-enter > * > * {
+  animation:
+    intro-up 1400ms var(--ease-float) both,
+    intro-fade 1500ms var(--ease-text) both;
+  animation-delay: var(--d), var(--d);
+}
+.app.is-student.is-intro .page-enter > * > :nth-child(2) { --d: 520ms; }
+.app.is-student.is-intro .page-enter > * > :nth-child(3) { --d: 690ms; }
+.app.is-student.is-intro .page-enter > * > :nth-child(4) { --d: 860ms; }
+.app.is-student.is-intro .page-enter > * > :nth-child(5) { --d: 1030ms; }
+.app.is-student.is-intro .page-enter > * > :nth-child(n + 6) { --d: 1200ms; }
 
 /* --- 3. Cột phải (0,9 – 2,2s): từng thẻ trôi vào sau cùng (2 phần tử đầu là nút đóng + thanh thu gọn) --- */
 .app.is-intro .ctx-panel > .ctx-card {
-  --d: 1260ms;
+  --d: 920ms;
   will-change: translate, opacity;
   animation:
-    intro-diag 1000ms var(--ease-glide) both,
-    intro-fade 800ms var(--ease-fade) both;
+    intro-diag 700ms var(--ease-glide) both,
+    intro-fade 550ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .ctx-panel > .ctx-card:nth-child(3) { --d: 900ms; }
-.app.is-intro .ctx-panel > .ctx-card:nth-child(4) { --d: 1020ms; }
-.app.is-intro .ctx-panel > .ctx-card:nth-child(5) { --d: 1140ms; }
+.app.is-student.is-intro .ctx-panel > .ctx-card {
+  animation:
+    intro-diag 1300ms var(--ease-glide) both,
+    intro-fade 1400ms var(--ease-text) both;
+  animation-delay: var(--d), var(--d);
+}
+.app.is-intro .ctx-panel > .ctx-card:nth-child(3) { --d: 650ms; }
+.app.is-intro .ctx-panel > .ctx-card:nth-child(4) { --d: 740ms; }
+.app.is-intro .ctx-panel > .ctx-card:nth-child(5) { --d: 830ms; }
 
 /* --- Màn hẹp: nút trên cùng rơi nhẹ xuống, thanh tab học sinh nổi lên từ đáy --- */
 .app.is-intro .topbar-inner > * {
