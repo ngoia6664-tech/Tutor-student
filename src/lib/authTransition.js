@@ -3,6 +3,8 @@
 import { prefersReducedMotion } from './settings.js'
 
 const KEY = 'auth-transition'
+/** Cờ sessionStorage: dashboard đã diễn màn xuất hiện trong phiên này (Layout); đăng nhập xong thì xóa để diễn lại */
+export const DASH_INTRO_KEY = 'dash-intro'
 
 /** @param {'login' | 'home'} to */
 export function markTransition(to) {

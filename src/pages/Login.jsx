@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { errMsg } from '../lib/errors.js'
 import { prefersReducedMotion } from '../lib/settings.js'
-import { canAnimateClick, clearTransition, markTransition, readTransition } from '../lib/authTransition.js'
+import { canAnimateClick, clearTransition, DASH_INTRO_KEY, markTransition, readTransition } from '../lib/authTransition.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorBox from '../components/ErrorBox.jsx'
@@ -52,7 +52,10 @@ export default function Login() {
       if (!prefersReducedMotion()) setPhase('error')
       return
     }
-    try { localStorage.setItem(EMAIL_KEY, email.trim()) } catch { /* không lưu được thì thôi */ }
+    try {
+      localStorage.setItem(EMAIL_KEY, email.trim())
+      sessionStorage.removeItem(DASH_INTRO_KEY) // vào dashboard thì diễn màn xuất hiện
+    } catch { /* không lưu được thì thôi */ }
     if (!prefersReducedMotion()) setPhase('success')
   }
 
