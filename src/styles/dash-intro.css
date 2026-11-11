@@ -10,6 +10,10 @@
    - Chỉ animate phần tử CON: thanh bên / cột phải ở màn hẹp là ngăn kéo ẩn bằng transform, không được đụng.
      Dùng translate / scale riêng (không dùng transform) để khỏi đè vị trí sẵn có. */
 
+/* Chữ rõ dần: vào êm, kết thúc rất dịu — dùng cả ngoài màn xuất hiện nên khai báo ở :root */
+:root {
+  --ease-text: cubic-bezier(0.33, 0, 0.15, 1);
+}
 .app.is-intro {
   --intro-blur: 6px;
   /* Lướt ra rồi chậm dần đều, không vượt (thanh bên, cột phải, nút) */
@@ -50,7 +54,7 @@
   to { opacity: 1; }
 }
 @keyframes intro-focus {
-  from { opacity: 0; filter: blur(var(--intro-blur)); }
+  from { opacity: 0; filter: blur(var(--intro-blur, 5px)); }
   to { opacity: 1; filter: blur(0); }
 }
 
@@ -99,33 +103,144 @@
 .app.is-intro .page-enter > * > :nth-child(4) { --d: 680ms; }
 .app.is-intro .page-enter > * > :nth-child(5) { --d: 790ms; }
 
-/* --- 2b. Trang Học sinh (trang mở đầu sau đăng nhập): từng thẻ nhóm được thêm vào 1, 2, 3…
-       rồi chữ trong thẻ rõ dần (mờ → nét) sau khi khung vào chỗ. Cả khối lưới không nổi chung. --- */
-.app.is-intro .page-enter > * > .group-block {
+/* --- 2b. Trang Học sinh (trang mở đầu sau đăng nhập): một dòng thời gian cố định, bố cục không nhảy
+       (TutorStudents dựng sẵn toolbar + 6 khung thẻ ngay từ đầu, dữ liệu chỉ rót vào chỗ có sẵn)
+       0,25s tiêu đề → 0,35s toolbar: ô tìm → ô lọc → nút (cách 50ms) → 0,55s khung thẻ 1…6 (cách 90ms)
+       → dữ liệu về: số trên toolbar + chữ trong thẻ rõ dần (mục 2c). --- */
+.app.is-intro .students-page > .assign-toolbar,
+.app.is-intro .students-page > .group-block {
   animation: none;
   will-change: auto;
 }
+.app.is-intro .students-page > .page-head { --d: 250ms; }
+.app.is-intro .students-page > .row-between { --d: 620ms; } /* dòng "Tìm thấy…" khi đang có bộ lọc nhớ từ lần trước */
+.app.is-intro .students-page > .assign-toolbar > :not(.row),
+.app.is-intro .students-page > .assign-toolbar > .row > * {
+  --d: 600ms;
+  will-change: translate, opacity;
+  animation:
+    intro-up 900ms var(--ease-float) both,
+    intro-fade 600ms var(--ease-fade) both;
+  animation-delay: var(--d), var(--d);
+}
+.app.is-intro .students-page > .assign-toolbar > :first-child { --d: 350ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(1) { --d: 400ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(2) { --d: 450ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(3) { --d: 500ms; }
+.app.is-intro .students-page > .assign-toolbar > .row > :nth-child(4) { --d: 550ms; }
+
 .app.is-intro .group-card {
-  --d: 870ms; /* thẻ thứ 9 trở đi (thường đã ngoài màn hình) hiện cùng lúc */
+  --d: 1180ms;
   will-change: translate, opacity;
   animation:
     intro-up 900ms var(--ease-float) both,
     intro-fade 500ms var(--ease-fade) both;
   animation-delay: var(--d), var(--d);
 }
-.app.is-intro .group-card > * {
-  will-change: opacity, filter;
-  animation: intro-focus 700ms var(--ease-fade) both;
-  animation-delay: calc(var(--d) + 300ms);
+.app.is-intro .group-card:nth-child(1) { --d: 550ms; }
+.app.is-intro .group-card:nth-child(2) { --d: 640ms; }
+.app.is-intro .group-card:nth-child(3) { --d: 730ms; }
+.app.is-intro .group-card:nth-child(4) { --d: 820ms; }
+.app.is-intro .group-card:nth-child(5) { --d: 910ms; }
+.app.is-intro .group-card:nth-child(6) { --d: 1000ms; }
+.app.is-intro .group-card:nth-child(7) { --d: 1090ms; }
+/* Dữ liệu về muộn (6 khung đã đứng yên): thẻ thứ 7 trở đi chỉ có khi đã có dữ liệu → vào ngay, không bắt chờ */
+.app.is-intro .group-grid.is-filling:not(.is-early) .group-card:nth-child(n + 7) { --d: 100ms; }
+
+/* --- 2c. Trang Học sinh lúc chờ API (TutorStudents: .group-card.is-shell, mọi lần tải đầu của trang):
+       khung thẻ trống thay khung xám; chờ lâu (> 1,2s) thì sóng sáng lướt qua lần lượt từng thẻ.
+       Dữ liệu về: React điền vào đúng khung đó (.group-grid.is-filling) → chữ rõ dần, khung không dựng lại. --- */
+.group-card.is-shell {
+  --w: 0ms;
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
 }
-.app.is-intro .group-card:nth-child(1) { --d: 150ms; }
-.app.is-intro .group-card:nth-child(2) { --d: 240ms; }
-.app.is-intro .group-card:nth-child(3) { --d: 330ms; }
-.app.is-intro .group-card:nth-child(4) { --d: 420ms; }
-.app.is-intro .group-card:nth-child(5) { --d: 510ms; }
-.app.is-intro .group-card:nth-child(6) { --d: 600ms; }
-.app.is-intro .group-card:nth-child(7) { --d: 690ms; }
-.app.is-intro .group-card:nth-child(8) { --d: 780ms; }
+.group-card.is-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.07) 50%, transparent 70%);
+  translate: -100% 0;
+  animation: shell-wave 1.8s ease-in-out infinite;
+  animation-delay: calc(1200ms + var(--w));
+}
+:root[data-theme='light'] .group-card.is-shell::after {
+  background: linear-gradient(100deg, transparent 30%, rgba(194, 133, 71, 0.13) 50%, transparent 70%);
+}
+.group-card.is-shell:nth-child(2) { --w: 120ms; }
+.group-card.is-shell:nth-child(3) { --w: 240ms; }
+.group-card.is-shell:nth-child(4) { --w: 360ms; }
+.group-card.is-shell:nth-child(5) { --w: 480ms; }
+.group-card.is-shell:nth-child(6) { --w: 600ms; }
+@keyframes shell-wave {
+  to { translate: 100% 0; }
+}
+/* Điền dữ liệu: chữ trong từng thẻ rõ dần, nối nhau theo thứ tự thẻ (cách 70ms) */
+.group-grid.is-filling .group-card > * {
+  --f: 660ms;
+  will-change: opacity, filter;
+  animation: intro-focus 1100ms var(--ease-text) both;
+  animation-delay: var(--f);
+}
+.group-grid.is-filling .group-card:nth-child(1) > * { --f: 0ms; }
+.group-grid.is-filling .group-card:nth-child(2) > * { --f: 110ms; }
+.group-grid.is-filling .group-card:nth-child(3) > * { --f: 220ms; }
+.group-grid.is-filling .group-card:nth-child(4) > * { --f: 330ms; }
+.group-grid.is-filling .group-card:nth-child(5) > * { --f: 440ms; }
+.group-grid.is-filling .group-card:nth-child(6) > * { --f: 550ms; }
+
+/* Dữ liệu về sớm (khung còn đang lần lượt xuất hiện): chữ mỗi thẻ đợi khung đó vào chỗ rồi mới rõ */
+.app.is-intro .group-grid.is-filling.is-early .group-card > * {
+  animation-delay: calc(var(--d) + 350ms);
+}
+
+/* Số đếm (tiêu đề, nút Nhóm / Học sinh, dòng "Tìm thấy"): giữ chỗ bằng "–" lúc chờ, có số thì rõ dần */
+.fill-num {
+  display: inline-block;
+  min-width: 1ch;
+  text-align: center;
+}
+.fill-num:not(.is-pending) {
+  animation: intro-focus 1000ms var(--ease-text) both;
+}
+.fill-num.is-pending {
+  opacity: 0.45;
+}
+/* Toolbar + nút chuỗi dựng sẵn lúc chờ dữ liệu: khóa (inert) + mờ nhẹ, có dữ liệu thì sáng dần */
+.students-page .assign-toolbar,
+.students-page .page-head > div {
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.students-page .is-pending {
+  opacity: 0.55;
+}
+
+/* --- 2d. Chế độ Học sinh / trong một nhóm (.group-block.is-list): dữ liệu về, đổi chế độ hay lọc ra em mới
+       thì khung nhóm nổi nhẹ lên, từng dòng học sinh rõ dần nối nhau (ngắn, để gõ tìm kiếm vẫn nhanh). --- */
+.group-block.is-list {
+  --intro-blur: 3px;
+}
+@keyframes list-in {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.group-block.is-list .group-frame {
+  animation: list-in 750ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.group-block.is-list .group-frame:nth-child(2) { animation-delay: 80ms; }
+.group-block.is-list .group-frame:nth-child(n + 3) { animation-delay: 160ms; }
+.group-block.is-list .student-row {
+  --r: 540ms;
+  animation: intro-focus 900ms var(--ease-text) both;
+  animation-delay: var(--r);
+}
+.group-block.is-list .student-row:nth-child(1) { --r: 120ms; }
+.group-block.is-list .student-row:nth-child(2) { --r: 190ms; }
+.group-block.is-list .student-row:nth-child(3) { --r: 260ms; }
+.group-block.is-list .student-row:nth-child(4) { --r: 330ms; }
+.group-block.is-list .student-row:nth-child(5) { --r: 400ms; }
+.group-block.is-list .student-row:nth-child(6) { --r: 470ms; }
 
 /* --- 3. Cột phải (0,9 – 2,2s): từng thẻ trôi vào sau cùng (2 phần tử đầu là nút đóng + thanh thu gọn) --- */
 .app.is-intro .ctx-panel > .ctx-card {
@@ -155,6 +270,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .group-card.is-shell::after,
+  .group-grid.is-filling .group-card > *,
+  .fill-num,
+  .group-block.is-list .group-frame,
+  .group-block.is-list .student-row,
   .app.is-intro *,
   .app.is-intro .tabbar {
     animation: none !important;

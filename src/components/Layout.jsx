@@ -542,7 +542,8 @@ export default function Layout() {
             {/* key theo đường dẫn: mỗi lần đổi trang chạy lại hiệu ứng hiện trang và xóa lỗi cũ */}
             <div key={pageKey} className="page-enter">
               <ErrorBoundary>
-                <Suspense fallback={<Loading />}>
+                {/* Màn xuất hiện: không hiện khung xám chờ tải mã trang (vài trăm ms) để khỏi nháy trước motion */}
+                <Suspense fallback={intro ? null : <Loading />}>
                   <Outlet />
                 </Suspense>
               </ErrorBoundary>

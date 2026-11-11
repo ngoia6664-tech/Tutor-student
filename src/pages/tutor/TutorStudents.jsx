@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useMemo, useState } from 'react'
+import { memo, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -18,6 +18,9 @@ import CustomSelect from '../../components/CustomSelect.jsx'
 import TutorOnboarding from '../../components/TutorOnboarding.jsx'
 
 const NONE = '__none' // khóa nhóm "Chưa xếp nhóm"
+
+const SHELL_SLOTS = [0, 1, 2, 3, 4, 5]
+const SHELLS_IN_MS = 1400 // 6 khung xuất hiện xong trong màn xuất hiện (khớp --d trong styles/dash-intro.css)
 
 export default function TutorStudents() {
   const [group, setGroup] = useRemembered('tutor-students-group', 'all', (v) => typeof v === 'string')
@@ -143,6 +146,18 @@ export default function TutorStudents() {
   }, [blocks, deferredSearchQuery, gradeFilter, statusFilter, activeSearch, data])
 
   const detail = group === 'all' ? null : blocks.find((b) => b.key === group)
+  // Lần tải đầu ở chế độ Nhóm: hiện khung thẻ trống thay khung xám; dữ liệu về thì điền chữ vào (rõ dần, styles/dash-intro.css)
+  const shells = loading && !data && !error && group === 'all' && viewMode === 'groups'
+  const filledFromShells = useRef(false)
+  if (shells) filledFromShells.current = true // ghi cờ khi render: chỉ đổi 1 chiều false → true, chạy lại vẫn vậy
+  // Dữ liệu về khi 6 khung còn đang lần lượt xuất hiện (màn xuất hiện lần đầu): chữ mỗi thẻ đợi khung đó vào chỗ
+  // rồi mới rõ (.is-early), không chen ngang. Về muộn thì chữ rõ ngay theo thứ tự thẻ.
+  const mountedAt = useRef(performance.now())
+  const fillEarly = useRef(/** @type {boolean | null} */ (null))
+  if (data && filledFromShells.current && fillEarly.current === null) fillEarly.current = performance.now() - mountedAt.current < SHELLS_IN_MS
+  // Số đếm: chưa có dữ liệu thì giữ chỗ bằng "–", có rồi thì số rõ dần (key đổi → dựng lại → chạy hiệu ứng)
+  /** @param {number} n */
+  const count = (n) => <span key={data ? 'n' : 'p'} className={data ? 'fill-num' : 'fill-num is-pending'}>{data ? n : '–'}</span>
 
   function resetFilters() {
     setSearchQuery('')
@@ -152,17 +167,21 @@ export default function TutorStudents() {
   }
 
   return (
-    <div>
+    <div className="students-page">
       <TutorOnboarding />
       <div className="page-head">
         <h1>
-          <span className="title-icon"><Icon name="users" /></span>Học sinh {data && <span className="muted small">({students.length})</span>}
+          <span className="title-icon"><Icon name="users" /></span>Học sinh <span className="muted small">({count(students.length)})</span>
         </h1>
-        {data && <StreakBackupButtons students={students} onRestored={reload} />}
+        {/* Dựng sẵn từ đầu (khóa khi chưa có dữ liệu) để không bật ra đẩy bố cục */}
+        <div inert={!data} className={data ? undefined : 'is-pending'}>
+          <StreakBackupButtons students={students} onRestored={reload} />
+        </div>
       </div>
 
-      {data && (
-        <div className="assign-toolbar" style={{ flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.8rem' }}>
+      {/* Toolbar dựng ngay khi mở trang (khóa mờ lúc chờ dữ liệu): lưới thẻ có chỗ cố định, không bị đẩy xuống */}
+      {(
+        <div className={`assign-toolbar${data ? '' : ' is-pending'}`} inert={!data} aria-busy={!data} style={{ flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.8rem' }}>
           {/* Thanh tìm kiếm */}
           <div style={{ position: 'relative', flex: '1 1 240px', minWidth: '200px' }}>
             <input
@@ -230,7 +249,7 @@ export default function TutorStudents() {
                 onClick={() => setViewMode('groups')}
                 title="Các khối nhóm: bấm một khối để xem học sinh trong nhóm"
               >
-                <Icon name="grid" size={14} /> Nhóm ({filteredBlocks.length})
+                <Icon name="grid" size={14} /> Nhóm ({count(filteredBlocks.length)})
               </button>
               <button
                 type="button"
@@ -238,7 +257,7 @@ export default function TutorStudents() {
                 onClick={() => setViewMode('students')}
                 title="Mọi học sinh, chia khung theo nhóm"
               >
-                <Icon name="users" size={14} /> Học sinh ({filteredStudents.length})
+                <Icon name="users" size={14} /> Học sinh ({count(filteredStudents.length)})
               </button>
             </div>
             )}
@@ -252,10 +271,10 @@ export default function TutorStudents() {
       )}
 
       {/* Dòng trạng thái khi đang có bộ lọc / tìm kiếm */}
-      {data && activeSearch && (
+      {activeSearch && (
         <div className="row row-between small muted" style={{ margin: '0.3rem 0 0.8rem', padding: '0.4rem 0.6rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <span>
-            Tìm thấy <strong>{filteredStudents.length}</strong> học sinh trong <strong>{filteredBlocks.length}</strong> nhóm
+            Tìm thấy <strong>{count(filteredStudents.length)}</strong> học sinh trong <strong>{count(filteredBlocks.length)}</strong> nhóm
             {searchQuery && <> khớp &ldquo;{searchQuery}&rdquo;</>}
             {gradeFilter !== 'all' && <> · Khối {gradeFilter}</>}
             {statusFilter !== 'all' && <> · Tình trạng lọc</>}
@@ -288,7 +307,7 @@ export default function TutorStudents() {
         />
       )}
 
-      {loading && <Loading />}
+      {loading && !shells && <Loading />}
       <ErrorBox message={error} onRetry={reload} />
 
       {!loading && !error && students.length === 0 && (
@@ -309,9 +328,18 @@ export default function TutorStudents() {
       {/* ========================================================
           HAI CHẾ ĐỘ: NHÓM (khối nhóm, bấm vào xem em trong nhóm) / HỌC SINH (mọi em, chia khung theo nhóm)
           ======================================================== */}
-      {!loading && !error && data && filteredStudents.length > 0 && (
-        <section className="group-block">
-          {detail ? (
+      {(shells || (!loading && !error && data && filteredStudents.length > 0)) && (
+        // is-list: chế độ Học sinh / trong một nhóm — khung + từng dòng rõ dần khi dữ liệu về (styles/dash-intro.css)
+        <section className={`group-block${!shells && (detail || viewMode === 'students') ? ' is-list' : ''}`}>
+          {shells ? (
+            // Lần đầu chờ API: 6 khung thẻ trống ngay tại chỗ của lưới thật (sóng sáng nếu chờ lâu).
+            // Cùng thẻ <button> + cùng key `slot-i` với thẻ thật → dữ liệu về thì React điền vào khung sẵn có, không dựng lại.
+            <div className="group-grid">
+              {SHELL_SLOTS.map((i) => (
+                <button key={`slot-${i}`} type="button" className="group-card is-shell" tabIndex={-1} aria-hidden="true" disabled />
+              ))}
+            </div>
+          ) : detail ? (
             <GroupFrame
               block={detail}
               list={filteredStudents}
@@ -321,10 +349,10 @@ export default function TutorStudents() {
               onBack={() => setGroup('all')}
             />
           ) : viewMode === 'groups' ? (
-            <div className="group-grid">
-              {filteredBlocks.map((b) => (
+            <div className={`group-grid${filledFromShells.current ? ' is-filling' : ''}${fillEarly.current ? ' is-early' : ''}`}>
+              {filteredBlocks.map((b, i) => (
                 <button
-                  key={b.key}
+                  key={`slot-${i}`}
                   type="button"
                   className="group-card"
                   onClick={() => setGroup(b.key)}

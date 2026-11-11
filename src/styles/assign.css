@@ -161,6 +161,17 @@ body:has(.assign-bar) .assign-space {
 }
 
 /* Danh sách "Bắt đầu" cho giáo viên mới (components/TutorOnboarding.jsx) */
+/* Khối "Bắt đầu" tự tải dữ liệu riêng nên hiện muộn: trượt mở từ chiều cao 0 thay vì bật ra đẩy cả trang */
+.onboard {
+  animation: onboard-open 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes onboard-open {
+  from { max-height: 0; opacity: 0; padding-block: 0; margin-bottom: 0; overflow: hidden; }
+  to { max-height: 900px; opacity: 1; overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onboard { animation: none; }
+}
 .onboard-title {
   margin: 0;
   font-size: 1.05rem;
