@@ -223,6 +223,9 @@
 .library-main {
   min-width: 0;
 }
+.library-main .list {
+  animation: intro-fade 250ms ease-out both;
+}
 /* Tấm nền vùng nội dung Thư viện (gia sư + học sinh): nền vũ trụ (quỹ đạo, hành tinh) không chạy ngay sau chữ / kệ.
    Cùng kiểu khung cây mục lục (.tree-box) */
 .library-panel {

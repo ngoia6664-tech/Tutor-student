@@ -1164,3 +1164,10 @@ textarea {
       0 0 16px rgba(217, 119, 6, 0.18);
   }
 }
+
+/* Khung dòng trống lúc chờ API (StudentHome) */
+.list-item.is-shell {
+  min-height: 4.2rem;
+  opacity: 0.45;
+  pointer-events: none;
+}

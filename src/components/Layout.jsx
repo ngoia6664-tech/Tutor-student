@@ -97,7 +97,7 @@ function loadCtxCollapsed() {
 // Lời gấu khi hỏi đăng xuất (chọn ngẫu nhiên)
 const BYE = ['Bạn muốn đăng xuất ư? Tôi sẽ nhớ bạn lắm đó 🥺', 'Đi thật hả? Nhớ quay lại học tiếp với tôi nha!', 'Về nghỉ ngơi à? Hẹn gặp lại bạn sớm nhé 🐼']
 
-const INTRO_MS = 4200
+const INTRO_MS = 2500
 
 const NAV = {
   tutor: [

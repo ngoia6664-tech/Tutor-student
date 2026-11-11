@@ -9,7 +9,7 @@
     (function () {
       var d = document.documentElement, t = null;
       d.classList.add('js');
-      try { t = localStorage.getItem('home-theme'); } catch (e) {}
+      try { t = localStorage.getItem('theme') || localStorage.getItem('home-theme'); } catch (e) {}
       d.setAttribute('data-theme', t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
     })();
   </script>
@@ -3421,6 +3421,11 @@
 
       <!-- Cụm nút bên phải tách biệt khỏi navigation -->
       <div class="header-actions">
+        <a href="/mo-phong-vat-li.html" class="action-chip" title="Phòng thí nghiệm mô phỏng Vật lí THPT">
+          <span style="font-size:14px;" aria-hidden="true">⚛</span>
+          <span class="hide-sm">Mô phỏng Vật lí</span>
+        </a>
+
         <a href="#cap-nhat" class="action-chip" title="Xem nhật ký cập nhật và tính năng sắp ra mắt">
           <span class="dot-new" aria-hidden="true"></span>
           <span class="hide-sm">Cập nhật mới</span>
@@ -4406,6 +4411,7 @@
           <h4>Truy cập & Thông tin</h4>
           <ul class="footer-links">
             <li><a href="/login">Đăng nhập ứng dụng</a></li>
+            <li><a href="/mo-phong-vat-li.html" style="font-weight:600; color:var(--primary);">⚛ Thí nghiệm mô phỏng Vật lí</a></li>
             <li><a href="#hoi-dap">Quyền riêng tư & Dữ liệu học tập</a></li>
             <li><span style="font-size:13.5px;">Các trang Điều khoản và Chính sách chi tiết sẽ được liên kết khi công bố chính thức.</span></li>
           </ul>
@@ -4431,7 +4437,7 @@
       const isDark = theme === 'dark';
       iconSun.style.display = isDark ? 'block' : 'none';
       iconMoon.style.display = isDark ? 'none' : 'block';
-      if (save) { try { localStorage.setItem('home-theme', theme); } catch (e) {} }
+      if (save) { try { localStorage.setItem('theme', theme); localStorage.setItem('home-theme', theme); } catch (e) {} }
     }
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light', false);
 

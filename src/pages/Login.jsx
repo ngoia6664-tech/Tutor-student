@@ -37,8 +37,16 @@ export default function Login() {
     return () => clearTimeout(t)
   }, [phase])
 
-  if (loading) return <Loading full text="Đang kiểm tra đăng nhập..." />
-  // Đã đăng nhập: chuyển thẳng tới trang theo vai trò
+  // Chỉ hiện màn hình kiểm tra toàn trang khi đã có session đăng nhập cũ và đang lấy profile,
+  // hoặc khi phase là 'done' mà profile mạng chậm chưa về kịp.
+  // Khi đang diễn cảnh 'arrive' (từ Trang chủ sang) hoặc 'success' (đang trượt vào app): không chặn bằng Loading full để hoạt cảnh liền mạch.
+  if (phase === 'done' && (!session || !profile)) {
+    return <Loading full text="Đang vào không gian học tập..." />
+  }
+  if (loading && session && !profile && phase !== 'arrive' && phase !== 'success') {
+    return <Loading full text="Đang kiểm tra đăng nhập..." />
+  }
+  // Đã đăng nhập: chuyển thẳng tới trang theo vai trò (khi không trong cảnh success đang diễn)
   if (session && profile && phase !== 'success') return <Navigate to={`/${profile.role}`} replace />
 
   async function handleSubmit(e) {

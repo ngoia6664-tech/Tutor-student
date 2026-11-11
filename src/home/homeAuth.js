@@ -6,11 +6,11 @@ const LEAVE_MS = 520
 const root = document.documentElement
 
 document.addEventListener('click', (e) => {
-  const a = /** @type {HTMLAnchorElement | null} */ (e.target instanceof Element ? e.target.closest('a.peek-btn[href="/login"]') : null)
+  const a = /** @type {HTMLAnchorElement | null} */ (e.target instanceof Element ? e.target.closest('a[href="/login"]') : null)
   if (!a || !canAnimateClick(e) || root.classList.contains('auth-leaving')) return
   e.preventDefault()
   markTransition('login')
-  a.classList.add('is-going')
+  if (a.classList.contains('peek-btn')) a.classList.add('is-going')
   root.classList.add('auth-leaving')
   setTimeout(() => window.location.assign(a.href), LEAVE_MS)
 })

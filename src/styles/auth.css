@@ -71,6 +71,10 @@
   padding-left: 2.4rem;
   border-color: rgba(180, 140, 82, 0.4);
 }
+.login-input input::-ms-reveal,
+.login-input input::-ms-clear {
+  display: none; /* Tránh Edge hiện nút mắt mặc định đè lên nút login-eye */
+}
 .login-input input:has(+ .login-eye) {
   padding-right: 2.8rem;
 }
@@ -94,6 +98,10 @@
 .login-eye:focus-visible { outline: 2px solid var(--focus); }
 
 /* --- Vào trang Đăng nhập (từ Trang chủ): thẻ trượt vào → 4 đinh tán đóng → gấu ở nút ló chào --- */
+:root:has(.login-wrap),
+body:has(.login-wrap) {
+  overflow-x: hidden; /* khóa toàn trang khi thẻ bay từ -110vw: không sinh thanh cuộn ngang gây méo viewport */
+}
 .login-wrap.is-arrive,
 .login-wrap.is-leave {
   overflow-x: clip; /* thẻ nằm ngoài màn hình lúc trượt: không hiện thanh cuộn ngang */
@@ -160,7 +168,11 @@
   55% { rotate: -8deg; }
   70% { rotate: 14deg; }
   86% { rotate: 0deg; background-position: 50% 0; }
-  100% { opacity: 1; translate: 0 0; rotate: 0deg; }
+  100% { opacity: 1; translate: 0 0; rotate: 0deg; background-position: 50% 0; }
+}
+/* Hết cảnh bay tới mà về idle: gấu lặn xuống nấp êm dịu thay vì biến mất trong 1 frame */
+.login-wrap.is-idle .peek-btn .peek {
+  transition: background-position 0.65s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 /* Bóng thẻ dưới bàn: rộng + đậm khi thẻ đang bay, gọn lại lúc thẻ hạ xuống */
