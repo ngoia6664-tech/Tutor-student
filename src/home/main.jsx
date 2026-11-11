@@ -8,6 +8,8 @@ import { prefersReducedMotion, useSettings } from '../lib/settings.js'
 import { OUTFITS, OUTFIT_TIERS } from '../lib/outfits.js'
 import '../styles/panda-shop.css'
 import './home-panda.css'
+import '../styles/auth.css'
+import './homeAuth.js'
 
 const byId = (id) => OUTFITS.find((o) => o.id === id) || OUTFITS[0]
 
