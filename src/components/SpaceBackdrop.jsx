@@ -133,12 +133,11 @@ export default function SpaceBackdrop() {
   const animated = settings.animatedBackground
   const theme = useTheme()
 
-  // Cuộn trang: nghiêng Hệ Mặt Trời (bản tối) & dịch nhẹ tường lớp học (bản sáng)
+  // Cuộn trang: nghiêng Hệ Mặt Trời (bản tối). Tường lớp học (bản sáng) đứng yên: dịch theo cuộn thì lệch khỏi khung bảng
   useEffect(() => {
     const rootEl = ref.current
     if (!rootEl || !animated || prefersReducedMotion()) return
     const solarEl = rootEl.querySelector('.solar')
-    const wallEl = rootEl.querySelector('.classroom-backwall')
     let frame = 0
     const update = () => {
       frame = 0
@@ -147,9 +146,6 @@ export default function SpaceBackdrop() {
       if (solarEl) {
         solarEl.style.setProperty('--tilt', `${TILT_TOP + (TILT_BOTTOM - TILT_TOP) * p}deg`)
         solarEl.style.setProperty('--turn', `${TURN_TOP + (TURN_BOTTOM - TURN_TOP) * p}deg`)
-      }
-      if (wallEl) {
-        wallEl.style.setProperty('--wall-shift', `${(-p * 26).toFixed(1)}px`)
       }
     }
     const onScroll = () => {
