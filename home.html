@@ -5053,10 +5053,10 @@
       // Đảm bảo body có class is-loading để kích hoạt chuỗi xuất hiện
       document.body.classList.add('is-loading');
 
-      // Sau 1450ms khi toàn bộ chuỗi xuất hiện hoàn tất, chuyển sang bồng bềnh liên tục
+      // Chuỗi xuất hiện xong lúc ~1,85s (thẻ nổi) → gỡ is-loading (selector mạnh hơn) rồi mới bồng bềnh
       setTimeout(() => {
-        document.body.classList.add('motion-ready');
-      }, 1450);
+        document.body.classList.replace('is-loading', 'motion-ready');
+      }, 1900);
 
       // Hiệu ứng tương tác 3D Tilt nhẹ trên Desk Mat Frame khi di chuyển chuột
       const stage = document.querySelector('.hero-stage');
