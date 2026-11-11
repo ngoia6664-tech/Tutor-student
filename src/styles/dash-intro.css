@@ -54,8 +54,8 @@
   to { opacity: 1; }
 }
 @keyframes intro-focus {
-  from { opacity: 0; filter: blur(var(--intro-blur, 5px)); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Hiệu ứng đổi trang thường (.page-enter trượt 6px) tắt trong lúc này để không chồng 2 chuyển động */
@@ -68,7 +68,6 @@
 .app.is-intro .nav-side > :not(.nav-pill),
 .app.is-intro .side-foot > * {
   --d: 0ms;
-  will-change: translate, opacity;
   animation:
     intro-left 600ms var(--ease-glide) both,
     intro-fade 450ms var(--ease-fade) both;
@@ -91,7 +90,6 @@
 /* --- 2. Nội dung chính (0,35 – 1,9s): từng khối bồng bềnh nổi lên, rõ dần (cách 110ms) --- */
 .app.is-intro .page-enter > * > * {
   --d: 660ms;
-  will-change: translate, opacity;
   animation:
     intro-up 700ms var(--ease-float) both,
     intro-fade 550ms var(--ease-fade) both;
@@ -104,20 +102,19 @@
 .app.is-intro .page-enter > * > :nth-child(5) { --d: 580ms; }
 
 /* --- 2b. Trang Học sinh (trang mở đầu sau đăng nhập): một dòng thời gian cố định, bố cục không nhảy
-       (TutorStudents dựng sẵn toolbar + 6 khung thẻ ngay từ đầu, dữ liệu chỉ rót vào chỗ có sẵn)
-       0,25s tiêu đề → 0,35s toolbar: ô tìm → ô lọc → nút (cách 50ms) → 0,55s khung thẻ 1…6 (cách 90ms)
+       (TutorStudents dựng sẵn toolbar + khung thẻ ngay từ đầu, dữ liệu chỉ rót vào chỗ có sẵn)
+       0,25s tiêu đề → 0,35s toolbar: ô tìm → ô lọc → nút (cách 50ms) → 0,55s khung thẻ 1…n (cách 90ms)
        → dữ liệu về: số trên toolbar + chữ trong thẻ rõ dần (mục 2c). --- */
 .app.is-intro .students-page > .assign-toolbar,
-.app.is-intro .students-page > .group-block {
+.app.is-intro .students-page > .group-block,
+.app.is-intro .students-page > .onboard {
   animation: none;
-  will-change: auto;
 }
 .app.is-intro .students-page > .page-head { --d: 180ms; }
 .app.is-intro .students-page > .row-between { --d: 450ms; } /* dòng "Tìm thấy…" khi đang có bộ lọc nhớ từ lần trước */
 .app.is-intro .students-page > .assign-toolbar > :not(.row),
 .app.is-intro .students-page > .assign-toolbar > .row > * {
   --d: 440ms;
-  will-change: translate, opacity;
   animation:
     intro-up 650ms var(--ease-float) both,
     intro-fade 450ms var(--ease-fade) both;
@@ -131,7 +128,6 @@
 
 .app.is-intro .group-card {
   --d: 845ms;
-  will-change: translate, opacity;
   animation:
     intro-up 650ms var(--ease-float) both,
     intro-fade 380ms var(--ease-fade) both;
@@ -144,8 +140,8 @@
 .app.is-intro .group-card:nth-child(5) { --d: 660ms; }
 .app.is-intro .group-card:nth-child(6) { --d: 725ms; }
 .app.is-intro .group-card:nth-child(7) { --d: 790ms; }
-/* Dữ liệu về muộn (6 khung đã đứng yên): thẻ thứ 7 trở đi chỉ có khi đã có dữ liệu → vào ngay, không bắt chờ */
-.app.is-intro .group-grid.is-filling:not(.is-early) .group-card:nth-child(n + 7) { --d: 100ms; }
+/* Thẻ thứ 7 trở đi chỉ có khi đã có dữ liệu → vào ngay, không bắt chờ */
+.app.is-intro .group-grid.is-filling .group-card:nth-child(n + 7) { --d: 100ms; }
 
 /* --- 2c. Trang Học sinh lúc chờ API (TutorStudents: .group-card.is-shell, mọi lần tải đầu của trang):
        khung thẻ trống thay khung xám; chờ lâu (> 1,2s) thì sóng sáng lướt qua lần lượt từng thẻ.
@@ -176,43 +172,29 @@
 @keyframes shell-wave {
   to { translate: 100% 0; }
 }
-/* Điền dữ liệu: chữ trong từng thẻ rõ dần, nối nhau theo thứ tự thẻ (cách 70ms) */
+/* Điền dữ liệu: chữ trong từng thẻ rõ dần êm dịu, không nháy hình */
 .group-grid.is-filling .group-card > * {
-  --f: 300ms;
-  will-change: opacity, filter;
-  animation: intro-focus 480ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  animation-delay: var(--f);
-}
-.group-grid.is-filling .group-card:nth-child(1) > * { --f: 0ms; }
-.group-grid.is-filling .group-card:nth-child(2) > * { --f: 50ms; }
-.group-grid.is-filling .group-card:nth-child(3) > * { --f: 100ms; }
-.group-grid.is-filling .group-card:nth-child(4) > * { --f: 150ms; }
-.group-grid.is-filling .group-card:nth-child(5) > * { --f: 200ms; }
-.group-grid.is-filling .group-card:nth-child(6) > * { --f: 250ms; }
-
-/* Dữ liệu về sớm (khung còn đang lần lượt xuất hiện): chữ mỗi thẻ đợi khung đó vào chỗ rồi mới rõ */
-.app.is-intro .group-grid.is-filling.is-early .group-card > * {
-  animation-delay: calc(var(--d) + 250ms);
+  animation: intro-focus 240ms ease-out both;
 }
 
-/* Số đếm (tiêu đề, nút Nhóm / Học sinh, dòng "Tìm thấy"): giữ chỗ bằng "–" lúc chờ, có số thì rõ dần */
+/* Số đếm (tiêu đề, nút Nhóm / Học sinh, dòng "Tìm thấy"): chuyển độ mờ mượt mà, không remount DOM */
 .fill-num {
   display: inline-block;
   min-width: 1ch;
   text-align: center;
-}
-.fill-num:not(.is-pending) {
-  animation: intro-focus 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .fill-num.is-pending {
   opacity: 0.45;
 }
 /* Toolbar + nút chuỗi dựng sẵn lúc chờ dữ liệu: khóa (inert) + mờ nhẹ, có dữ liệu thì sáng dần */
 .students-page .assign-toolbar,
-.students-page .page-head > div {
+.students-page .page-head > div,
+.student-toolbar {
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.students-page .is-pending {
+.students-page .is-pending,
+.student-toolbar.is-pending {
   opacity: 0.55;
 }
 
@@ -231,16 +213,8 @@
 .group-block.is-list .group-frame:nth-child(2) { animation-delay: 80ms; }
 .group-block.is-list .group-frame:nth-child(n + 3) { animation-delay: 160ms; }
 .group-block.is-list .student-row {
-  --r: 360ms;
-  animation: intro-focus 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  animation-delay: var(--r);
+  animation: intro-focus 220ms ease-out both;
 }
-.group-block.is-list .student-row:nth-child(1) { --r: 120ms; }
-.group-block.is-list .student-row:nth-child(2) { --r: 160ms; }
-.group-block.is-list .student-row:nth-child(3) { --r: 200ms; }
-.group-block.is-list .student-row:nth-child(4) { --r: 240ms; }
-.group-block.is-list .student-row:nth-child(5) { --r: 280ms; }
-.group-block.is-list .student-row:nth-child(6) { --r: 320ms; }
 
 /* --- 2e. Tài khoản học sinh: chữ xuất hiện chậm và dịu hơn gia sư (khối nội dung + thẻ cột phải),
        cùng thứ tự; vẫn chỉ opacity + translate (không blur cả khối lớn cho máy học sinh mượt). --- */

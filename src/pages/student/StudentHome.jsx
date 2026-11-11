@@ -6,7 +6,6 @@ import { compareDue, daysUntil, formatDate, matchTitle } from '../../lib/format.
 import { fetchStudentChapters } from '../../lib/chapters.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useNotifications } from '../../contexts/NotificationsContext.jsx'
-import Loading from '../../components/Loading.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import { DueBadge, TypeBadge } from '../../components/Badges.jsx'
 import FilterTree, { matchItem, selectionLabel, useTreeSelection } from '../../components/FilterTree.jsx'
@@ -204,101 +203,85 @@ export default function StudentHome() {
 
         {!where && !loading && <StudyNow chapter={now} />}
 
-        {/* Thanh tìm kiếm và bộ lọc bài tập */}
-        {data && (
-          <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
-                <input
-                  type="search"
-                  className="assign-search"
-                  style={{ width: '100%', paddingLeft: '2.1rem' }}
-                  placeholder="Tìm bài tập theo tên, chủ đề..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  aria-label="Tìm kiếm bài tập"
-                />
-                <span style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
-                  <Icon name="search" size={15} />
-                </span>
-              </div>
-
-              <CustomSelect
-                value={sortBy}
-                onChange={setSortBy}
-                options={[
-                  { value: 'due', label: 'Hạn gần nhất', icon: 'clock' },
-                  { value: 'assigned', label: 'Mới giao nhất', icon: 'zap' },
-                  { value: 'title', label: 'Tên A-Z', icon: 'file' },
-                ]}
-                prefixLabel="Sắp xếp: "
-                icon="clock"
-                ariaLabel="Sắp xếp danh sách"
+        {/* Thanh tìm kiếm và bộ lọc bài tập (dựng sẵn từ đầu, mờ khi chờ để không nhảy bố cục) */}
+        <div
+          className={`student-toolbar${data ? '' : ' is-pending'}`}
+          inert={!data}
+          aria-busy={!data}
+          style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'opacity 0.4s ease' }}
+        >
+          <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
+              <input
+                type="search"
+                className="assign-search"
+                style={{ width: '100%', paddingLeft: '2.1rem' }}
+                placeholder="Tìm bài tập theo tên, chủ đề..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Tìm kiếm bài tập"
+                disabled={!data}
               />
+              <span style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, pointerEvents: 'none' }}>
+                <Icon name="search" size={15} />
+              </span>
             </div>
 
-            {/* Chips lọc nhanh */}
-            <div className="chips" style={{ margin: 0, flexWrap: 'wrap', gap: '0.35rem' }}>
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={[
+                { value: 'due', label: 'Hạn gần nhất', icon: 'clock' },
+                { value: 'assigned', label: 'Mới giao nhất', icon: 'zap' },
+                { value: 'title', label: 'Tên A-Z', icon: 'file' },
+              ]}
+              prefixLabel="Sắp xếp: "
+              icon="clock"
+              ariaLabel="Sắp xếp danh sách"
+            />
+          </div>
+
+          {/* Chips lọc nhanh */}
+          <div className="chips" style={{ margin: 0, flexWrap: 'wrap', gap: '0.35rem' }}>
+            {[
+              ['all', 'Tất cả', counts.total],
+              ['soon', '⏰ Sắp đến hạn', counts.soon],
+              ['draft', '✍️ Đang làm dở', counts.draft],
+              ['overdue', '⚠️ Quá hạn', counts.overdue],
+              ['exam', '⏱️ Đề thi', counts.exam],
+            ].map(([key, label, n]) => (
+              // Luôn hiện đủ nút (số 0 thì khóa) để hàng nút không co lại khi dữ liệu về
               <button
+                key={key}
                 type="button"
-                className={`chip${quickFilter === 'all' ? ' active' : ''}`}
-                onClick={() => setQuickFilter('all')}
+                className={`chip${quickFilter === key ? ' active' : ''}`}
+                onClick={() => setQuickFilter(key)}
+                disabled={!data || (key !== 'all' && !n)}
               >
-                Tất cả ({counts.total})
+                {label} ({data ? n : '–'})
               </button>
-              {counts.soon > 0 && (
-                <button
-                  type="button"
-                  className={`chip${quickFilter === 'soon' ? ' active' : ''}`}
-                  onClick={() => setQuickFilter('soon')}
-                >
-                  ⏰ Sắp đến hạn ({counts.soon})
-                </button>
-              )}
-              {counts.draft > 0 && (
-                <button
-                  type="button"
-                  className={`chip${quickFilter === 'draft' ? ' active' : ''}`}
-                  onClick={() => setQuickFilter('draft')}
-                >
-                  ✍️ Đang làm dở ({counts.draft})
-                </button>
-              )}
-              {counts.overdue > 0 && (
-                <button
-                  type="button"
-                  className={`chip${quickFilter === 'overdue' ? ' active' : ''}`}
-                  onClick={() => setQuickFilter('overdue')}
-                >
-                  ⚠️ Quá hạn ({counts.overdue})
-                </button>
-              )}
-              {counts.exam > 0 && (
-                <button
-                  type="button"
-                  className={`chip${quickFilter === 'exam' ? ' active' : ''}`}
-                  onClick={() => setQuickFilter('exam')}
-                >
-                  ⏱️ Đề thi ({counts.exam})
-                </button>
-              )}
-            </div>
+            ))}
+          </div>
 
-            {activeFilters && (
-              <div className="row row-between small muted" style={{ padding: '0.2rem 0.4rem' }}>
-                <span>
-                  Tìm thấy <strong>{filteredRows.length}</strong> bài phù hợp
-                  {query && <> khớp &ldquo;{query}&rdquo;</>}
-                </span>
-                <button type="button" className="btn btn-ghost btn-small" onClick={resetQuick} style={{ padding: '0.1rem 0.35rem' }}>
-                  <Icon name="close" size={13} /> Xóa tìm kiếm
-                </button>
-              </div>
-            )}
+          {data && activeFilters && (
+            <div className="row row-between small muted" style={{ padding: '0.2rem 0.4rem' }}>
+              <span>
+                Tìm thấy <strong>{filteredRows.length}</strong> bài phù hợp
+                {query && <> khớp &ldquo;{query}&rdquo;</>}
+              </span>
+              <button type="button" className="btn btn-ghost btn-small" onClick={resetQuick} style={{ padding: '0.1rem 0.35rem' }}>
+                <Icon name="close" size={13} /> Xóa tìm kiếm
+              </button>
+            </div>
+          )}
+        </div>
+
+        {loading && (
+          // Khung dòng trống cùng chỗ với danh sách thật: dữ liệu về không làm nhảy chiều cao
+          <div className="list" aria-busy="true">
+            {[0, 1, 2].map((i) => <div key={i} className="list-item is-shell" aria-hidden="true" />)}
           </div>
         )}
-
-        {loading && <Loading />}
         <ErrorBox message={error} onRetry={reload} />
 
         {!loading && !error && filteredRows.length === 0 && (

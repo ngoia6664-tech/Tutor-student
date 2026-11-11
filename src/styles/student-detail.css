@@ -101,7 +101,7 @@
   border: 1px solid var(--border); border-top: 4px solid var(--wood-mid, #85532c);
   border-radius: var(--radius-lg, 16px);
   box-shadow: var(--shadow);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
   position: relative;
   overflow: hidden;
 }

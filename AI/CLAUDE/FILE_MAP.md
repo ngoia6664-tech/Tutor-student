@@ -1,4 +1,4 @@
-﻿# Bản đồ file — công dụng từng file trong src/
+# Bản đồ file — công dụng từng file trong src/
 
 > Đọc file này **trước** khi mở file nào trong dự án, để tìm đúng file theo yêu cầu. Mô tả lấy từ dòng chú thích đầu mỗi file; file không có chú thích ghi "—". Chi tiết tính năng: `AI/CLAUDE/FEATURES.md`. Thêm / xóa / đổi công dụng file → sửa dòng tương ứng ở đây.
 
@@ -30,7 +30,7 @@
 - `TutorFeedback.jsx` — Trang Góp ý (gia sư): xem góp ý học sinh gửi, đánh dấu đã xem
 - `TutorLessonView.jsx` — Xem bài giảng (gia sư), như học sinh sẽ thấy
 - `TutorReports.jsx` — Số thứ tự câu trong bài (đề thi đánh số theo phần: I.
-- `TutorStudents.jsx` — Trang Học sinh: 2 nút chế độ xem, số khớp bộ lọc / tìm kiếm: **Nhóm (số nhóm)** = lưới khối nhóm (icon, tên 2 dòng, "N em", ghi chú, dòng tóm tắt TB + chờ chấm + quá hạn, 3 em đầu rồi "+N em nữa"; bấm khối → xem riêng nhóm), **Học sinh (số em)** = mọi em chia khung viền mỏng theo nhóm, mỗi em một dòng gọn `StudentRow` (cả dòng bấm mở hồ sơ, chỉ hiện chip chờ chấm / quá hạn khi > 0); tạo / đổi tên nhóm; form sửa tên, nhóm (chọn hoặc gõ mới), lớp, môn. Tải dữ liệu không nhảy bố cục: toolbar + nút chuỗi dựng sẵn (khóa `inert` + mờ lúc chờ), số đếm giữ chỗ `count()` rồi rõ dần, chế độ Nhóm dùng 6 khung thẻ trống rồi điền vào, chế độ Học sinh `.is-list` rõ dần (CSS `styles/dash-intro.css`)
+- `TutorStudents.jsx` — Trang Học sinh: 2 nút chế độ xem, số khớp bộ lọc / tìm kiếm: **Nhóm (số nhóm)** = lưới khối nhóm (icon, tên 2 dòng, "N em", ghi chú, dòng tóm tắt TB + chờ chấm + quá hạn, 3 em đầu rồi "+N em nữa"; bấm khối → xem riêng nhóm), **Học sinh (số em)** = mọi em chia khung viền mỏng theo nhóm, mỗi em một dòng gọn `StudentRow` (cả dòng bấm mở hồ sơ, chỉ hiện chip chờ chấm / quá hạn khi > 0); tạo / đổi tên nhóm; form sửa tên, nhóm (chọn hoặc gõ mới), lớp, môn. Tải dữ liệu không nhảy bố cục: toolbar + nút chuỗi dựng sẵn (khóa `inert` + mờ lúc chờ), số đếm giữ chỗ `count()` rồi rõ dần, chế độ Nhóm dùng khung thẻ trống khớp số nhóm lần trước rồi điền vào, chế độ Học sinh `.is-list` rõ dần (CSS `styles/dash-intro.css`)
 
 ## `src/pages/student/`
 - `StudentAssignment.jsx` — Bản nháp câu trả lời lưu trên máy (lỡ tắt trình duyệ
@@ -213,7 +213,7 @@
 - `useAsync.js` — Hook tải dữ liệu chung: luôn có loading / error / data / reloa
 
 ## `src/styles/`
-- `dash-intro.css` — Màn xuất hiện dashboard ~2,2s (nhòe → nét) (Layout `.app.is-intro`, 1 lần mỗi phiên / sau đăng nhập, cờ `DASH_INTRO_KEY`): thanh bên trượt → khối nội dung bồng bềnh → thẻ cột phải trôi vào; trang Học sinh: thẻ nhóm thêm vào lần lượt rồi chữ rõ dần; lúc chờ API là 6 khung thẻ trống `.group-card.is-shell` (sóng sáng nếu chờ lâu), dữ liệu về thì điền vào đúng khung đó `.group-grid.is-filling`; chỉ animate phần tử con bằng translate/scale
+- `dash-intro.css` — Màn xuất hiện dashboard ~2,2s (nhòe → nét) (Layout `.app.is-intro`, 1 lần mỗi phiên / sau đăng nhập, cờ `DASH_INTRO_KEY`): thanh bên trượt → khối nội dung bồng bềnh → thẻ cột phải trôi vào; trang Học sinh: thẻ nhóm thêm vào lần lượt rồi chữ rõ dần; lúc chờ API là khung thẻ trống `.group-card.is-shell` khớp số nhóm lần trước (sóng sáng nếu chờ lâu), dữ liệu về thì điền vào đúng khung đó `.group-grid.is-filling`; chỉ animate phần tử con bằng translate/scale
 - `auth.css` — Khung + ô nhập trang Đăng nhập và mọi keyframe chuyển cảnh Trang chủ ↔ Đăng nhập (`auth-*`); trang chủ cũng import
 - `assign.css` — Giao bài nhanh từ danh sách (components/QuickAssign.jsx). Bảng c
 - `attempts.css` — Làm bài: thanh tiến độ, câu khó, làm lại

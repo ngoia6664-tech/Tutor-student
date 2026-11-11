@@ -5,10 +5,11 @@ import { useAsync } from '../lib/useAsync.js'
 import Icon from './Icon.jsx'
 
 const HIDE_KEY = 'tutor-onboarding-hidden'
+const DONE_KEY = 'tutor-onboarding-done'
 
 function readHidden() {
   try {
-    return localStorage.getItem(HIDE_KEY) === '1'
+    return localStorage.getItem(HIDE_KEY) === '1' || localStorage.getItem(DONE_KEY) === '1'
   } catch {
     return false
   }
@@ -41,7 +42,16 @@ export default function TutorOnboarding() {
     return [students > 0, chapters > 0, lessons + assignments > 0, lr + ar + cr > 0]
   }, [])
 
-  if (hidden || !data || data.every(Boolean)) return null
+  if (hidden || !data || data.every(Boolean)) {
+    if (data && data.every(Boolean)) {
+      try {
+        localStorage.setItem(DONE_KEY, '1')
+      } catch {
+        // bỏ qua
+      }
+    }
+    return null
+  }
 
   function hide() {
     try {

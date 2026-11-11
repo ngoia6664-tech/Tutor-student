@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useRemembered } from '../../lib/navMemory.js'
 import { Link } from 'react-router-dom'
 import { supabase, unwrap } from '../../lib/supabase.js'
@@ -19,8 +19,17 @@ import TutorOnboarding from '../../components/TutorOnboarding.jsx'
 
 const NONE = '__none' // khóa nhóm "Chưa xếp nhóm"
 
-const SHELL_SLOTS = [0, 1, 2, 3, 4, 5]
-const SHELLS_IN_MS = 1050 // 6 khung xuất hiện xong trong màn xuất hiện (khớp --d trong styles/dash-intro.css)
+const SAVED_GROUPS_KEY = 'tutor-groups-count'
+function readSavedGroupsCount() {
+  try {
+    const raw = sessionStorage.getItem(SAVED_GROUPS_KEY)
+    if (!raw) return 3 // mặc định 3 thẻ (1 hàng gọn gàng), không tạo 6 thẻ làm sụt hàng khi tải xong
+    const n = Number(raw)
+    return Number.isFinite(n) && n > 0 ? Math.min(6, Math.max(1, n)) : 3
+  } catch {
+    return 3
+  }
+}
 
 export default function TutorStudents() {
   const [group, setGroup] = useRemembered('tutor-students-group', 'all', (v) => typeof v === 'string')
@@ -146,18 +155,26 @@ export default function TutorStudents() {
   }, [blocks, deferredSearchQuery, gradeFilter, statusFilter, activeSearch, data])
 
   const detail = group === 'all' ? null : blocks.find((b) => b.key === group)
-  // Lần tải đầu ở chế độ Nhóm: hiện khung thẻ trống thay khung xám; dữ liệu về thì điền chữ vào (rõ dần, styles/dash-intro.css)
+  // Lần tải đầu ở chế độ Nhóm: hiện số khung thẻ trống khớp số nhóm lần trước (tránh sụt hàng nhảy bố cục)
   const shells = loading && !data && !error && group === 'all' && viewMode === 'groups'
+  const [shellCount] = useState(readSavedGroupsCount)
+  const shellSlots = useMemo(() => Array.from({ length: shellCount }, (_, i) => i), [shellCount])
+
+  useEffect(() => {
+    if (data && filteredBlocks) {
+      try {
+        sessionStorage.setItem(SAVED_GROUPS_KEY, String(filteredBlocks.length || 1))
+      } catch {
+        // bỏ qua
+      }
+    }
+  }, [data, filteredBlocks])
+
   const filledFromShells = useRef(false)
   if (shells) filledFromShells.current = true // ghi cờ khi render: chỉ đổi 1 chiều false → true, chạy lại vẫn vậy
-  // Dữ liệu về khi 6 khung còn đang lần lượt xuất hiện (màn xuất hiện lần đầu): chữ mỗi thẻ đợi khung đó vào chỗ
-  // rồi mới rõ (.is-early), không chen ngang. Về muộn thì chữ rõ ngay theo thứ tự thẻ.
-  const mountedAt = useRef(performance.now())
-  const fillEarly = useRef(/** @type {boolean | null} */ (null))
-  if (data && filledFromShells.current && fillEarly.current === null) fillEarly.current = performance.now() - mountedAt.current < SHELLS_IN_MS
-  // Số đếm: chưa có dữ liệu thì giữ chỗ bằng "–", có rồi thì số rõ dần (key đổi → dựng lại → chạy hiệu ứng)
+  // Số đếm: giữ nguyên node DOM để không unmount gây nháy hình khi dữ liệu về
   /** @param {number} n */
-  const count = (n) => <span key={data ? 'n' : 'p'} className={data ? 'fill-num' : 'fill-num is-pending'}>{data ? n : '–'}</span>
+  const count = (n) => <span className={`fill-num${data ? '' : ' is-pending'}`}>{data ? n : '–'}</span>
 
   function resetFilters() {
     setSearchQuery('')
@@ -332,10 +349,10 @@ export default function TutorStudents() {
         // is-list: chế độ Học sinh / trong một nhóm — khung + từng dòng rõ dần khi dữ liệu về (styles/dash-intro.css)
         <section className={`group-block${!shells && (detail || viewMode === 'students') ? ' is-list' : ''}`}>
           {shells ? (
-            // Lần đầu chờ API: 6 khung thẻ trống ngay tại chỗ của lưới thật (sóng sáng nếu chờ lâu).
+            // Lần đầu chờ API: khung thẻ trống khớp số nhóm lần trước (sóng sáng nếu chờ lâu).
             // Cùng thẻ <button> + cùng key `slot-i` với thẻ thật → dữ liệu về thì React điền vào khung sẵn có, không dựng lại.
             <div className="group-grid">
-              {SHELL_SLOTS.map((i) => (
+              {shellSlots.map((i) => (
                 <button key={`slot-${i}`} type="button" className="group-card is-shell" tabIndex={-1} aria-hidden="true" disabled />
               ))}
             </div>
@@ -349,7 +366,7 @@ export default function TutorStudents() {
               onBack={() => setGroup('all')}
             />
           ) : viewMode === 'groups' ? (
-            <div className={`group-grid${filledFromShells.current ? ' is-filling' : ''}${fillEarly.current ? ' is-early' : ''}`}>
+            <div className={`group-grid${filledFromShells.current ? ' is-filling' : ''}`}>
               {filteredBlocks.map((b, i) => (
                 <button
                   key={`slot-${i}`}
