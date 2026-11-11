@@ -75,7 +75,7 @@ export const TUTOR_HELP = [
       },
       {
         q: 'Nút "Bảng bên" dùng để làm gì?',
-        a: 'Trên điện thoại hoặc màn hình hẹp, nút **Bảng bên** mở cột thông tin phụ. Cột này hiện việc cần xử lý (bài chờ chấm, báo lỗi) và bài vừa giao. Trên màn hình rộng, cột này luôn hiện sẵn bên phải.',
+        a: 'Bảng bên là cột thông tin phụ: trên máy tính màn vừa, bấm lẫy **Bảng bên** ở mép phải màn hình; trên điện thoại, bấm nút ô lưới ở góc trên bên phải. Cột này hiện việc cần xử lý (bài chờ chấm, báo lỗi) và bài vừa giao. Trên màn hình rộng, cột này luôn hiện sẵn bên phải.',
       },
       {
         q: 'Cửa hàng gấu trong mục gia sư để làm gì?',

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
+import { matchPath, NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { prefetchPages } from '../pages/registry.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -103,8 +103,9 @@ const NAV = {
     { to: '/tutor/library', label: 'Thư viện', icon: 'library', group: 'Dạy học' },
     { to: '/tutor/assignments', label: 'Chấm bài', icon: 'grade', group: 'Dạy học' },
     { to: '/tutor/import', label: 'Nhập bài', icon: 'import', group: 'Công cụ' },
-    { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports', group: 'Công cụ' },
-    { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback', group: 'Công cụ' },
+    // `more`: ẩn sau nút "⋯ Thêm" của nhóm cho thanh bên ngắn lại (mục đang mở vẫn hiện)
+    { to: '/tutor/reports', label: 'Báo lỗi đề', icon: 'flag', badge: 'reports', group: 'Công cụ', more: true },
+    { to: '/tutor/feedback', label: 'Góp ý', icon: 'chat', badge: 'feedback', group: 'Công cụ', more: true },
   ],
   student: [
     { to: '/student', label: 'Bài cần làm', icon: 'todo', end: true },
@@ -240,6 +241,9 @@ export default function Layout() {
   const fromLabRef = useRef(false)
   const labWalkInRef = useRef(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Nút "⋯" mở các mục ít dùng: trong nhóm menu (navMore) và cụm nút cuối thanh bên (footMore)
+  const [navMore, setNavMore] = useState(false)
+  const [footMore, setFootMore] = useState(false)
   // Viên nền trượt sau mục menu đang chọn: đo lại khi đổi trang hoặc khi mục menu đổi cỡ (chuông báo, xoay máy...)
   const navRef = useRef(/** @type {HTMLElement | null} */ (null))
   const [pill, setPill] = useState(/** @type {{ x: number, y: number, w: number, h: number } | null} */ (null))
@@ -254,7 +258,7 @@ export default function Layout() {
     const ro = new ResizeObserver(measure)
     nav.querySelectorAll('.nav-link').forEach((el) => ro.observe(el))
     return () => ro.disconnect()
-  }, [pathname])
+  }, [pathname, navMore])
   const studying = useStudying()
   const showMascot = useSettings().mascot
   // Kính thiên văn ghi địa điểm đang xem lên URL (?vu-tru=<id>): tải lại trang thì mở lại đúng chỗ.
@@ -342,13 +346,19 @@ export default function Layout() {
           style={{ transform: `translate(${pill.x}px, ${pill.y}px)`, width: pill.w, height: pill.h }}
         />
       )}
-      {items.map((it, i) => [
+      {items.map((it, i) => {
+        const active = matchPath({ path: it.to, end: !!it.end }, pathname) || it.also?.test(pathname)
+        // Mục cuối của nhóm có mục ẩn: thêm nút ⋯ (chấm đỏ khi mục đang ẩn có số báo)
+        const lastOfGroup = it.group !== items[i + 1]?.group
+        const groupMore = lastOfGroup ? items.filter((x) => x.group === it.group && x.more) : []
+        const hiddenBadge = !navMore && groupMore.some((x) => x.badge && badges[x.badge] > 0)
+        return [
         it.group && it.group !== items[i - 1]?.group && (
           <div key={`g-${it.group}`} className="nav-group-label">
             {it.group}
           </div>
         ),
-        <NavLink
+        (!it.more || navMore || active) && <NavLink
           key={it.to}
           to={listUrl(it.to)}
           state={RESTORE}
@@ -365,7 +375,22 @@ export default function Layout() {
             </span>
           )}
         </NavLink>,
-      ])}
+        groupMore.length > 0 && (
+          <button
+            key={`more-${it.group}`}
+            type="button"
+            className="nav-link nav-more"
+            aria-expanded={navMore}
+            title={navMore ? 'Thu gọn' : groupMore.map((x) => x.label).join(', ')}
+            onClick={() => setNavMore((v) => !v)}
+          >
+            <Icon name={navMore ? 'up' : 'more'} size={19} />
+            <span className="side-label">{navMore ? 'Thu gọn' : 'Thêm'}</span>
+            {hiddenBadge && <span className="nav-more-dot" aria-label="Có mục mới" />}
+          </button>
+        ),
+        ]
+      })}
     </nav>
   )
 
@@ -393,37 +418,21 @@ export default function Layout() {
         </div>
         {nav}
         <div className="side-foot">
-          {/* Màn rộng không còn thanh trên cùng: chuông + ngắm vũ trụ + bảng bên + cửa hàng + góp ý nằm ở đây
+          {/* Màn rộng không còn thanh trên cùng: chuông + ngắm vũ trụ + cửa hàng + góp ý nằm ở đây
               (học sinh: cả màn hẹp; không còn nổi góc màn hình, đỡ che nội dung; chuỗi + Xu + Sao ở cột phải) */}
-          <span className="side-user" title={profile.full_name}>
-            {profile.full_name || 'Tài khoản'}
-          </span>
-          {docked && <NotificationBell variant="side" />}
+          {/* Tên + chuông chung một hàng (chuông chỉ còn icon + số chưa đọc) cho thanh bên ngắn lại */}
+          <div className="side-user-row">
+            <span className="side-user" title={profile.full_name}>
+              {profile.full_name || 'Tài khoản'}
+            </span>
+            {docked && <NotificationBell variant="side" />}
+          </div>
+          {/* Trang chủ giới thiệu là trang tĩnh riêng (home.html), không thuộc router: dùng <a> tải lại trang */}
+          <a href="/home.html" className="side-btn" title="Về Trang chủ">
+            <Icon name="home" />
+            <span className="side-label">Trang chủ</span>
+          </a>
           {telescopeBtn(true)}
-          {/* Màn hẹp: thanh trên chỉ còn ☰ / chuỗi / chuông → bảng bên nằm ở đây; bấm thì đóng menu rồi mở ngăn kéo phải */}
-          <button
-            type="button"
-            className="side-btn ctx-btn-side"
-            onClick={toggleCtx}
-            aria-controls="ctx-panel"
-            aria-expanded={wideCtx ? !ctxCollapsed : ctxOpen}
-            aria-label={wideCtx ? (ctxCollapsed ? 'Hiện bảng bên' : 'Ẩn bảng bên') : 'Bảng bên'}
-            title={wideCtx ? (ctxCollapsed ? 'Hiện bảng bên' : 'Ẩn bảng bên') : 'Bảng bên'}
-          >
-            <Icon name="panel" />
-            <span className="side-label">Bảng bên</span>
-          </button>
-          {(docked || !isTutor) && (
-            <NavLink to={`/${profile.role === 'tutor' ? 'tutor' : 'student'}/shop`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Cửa hàng gấu">
-              <Icon name="shop" />
-              <span className="side-label">Cửa hàng gấu</span>
-            </NavLink>
-          )}
-          {!isTutor && <FeedbackButton />}
-          <NavLink to={`/${isTutor ? 'tutor' : 'student'}/help`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Hỏi đáp">
-            <Icon name="help" />
-            <span className="side-label">Hỏi đáp</span>
-          </NavLink>
           <ThemeToggle withLabel className="side-btn" />
           <button
             type="button"
@@ -436,6 +445,32 @@ export default function Layout() {
           >
             <Icon name="settings" />
             <span className="side-label">Cài đặt</span>
+          </button>
+          {/* Nút ít dùng gom sau "⋯ Thêm"; đang ở Cửa hàng / Hỏi đáp thì luôn hiện để thấy mình đang ở đâu */}
+          {(footMore || /\/(shop|help)$/.test(pathname)) && (
+            <>
+              {(docked || !isTutor) && (
+                <NavLink to={`/${profile.role === 'tutor' ? 'tutor' : 'student'}/shop`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Cửa hàng gấu">
+                  <Icon name="shop" />
+                  <span className="side-label">Cửa hàng gấu</span>
+                </NavLink>
+              )}
+              {!isTutor && <FeedbackButton />}
+              <NavLink to={`/${isTutor ? 'tutor' : 'student'}/help`} className={({ isActive }) => (isActive ? 'side-btn is-current' : 'side-btn')} title="Hỏi đáp">
+                <Icon name="help" />
+                <span className="side-label">Hỏi đáp</span>
+              </NavLink>
+            </>
+          )}
+          <button
+            type="button"
+            className="side-btn"
+            aria-expanded={footMore}
+            title={footMore ? 'Thu gọn' : 'Cửa hàng gấu, Hỏi đáp...'}
+            onClick={() => setFootMore((v) => !v)}
+          >
+            <Icon name={footMore ? 'up' : 'more'} />
+            <span className="side-label">{footMore ? 'Thu gọn' : 'Thêm'}</span>
           </button>
           <button type="button" className="side-btn is-danger" onClick={confirmSignOut} title="Đăng xuất">
             <Icon name="logout" />

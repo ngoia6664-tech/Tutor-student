@@ -91,11 +91,11 @@ export const STUDENT_HELP = [
       },
       {
         q: 'Tôi góp ý về app bằng cách nào?',
-        a: 'Bấm **Góp ý** trong thanh bên (máy tính) hoặc trong ngăn kéo menu (điện thoại). Góp ý được gửi tới người quản trị app.',
+        a: 'Bấm **Thêm** (dấu ⋯) ở cuối thanh bên (máy tính) hoặc ngăn kéo menu (điện thoại), rồi bấm **Góp ý**. Góp ý được gửi tới người quản trị app.',
       },
       {
         q: 'Nút "Bảng bên" dùng để làm gì?',
-        a: 'Nút **Bảng bên** mở cột thông tin phụ, gồm chuỗi, Xu, Sao và việc đang làm dở (tùy trang). Trên màn hình rộng, cột này luôn hiện sẵn bên phải. Trên điện thoại hoặc màn hình hẹp, bạn bấm nút Bảng bên để mở.',
+        a: 'Nút **Bảng bên** mở cột thông tin phụ, gồm chuỗi, Xu, Sao và việc đang làm dở (tùy trang). Trên màn hình rộng, cột này luôn hiện sẵn bên phải. Trên máy tính màn vừa, bấm lẫy **Bảng bên** ở mép phải màn hình. Trên điện thoại, bấm nút ô lưới ở góc trên bên phải.',
       },
     ],
   },

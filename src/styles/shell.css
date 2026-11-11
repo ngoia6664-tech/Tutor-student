@@ -109,9 +109,6 @@ body:has(.side.is-open) {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
-.ctx-btn-side {
-  display: none;
-}
 
 /* Màn hẹp: thanh trên cùng chỉ còn nút (☰, chuỗi 🔥 của học sinh, chuông; ngắm vũ trụ + bảng bên nằm trong ngăn kéo menu). Bỏ dải nền đặc + tên app,
    mỗi nút tự có nền riêng, nội dung cuộn qua phía sau không bị che nửa chừng */
@@ -780,9 +777,6 @@ body:has(.ctx-card) .ctx-panel {
   display: none;
 }
 
-body:has(.ctx-card) .ctx-btn-side {
-  display: flex;
-}
 
 @media (max-width: 1359px) {
   .ctx-panel {
@@ -898,45 +892,12 @@ body:has(.ctx-card) .ctx-btn-side {
     border-color: var(--wood-mid, var(--border-strong));
     background: var(--surface-2);
   }
-  body:has(.ctx-card) .ctx-expand-btn {
-    position: fixed;
-    top: 1.25rem;
-    right: 0;
-    z-index: 15;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem 0.45rem 0.7rem;
-    border: 1.5px solid var(--border-strong);
-    border-right: 0;
-    border-radius: 999px 0 0 999px;
-    background: var(--surface-solid);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.82rem;
-    font-weight: 700;
-    box-shadow: var(--shadow);
-    cursor: pointer;
-    opacity: 0;
-    transform: translateX(110%);
-    pointer-events: none;
-    transition:
-      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.24s ease,
-      padding-right 0.2s var(--ease),
-      border-color 0.2s var(--ease),
-      color 0.2s var(--ease);
-  }
   :root[data-ctx='collapsed'] body:has(.ctx-card) .ctx-expand-btn {
     opacity: 1;
     transform: translateX(0);
     pointer-events: auto;
   }
-  :root[data-ctx='collapsed'] body:has(.ctx-card) .ctx-expand-btn:hover {
-    padding-right: 1.1rem;
-    border-color: var(--primary);
-    color: var(--primary);
-  }
+
   /* Trang làm bài: màn rộng có ô số câu ở cột phải cố định nên ẩn cả sticky lẫn dòng mờ */
   :root:not([data-ctx='collapsed']) body:has(.ctx-card .qgrid) .answer-progress,
   :root:not([data-ctx='collapsed']) body:has(.ctx-card .qgrid) .exam-hint-pill {
@@ -1285,6 +1246,57 @@ body:has(.ctx-card) .ctx-btn-side {
   }
   .side-backdrop {
     animation: none;
+  }
+}
+
+/* Lẫy "◀ Bảng bên" ở mép phải (màn ≥ 1024px, không còn thanh trên cùng):
+   ≥ 1360px hiện khi cột phải đã thu gọn; 1024–1359px là cách mở ngăn kéo bảng bên (thanh bên trái không còn nút Bảng bên) */
+@media (min-width: 1024px) {
+  body:has(.ctx-card) .ctx-expand-btn {
+    position: fixed;
+    top: 1.25rem;
+    right: 0;
+    z-index: 15;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem 0.45rem 0.7rem;
+    border: 1.5px solid var(--border-strong);
+    border-right: 0;
+    border-radius: 999px 0 0 999px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(110%);
+    pointer-events: none;
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.24s ease,
+      padding-right 0.2s var(--ease),
+      border-color 0.2s var(--ease),
+      color 0.2s var(--ease);
+  }
+  body:has(.ctx-card) .ctx-expand-btn:hover {
+    padding-right: 1.1rem;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1359px) {
+  body:has(.ctx-card) .ctx-expand-btn {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  body:has(.ctx-card) .ctx-panel.is-open ~ .ctx-expand-btn {
+    opacity: 0;
+    transform: translateX(110%);
+    pointer-events: none;
   }
 }
 
@@ -1831,4 +1843,52 @@ body:has(.ctx-card .qgrid) .answer-progress {
   background: #f59e0b;
   border-color: #d97706;
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* Nút "⋯ Thêm" trong nhóm menu thanh bên (Layout: mục `more` ẩn sau nút này) */
+.nav-more {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+.nav-more:hover {
+  color: var(--text);
+}
+.nav-more-dot {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--danger);
+}
+:root[data-side='rail'] .nav-more-dot {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+/* Hàng tên + chuông thông báo ở cuối thanh bên: chuông chỉ còn icon (thu gọn thì chỉ còn chuông) */
+.side-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+.side-user-row .side-user {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.side-user-row .bell-side > .side-btn {
+  width: auto;
+  flex: none;
+  gap: 0.3rem;
+}
+.side-user-row .bell-side .side-label {
+  display: none;
 }
