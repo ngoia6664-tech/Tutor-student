@@ -22,8 +22,10 @@ Rồi chạy ngay `node "d:\Duy Anh office\office.mjs" inbox <tên>` và làm th
 - Mức suy nghĩ: medium; test RLS, bảo mật, chấm điểm: high.
 
 ## Antigravity — thư mục `D:\wt\antigravity`, nhánh `agent/antigravity`
-- Được sửa: `src/components/`, `src/pages/`, `src/styles/`, `public/`, `AI/ANTIGRAVITY/`.
-- Cấm: `supabase/`, `src/lib/`, `src/contexts/` (backend, truy vấn, đăng nhập). Cần đổi dữ liệu thì nhắn Claude code.
+- Được sửa: **mọi file frontend** (HTML, CSS, component, trang, ảnh), gồm cả `home.html`, `index.html`, `src/home/`, `src/components/`, `src/pages/`, `src/styles/`, `public/`, `AI/ANTIGRAVITY/`.
+- Cấm (backend, cấu hình, luật): `supabase/`, `src/lib/`, `src/contexts/`, `package.json`, `package-lock.json`, `vite.config.*`,
+  `vercel.json`, `tsconfig.json`, `.env*`, `.claude/`, `.github/`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`. Cần đổi những chỗ này thì nhắn Claude code.
+- Sửa lớn (tách file, đổi cấu trúc) làm thành commit riêng, cuối cùng, để Anh bỏ riêng được nếu lỗi.
 - Theo quy ước CSS trong `CLAUDE.md` (không `backdrop-filter`, màu dùng biến trong `base.css`, chữ hiển thị tiếng Việt).
 
 ## Văn phòng (bắt buộc)
