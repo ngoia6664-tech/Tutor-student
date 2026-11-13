@@ -59,6 +59,14 @@ Tìm bằng grep tên bảng/hàm. Thứ tự: bảng → `is_tutor()` + trigger
 ## Phạm vi
 Chỉ bài giảng + bài tập. Không thêm lịch học, điểm danh, học phí.
 
+## Git và văn phòng agent
+- Claude code commit tự do. **Merge vào `main` và push chỉ khi Anh yêu cầu rõ trong phiên.** Hook `pre-push` chặn push main;
+  khi Anh yêu cầu thì chạy `OFFICE_ALLOW_MAIN=1 git push origin main` (Bash). Không dùng `--no-verify`, không sửa `.git/hooks`.
+- Codex (`agent/codex-test`, `D:\wt\codex-test`) và Antigravity (`agent/antigravity`, `D:\wt\antigravity`) chỉ commit; luật ở `AGENTS.md`.
+  Merge nhánh của họ vào main chỉ khi Anh yêu cầu.
+- Văn phòng: `node "d:\Duy Anh office\office.mjs" inbox claude-code` đầu phiên; `status claude-code "..."` khi đổi việc;
+  `send claude-code anh "..."` khi cần Anh duyệt merge / push.
+
 ## Bất biến quan trọng
 - Đáp án ở `answer_keys`, học sinh chỉ đọc sau khi nộp (RLS). Không gửi đáp án xuống học sinh trước khi nộp; chấm ở SQL (`submit_assignment`).
 - Học sinh không UPDATE `assignment_recipients` / không ghi `submission_answers` trực tiếp, chỉ qua RPC.
