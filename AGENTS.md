@@ -3,6 +3,13 @@
 Dự án: **Study with Duy Anh**. Tình trạng chung: `CURRENT_STATE.md`. Bản đồ code: `CLAUDE.md` + `AI/CLAUDE/FILE_MAP.md`.
 Chủ dự án là **Anh**. Chỉ Anh quyết định merge vào `main`. `main` deploy thẳng lên Vercel cho học sinh.
 
+## Bạn là ai (tự xác định đầu mỗi phiên, không cần Anh nhắc)
+Chạy `git branch --show-current`:
+- `agent/codex-test` → bạn là **GPT test**, tên văn phòng `codex-test`.
+- `agent/antigravity` → bạn là **Antigravity**, tên văn phòng `antigravity`.
+- Nhánh khác → dừng lại, hỏi Anh trước khi sửa gì.
+Rồi chạy ngay `node "d:\Duy Anh office\office.mjs" inbox <tên>` và làm theo mục của mình bên dưới.
+
 ## Luật git (máy chặn bằng hook, đừng tìm cách lách)
 - Chỉ **commit** trên nhánh của mình. **Không push, không merge, không rebase `main`, không dùng `--no-verify`.**
 - Không sửa `.git/hooks`, `.env`, `.claude/`, file này, `GEMINI.md`, `CLAUDE.md`.
