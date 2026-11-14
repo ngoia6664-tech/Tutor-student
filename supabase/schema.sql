@@ -2619,7 +2619,7 @@ begin
   end if;
 end;
 $$;
-revoke all on function public.course_sync_item(uuid, uuid) from public;
+revoke all on function public.course_sync_item(uuid, uuid) from public, anon, authenticated;
 
 -- Đồng bộ mọi bài trong các chủ đề đã cho
 create or replace function public.course_sync_chapters(p_chapters uuid[])
@@ -2639,7 +2639,7 @@ begin
   end loop;
 end;
 $$;
-revoke all on function public.course_sync_chapters(uuid[]) from public;
+revoke all on function public.course_sync_chapters(uuid[]) from public, anon, authenticated;
 
 -- Bài đổi chủ đề / ẩn hiện (cả lúc chủ đề bị xóa: chapter_id → null)
 create or replace function public.course_on_item_change()
@@ -2748,7 +2748,7 @@ as $$
                / nullif((select count(*) from exercises where assignment_id = p_aid), 0), 2)
   end;
 $$;
-revoke all on function public.course_auto_score(uuid, uuid) from public;
+revoke all on function public.course_auto_score(uuid, uuid) from public, anon, authenticated;
 
 -- Báo API (PostgREST) đọc lại cấu trúc bảng ngay, tránh lỗi "schema cache" sau khi nâng cấp
 notify pgrst, 'reload schema';
