@@ -322,7 +322,9 @@ export default function ImportJson() {
           source_key: d.source_key || null,
         }
         // Bài đã có (cùng mã trong file): sửa tại chỗ, giữ nguyên người nhận + bài làm của học sinh
-        const old = await findExistingAssignment(d, chapterOf[s.id] || null)
+        let old = await findExistingAssignment(d, chapterOf[s.id] || null)
+        // Bài cũ chưa có mã mà khác số câu: nhiều khả năng chỉ trùng tên chung chung ("Bài tập lý thuyết"), không ghép để khỏi xóa nhầm câu
+        if (old && !old.assignment.source_key && old.exercises.length !== d.exercises.length) old = null
         if (old) {
           const plan = planSync(d, old.exercises)
           const legacy = !old.assignment.source_key

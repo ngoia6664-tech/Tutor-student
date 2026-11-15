@@ -188,6 +188,10 @@
 .dlg-message {
   margin: 0.35rem 0 0;
   overflow-wrap: anywhere;
+  white-space: pre-line; /* giữ xuống dòng của danh sách */
+  max-height: 45vh; /* nội dung dài thì cuộn trong hộp, nút luôn thấy */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .dlg-actions {
   display: flex;
