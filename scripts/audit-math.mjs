@@ -56,14 +56,51 @@ function hideExplicit(line) {
   return out
 }
 
+// ----- Tên chất / nguyên tố viết chữ thường chưa bọc $...$: QAl, mCu, nH2, VCO2, Q_Al, Cu(OH)2, H2SO4 -----
+const ELEMENTS = new Set(
+  'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr'.split(' ')
+)
+/** Chuỗi gồm toàn nguyên tố hợp lệ kèm chỉ số / nhóm ngoặc (Cu(OH)2, H2SO4)? Trả về true nếu có ít nhất một chữ số chỉ số. */
+function chemWithDigit(tok) {
+  if (!/\d/.test(tok)) return false
+  const inner = tok.replace(/[()]/g, '')
+  const parts = inner.match(/[A-Z][a-z]?|\d+/g) || []
+  return parts.join('') === inner && parts.filter((p) => !/\d/.test(p)).every((p) => ELEMENTS.has(p)) && parts.some((p) => ELEMENTS.has(p))
+}
+/** Danh sách đoạn nghi là ký hiệu ghép: ký hiệu đại lượng + tên chất, hoặc công thức hóa học thiếu chỉ số con. */
+function chemHits(line) {
+  const plain = line.replace(/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g, ' ').replace(/`[^`\n]*`/g, ' ')
+  const out = []
+  // QAl, mCu, nH2, VCO2: một chữ đại lượng liền sau là tên chất (viết hoa đầu), không có khoảng cách
+  // Chỉ báo khi tên chất rõ ràng: có nguyên tố hai chữ (Al, Cu) hoặc có chỉ số số (H2, CO2); chỉ số số chỉ ở cuối.
+  // Bỏ pV, TN, EU, MPa (đơn vị), mã ngẫu nhiên (nH6V58).
+  for (const m of plain.matchAll(/(?<![\p{L}\d_])([QqmnVvcCTMLEp])((?:[A-Z][a-z]?){1,3}\d*)(?![\p{L}\d])/gu)) {
+    const rest = m[2].match(/[A-Z][a-z]?/g) || []
+    const clear = rest.some((e) => e.length === 2) || /\d$/.test(m[2])
+    if (m[2] !== 'Pa' && clear && rest.every((e) => ELEMENTS.has(e))) out.push(m[0])
+  }
+  // Q_Al, m_{Cu}, n_{H2}: chỉ số tên chất không bọc \mathrm
+  for (const m of plain.matchAll(/(?<![\p{L}\d])[A-Za-z]_\{?((?:[A-Z][a-z]?\d*){1,4})\}?(?![\p{L}\d])/gu)) {
+    const rest = m[1].match(/[A-Z][a-z]?/g) || []
+    if (rest.every((e) => ELEMENTS.has(e))) out.push(m[0])
+  }
+  // Cu(OH)2, H2SO4, CO2: công thức hóa học chưa có chỉ số con
+  for (const m of plain.matchAll(/(?<![\p{L}\d_])((?:[A-Z][a-z]?\d*|\([A-Za-z0-9]+\)\d*){2,})(?![\p{L}\d_])/gu)) {
+    if (chemWithDigit(m[1])) out.push(m[1])
+  }
+  return [...new Set(out)]
+}
+
 const hits = []
 const walk = (file, v) => {
   if (typeof v === 'string') {
     for (const line of v.split('\n')) {
+      const chem = chemHits(line)
+      if (chem.length) hits.push({ file, line: line.trim().slice(0, 140), kind: 'tên chất / hóa học chưa bọc $…$', bad: chem })
       if (line.includes('$') || !line.includes('/')) continue
       for (const sp of findMathSpans(hideExplicit(line))) {
         const bad = multiDenoms(sp.tex)
-        if (bad.length) hits.push({ file, line: line.trim().slice(0, 140), tex: sp.tex, bad })
+        if (bad.length) hits.push({ file, line: line.trim().slice(0, 140), kind: 'mẫu số dài', bad })
       }
     }
   } else if (v && typeof v === 'object') for (const x of Object.values(v)) walk(file, x)
@@ -86,6 +123,7 @@ const seen = new Set()
 for (const h of hits) {
   if (seen.has(h.line)) continue
   seen.add(h.line)
-  console.log(`${h.file}\n  nhập : ${h.line}\n  mẫu số dài: ${h.bad.join(' ; ')}\n`)
+  const kinds = hits.filter((x) => x.line === h.line).map((x) => `${x.kind}: ${x.bad.join(' ; ')}`)
+  console.log(`${h.file}\n  nhập : ${h.line}\n  ${kinds.join('\n  ')}\n`)
 }
-console.log(`${files.length} file, ${seen.size} dòng có phân số mẫu nhiều nhân tử (cần xem tay).`)
+console.log(`${files.length} file, ${seen.size} dòng nghi ngờ (phân số mẫu nhiều nhân tử, hoặc tên chất / công thức hóa học chưa bọc $…$) — cần xem tay.`)

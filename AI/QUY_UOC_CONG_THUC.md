@@ -108,6 +108,7 @@ Số nguyên tử là chỉ số **dưới** `_`; điện tích ion là chỉ s�
 Chỉ sửa **chữ**; giữ nguyên mọi thứ điều khiển chấm điểm.
 
 1. Chạy rà soát: `node scripts/audit-math.mjs "<thư mục hoặc file>"` (trong dự án portal). Nó liệt kê dòng có phân số chữ thường mà mẫu nhiều nhân tử. Đây là chỗ app dễ đoán sai. Danh sách ngắn, xem hết.
+   Script cũng liệt kê tên chất / công thức hóa học chưa bọc `$...$`: `QAl`, `mCu`, `nH2`, `VCO2`, `Q_Al`, `m_{Cu}`, `Cu(OH)2`, `H2SO4`. Có vài báo nhầm (mã câu như `P8K`, `v_N` có thể đúng ý); xem từng dòng.
 2. Ngoài danh sách đó, tự tìm trong file: `/` giữa các biến, `1/2mv²`, `1/2π`, `p=1/3Nmv²/V`, `⟨ ⟩`, `Eđ` có gạch trên, `Cu(OH)2`, `H2SO4`, số mũ / chỉ số viết bằng chữ thường.
 3. Thay bằng `$...$` theo mục 3. Công thức đã đúng ở dạng `$...$` thì để nguyên.
 4. Không dùng tìm-và-thay hàng loạt mù quáng. Đọc từng chỗ: `kg/mol`, `m/s`, `A/B/C/D`, ngày `12/10`, mã câu `cd6-m4-tn-21` KHÔNG phải phân số.

@@ -118,6 +118,12 @@ create index if not exists submission_answers_rec_idx on public.submission_answe
 -- points: điểm câu này theo thang THPT (chỉ tính cho trắc nghiệm, đúng-sai, trả lời ngắn)
 alter table public.submission_answers add column if not exists points numeric(5, 2);
 
+-- ---- Nâng cấp: mã nguồn trong file JSON (nhập lại cùng mã thì cập nhật tại chỗ, giữ bài làm học sinh) ----
+-- Chỉ thêm cột, không đụng RLS / hàm nào. Ghi bằng update trực tiếp (lib/assignments.js saveSourceKeys).
+alter table public.assignments add column if not exists source_key text;
+alter table public.exercises add column if not exists source_key text;
+create index if not exists assignments_source_key_idx on public.assignments (source_key) where source_key is not null;
+
 -- ---- Nâng cấp: chương ----
 -- Chương gom bài giảng + bài tập của cùng một nội dung (vd. "Chủ đề 4: Giao thoa sóng cơ").
 -- section: nhóm lớn hơn để xếp các chương (vd. "Chuyên đề 2: Sóng").
