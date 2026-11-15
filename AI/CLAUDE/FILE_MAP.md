@@ -250,6 +250,7 @@
 
 
 ## `tests/`
+- `AI/QUY_UOC_CONG_THUC.md` — Quy ước viết công thức trong JSON + bảng quy đổi + cách sửa file cũ + điều không được đổi (id, đáp án) cho agent soạn bài. Đi kèm file mẫu dưới.
 - `AI/MAU_CONG_THUC.json` — File mẫu "tutor-lesson/v1" (nhập được) cho agent soạn bài: cách viết phân số, căn, mũ, chỉ số, logarit, trung bình `\overline{E}`, vectơ, lồng nhau, hóa học `\mathrm{Cu(OH)_2}`. Mọi công thức trong `$...$`.
 - `lib/syncByKey.js` — `planSync`: ghép câu trong file JSON với câu đã có theo `source_key`, báo thay đổi đụng tới điểm (đổi đáp án / phương án / xóa câu). `lib/assignments.js` `findExistingAssignment` tìm bài đã có.
 - `scripts/audit-math.mjs` — Rà JSON bài giảng: liệt kê phân số chữ thường có mẫu nhiều nhân tử dễ hiểu nhầm (`2/3μm`, `1/2π`); chỉ đọc. `node scripts/audit-math.mjs "<thư mục>"`. Cách chữa: thêm ngoặc hoặc viết `$\frac{}{}$`.
