@@ -47,9 +47,10 @@ export async function findExistingAssignment(draft, chapterId) {
   if (draft.source_key) {
     row = (unwrap(await supabase.from('assignments').select('*').eq('source_key', draft.source_key).limit(1)) || [])[0] || null
   }
-  if (!row && chapterId) {
-    const q = supabase.from('assignments').select('*').eq('title', draft.title).eq('chapter_id', chapterId).is('source_key', null).limit(1)
-    row = (unwrap(await q) || [])[0] || null
+  if (!row) {
+    // Bài cũ chưa có mã: cùng tiêu đề, ưu tiên cùng chủ đề; khác chủ đề thì chỉ nhận khi chỉ có đúng một bài trùng tiêu đề
+    const same = unwrap(await supabase.from('assignments').select('*').eq('title', draft.title).is('source_key', null)) || []
+    row = same.find((a) => chapterId && a.chapter_id === chapterId) || (same.length === 1 ? same[0] : null)
   }
   if (!row) return null
   const [exercises, recipients] = await Promise.all([

@@ -87,7 +87,7 @@ export default function ImportJson() {
     const [lessons, chapters, assignments] = await Promise.all([
       supabase.from('lessons').select('id, title, chapter_id').order('created_at', { ascending: false }).then(unwrap),
       fetchChapters(),
-      supabase.from('assignments').select('id, title').then(unwrap),
+      supabase.from('assignments').select('id, title, source_key').then(unwrap),
     ])
     return { lessons, chapters, assignments }
   }, [reloadKey])
@@ -142,8 +142,15 @@ export default function ImportJson() {
     return (inChapter.find((l) => sameDang(l.title)) || inChapter[0])?.id || ''
   }
 
+  // Bài tập trong file đã có trong app: 'key' = cùng mã nguồn (chắc chắn), 'title' = chỉ trùng tiêu đề (bài cũ chưa có mã)
+  const matchKind = (d) => {
+    if (d.kind !== 'assignment') return null
+    const list = lists.data?.assignments || []
+    if (d.source_key && list.some((a) => a.source_key === d.source_key)) return 'key'
+    return list.some((a) => normTitle(a.title) === normTitle(d.title)) ? 'title' : null
+  }
   const defaultOpts = (d) => ({
-    include: !existingTitles.has(normTitle(d.title)),
+    include: matchKind(d) === 'key' || !existingTitles.has(normTitle(d.title)),
     due_date: d.due_date || '',
     is_exam: !!d.is_exam,
     timed: d.time_limit_minutes !== null,
@@ -547,6 +554,11 @@ export default function ImportJson() {
             <>
               <span className="badge">{TYPE_LABEL[d.type]}</span>
               <span className="badge">{d.exercises.length} câu</span>
+              {matchKind(d) && (
+                <span className="badge badge-warn" title="Lưu sẽ sửa bài đã có tại chỗ, giữ bài làm của học sinh (có hỏi xác nhận)">
+                  {matchKind(d) === 'key' ? '♻️ Sẽ cập nhật bài đã có (cùng mã)' : '♻️ Trùng tiêu đề bài đã có – tích chọn để cập nhật tại chỗ'}
+                </span>
+              )}
               {d.flaggedCount > 0 && <span className="badge badge-warn">{d.flaggedCount} câu có ghi chú cần xem</span>}
             </>
           )}
