@@ -122,7 +122,7 @@ Nếu bắt buộc phải đổi những mục trên (ví dụ đáp án sai), g
 
 ## 5. Kiểm tra trước khi giao lại
 
-- `JSON.parse` thành công.
+- **Bắt buộc:** `node scripts/check-latex.mjs "<thư mục hoặc file>"` phải báo **0 lỗi** (thoát mã 0). Nó kiểm tra JSON hợp lệ, cặp `$` chẵn, mọi công thức KaTeX vẽ được, không dùng `\ce{}`, và bắt lỗi quên gấp đôi dấu `\` (`\frac` thành ký tự lạ). Cảnh báo (vd. `Q_{Al}` chưa bọc `\mathrm`) cũng phải sửa hết. Script bỏ qua đoạn nằm trong dấu nháy `...`.
 - Chạy lại `node scripts/audit-math.mjs` trên file đã sửa: không còn dòng mơ hồ nào chưa xử lý.
 - Cặp `$` luôn chẵn trong từng chuỗi; `{ }` trong công thức cân nhau.
 - Mở app, Nhập bài, xem trước: các công thức vừa sửa hiển thị đúng (đặc biệt phân số, gạch trên, chỉ số hóa học).
