@@ -14,6 +14,7 @@ const show = (/** @type {string} */ text) => convertText(text).map((p) => (p.typ
 const CONVERT = [
   // dòng công thức của bài giảng
   ['i = λD/a', String.raw`$i = \frac{\lambda D}{a}$`],
+  ['E = 3/2kT', String.raw`$E = \frac{3}{2} k T$`],
   ['Δd_s = kλ, k ∈ Z', String.raw`$\Delta d_{s} = k \lambda$, $k \in \mathbb{Z}$`],
   ['Δφ = 2πΔd/λ', String.raw`$\Delta \varphi = \frac{2 \pi \Delta d}{\lambda}$`],
   ['|x_t,n| = (n − 0,5)i', String.raw`$|x_{t,n}| = (n - 0{,}5) i$`],

@@ -26,12 +26,40 @@ export function toExercisePayload(ex) {
   const kind = ex.kind || 'essay'
   return {
     id: ex.id || null,
+    source_key: ex.source_key || null,
     kind,
     question_md: ex.question_md,
     options: kind === 'essay' || kind === 'short' ? null : ex.options,
     correct: kind === 'essay' ? null : ex.correct,
     answer_md: ex.answer_md || '',
     method_md: ex.method_md || '',
+  }
+}
+
+/**
+ * Tìm bài đã có ứng với bài trong file JSON (cùng source_key; bài cũ chưa có mã thì cùng tiêu đề + chủ đề).
+ * Trả về null nếu chưa có; không thì bài + câu (kèm đáp án) + học sinh đang nhận, để gọi planSync và lưu tại chỗ.
+ * @param {{ source_key?: string, title: string }} draft
+ * @param {string | null} chapterId
+ */
+export async function findExistingAssignment(draft, chapterId) {
+  let row = null
+  if (draft.source_key) {
+    row = (unwrap(await supabase.from('assignments').select('*').eq('source_key', draft.source_key).limit(1)) || [])[0] || null
+  }
+  if (!row && chapterId) {
+    const q = supabase.from('assignments').select('*').eq('title', draft.title).eq('chapter_id', chapterId).is('source_key', null).limit(1)
+    row = (unwrap(await q) || [])[0] || null
+  }
+  if (!row) return null
+  const [exercises, recipients] = await Promise.all([
+    supabase.from('exercises').select('id, kind, options, source_key, answer_keys(correct)').eq('assignment_id', row.id).order('sort_order').then(unwrap),
+    supabase.from('assignment_recipients').select('student_id, from_course').eq('assignment_id', row.id).then(unwrap),
+  ])
+  return {
+    assignment: row,
+    exercises: exercises.map((e) => ({ id: e.id, kind: e.kind || 'essay', options: e.options || null, source_key: e.source_key, correct: firstKey(e.answer_keys)?.correct ?? null })),
+    studentIds: recipients.filter((r) => !r.from_course).map((r) => r.student_id),
   }
 }
 

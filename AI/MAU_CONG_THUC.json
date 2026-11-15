@@ -1,0 +1,137 @@
+{
+  "schema": "tutor-lesson/v1",
+  "lesson": {
+    "id": "mau-cong-thuc",
+    "subject": "Mẫu",
+    "grade": "12",
+    "chapter": "Mẫu soạn bài",
+    "topic": "Mẫu viết công thức (Toán, Lý, Hóa)",
+    "part": "Mẫu công thức",
+    "theory": {
+      "sections": [
+        {
+          "title": "0. Quy ước chung (đọc trước)",
+          "explain": "Mỗi công thức viết trong dấu `$...$` (LaTeX). Phần trong dấu nháy là chữ gõ vào file JSON, phần sau mũi tên là kết quả hiển thị. Trong JSON, dấu `\\` phải gõ thành `\\\\` (vd. `\\\\frac`). Công thức chữ thường không có `$` thì app tự đoán, dễ sai (vd. `3/2kT`), nên **luôn dùng `$...$`**. Không dùng `\\ce{}` vì app không có mhchem.",
+          "formulas": [
+            "Một công thức = một cặp `$...$`; chữ tiếng Việt bên trong công thức phải bọc `\\text{...}`.",
+            "Số thập phân trong công thức dùng dấu phẩy có ngoặc nhọn: `1{,}38`."
+          ]
+        },
+        {
+          "title": "1. Phân số",
+          "explain": "Phân số là `\\frac{tử}{mẫu}`; tử và mẫu luôn nằm trong ngoặc nhọn nên không bao giờ nhầm mẫu số.",
+          "formulas": [
+            "- Đúng: `$\\frac{3}{2}kT$` → $\\frac{3}{2}kT$ — tử 3, mẫu 2, rồi nhân kT",
+            "- Mẫu là tích: `$\\frac{3}{2kT}$` → $\\frac{3}{2kT}$ — khác hẳn dòng trên",
+            "- Động năng trung bình: `$\\overline{E_d} = \\frac{3}{2}kT$` → $\\overline{E_d} = \\frac{3}{2}kT$",
+            "- Áp suất khí: `$p = \\frac{1}{3}\\frac{Nm\\overline{v^2}}{V}$` → $p = \\frac{1}{3}\\frac{Nm\\overline{v^2}}{V}$",
+            "- Tử, mẫu nhiều nhân tử: `$i = \\frac{\\lambda D}{a}$` → $i = \\frac{\\lambda D}{a}$",
+            "- Phân số lồng căn: `$\\frac{1}{2\\pi}\\sqrt{\\frac{1}{LC}}$` → $\\frac{1}{2\\pi}\\sqrt{\\frac{1}{LC}}$",
+            "- Phân số nhỏ trong dòng chữ: `$\\tfrac{1}{2}mv^2$` → $\\tfrac{1}{2}mv^2$",
+            "- Phân số cỡ lớn: `$\\dfrac{a+b}{c-d}$` → $\\dfrac{a+b}{c-d}$",
+            "Sai thường gặp: `3/2kT`, `1/2π`, `a/2b` viết chữ thường không ngoặc. Nếu bắt buộc dùng chữ thường thì viết `(3/2)kT`."
+          ]
+        },
+        {
+          "title": "2. Căn và lũy thừa",
+          "explain": "Căn bậc hai `\\sqrt{}`, căn bậc n `\\sqrt[n]{}`. Số mũ dùng `^`; mũ nhiều ký tự phải có ngoặc nhọn.",
+          "formulas": [
+            "- Căn bậc hai: `$\\sqrt{x}$` → $\\sqrt{x}$",
+            "- Căn bậc ba: `$\\sqrt[3]{x}$` → $\\sqrt[3]{x}$",
+            "- Căn bậc n: `$\\sqrt[n]{a^n} = |a|$` → $\\sqrt[n]{a^n} = |a|$",
+            "- Căn chứa phân số: `$v_{\\text{rms}} = \\sqrt{\\frac{3kT}{m}}$` → $v_{\\text{rms}} = \\sqrt{\\frac{3kT}{m}}$",
+            "- Bình phương: `$x^2 + y^2 = r^2$` → $x^2 + y^2 = r^2$",
+            "- Mũ nhiều ký tự: `$x^{n+1}$` → $x^{n+1}$",
+            "- Lũy thừa của 10: `$1{,}38 \\times 10^{-23}\\ \\text{J/K}$` → $1{,}38 \\times 10^{-23}\\ \\text{J/K}$",
+            "- Hàm mũ: `$e^{-\\lambda t}$` → $e^{-\\lambda t}$",
+            "- Mũ của phân số: `$\\left(\\frac{a}{b}\\right)^{2}$` → $\\left(\\frac{a}{b}\\right)^{2}$"
+          ]
+        },
+        {
+          "title": "3. Chỉ số dưới và chỉ số trên",
+          "explain": "Chỉ số dưới `_`, chỉ số trên `^`; dùng cả hai thì viết liền `x_i^2`. Chữ thường làm chỉ số (min, rms, khí) bọc `\\text{}` để thẳng đứng.",
+          "formulas": [
+            "- Chỉ số số: `$x_1,\\ x_2,\\ T_2$` → $x_1,\\ x_2,\\ T_2$",
+            "- Chỉ số chữ: `$N_A,\\ I_{\\max},\\ \\lambda_{\\min}$` → $N_A,\\ I_{\\max},\\ \\lambda_{\\min}$",
+            "- Chỉ số là từ: `$m_{\\text{khí}},\\ v_{\\text{rms}}$` → $m_{\\text{khí}},\\ v_{\\text{rms}}$",
+            "- Chỉ số biểu thức: `$x_{n+1},\\ a_{i,j}$` → $x_{n+1},\\ a_{i,j}$",
+            "- Vừa dưới vừa trên: `$x_i^2,\\ \\sum_{i=1}^{n} x_i$` → $x_i^2,\\ \\sum_{i=1}^{n} x_i$"
+          ]
+        },
+        {
+          "title": "4. Logarit",
+          "explain": "Cơ số viết bằng chỉ số dưới.",
+          "formulas": [
+            "- Logarit cơ số a: `$\\log_a b$` → $\\log_a b$",
+            "- Logarit thập phân: `$\\lg x = \\log_{10} x$` → $\\lg x = \\log_{10} x$",
+            "- Logarit tự nhiên: `$\\ln x$` → $\\ln x$",
+            "- Công thức: `$\\log_a (bc) = \\log_a b + \\log_a c$` → $\\log_a (bc) = \\log_a b + \\log_a c$",
+            "- Đổi cơ số: `$\\log_a b = \\frac{\\ln b}{\\ln a}$` → $\\log_a b = \\frac{\\ln b}{\\ln a}$"
+          ]
+        },
+        {
+          "title": "5. Giá trị trung bình (gạch ngang trên), vectơ, góc",
+          "explain": "Giá trị trung bình dùng `\\overline{...}` (gạch trên cả biểu thức). Một chữ đơn có thể dùng `\\bar{E}`; biểu thức dài như `v^2` dùng `\\overline`.",
+          "formulas": [
+            "- Trung bình của E: `$\\overline{E}$` → $\\overline{E}$",
+            "- Động năng trung bình: `$\\overline{E_d} = \\frac{3}{2}kT$` → $\\overline{E_d} = \\frac{3}{2}kT$",
+            "- Trung bình bình phương: `$\\overline{v^2}$` → $\\overline{v^2}$",
+            "- Chữ đơn: `$\\bar{x}$` → $\\bar{x}$",
+            "- Ngoặc nhọn (kiểu cũ): `$\\langle E_d\\rangle$` → $\\langle E_d\\rangle$ — cũng được, nhưng nên thống nhất một kiểu trong cả bộ",
+            "- Vectơ: `$\\vec{F} = m\\vec{a}$` → $\\vec{F} = m\\vec{a}$",
+            "- Vectơ hai điểm: `$\\overrightarrow{AB}$` → $\\overrightarrow{AB}$",
+            "- Giá trị tuyệt đối: `$|x|,\\ \\left|\\frac{a}{b}\\right|$` → $|x|,\\ \\left|\\frac{a}{b}\\right|$",
+            "- Góc: `$\\widehat{ABC} = 30^\\circ$` → $\\widehat{ABC} = 30^\\circ$"
+          ]
+        },
+        {
+          "title": "6. Biểu thức lồng nhau",
+          "explain": "Ngoặc to tự co theo nội dung: `\\left( ... \\right)`.",
+          "formulas": [
+            "- Căn trong phân số: `$\\frac{\\sqrt{3}}{2}$` → $\\frac{\\sqrt{3}}{2}$",
+            "- Phân số trong căn: `$\\sqrt{\\frac{3kT}{m}}$` → $\\sqrt{\\frac{3kT}{m}}$",
+            "- Phân số chồng phân số: `$\\frac{\\frac{1}{2}mv^2}{kT}$` → $\\frac{\\frac{1}{2}mv^2}{kT}$",
+            "- Thuyết tương đối: `$\\frac{1}{\\sqrt{1-\\frac{v^2}{c^2}}}$` → $\\frac{1}{\\sqrt{1-\\frac{v^2}{c^2}}}$",
+            "- Ngoặc to: `$\\left(\\frac{a}{b}\\right)^2 + \\left[\\frac{c}{d}\\right]$` → $\\left(\\frac{a}{b}\\right)^2 + \\left[\\frac{c}{d}\\right]$",
+            "- Nghiệm bậc hai: `$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$` → $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$"
+          ]
+        },
+        {
+          "title": "7. Hóa học: chỉ số con (dưới) và điện tích (trên)",
+          "explain": "Công thức hóa học bọc `\\mathrm{}` để chữ thẳng đứng. Số nguyên tử là chỉ số dưới `_`; điện tích ion là chỉ số trên `^`. **Hệ số đứng trước viết bình thường, không là chỉ số.**",
+          "formulas": [
+            "- Hiđroxit: `$\\mathrm{Cu(OH)_2}$` → $\\mathrm{Cu(OH)_2}$ — số 2 ở dưới, ngoài ngoặc",
+            "- Axit: `$\\mathrm{H_2SO_4}$` → $\\mathrm{H_2SO_4}$",
+            "- Muối: `$\\mathrm{Al_2(SO_4)_3}$` → $\\mathrm{Al_2(SO_4)_3}$",
+            "- Ion: `$\\mathrm{SO_4^{2-}},\\ \\mathrm{Fe^{3+}},\\ \\mathrm{Na^+}$` → $\\mathrm{SO_4^{2-}},\\ \\mathrm{Fe^{3+}},\\ \\mathrm{Na^+}$",
+            "- Phản ứng có hệ số: `$\\mathrm{2H_2 + O_2 \\xrightarrow{t^\\circ} 2H_2O}$` → $\\mathrm{2H_2 + O_2 \\xrightarrow{t^\\circ} 2H_2O}$",
+            "- Kết tủa, khí: `$\\mathrm{CaCO_3 \\downarrow},\\ \\mathrm{CO_2 \\uparrow}$` → $\\mathrm{CaCO_3 \\downarrow},\\ \\mathrm{CO_2 \\uparrow}$",
+            "- Cân bằng thuận nghịch: `$\\mathrm{N_2 + 3H_2 \\rightleftharpoons 2NH_3}$` → $\\mathrm{N_2 + 3H_2 \\rightleftharpoons 2NH_3}$",
+            "- Đồng vị: `${}^{14}_{6}\\mathrm{C}$` → ${}^{14}_{6}\\mathrm{C}$",
+            "- Nồng độ: `$C_M = \\frac{n}{V}\\ \\text{(mol/L)}$` → $C_M = \\frac{n}{V}\\ \\text{(mol/L)}$"
+          ]
+        },
+        {
+          "title": "8. Ký hiệu, đơn vị, hệ phương trình",
+          "explain": "Đơn vị bọc `\\text{}` hoặc `\\mathrm{}`; ký hiệu Hy Lạp gõ lệnh (`\\lambda`, `\\Delta`).",
+          "formulas": [
+            "- Hy Lạp: `$\\alpha,\\ \\beta,\\ \\lambda,\\ \\mu,\\ \\rho,\\ \\omega,\\ \\Delta,\\ \\Omega,\\ \\pi$` → $\\alpha,\\ \\beta,\\ \\lambda,\\ \\mu,\\ \\rho,\\ \\omega,\\ \\Delta,\\ \\Omega,\\ \\pi$",
+            "- So sánh: `$a \\le b,\\ a \\ge b,\\ a \\ne b,\\ a \\approx b$` → $a \\le b,\\ a \\ge b,\\ a \\ne b,\\ a \\approx b$",
+            "- Nhân, chia: `$a \\times b,\\ a \\cdot b,\\ a : b$` → $a \\times b,\\ a \\cdot b,\\ a : b$",
+            "- Đơn vị ghép: `$\\mathrm{m/s^2},\\ \\mathrm{J/(mol\\cdot K)},\\ \\mathrm{kg\\cdot m^{-3}}$` → $\\mathrm{m/s^2},\\ \\mathrm{J/(mol\\cdot K)},\\ \\mathrm{kg\\cdot m^{-3}}$",
+            "- Số có đơn vị: `$8{,}31\\ \\mathrm{J/(mol\\cdot K)}$` → $8{,}31\\ \\mathrm{J/(mol\\cdot K)}$",
+            "- Tổng, tích phân: `$\\sum_{i=1}^{n} x_i,\\ \\int_0^1 x^2\\,dx$` → $\\sum_{i=1}^{n} x_i,\\ \\int_0^1 x^2\\,dx$",
+            "- Giới hạn: `$\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$` → $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$",
+            "- Hệ phương trình: `$\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$` → $\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$"
+          ]
+        }
+      ],
+      "summary_1_min": [
+        "Mọi công thức nằm trong `$...$`; phân số `\\frac{tử}{mẫu}`; trung bình `\\overline{E}`; hóa học `\\mathrm{Cu(OH)_2}`.",
+        "Không viết `3/2kT`, `1/2π`: dễ bị đọc sai mẫu số."
+      ]
+    },
+    "exercises": {},
+    "review_flags": []
+  }
+}

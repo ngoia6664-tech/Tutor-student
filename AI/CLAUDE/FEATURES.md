@@ -51,6 +51,8 @@ Mọi chữ hiển thị và comment viết **tiếng Việt**. Ưu tiên giao d
 - Công thức viết bằng chữ thường (bài cũ nhập từ Word / file JSON, chưa có `$...$`): `lib/autoMath.js` tự đổi lúc hiển thị (plugin remark trong `Markdown.jsx`), không sửa dữ liệu.
   Nhận: phân số `a/b`, `λD/a`, `(1)/(2)`; chỉ số `x_s`, `x₁`, `λ_min`, `N_riêng,1`; số mũ `x²`, `10⁻³`; căn `√`; `|x|`, `abs(x)`; `⌊x⌋`; hàm `cosα`, `sinπ/6`; số kèm đơn vị `0,6 μm`, `m/s²`;
   Hy Lạp, `≤ ≥ ≈ ∈`, dấu phẩy thập phân. Không đổi: câu chữ thường, đơn vị đứng một mình, `A/B/C/D`, ngày `12/10`, mã `cd5-ii-tn-1`, công thức hóa học `CO₂`, `P-T`, `a-d`, từ viết tắt (SGK-CD).
+  Tử và mẫu đều là số thì chữ Latin liền sau là nhân tử: `3/2kT` = (3/2)·kT, `1/2mv²` = (1/2)·mv² (chữ Hy Lạp vẫn vào mẫu: `1/2π`, `2/3μm` còn mơ hồ → ghi ngoặc). Rà hàng loạt: `scripts/audit-math.mjs`.
+  Nhập lại cùng mã = sửa tại chỗ: `assignments.source_key` = `<lesson.id>|<loại>`, `exercises.source_key` = id câu trong file (tutor-lesson/v1). ImportJson gọi `findExistingAssignment` + `planSync`, rồi `save_assignment` với id cũ (giữ người nhận + bài làm, tự chấm lại). Đổi đáp án / phương án / xóa câu thì hỏi xác nhận; bài cũ chưa có mã ghép theo tiêu đề + chủ đề + thứ tự câu (cũng hỏi).
   Đoán sai một đoạn thì bọc trong `` `...` `` để giữ nguyên. Quy tắc nằm một chỗ (`autoMath.js`), có bảng test từ bài thật (`tests/autoMath.test.js`).
 - Hiệu năng ô nhập: `Markdown` là `memo` (KaTeX chỉ vẽ lại khi chữ đổi). Danh sách câu nặng tách thành component `memo` + callback `useCallback`
   (`SheetQuestion` ở AssignmentTracking, `ExerciseEditCard` ở AssignmentEditor, `LessonPreview`/`AssignmentPreview` ở ImportJson) để gõ một ô không vẽ lại cả trang.

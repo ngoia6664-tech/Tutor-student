@@ -118,6 +118,11 @@ create index if not exists submission_answers_rec_idx on public.submission_answe
 -- points: điểm câu này theo thang THPT (chỉ tính cho trắc nghiệm, đúng-sai, trả lời ngắn)
 alter table public.submission_answers add column if not exists points numeric(5, 2);
 
+-- ---- Nâng cấp: mã nguồn trong file JSON (nhập lại cùng mã thì cập nhật tại chỗ, giữ bài làm học sinh) ----
+alter table public.assignments add column if not exists source_key text;
+alter table public.exercises add column if not exists source_key text;
+create index if not exists assignments_source_key_idx on public.assignments (source_key) where source_key is not null;
+
 -- ---- Nâng cấp: chương ----
 -- Chương gom bài giảng + bài tập của cùng một nội dung (vd. "Chủ đề 4: Giao thoa sóng cơ").
 -- section: nhóm lớn hơn để xếp các chương (vd. "Chuyên đề 2: Sóng").
@@ -545,11 +550,12 @@ begin
   end if;
 
   if v_id is null then
-    insert into assignments (lesson_id, title, type, due_date, chapter_id, is_exam, time_limit_minutes)
+    insert into assignments (lesson_id, title, type, due_date, chapter_id, is_exam, time_limit_minutes, source_key)
     values (nullif(p ->> 'lesson_id', '')::uuid, trim(p ->> 'title'), p ->> 'type',
             nullif(p ->> 'due_date', '')::date, nullif(p ->> 'chapter_id', '')::uuid,
             coalesce((p ->> 'is_exam')::boolean, false),
-            case when coalesce((p ->> 'is_exam')::boolean, false) then nullif(p ->> 'time_limit_minutes', '')::int end)
+            case when coalesce((p ->> 'is_exam')::boolean, false) then nullif(p ->> 'time_limit_minutes', '')::int end,
+            nullif(p ->> 'source_key', ''))
     returning id into v_id;
   else
     update assignments
@@ -560,7 +566,8 @@ begin
            chapter_id = nullif(p ->> 'chapter_id', '')::uuid,
            is_exam = coalesce((p ->> 'is_exam')::boolean, false),
            time_limit_minutes = case when coalesce((p ->> 'is_exam')::boolean, false)
-                                     then nullif(p ->> 'time_limit_minutes', '')::int end
+                                     then nullif(p ->> 'time_limit_minutes', '')::int end,
+           source_key = coalesce(nullif(p ->> 'source_key', ''), source_key)
      where id = v_id;
     if not found then
       raise exception 'Không tìm thấy bài tập để cập nhật';
@@ -616,13 +623,15 @@ begin
     -- Cập nhật câu cũ (nếu id thuộc bài này), không thì thêm câu mới
     update exercises
        set sort_order = v_i, kind = v_kind, question_md = v_ex ->> 'question_md',
-           options = case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end
+           options = case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end,
+           source_key = coalesce(nullif(v_ex ->> 'source_key', ''), source_key)
      where id::text = coalesce(v_ex ->> 'id', '') and assignment_id = v_id
     returning id into v_ex_id;
     if v_ex_id is null then
-      insert into exercises (assignment_id, sort_order, kind, question_md, options)
+      insert into exercises (assignment_id, sort_order, kind, question_md, options, source_key)
       values (v_id, v_i, v_kind, v_ex ->> 'question_md',
-              case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end)
+              case when v_kind in ('essay', 'short') then null else v_ex -> 'options' end,
+              nullif(v_ex ->> 'source_key', ''))
       returning id into v_ex_id;
     end if;
 

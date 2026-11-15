@@ -145,6 +145,7 @@ function fromFillBlank(fb, includeNotes, warnings = []) {
     type: normalizeType(fb.assignment),
     flagged: !!str(fb.note),
     exercise: {
+      source_key: str(fb.id),
       kind: 'fill_blank',
       question_md: join([levelLine(fb.level), 'Điền vào chỗ trống:', imagesMd(fb.images, `Câu ${str(fb.id)}`, warnings)]),
       options: items.map(({ id, statement }) => ({ id, statement })),
@@ -179,6 +180,7 @@ function fromMcq(q, includeNotes, warnings = []) {
       flagged: true,
       invalid: true,
       exercise: {
+        source_key: str(q.id),
         kind: 'essay',
         question_md: join([head, str(q.stem), pics, options.map((o) => `- **${o.label}.** ${o.text}`).join('\n')]),
         answer_md: str(q.answer),
@@ -190,6 +192,7 @@ function fromMcq(q, includeNotes, warnings = []) {
     type: normalizeType(q.assignment),
     flagged: !!str(q.note),
     exercise: {
+      source_key: str(q.id),
       kind: 'mcq',
       question_md: join([head, str(q.stem), pics]),
       options: options.map(({ label, text }) => ({ label, text })),
@@ -236,6 +239,7 @@ function fromTfGroup(items, includeNotes, warnings = []) {
     type: normalizeType(first.assignment),
     flagged: items.some((q) => str(q.note)),
     exercise: {
+      source_key: tfGroupKey(first),
       kind: 'true_false',
       question_md: join([levelLine(first.level), lead || 'Chọn Đúng hoặc Sai cho mỗi ý sau:', imagesMd(items.flatMap((q) => arr(q.images)), `Câu ${str(first.id)}`, warnings)]),
       options: rows.map((r) => ({ id: r.id, statement: r.statement })),
@@ -283,6 +287,7 @@ function fromProblem(p, typeTitle, includeNotes, warnings = []) {
       type: normalizeType(p.assignment),
       flagged: !!str(p.note),
       exercise: {
+        source_key: str(p.id),
         kind: 'short',
         question_md: join([str(p.statement), pics]),
         correct: str(p.answer),
@@ -299,6 +304,7 @@ function fromProblem(p, typeTitle, includeNotes, warnings = []) {
     type: normalizeType(p.assignment),
     flagged: !!str(p.note),
     exercise: {
+      source_key: str(p.id),
       kind: 'essay',
       question_md: join([typeTitle ? `_${typeTitle}_` : '', str(p.statement), pics]),
       answer_md: str(p.answer),
@@ -349,6 +355,8 @@ export function convertTutorLessonV1(obj, { includeNotes = true } = {}) {
     const exs = list.map((c) => c.exercise)
     drafts.push({
       kind: 'assignment',
+      // Mã bài trong file: lần nhập sau cùng mã thì cập nhật tại chỗ, không mất bài làm học sinh
+      source_key: str(lesson.id) ? `${str(lesson.id)}|${type}` : '',
       looksLikeExam: exs.some((e) => e.kind === 'true_false') && exs.some((e) => e.kind === 'short'),
       // Chỉ có một loại bài và "part" đã nói rõ (vd. "Bài tập trên lớp") thì không thêm hậu tố
       title: types.length === 1 && part ? baseTitle : `${baseTitle} – ${TYPE_TITLE[type]}`,

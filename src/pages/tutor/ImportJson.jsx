@@ -14,7 +14,8 @@ import { askConfirm } from '../../lib/dialog.js'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../../lib/importJson.js'
 import { SAMPLE_TUTOR_LESSON } from '../../lib/importTutorLesson.js'
 import { formatDate, TYPE_LABEL } from '../../lib/format.js'
-import { toExercisePayload } from '../../lib/assignments.js'
+import { findExistingAssignment, toExercisePayload } from '../../lib/assignments.js'
+import { planSync } from '../../lib/syncByKey.js'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
 import Markdown from '../../components/Markdown.jsx'
@@ -301,21 +302,51 @@ export default function ImportJson() {
         const o = opts[key]
         const link = s.linkLessonId || ''
         const lessonId = lessonOf[s.id] || (link.startsWith('batch:') ? lessonOf[link.slice(6)] : link) || null
-        done[key] = unwrap(
-          await supabase.rpc('save_assignment', {
-            p: {
-              title: d.title,
-              type: d.type,
-              is_exam: !!o.is_exam,
-              time_limit_minutes: timeLimitOf(o),
-              due_date: o.due_date || null,
-              lesson_id: lessonId,
-              chapter_id: chapterOf[s.id],
-              exercises: d.exercises.map(toExercisePayload),
-              student_ids: receiversOf(key),
-            },
-          })
-        )
+        let payload = {
+          title: d.title,
+          type: d.type,
+          is_exam: !!o.is_exam,
+          time_limit_minutes: timeLimitOf(o),
+          due_date: o.due_date || null,
+          lesson_id: lessonId,
+          chapter_id: chapterOf[s.id],
+          exercises: d.exercises.map(toExercisePayload),
+          student_ids: receiversOf(key),
+          source_key: d.source_key || null,
+        }
+        // Bài đã có (cùng mã trong file): sửa tại chỗ, giữ nguyên người nhận + bài làm của học sinh
+        const old = await findExistingAssignment(d, chapterOf[s.id] || null)
+        if (old) {
+          const plan = planSync(d, old.exercises)
+          const legacy = !old.assignment.source_key
+          if (
+            (plan.conflicts.length || legacy) &&
+            !(await askConfirm({
+              title: `Cập nhật bài đã có "${old.assignment.title}"?`,
+              message: [
+                legacy ? 'Bài này chưa có mã nguồn; app ghép theo tiêu đề và thứ tự câu.' : '',
+                plan.conflicts.length ? `Điểm của học sinh có thể đổi:\n- ${plan.conflicts.join('\n- ')}` : 'Chỉ đổi chữ; bài làm của học sinh được giữ.',
+              ].filter(Boolean).join('\n\n'),
+              confirmText: 'Cập nhật',
+            }))
+          )
+            continue
+          const a = old.assignment
+          payload = {
+            id: a.id,
+            title: a.title,
+            type: a.type,
+            is_exam: a.is_exam,
+            time_limit_minutes: a.time_limit_minutes,
+            due_date: a.due_date,
+            lesson_id: a.lesson_id,
+            chapter_id: a.chapter_id,
+            exercises: plan.exercises.map(toExercisePayload),
+            student_ids: old.studentIds,
+            source_key: d.source_key || null,
+          }
+        }
+        done[key] = unwrap(await supabase.rpc('save_assignment', { p: payload }))
         setSaved({ ...done })
       }
     } catch (e) {

@@ -523,11 +523,13 @@ function findSpans(s) {
     return extendSeq({ parts: [f.tex], start: p, end: f.end, score: f.score, v: f.v, single: f, last: f }, opts)
   }
   /** Mẫu số: các nhân tử viết liền nhau (aD, 2π, (kD)), dừng ở dấu cách hoặc phép toán. @returns {Seq | null} */
-  const parseDenom = (/** @type {number} */ p) => {
+  const parseDenom = (/** @type {number} */ p, /** @type {boolean} */ numNumeric = false) => {
     const f = parseFactor(p, { unit: false })
     if (!f) return null
     /** @type {Seq} */
     const acc = { parts: [f.tex], start: p, end: f.end, score: f.score, v: f.v, single: f, last: f }
+    // 3/2kT, 1/2mv²: tử là số và mẫu là số thì chữ cái liền sau là nhân tử, không thuộc mẫu → (3/2)kT
+    if (numNumeric && /^\d+(?:,\d+)?$/.test(f.tex) && /[A-Za-z]/.test(s[f.end] || '')) return acc
     while (startsJux(s[acc.end])) {
       const g = parseFactor(acc.end, { unit: false })
       if (!g) break
@@ -557,7 +559,7 @@ function findSpans(s) {
     if (!acc) return null
     for (;;) {
       if (s[acc.end] !== '/') break
-      const d = parseDenom(acc.end + 1)
+      const d = parseDenom(acc.end + 1, /^\d+(?:,\d+)?$/.test(s.slice(acc.start, acc.end).replace(/\s/g, '')))
       if (!d || !fractionOk(acc.start, acc.end, d.end)) break
       /** @type {Node} */
       let frac = { tex: `\\frac{${seqTex(acc)}}{${seqTex(d)}}`, end: d.end, score: acc.score + d.score + 2, v: acc.v || d.v, kind: 'frac' }
