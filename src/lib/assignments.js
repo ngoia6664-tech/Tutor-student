@@ -63,6 +63,16 @@ export async function findExistingAssignment(draft, chapterId) {
   }
 }
 
+// Ghi mã nguồn (source_key) sau khi save_assignment lưu xong; câu thứ i của file ↔ câu thứ i theo sort_order
+export async function saveSourceKeys(assignmentId, draft) {
+  if (!draft.source_key) return
+  unwrap(await supabase.from('assignments').update({ source_key: draft.source_key }).eq('id', assignmentId))
+  const rows = unwrap(await supabase.from('exercises').select('id').eq('assignment_id', assignmentId).order('sort_order'))
+  await Promise.all(
+    rows.map((r, i) => (draft.exercises[i]?.source_key ? supabase.from('exercises').update({ source_key: draft.exercises[i].source_key }).eq('id', r.id).then(unwrap) : null))
+  )
+}
+
 // answer_keys là quan hệ 1-1 nên PostgREST có thể trả về object hoặc mảng
 function firstKey(k) {
   return Array.isArray(k) ? k[0] : k

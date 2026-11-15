@@ -14,7 +14,7 @@ import { askConfirm } from '../../lib/dialog.js'
 import { parseImport, SAMPLE_ASSIGNMENT, SAMPLE_LESSON } from '../../lib/importJson.js'
 import { SAMPLE_TUTOR_LESSON } from '../../lib/importTutorLesson.js'
 import { formatDate, TYPE_LABEL } from '../../lib/format.js'
-import { findExistingAssignment, toExercisePayload } from '../../lib/assignments.js'
+import { findExistingAssignment, saveSourceKeys, toExercisePayload } from '../../lib/assignments.js'
 import { planSync } from '../../lib/syncByKey.js'
 import ExerciseBody, { KIND_LABEL } from '../../components/ExerciseBody.jsx'
 import ErrorBox from '../../components/ErrorBox.jsx'
@@ -347,6 +347,7 @@ export default function ImportJson() {
           }
         }
         done[key] = unwrap(await supabase.rpc('save_assignment', { p: payload }))
+        await saveSourceKeys(done[key], d)
         setSaved({ ...done })
       }
     } catch (e) {
