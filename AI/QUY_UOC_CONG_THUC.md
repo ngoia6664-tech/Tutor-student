@@ -54,9 +54,18 @@ JSON bắt buộc gấp đôi dấu gạch ngược: LaTeX `\frac` phải gõ **
 |---|---|
 | x₁, T₂ | `x_1`, `T_2` |
 | N_A, I_max | `N_A`, `I_{\max}` |
-| chỉ số là chữ Việt / từ | `m_{\text{khí}}`, `v_{\text{rms}}` |
+| chỉ số là chữ Việt / từ | `m_{\text{khí}}`, `v_{\text{rms}}`, `Q_{\text{thu}}`, `c_{\text{nước}}` |
+| **chỉ số là tên chất / nguyên tố** (như QAl: Al nhỏ, thẳng, ở góc dưới của Q) | `Q_{\mathrm{Al}}`, `m_{\mathrm{Cu}}`, `n_{\mathrm{H_2}}`, `V_{\mathrm{CO_2}}` |
 | xₙ₊₁ | `x_{n+1}` |
 | vừa dưới vừa trên | `x_i^2` |
+
+**Quy ước chỉ số dưới (bắt buộc):** chữ đứng sau ký hiệu để chỉ *đối tượng* (nguyên tố, chất, từ) luôn là chỉ số dưới, nhỏ, **thẳng đứng**, nằm ở góc dưới bên phải của ký hiệu đứng trước, giống chỉ số trong hóa học.
+- Tên nguyên tố / chất / công thức hóa học → `_{\mathrm{...}}`: `Q_{\mathrm{Al}}`, `m_{\mathrm{Fe}}`, `n_{\mathrm{H_2O}}`.
+- Từ tiếng Việt hoặc tiếng Anh → `_{\text{...}}`: `Q_{\text{thu}}`, `v_{\text{rms}}`.
+- Chỉ số chỉ là biến hay số (thứ tự, vị trí) giữ nghiêng: `x_1`, `a_n`, `x_{n+1}`.
+- KHÔNG viết `Q_{Al}` hoặc `QAl` hoặc `Q_Al` không bọc `\mathrm`/`\text`: `Al` thành chữ nghiêng `A·l` (như hai biến nhân nhau) và ký hiệu sai.
+- Chỉ số nhiều ký tự luôn có `{ }`: `Q_{\mathrm{Al}}`, không phải `Q_\mathrm{Al}`.
+- Khi sửa file cũ, mọi `QAl`, `Q_Al`, `mCu`, `nH2`, `VCO2` (đối tượng dính sau ký hiệu) đổi thành dạng trên.
 
 ### Logarit
 `\log_a b` · `\lg x` · `\ln x` · `\log_{10} x` · `\log_a (bc) = \log_a b + \log_a c`

@@ -54,7 +54,9 @@
             "- Chỉ số số: `$x_1,\\ x_2,\\ T_2$` → $x_1,\\ x_2,\\ T_2$",
             "- Chỉ số chữ: `$N_A,\\ I_{\\max},\\ \\lambda_{\\min}$` → $N_A,\\ I_{\\max},\\ \\lambda_{\\min}$",
             "- Chỉ số là từ: `$m_{\\text{khí}},\\ v_{\\text{rms}}$` → $m_{\\text{khí}},\\ v_{\\text{rms}}$",
-            "- Chỉ số biểu thức: `$x_{n+1},\\ a_{i,j}$` → $x_{n+1},\\ a_{i,j}$",
+            "- Chỉ số là tên chất / nguyên tố (viết nhỏ, thẳng, ở góc dưới): `$Q_{\\mathrm{Al}},\\ m_{\\mathrm{Cu}},\\ n_{\\mathrm{H_2}},\\ V_{\\mathrm{CO_2}}$` → $Q_{\\mathrm{Al}},\\ m_{\\mathrm{Cu}},\\ n_{\\mathrm{H_2}},\\ V_{\\mathrm{CO_2}}$ — dùng \\mathrm; viết Q_{Al} (không mathrm) sẽ thành chữ nghiêng sai",
+            "- Chỉ số là từ tiếng Việt: `$Q_{\\text{thu}},\\ Q_{\\text{tỏa}},\\ c_{\\text{nước}}$` → $Q_{\\text{thu}},\\ Q_{\\text{tỏa}},\\ c_{\\text{nước}}$",
+            "- Chỉ số là phép tính: `$x_{n+1},\\ a_{i,j}$` → $x_{n+1},\\ a_{i,j}$",
             "- Vừa dưới vừa trên: `$x_i^2,\\ \\sum_{i=1}^{n} x_i$` → $x_i^2,\\ \\sum_{i=1}^{n} x_i$"
           ]
         },
