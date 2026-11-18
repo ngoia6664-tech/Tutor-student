@@ -65,7 +65,10 @@ Chỉ bài giảng + bài tập. Không thêm lịch học, điểm danh, học 
 - Codex (`agent/codex-test`, `D:\wt\codex-test`) và Antigravity (`agent/antigravity`, `D:\wt\antigravity`) chỉ commit; luật ở `AGENTS.md`.
   Merge nhánh của họ vào main chỉ khi Anh yêu cầu.
 - Văn phòng: `node "d:\Duy Anh office\office.mjs" inbox claude-code` đầu phiên; `status claude-code "..."` khi đổi việc;
-  `send claude-code anh "..."` khi cần Anh duyệt merge / push.
+  cần Anh duyệt merge / push thì ghi vào mục `## CẦN ĐẦU NÃO QUYẾT` của báo cáo.
+- Báo cáo (bắt buộc, như mục "Văn phòng" trong `AGENTS.md`): xong việc → viết theo `d:Duy Anh officedataeportsTEMPLATE.md`,
+  nộp `report claude-code <mã-việc> --file <báo-cáo.md>`; vẫn cập nhật HANDOFF. **Chưa có báo cáo in OK = chưa xong.**
+  Cần Anh / đầu não quyết thì DỪNG, ghi vào `## CẦN ĐẦU NÃO QUYẾT`, không tự đoán. `send claude-code dau-nao` chỉ cho câu hỏi gấp.
 
 ## Bất biến quan trọng
 - Đáp án ở `answer_keys`, học sinh chỉ đọc sau khi nộp (RLS). Không gửi đáp án xuống học sinh trước khi nộp; chấm ở SQL (`submit_assignment`).
