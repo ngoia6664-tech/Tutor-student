@@ -64,7 +64,7 @@ Chỉ bài giảng + bài tập. Không thêm lịch học, điểm danh, học 
   khi Anh yêu cầu thì chạy `OFFICE_ALLOW_MAIN=1 git push origin main` (Bash). Không dùng `--no-verify`, không sửa `.git/hooks`.
 - Codex (`agent/codex-test`, `D:\wt\codex-test`) và Antigravity (`agent/antigravity`, `D:\wt\antigravity`) chỉ commit; luật ở `AGENTS.md`.
   Merge nhánh của họ vào main chỉ khi Anh yêu cầu.
-- Thư mục việc: mỗi cuộc Claude code làm trong thư mục việc riêng `D:\wt\<mã>` (nhánh `task/<mã>`, đầu não / Anh tạo bằng `mo claude-code <mã>`).
+- Thư mục việc: mỗi cuộc Claude code làm trong thư mục việc riêng `D:\wt\agent-con\<mã>` (nhánh `task/<mã>`, đầu não / Anh tạo bằng `mo claude-code <mã>`).
   Không làm thẳng trong `D:\wt\multi-teacher` (chỉ nơi gộp) trừ khi nhiệm vụ nói rõ. Xong → `report`; KHÔNG tự chạy `don` (đầu não / Anh gộp rồi mới `don`).
 - Văn phòng: đầu phiên chạy `node "d:\Duy Anh office\office.mjs" inbox claude-code`, rồi `nhiemvu claude-code [mã]`
   (Anh dán "Làm nhiệm vụ <mã>" thì chạy `nhiemvu claude-code <mã>`) và làm đúng nhiệm vụ đó (không có file nhiệm vụ cho việc Anh giao miệng thì hỏi lại Anh / dừng, đừng tự đoán phạm vi); `status claude-code "..."` khi đổi việc;
