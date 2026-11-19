@@ -64,9 +64,10 @@ Chỉ bài giảng + bài tập. Không thêm lịch học, điểm danh, học 
   khi Anh yêu cầu thì chạy `OFFICE_ALLOW_MAIN=1 git push origin main` (Bash). Không dùng `--no-verify`, không sửa `.git/hooks`.
 - Codex (`agent/codex-test`, `D:\wt\codex-test`) và Antigravity (`agent/antigravity`, `D:\wt\antigravity`) chỉ commit; luật ở `AGENTS.md`.
   Merge nhánh của họ vào main chỉ khi Anh yêu cầu.
-- Văn phòng: `node "d:\Duy Anh office\office.mjs" inbox claude-code` đầu phiên; `status claude-code "..."` khi đổi việc;
+- Văn phòng: đầu phiên chạy `node "d:\Duy Anh office\office.mjs" inbox claude-code`, rồi `nhiemvu claude-code` và làm đúng
+  nhiệm vụ đó (không có file nhiệm vụ cho việc Anh giao miệng thì hỏi lại Anh / dừng, đừng tự đoán phạm vi); `status claude-code "..."` khi đổi việc;
   cần Anh duyệt merge / push thì ghi vào mục `## CẦN ĐẦU NÃO QUYẾT` của báo cáo.
-- Báo cáo (bắt buộc, như mục "Văn phòng" trong `AGENTS.md`): xong việc → viết theo `d:Duy Anh officedataeportsTEMPLATE.md`,
+- Báo cáo (bắt buộc, như mục "Văn phòng" trong `AGENTS.md`): xong việc → viết theo `D:/Duy Anh office/data/reports/TEMPLATE.md`,
   nộp `report claude-code <mã-việc> --file <báo-cáo.md>`; vẫn cập nhật HANDOFF. **Chưa có báo cáo in OK = chưa xong.**
   Cần Anh / đầu não quyết thì DỪNG, ghi vào `## CẦN ĐẦU NÃO QUYẾT`, không tự đoán. `send claude-code dau-nao` chỉ cho câu hỏi gấp.
 

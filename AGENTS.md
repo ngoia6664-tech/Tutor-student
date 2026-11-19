@@ -30,10 +30,11 @@ Rồi chạy ngay `node "d:\Duy Anh office\office.mjs" inbox <tên>` và làm th
 
 ## Văn phòng (bắt buộc)
 Lệnh: `node "d:\Duy Anh office\office.mjs" <lệnh>`. Tên agent: `claude-code`, `codex-test`, `antigravity`, `gpt-lesson`, `claude-review`, `dau-nao` (đầu não, người điều phối), `anh`.
-1. **Đầu phiên:** `inbox <tên mình>` để nhận việc.
+1. **Đầu phiên:** chạy `inbox <tên mình>`, rồi `nhiemvu <tên mình>` và làm đúng nhiệm vụ in ra (kèm báo cáo trước của mình nếu có).
+   Không có file nhiệm vụ cho việc Anh vừa giao miệng thì hỏi lại Anh / dừng, đừng tự đoán phạm vi.
 2. **Khi bắt đầu / đổi việc:** `status <tên mình> "đang làm gì"`. Kẹt thì thêm `--blocked`.
 3. **Cuối phiên:** cập nhật HANDOFF của mình (`AI/CODEX/HANDOFF.md` hoặc `AI/ANTIGRAVITY/HANDOFF.md`), commit, rồi viết báo cáo
-   theo mẫu `d:Duy Anh officedataeportsTEMPLATE.md` và nộp: `report <tên mình> <mã-việc> --file <báo-cáo.md>`.
+   theo mẫu `D:/Duy Anh office/data/reports/TEMPLATE.md` và nộp: `report <tên mình> <mã-việc> --file <báo-cáo.md>`.
    `send <tên mình> dau-nao "..."` chỉ dùng cho câu hỏi gấp.
 4. **Chưa có báo cáo được văn phòng nhận (`report` in OK) = chưa được coi là xong việc.**
 5. Gặp việc cần Anh / đầu não quyết thì DỪNG, ghi vào mục `## CẦN ĐẦU NÃO QUYẾT` của báo cáo (TRẠNG THÁI: DỪNG), không tự đoán.
