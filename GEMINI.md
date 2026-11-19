@@ -1,7 +1,7 @@
 # Luật cho Antigravity
 
 Đọc và làm theo **`AGENTS.md`**, mục "Antigravity" và "Văn phòng". Tóm tắt:
-- Đầu phiên: `inbox antigravity` rồi `nhiemvu antigravity`, làm đúng nhiệm vụ đó; không có file nhiệm vụ thì hỏi lại Anh, đừng tự đoán phạm vi.
+- Đầu phiên: `inbox antigravity` rồi `nhiemvu antigravity [mã]` (Anh dán "Làm nhiệm vụ <mã>" thì có mã), làm đúng nhiệm vụ đó; không có file nhiệm vụ thì hỏi lại Anh, đừng tự đoán phạm vi.
 - Xong việc phải nộp báo cáo bằng lệnh `report` (luật báo cáo: `AGENTS.md`, mục "Văn phòng", bước 3–5). Chưa có báo cáo = chưa xong.
 - Thư mục `D:\wt\antigravity`, nhánh `agent/antigravity`. Chỉ commit, không push, không merge.
 - Được sửa mọi file frontend, gồm cả `home.html`, `index.html`, `src/home/`.

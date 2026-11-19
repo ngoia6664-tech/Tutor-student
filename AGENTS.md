@@ -30,7 +30,8 @@ Rồi chạy ngay `node "d:\Duy Anh office\office.mjs" inbox <tên>` và làm th
 
 ## Văn phòng (bắt buộc)
 Lệnh: `node "d:\Duy Anh office\office.mjs" <lệnh>`. Tên agent: `claude-code`, `codex-test`, `antigravity`, `gpt-lesson`, `claude-review`, `dau-nao` (đầu não, người điều phối), `anh`.
-1. **Đầu phiên:** chạy `inbox <tên mình>`, rồi `nhiemvu <tên mình>` và làm đúng nhiệm vụ in ra (kèm báo cáo trước của mình nếu có).
+1. **Đầu phiên:** chạy `inbox <tên mình>`, rồi `nhiemvu <tên mình> [mã]` và làm đúng nhiệm vụ in ra (kèm báo cáo trước của mình nếu có).
+   Anh dán "Làm nhiệm vụ <mã>" thì chạy `nhiemvu <tên mình> <mã>` (đúng nhiệm vụ của mã đó, không lẫn với cuộc khác); không có mã thì `nhiemvu <tên mình>`.
    Không có file nhiệm vụ cho việc Anh vừa giao miệng thì hỏi lại Anh / dừng, đừng tự đoán phạm vi.
 2. **Khi bắt đầu / đổi việc:** `status <tên mình> "đang làm gì"`. Kẹt thì thêm `--blocked`.
 3. **Cuối phiên:** cập nhật HANDOFF của mình (`AI/CODEX/HANDOFF.md` hoặc `AI/ANTIGRAVITY/HANDOFF.md`), commit, rồi viết báo cáo
@@ -38,3 +39,4 @@ Lệnh: `node "d:\Duy Anh office\office.mjs" <lệnh>`. Tên agent: `claude-code
    `send <tên mình> dau-nao "..."` chỉ dùng cho câu hỏi gấp.
 4. **Chưa có báo cáo được văn phòng nhận (`report` in OK) = chưa được coi là xong việc.**
 5. Gặp việc cần Anh / đầu não quyết thì DỪNG, ghi vào mục `## CẦN ĐẦU NÃO QUYẾT` của báo cáo (TRẠNG THÁI: DỪNG), không tự đoán.
+6. Codex và Antigravity làm trong thư mục cố định của mình (không dùng `mo`). Lệnh `mo` / `don` (thư mục việc tạm) chỉ đầu não / Anh chạy.
